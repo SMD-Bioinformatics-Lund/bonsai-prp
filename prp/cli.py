@@ -1,29 +1,30 @@
+"""Definition of the PRP command-line interface."""
 import json
 import logging
+from typing import List
 
 import click
-from typing import List
 from pydantic import ValidationError
 
 from .models.metadata import RunInformation, SoupVersion
 from .models.phenotype import ElementType
-from .models.typing import TypingMethod
 from .models.qc import QcMethodIndex
 from .models.sample import MethodIndex, PipelineResult
+from .models.typing import TypingMethod
 from .parse import (
-    parse_cgmlst_results,
-    parse_mlst_results,
-    parse_quast_results,
-    parse_postalignqc_results,
-    parse_resfinder_amr_pred,
     parse_amrfinder_amr_pred,
-    parse_kraken_result,
-    parse_virulencefinder_vir_pred,
     parse_amrfinder_vir_pred,
+    parse_cgmlst_results,
+    parse_kraken_result,
+    parse_mlst_results,
     parse_mykrobe_amr_pred,
     parse_mykrobe_lineage_results,
+    parse_postalignqc_results,
+    parse_quast_results,
+    parse_resfinder_amr_pred,
     parse_tbprofiler_amr_pred,
     parse_tbprofiler_lineage_results,
+    parse_virulencefinder_vir_pred,
 )
 
 logging.basicConfig(
@@ -36,7 +37,7 @@ OUTPUT_SCHEMA_VERSION = 1
 
 @click.group()
 def cli():
-    pass
+    """Base CLI entrypoint."""
 
 
 @cli.command()
@@ -64,8 +65,15 @@ def cli():
 )
 @click.option("-m", "--mlst", type=click.File(), help="MLST prediction results")
 @click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
-@click.option("-v", "--virulence", type=click.File(), help="Virulence factor prediction results")
-@click.option("-r", "--resistance", type=click.File(), help="resfinder resistance prediction results")
+@click.option(
+    "-v", "--virulence", type=click.File(), help="Virulence factor prediction results"
+)
+@click.option(
+    "-r",
+    "--resistance",
+    type=click.File(),
+    help="resfinder resistance prediction results",
+)
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
 @click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
 @click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
@@ -87,9 +95,8 @@ def create_output(
     tbprofiler,
     correct_alleles,
     output,
-):
+):  # pylint: disable=too-many-arguments
     """Combine pipeline results into a standardized json output file."""
-    # base results
     LOG.info("Start generating pipeline result json")
 
     run_info = RunInformation(**json.load(run_metadata))
@@ -187,9 +194,13 @@ def create_output(
             )
         ]
         results["run_metadata"]["databases"] = db_info
-        amr_res: MethodIndex = parse_mykrobe_amr_pred(pred_res[sample_id], ElementType.AMR)
+        amr_res: MethodIndex = parse_mykrobe_amr_pred(
+            pred_res[sample_id], ElementType.AMR
+        )
         results["element_type_result"].append(amr_res)
-        lin_res: MethodIndex = parse_mykrobe_lineage_results(pred_res[sample_id], TypingMethod.LINEAGE)
+        lin_res: MethodIndex = parse_mykrobe_lineage_results(
+            pred_res[sample_id], TypingMethod.LINEAGE
+        )
         results["typing_result"].append(lin_res)
 
     # tbprofiler
@@ -207,7 +218,9 @@ def create_output(
             )
         ]
         results["run_metadata"]["databases"].extend(db_info)
-        lin_res: MethodIndex = parse_tbprofiler_lineage_results(pred_res, TypingMethod.LINEAGE)
+        lin_res: MethodIndex = parse_tbprofiler_lineage_results(
+            pred_res, TypingMethod.LINEAGE
+        )
         results["typing_result"].append(lin_res)
         amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res, ElementType.AMR)
         results["element_type_result"].append(amr_res)
@@ -218,7 +231,7 @@ def create_output(
         click.secho("Input failed Validation", fg="red")
         click.secho(err)
         raise click.Abort
-    LOG.info(f"Storing results to: {output.name}")
+    LOG.info("Storing results to: %s", output.name)
     output.write(output_data.json(indent=2))
     click.secho("Finished generating pipeline output", fg="green")
 

@@ -1,9 +1,9 @@
 """Typing related data models"""
 
 from enum import Enum
-from typing import Dict, List, Optional, Union, Any
+from typing import Dict, List, Optional, Union
 
-from pydantic import Field, BaseModel
+from pydantic import Field
 
 from .base import RWModel
 
@@ -11,7 +11,6 @@ from .base import RWModel
 class TypingSoftware(Enum):
     """Container for software names."""
 
-    # typing
     CHEWBBACA = "chewbbaca"
     MLST = "mlst"
     TBPROFILER = "tbprofiler"
@@ -19,6 +18,8 @@ class TypingSoftware(Enum):
 
 
 class TypingMethod(Enum):
+    """Valid typing methods."""
+
     MLST = "mlst"
     CGMLST = "cgmlst"
     LINEAGE = "lineage"
@@ -27,13 +28,13 @@ class TypingMethod(Enum):
 class LineageInformation(RWModel):
     """Base class for storing lineage information typing results"""
 
-    lin: Union[str, None]
-    family: Union[str, None]
-    spoligotype: Union[str, None]
-    rd: Union[str, None]
-    frac: Union[str, None]
-    variant: Union[str, None]
-    coverage: Union[Dict, None]
+    lin: Optional[str]
+    family: Optional[str]
+    spoligotype: Optional[str]
+    rd: Optional[str]
+    frac: Optional[str]
+    variant: Optional[str]
+    coverage: Optional[Dict]
 
 
 class ResultMlstBase(RWModel):
@@ -45,14 +46,14 @@ class ResultMlstBase(RWModel):
 class ResultLineageBase(RWModel):
     """Base class for storing MLST-like typing results"""
 
-    lineages: List[LineageInformation]#Union[int, str, None]]
+    lineages: List[LineageInformation]
 
 
 class TypingResultMlst(ResultMlstBase):
     """MLST results"""
 
     scheme: str
-    sequence_type: Union[int, None] = Field(None, alias="sequenceType")
+    sequence_type: Optional[int] = Field(None, alias="sequenceType")
 
 
 class TypingResultCgMlst(ResultMlstBase):

@@ -1,11 +1,12 @@
 """Parse output of QC tools."""
 
 import csv
-import logging
 import json
+import logging
 
-from ..models.qc import QcMethodIndex, QcSoftware, QuastQcResult, PostAlignQcResult
 from click.types import File
+
+from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult
 
 LOG = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ def parse_quast_results(file: File) -> QcMethodIndex:
     Returns:
         AssemblyQc: list of key-value pairs
     """
-    LOG.info(f"Parsing tsv file: {file.name}")
+    LOG.info("Parsing tsv file: %s", file.name)
     creader = csv.reader(file, delimiter="\t")
     header = next(creader)
     raw = [dict(zip(header, row)) for row in creader]
@@ -45,17 +46,17 @@ def parse_postalignqc_results(input_file: File) -> QcMethodIndex:
     Returns:
         PostAlignQc: list of key-value pairs
     """
-    LOG.info(f"Parsing json file: {input_file.name}")
+    LOG.info("Parsing json file: %s", input_file.name)
     qc_dict = json.load(input_file)
     qc_res = PostAlignQcResult(
-        ins_size = int(float(qc_dict["ins_size"])),
-        ins_size_dev = int(float(qc_dict["ins_size_dev"])),
-        mean_cov = int(qc_dict["mean_cov"]),
-        pct_above_x = qc_dict["pct_above_x"],
-        mapped_reads = int(qc_dict["mapped_reads"]),
-        tot_reads = int(qc_dict["tot_reads"]),
-        iqr_median = float(qc_dict["iqr_median"]),
-        dup_pct = float(qc_dict["dup_pct"]),
-        dup_reads = int(qc_dict["dup_reads"]),
+        ins_size=int(float(qc_dict["ins_size"])),
+        ins_size_dev=int(float(qc_dict["ins_size_dev"])),
+        mean_cov=int(qc_dict["mean_cov"]),
+        pct_above_x=qc_dict["pct_above_x"],
+        mapped_reads=int(qc_dict["mapped_reads"]),
+        tot_reads=int(qc_dict["tot_reads"]),
+        iqr_median=float(qc_dict["iqr_median"]),
+        dup_pct=float(qc_dict["dup_pct"]),
+        dup_reads=int(qc_dict["dup_reads"]),
     )
     return QcMethodIndex(software=QcSoftware.POSTALIGNQC, result=qc_res)

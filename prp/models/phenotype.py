@@ -1,16 +1,15 @@
 """Datamodels used for prediction results."""
 from enum import Enum
-from typing import Dict, List, Union, Any
+from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from .base import RWModel
 
 
 class PredictionSoftware(Enum):
-    """Container for software names."""
+    """Container for prediciton software names."""
 
-    # phenotype
     AMRFINDER = "amrfinder"
     RESFINDER = "resfinder"
     VIRFINDER = "virulencefinder"
@@ -19,12 +18,16 @@ class PredictionSoftware(Enum):
 
 
 class VariantType(Enum):
+    """Types of variants."""
+
     SUBSTITUTION = "substitution"
     INSERTION = "insertion"
     DELETION = "deletion"
 
 
 class ElementType(Enum):
+    """Categories of resistance and virulence genes."""
+
     AMR = "AMR"
     ACID = "STRESS_ACID"
     BIOCIDE = "STRESS_BIOCIDE"
@@ -34,36 +37,38 @@ class ElementType(Enum):
 
 
 class DatabaseReference(RWModel):
-    ref_database: Union[str, None]
-    ref_id: Union[str, None]
+    """Refernece to a database."""
+
+    ref_database: Optional[str]
+    ref_id: Optional[str]
 
 
 class GeneBase(BaseModel):
     """Container for gene information"""
 
-    accession: Union[str, None]
+    accession: Optional[str]
     # prediction info
-    depth: Union[float, None]
-    identity: Union[float, None]
-    coverage: Union[float, None]
-    ref_start_pos: Union[int, None]
-    ref_end_pos: Union[int, None]
-    ref_gene_length: Union[int, None]
-    alignment_length: Union[int, None]
+    depth: Optional[float]
+    identity: Optional[float]
+    coverage: Optional[float]
+    ref_start_pos: Optional[int]
+    ref_end_pos: Optional[int]
+    ref_gene_length: Optional[int]
+    alignment_length: Optional[int]
     # amrfinder extra info
-    contig_id: Union[str, None]
-    gene_symbol: Union[str, None]
-    sequence_name: Union[str, None]
-    ass_start_pos: Union[int, None]
-    ass_end_pos: Union[int, None]
-    strand: Union[str, None]
-    element_type: Union[str, None]
-    element_subtype: Union[str, None]
-    target_length: Union[int, None]
-    res_class: Union[str, None]
-    res_subclass: Union[str, None]
-    method: Union[str, None]
-    close_seq_name: Union[str, None]
+    contig_id: Optional[str]
+    gene_symbol: Optional[str]
+    sequence_name: Optional[str]
+    ass_start_pos: Optional[int]
+    ass_end_pos: Optional[int]
+    strand: Optional[str]
+    element_type: Optional[str]
+    element_subtype: Optional[str]
+    target_length: Optional[int]
+    res_class: Optional[str]
+    res_subclass: Optional[str]
+    method: Optional[str]
+    close_seq_name: Optional[str]
 
 
 class ResistanceGene(GeneBase, DatabaseReference):
@@ -75,38 +80,38 @@ class ResistanceGene(GeneBase, DatabaseReference):
 class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
 
-    virulence_category: Union[str, None]
+    virulence_category: Optional[str]
 
 
 class VariantBase(DatabaseReference):
     """Container for mutation information"""
 
-    variant_type: Union[VariantType, None] # type of mutation insertion/deletion/substitution
-    genes: Union[List[str], None]
-    position: Union[int, None]
-    ref_nt: Union[str, None]
-    alt_nt: Union[str, None]
+    variant_type: Optional[VariantType]
+    genes: Optional[List[str]]
+    position: Optional[int]
+    ref_nt: Optional[str]
+    alt_nt: Optional[str]
     # prediction info
-    depth: Union[float, None]
-    contig_id: Union[str, None]
-    gene_symbol: Union[str, None]
-    sequence_name: Union[str, None]
-    ass_start_pos: Union[int, None]
-    ass_end_pos: Union[int, None]
-    strand: Union[str, None]
-    element_type: Union[str, None]
-    element_subtype: Union[str, None]
-    target_length: Union[int, None]
-    res_class: Union[str, None]
-    res_subclass: Union[str, None]
-    method: Union[str, None]
-    close_seq_name: Union[str, None]
-    type: Union[str, None]
-    change: Union[str, None]
-    nucleotide_change: Union[str, None]
-    protein_change: Union[str, None]
-    annotation: Union[List[Dict], None]
-    drugs: Union[List[Dict], None]
+    depth: Optional[float]
+    contig_id: Optional[str]
+    gene_symbol: Optional[str]
+    sequence_name: Optional[str]
+    ass_start_pos: Optional[int]
+    ass_end_pos: Optional[int]
+    strand: Optional[str]
+    element_type: Optional[str]
+    element_subtype: Optional[str]
+    target_length: Optional[int]
+    res_class: Optional[str]
+    res_subclass: Optional[str]
+    method: Optional[str]
+    close_seq_name: Optional[str]
+    type: Optional[str]
+    change: Optional[str]
+    nucleotide_change: Optional[str]
+    protein_change: Optional[str]
+    annotation: Optional[List[Dict]]
+    drugs: Optional[List[Dict]]
 
 
 class ResistanceVariant(VariantBase):

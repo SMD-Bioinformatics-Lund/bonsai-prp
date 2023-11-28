@@ -1,9 +1,8 @@
 """QC data models."""
 from enum import Enum
+from typing import Dict, Union
 
 from pydantic import BaseModel
-
-from typing import Dict, Union
 
 from .base import RWModel
 
@@ -44,6 +43,12 @@ class PostAlignQcResult(BaseModel):
 
 
 class QcMethodIndex(RWModel):
+    """QC results container.
+
+    Based on Mongo db Attribute pattern.
+    Reference: https://www.mongodb.com/developer/products/mongodb/attribute-pattern/
+    """
+
     software: QcSoftware
     version: Union[str, None]
     result: Union[QuastQcResult, PostAlignQcResult]

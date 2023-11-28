@@ -1,36 +1,20 @@
 """Data model definition of input/ output data"""
-from enum import Enum
 from typing import List, Union
 
 from pydantic import Field
 
 from .base import RWModel
 from .metadata import RunMetadata
-from .phenotype import ElementTypeResult, ElementType, PredictionSoftware
+from .phenotype import ElementType, ElementTypeResult, PredictionSoftware
 from .qc import QcMethodIndex
-from .typing import TypingMethod, TypingResultCgMlst, TypingResultMlst, TypingResultLineage, TypingSoftware
-
-# disabled validation
-# SAMPLE_ID_PATTERN = r"^[a-zA-Z1-9-_]+$"
-# , regex=SAMPLE_ID_PATTERN
-
-
-class TaxLevel(Enum):
-    P = "phylum"
-    C = "class"
-    O = "order"
-    F = "family"
-    G = "genus"
-    S = "species"
-
-
-class SpeciesPrediction(RWModel):
-    scientific_name: str = Field(..., alias="scientificName")
-    taxonomy_id: int = Field(..., alias="taxId")
-    taxonomy_lvl: TaxLevel = Field(..., alias="taxLevel")
-    kraken_assigned_reads: int = Field(..., alias="krakenAssignedReads")
-    added_reads: int = Field(..., alias="addedReads")
-    fraction_total_reads: float = Field(..., alias="fractionTotalReads")
+from .species import SpeciesPrediction
+from .typing import (
+    TypingMethod,
+    TypingResultCgMlst,
+    TypingResultLineage,
+    TypingResultMlst,
+    TypingSoftware,
+)
 
 
 class MethodIndex(RWModel):
@@ -38,7 +22,9 @@ class MethodIndex(RWModel):
 
     type: Union[ElementType, TypingMethod]
     software: PredictionSoftware | TypingSoftware | None
-    result: Union[ElementTypeResult, TypingResultMlst, TypingResultCgMlst, TypingResultLineage]
+    result: Union[
+        ElementTypeResult, TypingResultMlst, TypingResultCgMlst, TypingResultLineage
+    ]
 
 
 class SampleBase(RWModel):

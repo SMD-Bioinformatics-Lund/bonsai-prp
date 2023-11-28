@@ -1,8 +1,7 @@
 """Metadata models."""
 from datetime import datetime
 from enum import Enum
-from lib2to3.pytree import Base
-from typing import Dict, List
+from typing import List
 
 from pydantic import BaseModel, Field
 
@@ -10,6 +9,8 @@ from .base import RWModel
 
 
 class SoupType(Enum):
+    """Type of software of unkown provenance."""
+
     DB = "database"
     SW = "software"
 

@@ -1,3 +1,5 @@
+"""Definition of tags."""
+
 from enum import Enum
 from typing import List
 
@@ -5,18 +7,24 @@ from .base import RWModel
 
 
 class TagType(Enum):
+    """Categories of tags."""
+
     VIRULENCE = "virulence"
     RESISTANCE = "resistane"
     QC = "qc"
 
 
 class ResistanceTag(Enum):
+    """AMR associated tags."""
+
     VRE = "VRE"
     ESBL = "ESBL"
     MRSA = "MRSA"
 
 
 class VirulenceTag(Enum):
+    """Virulence associated tags."""
+
     PVL_ALL_POS = "pos"
     PVL_LUKS_POS = "neg/pos"
     PVL_LUKF_POS = "pos/neg"
@@ -41,4 +49,4 @@ class Tag(RWModel):
     severity: TagSeverity
 
 
-TAG_LIST = List[Tag]
+TagList = List[Tag]

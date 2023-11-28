@@ -1,3 +1,4 @@
+"""Species related data models."""
 from enum import Enum
 from typing import List
 
@@ -18,6 +19,8 @@ class TaxLevel(Enum):
 
 
 class SpeciesPrediction(RWModel):
+    """Species prediction results."""
+
     scientific_name: str = Field(..., alias="scientificName")
     taxonomy_id: int = Field(..., alias="taxId")
     taxonomy_lvl: TaxLevel = Field(..., alias="taxLevel")
