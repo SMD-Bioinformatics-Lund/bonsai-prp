@@ -20,6 +20,7 @@ class ResistanceTag(Enum):
     VRE = "VRE"
     ESBL = "ESBL"
     MRSA = "MRSA"
+    MSSA = "MSSA"
 
 
 class VirulenceTag(Enum):
