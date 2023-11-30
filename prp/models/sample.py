@@ -7,7 +7,7 @@ from .base import RWModel
 from .metadata import RunMetadata
 from .phenotype import ElementType, ElementTypeResult, PredictionSoftware
 from .qc import QcMethodIndex
-from .species import SpeciesPrediction
+from .species import SpeciesPredictionResult
 from .typing import (
     TypingMethod,
     TypingResultCgMlst,
@@ -33,7 +33,7 @@ class SampleBase(RWModel):
     sample_id: str = Field(..., alias="sampleId", min_length=3, max_length=100)
     run_metadata: RunMetadata = Field(..., alias="runMetadata")
     qc: List[QcMethodIndex] = Field(...)
-    species_prediction: List[SpeciesPrediction] = Field(..., alias="speciesPrediction")
+    species_prediction: SpeciesPredictionResult = Field(..., alias="speciesPrediction")
 
 
 class PipelineResult(SampleBase):

@@ -29,4 +29,4 @@ class SpeciesPrediction(RWModel):
     fraction_total_reads: float = Field(..., alias="fractionTotalReads")
 
 
-SpeciesPrediction = List[SpeciesPrediction]
+SpeciesPredictionResult = List[SpeciesPrediction]
