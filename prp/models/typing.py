@@ -24,6 +24,7 @@ class TypingMethod(Enum):
     CGMLST = "cgmlst"
     LINEAGE = "lineage"
 
+
 class ChewbbacaErrors(str, Enum):
     """Chewbbaca error codes."""
 
