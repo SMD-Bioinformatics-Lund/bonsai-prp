@@ -24,6 +24,25 @@ class TypingMethod(Enum):
     CGMLST = "cgmlst"
     LINEAGE = "lineage"
 
+class ChewbbacaErrors(str, Enum):
+    """Chewbbaca error codes."""
+
+    PLOT5 = "PLOT5"
+    PLOT3 = "PLOT3"
+    LOTSC = "LOTSC"
+    NIPH = "NIPH"
+    NIPHEM = "NIPHEM"
+    ALM = "ALM"
+    ASM = "ASM"
+    LNF = "LNF"
+
+
+class MlstErrors(str, Enum):
+    """MLST error codes."""
+
+    NOVEL = "novel"
+    PARTIAL = "partial"
+
 
 class LineageInformation(RWModel):
     """Base class for storing lineage information typing results"""
@@ -68,3 +87,6 @@ class TypingResultLineage(ResultLineageBase):
 
     main_lin: str
     sublin: str
+
+
+CgmlstAlleles = Dict[str, int | None | ChewbbacaErrors | MlstErrors | List[int]]
