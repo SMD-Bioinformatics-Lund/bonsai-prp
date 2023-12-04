@@ -216,7 +216,7 @@ def create_output(
         click.secho(err)
         raise click.Abort
     LOG.info("Storing results to: %s", output.name)
-    output.write(output_data.json(indent=2))
+    output.write(output_data.model_dump_json(indent=2))
     click.secho("Finished generating pipeline output", fg="green")
 
 
