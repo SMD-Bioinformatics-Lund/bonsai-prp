@@ -6,7 +6,6 @@ from ...models.phenotype import ElementType, ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import VirulenceGene
 from ...models.sample import MethodIndex
-from .utils import _default_virulence
 
 LOG = logging.getLogger(__name__)
 
@@ -55,14 +54,12 @@ def _parse_virulencefinder_vir_results(pred: str) -> ElementTypeResult:
     return ElementTypeResult(results)
 
 
-def parse_virulencefinder_vir_pred(file: str) -> ElementTypeResult:
+def parse_virulencefinder_vir_pred(file: str) -> ElementTypeResult | None:
     """Parse virulencefinder virulence prediction results."""
     LOG.info("Parsing virulencefinder virulence prediction")
     pred = json.load(file)
     if "not virulencefinder" in pred:
         results: ElementTypeResult = _parse_virulencefinder_vir_results(pred)
-    else:
-        results: ElementTypeResult = _default_virulence()
-    return MethodIndex(
-        type=ElementType.VIR, software=Software.VIRFINDER, result=results
-    )
+        return MethodIndex(
+            type=ElementType.VIR, software=Software.VIRFINDER, result=results
+        )
