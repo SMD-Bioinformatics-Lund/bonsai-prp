@@ -6,12 +6,12 @@ from typing import List
 import click
 from pydantic import ValidationError
 
-from .models.metadata import RunInformation, SoupVersion
+from .models.metadata import SoupVersion
 from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex
 from .models.sample import MethodIndex, PipelineResult
 from .models.typing import TypingMethod
-from .parse.metadata import get_database_info
+from .parse.metadata import parse_run_metadata
 from .parse import (
     parse_amrfinder_amr_pred,
     parse_amrfinder_vir_pred,
@@ -55,6 +55,7 @@ def cli():
     "-d",
     "--process-metadata",
     type=click.File(),
+    required=True,
     multiple=True,
     help="Nextflow processes metadata from the pipeline in json format",
 )
@@ -99,18 +100,12 @@ def create_output(
 ):  # pylint: disable=too-many-arguments
     """Combine pipeline results into a standardized json output file."""
     LOG.info("Start generating pipeline result json")
-
-    run_info = RunInformation(**json.load(run_metadata))
     results = {
-        "sample_id": sample_id,
-        "run_metadata": {"run": run_info},
+        "run_metadata": parse_run_metadata(run_metadata, process_metadata),
         "qc": [],
         "typing_result": [],
         "element_type_result": [],
     }
-    if process_metadata:
-        results["run_metadata"]["databases"] = get_database_info(process_metadata)
-
     # qc
     if quast:
         LOG.info("Parse quast results")
@@ -218,9 +213,11 @@ def create_output(
         amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res, ElementType.AMR)
         results["element_type_result"].append(amr_res)
 
-    import pdb; pdb.set_trace()
     try:
-        output_data = PipelineResult(schema_version=OUTPUT_SCHEMA_VERSION, **results)
+        output_data = PipelineResult(
+            sample_id=sample_id, 
+            schema_version=OUTPUT_SCHEMA_VERSION, 
+            **results)
     except ValidationError as err:
         click.secho("Input failed Validation", fg="red")
         click.secho(err)
