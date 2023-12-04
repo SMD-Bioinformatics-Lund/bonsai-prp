@@ -11,6 +11,7 @@ from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex
 from .models.sample import MethodIndex, PipelineResult
 from .models.typing import TypingMethod
+from .parse.metadata import get_database_info
 from .parse import (
     parse_amrfinder_amr_pred,
     parse_amrfinder_vir_pred,
@@ -108,15 +109,7 @@ def create_output(
         "element_type_result": [],
     }
     if process_metadata:
-        db_info: List[SoupVersion] = []
-        for soup in process_metadata:
-            dbs = json.load(soup)
-            if isinstance(dbs, (list, tuple)):
-                for db in dbs:
-                    db_info.append(SoupVersion(**db))
-            else:
-                db_info.append(SoupVersion(**dbs))
-        results["run_metadata"]["databases"] = db_info
+        results["run_metadata"]["databases"] = get_database_info(process_metadata)
 
     # qc
     if quast:
