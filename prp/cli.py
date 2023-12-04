@@ -170,18 +170,13 @@ def create_output(
     if mykrobe:
         LOG.info("Parse mykrobe results")
         pred_res = json.load(mykrobe)
-        sample_id = list(pred_res.keys())[0]
-        db_info: List[SoupVersion] = []
-        db_info = [
+        results["run_metadata"]["databases"].append(
             SoupVersion(
-                **{
-                    "name": "mykrobe-predictor",
-                    "version": pred_res[sample_id]["version"]["mykrobe-predictor"],
-                    "type": "database",
-                }
+                name="mykrobe-predictor", 
+                version=pred_res[sample_id]["version"]["mykrobe-predictor"],
+                type=SoupType.DB,
             )
-        ]
-        results["run_metadata"]["databases"] = db_info
+        )
         amr_res: MethodIndex = parse_mykrobe_amr_pred(
             pred_res[sample_id], ElementType.AMR
         )
@@ -198,11 +193,9 @@ def create_output(
         db_info: List[SoupVersion] = []
         db_info = [
             SoupVersion(
-                **{
-                    "name": pred_res["db_version"]["name"],
-                    "version": pred_res["db_version"]["commit"],
-                    "type": "database",
-                }
+                name=pred_res["db_version"]["name"],
+                version=pred_res["db_version"]["commit"],
+                type=SoupType.DB,
             )
         ]
         results["run_metadata"]["databases"].extend(db_info)
