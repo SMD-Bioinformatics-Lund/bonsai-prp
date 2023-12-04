@@ -6,12 +6,12 @@ from typing import List
 import click
 from pydantic import ValidationError
 
-from .models.metadata import SoupVersion
+from .models.metadata import SoupVersion, SoupType
 from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex
 from .models.sample import MethodIndex, PipelineResult
 from .models.typing import TypingMethod
-from .parse.metadata import parse_run_metadata
+from .parse.metadata import get_database_info, parse_run_info
 from .parse import (
     parse_amrfinder_amr_pred,
     parse_amrfinder_vir_pred,
@@ -101,7 +101,10 @@ def create_output(
     """Combine pipeline results into a standardized json output file."""
     LOG.info("Start generating pipeline result json")
     results = {
-        "run_metadata": parse_run_metadata(run_metadata, process_metadata),
+        "run_metadata": {
+            "run": parse_run_info(run_metadata), 
+            "databases": get_database_info(process_metadata),
+        },
         "qc": [],
         "typing_result": [],
         "element_type_result": [],

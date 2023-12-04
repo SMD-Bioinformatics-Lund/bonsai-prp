@@ -25,17 +25,14 @@ def get_database_info(process_metadata: List[TextIO]) -> List[SoupVersion]:
     return db_info
 
 
-def parse_run_metadata(run_meta: TextIO, process_meta: List[TextIO]) -> RunMetadata:
-    """Parse metadata for the analysis
+def parse_run_info(run_metadata: TextIO) -> RunInformation:
+    """Parse nextflow analysis information
 
-    :param run_meta: Nextflow analysis metadata in json format.
-    :type run_meta: TextIO
-    :param process_meta: Records of the databases used in the analysis.
-    :type process_meta: TextIO
+    :param run_metadata: Nextflow analysis metadata in json format.
+    :type run_metadata: TextIO
     :return: Analysis metadata record.
     :rtype: RunMetadata
     """
     LOG.info("Parse run metadata.")
-    run_info = RunInformation(**json.load(run_meta))
-    db_info = get_database_info(process_meta)
-    return RunMetadata(run=run_info, databases=db_info)
+    run_info = RunInformation(**json.load(run_metadata))
+    return run_info
