@@ -62,7 +62,7 @@ def cli():
     "-k", "--kraken", type=click.File(), help="Kraken species annotation results"
 )
 @click.option(
-    "-a", "--amr", type=str, help="amrfinderplus anti-microbial resistance results"
+    "-a", "--amrfinder", type=str, help="amrfinderplus anti-microbial resistance results"
 )
 @click.option("-m", "--mlst", type=click.File(), help="MLST prediction results")
 @click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
@@ -71,7 +71,7 @@ def cli():
 )
 @click.option(
     "-r",
-    "--resistance",
+    "--resfinder",
     type=click.File(),
     help="resfinder resistance prediction results",
 )
@@ -89,8 +89,8 @@ def create_output(
     mlst,
     cgmlst,
     virulence,
-    amr,
-    resistance,
+    amrfinder,
+    resfinder,
     quality,
     mykrobe,
     tbprofiler,
@@ -132,9 +132,9 @@ def create_output(
         results["typing_result"].append(res)
 
     # resfinder of different types
-    if resistance:
+    if resfinder:
         LOG.info("Parse resistance results")
-        pred_res = json.load(resistance)
+        pred_res = json.load(resfinder)
         methods = [ElementType.AMR, ElementType.BIOCIDE, ElementType.HEAT]
         for method in methods:
             res: MethodIndex = parse_resfinder_amr_pred(pred_res, method)
@@ -143,7 +143,7 @@ def create_output(
                 results["element_type_result"].append(res)
 
     # amrfinder
-    if amr:
+    if amrfinder:
         LOG.info("Parse amr results")
         methods = [
             ElementType.AMR,
@@ -152,9 +152,9 @@ def create_output(
             ElementType.HEAT,
         ]
         for method in methods:
-            res: MethodIndex = parse_amrfinder_amr_pred(amr, method)
+            res: MethodIndex = parse_amrfinder_amr_pred(amrfinder, method)
             results["element_type_result"].append(res)
-        vir: MethodIndex = parse_amrfinder_vir_pred(amr)
+        vir: MethodIndex = parse_amrfinder_vir_pred(amrfinder)
         results["element_type_result"].append(vir)
 
     # get virulence factors in sample
@@ -218,6 +218,7 @@ def create_output(
         amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res, ElementType.AMR)
         results["element_type_result"].append(amr_res)
 
+    import pdb; pdb.set_trace()
     try:
         output_data = PipelineResult(schema_version=OUTPUT_SCHEMA_VERSION, **results)
     except ValidationError as err:
