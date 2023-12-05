@@ -1,7 +1,7 @@
 """Typing related data models"""
 
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 from pydantic import Field
 
@@ -48,13 +48,13 @@ class MlstErrors(str, Enum):
 class LineageInformation(RWModel):
     """Base class for storing lineage information typing results"""
 
-    lin: Optional[str]
-    family: Optional[str]
-    spoligotype: Optional[str]
-    rd: Optional[str]
-    frac: Optional[str]
-    variant: Optional[str]
-    coverage: Optional[Dict]
+    lin: str | None = None
+    family: str | None = None
+    spoligotype: str | None = None
+    rd: str | None = None
+    fraction: float | None = None
+    variant: str | None = None
+    coverage: Dict[str, Any] = None
 
 
 class ResultMlstBase(RWModel):

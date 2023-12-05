@@ -55,7 +55,13 @@ def _parse_virulencefinder_vir_results(pred: str) -> ElementTypeResult:
 
 
 def parse_virulencefinder_vir_pred(file: str) -> ElementTypeResult | None:
-    """Parse virulencefinder virulence prediction results."""
+    """Parse virulencefinder virulence prediction results.
+
+    :param file: File name
+    :type file: str
+    :return: Return element type if virulence was predicted else null
+    :rtype: ElementTypeResult | None
+    """
     LOG.info("Parsing virulencefinder virulence prediction")
     pred = json.load(file)
     if "not virulencefinder" in pred:
@@ -63,3 +69,5 @@ def parse_virulencefinder_vir_pred(file: str) -> ElementTypeResult | None:
         return MethodIndex(
             type=ElementType.VIR, software=Software.VIRFINDER, result=results
         )
+
+    return None

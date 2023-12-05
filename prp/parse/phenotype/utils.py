@@ -1,5 +1,5 @@
 """Shared utility functions."""
-from ...models.phenotype import ElementTypeResult, ResistanceGene, VirulenceGene
+from ...models.phenotype import ElementTypeResult, ResistanceGene
 
 
 def _default_resistance() -> ElementTypeResult:
@@ -48,3 +48,15 @@ def _default_variant() -> ElementTypeResult:
     )
     mutations = [mutation]
     return ElementTypeResult(phenotypes=[], genes=[], mutations=mutations)
+
+
+def is_prediction_result_empty(result: ElementTypeResult) -> bool:
+    """Check if prediction result is emtpy.
+
+    :param result: Prediction result
+    :type result: ElementTypeResult
+    :return: Retrun True if no resistance was predicted.
+    :rtype: bool
+    """
+    n_entries = len(result.genes) + len(result.mutations)
+    return n_entries == 1

@@ -7,7 +7,7 @@ import click
 from pydantic import ValidationError
 
 from .models.metadata import SoupType, SoupVersion
-from .models.phenotype import ElementStressSubtype, ElementType
+from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex
 from .models.sample import MethodIndex, PipelineResult
 from .models.typing import TypingMethod
@@ -189,6 +189,7 @@ def create_output(
             )
             raise click.Abort()
 
+        # add mykrobe db version
         results["run_metadata"]["databases"].append(
             SoupVersion(
                 name="mykrobe-predictor",
@@ -196,10 +197,11 @@ def create_output(
                 type=SoupType.DB,
             )
         )
-        amr_res: MethodIndex = parse_mykrobe_amr_pred(
-            pred_res[sample_id], ElementType.AMR
-        )
-        results["element_type_result"].append(amr_res)
+        # parse mykrobe result
+        amr_res = parse_mykrobe_amr_pred(pred_res[sample_id], ElementType.AMR)
+        if amr_res is not None:
+            results["element_type_result"].append(amr_res)
+
         lin_res: MethodIndex = parse_mykrobe_lineage_results(
             pred_res[sample_id], TypingMethod.LINEAGE
         )
@@ -239,8 +241,7 @@ def create_output(
 
 
 @cli.command()
-@click.argument("output", type=click.File("w"), default="-")
-def print_schema(output):
+def print_schema():
     """Print Pipeline result output format schema."""
     click.secho(PipelineResult.schema_json(indent=2))
 

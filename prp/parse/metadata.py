@@ -3,7 +3,7 @@ import json
 import logging
 from typing import List, TextIO
 
-from ..models.metadata import RunInformation, RunMetadata, SoupVersion
+from ..models.metadata import RunInformation, SoupVersion
 
 LOG = logging.getLogger(__name__)
 

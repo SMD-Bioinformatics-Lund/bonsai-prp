@@ -44,7 +44,7 @@ def _assign_res_subtype(
     elif element_type == ElementType.AMR:
         assigned_subtype = ElementAmrSubtype.AMR
     else:
-        LOG.warning(f"Dont know how to assign subtype for {element_type}")
+        LOG.warning("Dont know how to assign subtype for %s", element_type)
     return assigned_subtype
 
 

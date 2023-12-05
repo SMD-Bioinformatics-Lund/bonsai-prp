@@ -7,6 +7,7 @@ from typing import List
 
 from ..models.sample import MethodIndex
 from ..models.typing import (
+    LineageInformation,
     TypingMethod,
     TypingResultCgMlst,
     TypingResultLineage,
@@ -114,63 +115,6 @@ def parse_cgmlst_results(
     )
 
 
-def _create_lineage_array(
-    lineage=None,
-    family=None,
-    spoligotype=None,
-    rd=None,
-    frac=None,
-    variant=None,
-    coverage=None,
-):
-    """Create lineage array for mykrobe info"""
-    return {
-        "lin": lineage,
-        "family": family,
-        "spoligotype": spoligotype,
-        "rd": rd,
-        "frac": frac,
-        "variant": variant,
-        "coverage": coverage,
-    }
-
-
-def _get_lineage_info(lineage_dict):
-    """Create a list of arrays by parsing mykrobe lineage output"""
-    lineages = []
-    if "calls_summary" in lineage_dict:
-        lineage_calls = lineage_dict["calls"]
-        sublin = list(lineage_calls.keys())[0]
-        lineage_info = lineage_calls[sublin]
-        for lineage in lineage_info:
-            genotypes = list(
-                list(lineage_dict["calls_summary"].values())[0]["genotypes"].keys()
-            )
-            main_lin = genotypes[0]
-            try:
-                variant = list(lineage_info[lineage].keys())[0]
-            except AttributeError:
-                variant = None
-            try:
-                coverage = lineage_info[lineage][variant]["info"]["coverage"][
-                    "alternate"
-                ]
-            except (KeyError, TypeError):
-                coverage = None
-            lin_array = _create_lineage_array(
-                lineage=lineage, variant=variant, coverage=coverage
-            )
-            lineages.append(lin_array)
-    else:
-        genotypes = list(lineage_dict.keys())
-        main_lin, sublin = genotypes[0], genotypes[0]
-        lin_array = _create_lineage_array(
-            lineage=genotypes[0], coverage=lineage_dict[genotypes[0]]
-        )
-        lineages.append(lin_array)
-    return main_lin, sublin, lineages
-
-
 def parse_tbprofiler_lineage_results(pred_res: dict, method) -> TypingResultLineage:
     """Parse tbprofiler results for lineage object."""
     LOG.info("Parsing lineage results")
@@ -185,7 +129,39 @@ def parse_tbprofiler_lineage_results(pred_res: dict, method) -> TypingResultLine
 def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage:
     """Parse mykrobe results for lineage object."""
     LOG.info("Parsing lineage results")
-    main_lin, sublin, lineages = _get_lineage_info(pred_res["phylogenetics"]["lineage"])
+    lineages = []
+    lineage_pred = pred_res["phylogenetics"]["lineage"]
+    if "calls_summary" in lineage_pred:
+        lineage_calls = lineage_pred["calls"]
+        sublin = list(lineage_calls)[0]
+        lineage_info = lineage_calls[sublin]
+        for lineage in lineage_info:
+            genotypes = list(
+                list(lineage_pred["calls_summary"].values())[0]["genotypes"].keys()
+            )
+            main_lin = genotypes[0]
+            try:
+                variant = list(lineage_info[lineage].keys())[0]
+            except AttributeError:
+                variant = None
+            try:
+                coverage = lineage_info[lineage][variant]["info"]["coverage"][
+                    "alternate"
+                ]
+            except (KeyError, TypeError):
+                coverage = None
+            lin_array = LineageInformation(
+                lineage=lineage, variant=variant, coverage=coverage
+            )
+            lineages.append(lin_array)
+    else:
+        genotypes = list(lineage_pred)
+        main_lin, sublin = genotypes[0], genotypes[0]
+        lin_array = LineageInformation(
+            lineage=genotypes[0], coverage=lineage_pred[genotypes[0]]
+        )
+        lineages.append(lin_array)
+    # cast to lineage object
     result_obj = TypingResultLineage(
         main_lin=main_lin,
         sublin=sublin,

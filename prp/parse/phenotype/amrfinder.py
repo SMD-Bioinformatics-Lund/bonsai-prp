@@ -8,7 +8,6 @@ from ...models.phenotype import ElementType, ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceGene, VirulenceGene
 from ...models.sample import MethodIndex
-from .utils import _default_resistance
 
 LOG = logging.getLogger(__name__)
 

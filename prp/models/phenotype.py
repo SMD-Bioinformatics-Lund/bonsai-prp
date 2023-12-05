@@ -83,7 +83,7 @@ class GeneBase(BaseModel):
         alias="target_length",
         description="The length of the query protein or gene.",
     )
-    alignment_length: Optional[int]
+    alignment_length: Optional[int] = None
     # amrfinder extra info
     contig_id: Optional[str] = None
     gene_symbol: Optional[str] = None
@@ -100,9 +100,9 @@ class GeneBase(BaseModel):
     element_type: ElementType = Field(
         description="The predominant function fo the gene."
     )
-    element_subtype: ElementStressSubtype | ElementAmrSubtype | ElementVirulenceSubtype = Field(
-        description="Further functional categorization of the genes."
-    )
+    element_subtype: Union[
+        ElementStressSubtype, ElementAmrSubtype, ElementVirulenceSubtype
+    ] = Field(description="Further functional categorization of the genes.")
     res_class: Optional[str] = None
     res_subclass: Optional[str] = None
     method: Optional[str] = Field(
@@ -110,7 +110,8 @@ class GeneBase(BaseModel):
     )
     close_seq_name: Optional[str] = Field(
         default=None,
-        description="Name of the closest competing hit if there are multiple equaly good hits",
+        description=("Name of the closest competing hit if there "
+                     "are multiple equaly good hits"),
     )
 
 
