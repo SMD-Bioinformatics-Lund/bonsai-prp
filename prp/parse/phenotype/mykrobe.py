@@ -1,7 +1,7 @@
 """Parse Mykrobe results."""
 import logging
 import re
-from typing import Tuple, Dict, Any
+from typing import Any, Dict, Tuple
 
 from ...models.metadata import SoupVersions
 from ...models.phenotype import ElementTypeResult

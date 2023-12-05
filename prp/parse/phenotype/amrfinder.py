@@ -1,7 +1,7 @@
 """Parse AMRfinder plus result."""
+import logging
 from typing import Tuple
 
-import logging
 import pandas as pd
 
 from ...models.phenotype import ElementType, ElementTypeResult
@@ -65,9 +65,9 @@ def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> ElementTyp
         hits = hits.drop(columns=["Protein identifier", "HMM id", "HMM description"])
         hits = hits.where(pd.notnull(hits), None)
         # group predictions based on their element type
-        predictions = (hits
-                        .loc[lambda row: row.element_type == element_type]
-                        .to_dict(orient="records"))
+        predictions = hits.loc[lambda row: row.element_type == element_type].to_dict(
+            orient="records"
+        )
         results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
     return MethodIndex(type=element_type, result=results, software=Software.AMRFINDER)
 

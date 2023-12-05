@@ -1,8 +1,9 @@
 """Parse metadata passed to pipeline."""
-from ..models.metadata import SoupVersion, RunInformation, RunMetadata
-from typing import List, TextIO
 import json
 import logging
+from typing import List, TextIO
+
+from ..models.metadata import RunInformation, RunMetadata, SoupVersion
 
 LOG = logging.getLogger(__name__)
 

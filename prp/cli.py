@@ -6,12 +6,11 @@ from typing import List
 import click
 from pydantic import ValidationError
 
-from .models.metadata import SoupVersion, SoupType
-from .models.phenotype import ElementType, ElementStressSubtype
+from .models.metadata import SoupType, SoupVersion
+from .models.phenotype import ElementStressSubtype, ElementType
 from .models.qc import QcMethodIndex
 from .models.sample import MethodIndex, PipelineResult
 from .models.typing import TypingMethod
-from .parse.metadata import get_database_info, parse_run_info
 from .parse import (
     parse_amrfinder_amr_pred,
     parse_amrfinder_vir_pred,
@@ -27,6 +26,7 @@ from .parse import (
     parse_tbprofiler_lineage_results,
     parse_virulencefinder_vir_pred,
 )
+from .parse.metadata import get_database_info, parse_run_info
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
@@ -55,7 +55,6 @@ def cli():
     "-d",
     "--process-metadata",
     type=click.File(),
-    required=True,
     multiple=True,
     help="Nextflow processes metadata from the pipeline in json format",
 )
@@ -181,6 +180,15 @@ def create_output(
     if mykrobe:
         LOG.info("Parse mykrobe results")
         pred_res = json.load(mykrobe)
+
+        # verify that sample id is in prediction result
+        if not sample_id in pred_res:
+            LOG.warning(
+                "Sample id %s is not in Mykrobe result, possible sample mixup",
+                sample_id,
+            )
+            raise click.Abort()
+
         results["run_metadata"]["databases"].append(
             SoupVersion(
                 name="mykrobe-predictor",

@@ -1,5 +1,5 @@
 """Generic database objects of which several other models are based on."""
-from pydantic import ConfigDict, BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class RWModel(BaseModel):  # pylint: disable=too-few-public-methods

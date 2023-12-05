@@ -1,10 +1,15 @@
 """Parse resfinder results."""
 import logging
-from typing import Any, Dict, Tuple, List
-
 from itertools import chain
+from typing import Any, Dict, List, Tuple
+
 from ...models.metadata import SoupVersions
-from ...models.phenotype import ElementType, ElementAmrSubtype, ElementStressSubtype, ElementTypeResult
+from ...models.phenotype import (
+    ElementAmrSubtype,
+    ElementStressSubtype,
+    ElementType,
+    ElementTypeResult,
+)
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
@@ -19,12 +24,15 @@ STRESS_FACTORS = {
         "ethidium bromide",
         "chlorhexidine",
         "cetylpyridinium chloride",
-        "hydrogen peroxide"], 
-    ElementStressSubtype.HEAT: ["temperature"]
+        "hydrogen peroxide",
+    ],
+    ElementStressSubtype.HEAT: ["temperature"],
 }
 
 
-def _assign_res_subtype(prediction: Dict[str, Any], element_type: ElementType) -> ElementStressSubtype | None:
+def _assign_res_subtype(
+    prediction: Dict[str, Any], element_type: ElementType
+) -> ElementStressSubtype | None:
     """Assign element subtype from resfindere prediction."""
     assigned_subtype = None
     if element_type == ElementType.STRESS:
@@ -161,7 +169,7 @@ def parse_resfinder_amr_pred(
     stress_factors = list(chain(*STRESS_FACTORS.values()))
     categories = {
         ElementType.STRESS: stress_factors,
-        ElementType.AMR: list(set(prediction["phenotypes"]) - set(stress_factors))
+        ElementType.AMR: list(set(prediction["phenotypes"]) - set(stress_factors)),
     }
     # parse resistance
     sr_profile = _get_resfinder_amr_sr_profie(

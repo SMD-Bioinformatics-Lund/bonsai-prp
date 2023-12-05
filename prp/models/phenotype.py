@@ -60,6 +60,7 @@ class ElementVirulenceSubtype(Enum):
 
     VIR = "VIRULENCE"
 
+
 class DatabaseReference(RWModel):
     """Refernece to a database."""
 
