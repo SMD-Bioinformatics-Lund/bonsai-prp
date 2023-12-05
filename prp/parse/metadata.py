@@ -6,6 +6,7 @@ import logging
 
 LOG = logging.getLogger(__name__)
 
+
 def get_database_info(process_metadata: List[TextIO]) -> List[SoupVersion]:
     """Get database or software information.
 

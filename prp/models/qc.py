@@ -1,6 +1,6 @@
 """QC data models."""
 from enum import Enum
-from typing import Dict, Union
+from typing import Dict
 
 from pydantic import BaseModel
 
@@ -50,5 +50,5 @@ class QcMethodIndex(RWModel):
     """
 
     software: QcSoftware
-    version: Union[str, None]
-    result: Union[QuastQcResult, PostAlignQcResult]
+    version: str | None = None
+    result: QuastQcResult | PostAlignQcResult

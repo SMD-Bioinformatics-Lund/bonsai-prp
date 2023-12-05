@@ -29,8 +29,14 @@ class RunInformation(RWModel):
     pipeline: str
     version: str
     commit: str
-    analysis_profile: str = Field(..., alias="analysisProfile")
-    configuration_files: List[str] = Field(..., alias="configurationFiles")
+    analysis_profile: str = Field(
+        ...,
+        alias="analysisProfile",
+        description="The analysis profile used when starting the pipeline",
+    )
+    configuration_files: List[str] = Field(
+        ..., alias="configurationFiles", description="Nextflow configuration used"
+    )
     workflow_name: str
     sample_name: str
     sequencing_platform: str

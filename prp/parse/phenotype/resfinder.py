@@ -1,15 +1,43 @@
 """Parse resfinder results."""
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, List
 
+from itertools import chain
 from ...models.metadata import SoupVersions
-from ...models.phenotype import ElementType, ElementTypeResult
+from ...models.phenotype import ElementType, ElementAmrSubtype, ElementStressSubtype, ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceGene, ResistanceVariant
+from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
 from .utils import _default_resistance
 
 LOG = logging.getLogger(__name__)
+
+STRESS_FACTORS = {
+    ElementStressSubtype.BIOCIDE: [
+        "formaldehyde",
+        "benzylkonium chloride",
+        "ethidium bromide",
+        "chlorhexidine",
+        "cetylpyridinium chloride",
+        "hydrogen peroxide"], 
+    ElementStressSubtype.HEAT: ["temperature"]
+}
+
+
+def _assign_res_subtype(prediction: Dict[str, Any], element_type: ElementType) -> ElementStressSubtype | None:
+    """Assign element subtype from resfindere prediction."""
+    assigned_subtype = None
+    if element_type == ElementType.STRESS:
+        for sub_type, phenotypes in STRESS_FACTORS.items():
+            # get intersection of subtype phenotypes and predicted phenos
+            intersect = set(phenotypes) & set(prediction["phenotypes"])
+            if len(intersect) > 0:
+                assigned_subtype = sub_type
+    elif element_type == ElementType.AMR:
+        assigned_subtype = ElementAmrSubtype.AMR
+    else:
+        LOG.warning(f"Dont know how to assign subtype for {element_type}")
+    return assigned_subtype
 
 
 def _get_resfinder_amr_sr_profie(resfinder_result, limit_to_phenotypes=None):
@@ -34,13 +62,11 @@ def _get_resfinder_amr_sr_profie(resfinder_result, limit_to_phenotypes=None):
 
 def _parse_resfinder_amr_genes(
     resfinder_result, limit_to_phenotypes=None
-) -> Tuple[ResistanceGene, ...]:
+) -> List[ResistanceGene]:
     """Get resistance genes from resfinder result."""
     results = []
-
     if not "seq_regions" in resfinder_result:
-        results = _default_resistance().genes
-        return results
+        return _default_resistance().genes
 
     for info in resfinder_result["seq_regions"].values():
         # Get only acquired resistance genes
@@ -52,6 +78,11 @@ def _parse_resfinder_amr_genes(
             intersect = set(info["phenotypes"]) & set(limit_to_phenotypes)
             if len(intersect) == 0:
                 continue
+
+        # get element type by peeking at first phenotype
+        pheno = info["phenotypes"][0]
+        res_category = resfinder_result["phenotypes"][pheno]["category"].upper()
+        category = ElementType(res_category)
 
         # store results
         gene = ResistanceGene(
@@ -67,18 +98,8 @@ def _parse_resfinder_amr_genes(
             phenotypes=info["phenotypes"],
             ref_database=info["ref_database"][0],
             ref_id=info["ref_id"],
-            contig_id=None,
-            sequence_name=None,
-            ass_start_pos=None,
-            ass_end_pos=None,
-            strand=None,
-            element_type=None,
-            element_subtype=None,
-            target_length=None,
-            res_class=None,
-            res_subclass=None,
-            method=None,
-            close_seq_name=None,
+            element_type=category,
+            element_subtype=_assign_res_subtype(info, category),
         )
         results.append(gene)
     return results
@@ -105,11 +126,11 @@ def _parse_resfinder_amr_variants(
             info["depth"] = 0
         # translate variation type bools into classifier
         if info["substitution"]:
-            var_type = "substitution"
+            var_type = VariantType.SUBSTITUTION
         elif info["insertion"]:
-            var_type = "insertion"
+            var_type = VariantType.INSERTION
         elif info["deletion"]:
-            var_type = "deletion"
+            var_type = VariantType.DELETION
         else:
             raise ValueError("Output has no known mutation type")
         if not "seq_regions" in info:
@@ -131,37 +152,25 @@ def _parse_resfinder_amr_variants(
 
 
 def parse_resfinder_amr_pred(
-    prediction: Dict[str, Any], resistance_category
+    prediction: Dict[str, Any], resistance_category: ElementType
 ) -> Tuple[SoupVersions, ElementTypeResult]:
     """Parse resfinder resistance prediction results."""
     # resfinder missclassifies resistance the param amr_category by setting all to amr
     LOG.info("Parsing resistance prediction")
     # parse resistance based on the category
+    stress_factors = list(chain(*STRESS_FACTORS.values()))
     categories = {
-        ElementType.BIOCIDE: [
-            "formaldehyde",
-            "benzylkonium chloride",
-            "ethidium bromide",
-            "chlorhexidine",
-            "cetylpyridinium chloride",
-            "hydrogen peroxide",
-        ],
-        ElementType.HEAT: ["temperature"],
+        ElementType.STRESS: stress_factors,
+        ElementType.AMR: list(set(prediction["phenotypes"]) - set(stress_factors))
     }
-    categories[ElementType.AMR] = list(
-        set(prediction["phenotypes"])
-        - set(categories[ElementType.BIOCIDE] + categories[ElementType.HEAT])
-    )
-
     # parse resistance
+    sr_profile = _get_resfinder_amr_sr_profie(
+        prediction, categories[resistance_category]
+    )
+    res_genes = _parse_resfinder_amr_genes(prediction, categories[resistance_category])
+    res_mut = _parse_resfinder_amr_variants(prediction, categories[resistance_category])
     resistance = ElementTypeResult(
-        phenotypes=_get_resfinder_amr_sr_profie(
-            prediction, categories[resistance_category]
-        ),
-        genes=_parse_resfinder_amr_genes(prediction, categories[resistance_category]),
-        mutations=_parse_resfinder_amr_variants(
-            prediction, categories[resistance_category]
-        ),
+        phenotypes=sr_profile, genes=res_genes, mutations=res_mut
     )
     return MethodIndex(
         type=resistance_category, software=Software.RESFINDER, result=resistance

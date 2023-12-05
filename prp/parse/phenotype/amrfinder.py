@@ -1,6 +1,7 @@
 """Parse AMRfinder plus result."""
 from typing import Tuple
 
+import logging
 import pandas as pd
 
 from ...models.phenotype import ElementType, ElementTypeResult
@@ -9,24 +10,19 @@ from ...models.phenotype import ResistanceGene, VirulenceGene
 from ...models.sample import MethodIndex
 from .utils import _default_resistance
 
+LOG = logging.getLogger(__name__)
+
 
 def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...]:
     """Parse amrfinder prediction results from amrfinderplus."""
     genes = []
     for prediction in predictions:
         gene = ResistanceGene(
-            virulence_category=None,
             accession=prediction["close_seq_accn"],
-            depth=None,
             identity=prediction["ref_seq_identity"],
             coverage=prediction["ref_seq_cov"],
-            ref_start_pos=None,
-            ref_end_pos=None,
             ref_gene_length=prediction["ref_seq_len"],
             alignment_length=prediction["align_len"],
-            ref_database=None,
-            phenotypes=[],
-            ref_id=None,
             contig_id=prediction["contig_id"],
             gene_symbol=prediction["gene_symbol"],
             sequence_name=prediction["sequence_name"],
@@ -42,10 +38,10 @@ def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...
             close_seq_name=prediction["close_seq_name"],
         )
         genes.append(gene)
-    return ElementTypeResult(phenotypes=[], genes=genes, mutations=[])
+    return ElementTypeResult(phenotypes={}, genes=genes, mutations=[])
 
 
-def parse_amrfinder_amr_pred(file, element_type: str) -> ElementTypeResult:
+def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> ElementTypeResult:
     """Parse amrfinder resistance prediction results."""
     LOG.info("Parsing amrfinder amr prediction")
     with open(file, "rb") as tsvfile:
@@ -68,27 +64,11 @@ def parse_amrfinder_amr_pred(file, element_type: str) -> ElementTypeResult:
         )
         hits = hits.drop(columns=["Protein identifier", "HMM id", "HMM description"])
         hits = hits.where(pd.notnull(hits), None)
-        if element_type == ElementType.AMR:
-            predictions = hits[hits["element_type"] == "AMR"].to_dict(orient="records")
-            results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
-        elif element_type == ElementType.HEAT:
-            predictions = hits[(hits["element_subtype"] == "HEAT")].to_dict(
-                orient="records"
-            )
-            results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
-        elif element_type == ElementType.BIOCIDE:
-            predictions = hits[
-                (hits["element_subtype"] == "ACID")
-                & (hits["element_subtype"] == "BIOCIDE")
-            ].to_dict(orient="records")
-            results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
-        elif element_type == ElementType.METAL:
-            predictions = hits[hits["element_subtype"] == "METAL"].to_dict(
-                orient="records"
-            )
-            results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
-        else:
-            results = _default_resistance()
+        # group predictions based on their element type
+        predictions = (hits
+                        .loc[lambda row: row.element_type == element_type]
+                        .to_dict(orient="records"))
+        results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
     return MethodIndex(type=element_type, result=results, software=Software.AMRFINDER)
 
 
@@ -125,7 +105,7 @@ def _parse_amrfinder_vir_results(predictions: dict) -> ElementTypeResult:
             close_seq_name=prediction["close_seq_name"],
         )
         genes.append(gene)
-    return ElementTypeResult(phenotypes=[], genes=genes, mutations=[])
+    return ElementTypeResult(phenotypes={}, genes=genes, mutations=[])
 
 
 def parse_amrfinder_vir_pred(file: str):

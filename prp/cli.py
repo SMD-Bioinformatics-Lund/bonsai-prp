@@ -7,7 +7,7 @@ import click
 from pydantic import ValidationError
 
 from .models.metadata import SoupVersion, SoupType
-from .models.phenotype import ElementType
+from .models.phenotype import ElementType, ElementStressSubtype
 from .models.qc import QcMethodIndex
 from .models.sample import MethodIndex, PipelineResult
 from .models.typing import TypingMethod
@@ -63,12 +63,18 @@ def cli():
     "-k", "--kraken", type=click.File(), help="Kraken species annotation results"
 )
 @click.option(
-    "-a", "--amrfinder", type=str, help="amrfinderplus anti-microbial resistance results"
+    "-a",
+    "--amrfinder",
+    type=str,
+    help="amrfinderplus anti-microbial resistance results",
 )
 @click.option("-m", "--mlst", type=click.File(), help="MLST prediction results")
 @click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
 @click.option(
-    "-v", "--virulence", type=click.File(), help="Virulence factor prediction results"
+    "-v",
+    "--virulencefinder",
+    type=click.File(),
+    help="Virulence factor prediction results",
 )
 @click.option(
     "-r",
@@ -89,7 +95,7 @@ def create_output(
     kraken,
     mlst,
     cgmlst,
-    virulence,
+    virulencefinder,
     amrfinder,
     resfinder,
     quality,
@@ -102,7 +108,7 @@ def create_output(
     LOG.info("Start generating pipeline result json")
     results = {
         "run_metadata": {
-            "run": parse_run_info(run_metadata), 
+            "run": parse_run_info(run_metadata),
             "databases": get_database_info(process_metadata),
         },
         "qc": [],
@@ -133,7 +139,10 @@ def create_output(
     if resfinder:
         LOG.info("Parse resistance results")
         pred_res = json.load(resfinder)
-        methods = [ElementType.AMR, ElementType.BIOCIDE, ElementType.HEAT]
+        methods = [
+            ElementType.AMR,
+            ElementType.STRESS,
+        ]
         for method in methods:
             res: MethodIndex = parse_resfinder_amr_pred(pred_res, method)
             # exclude empty results from output
@@ -145,9 +154,7 @@ def create_output(
         LOG.info("Parse amr results")
         methods = [
             ElementType.AMR,
-            ElementType.BIOCIDE,
-            ElementType.METAL,
-            ElementType.HEAT,
+            ElementType.STRESS,
         ]
         for method in methods:
             res: MethodIndex = parse_amrfinder_amr_pred(amrfinder, method)
@@ -156,10 +163,11 @@ def create_output(
         results["element_type_result"].append(vir)
 
     # get virulence factors in sample
-    if virulence:
-        LOG.info("Parse virulence results")
-        vir: MethodIndex = parse_virulencefinder_vir_pred(virulence)
-        results["element_type_result"].append(vir)
+    if virulencefinder:
+        LOG.info("Parse virulencefinder results")
+        vir: MethodIndex | None = parse_virulencefinder_vir_pred(virulencefinder)
+        if vir is not None:
+            results["element_type_result"].append(vir)
 
     # species id
     if kraken:
@@ -175,7 +183,7 @@ def create_output(
         pred_res = json.load(mykrobe)
         results["run_metadata"]["databases"].append(
             SoupVersion(
-                name="mykrobe-predictor", 
+                name="mykrobe-predictor",
                 version=pred_res[sample_id]["version"]["mykrobe-predictor"],
                 type=SoupType.DB,
             )
@@ -211,9 +219,8 @@ def create_output(
 
     try:
         output_data = PipelineResult(
-            sample_id=sample_id, 
-            schema_version=OUTPUT_SCHEMA_VERSION, 
-            **results)
+            sample_id=sample_id, schema_version=OUTPUT_SCHEMA_VERSION, **results
+        )
     except ValidationError as err:
         click.secho("Input failed Validation", fg="red")
         click.secho(err)
