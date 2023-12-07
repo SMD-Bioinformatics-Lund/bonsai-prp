@@ -93,22 +93,25 @@ def _parse_resfinder_amr_genes(
         category = ElementType(res_category)
 
         # store results
-        gene = ResistanceGene(
-            gene_symbol=info["name"],
-            accession=info["ref_acc"],
-            depth=info["depth"],
-            identity=info["identity"],
-            coverage=info["coverage"],
-            ref_start_pos=info["ref_start_pos"],
-            ref_end_pos=info["ref_end_pos"],
-            ref_gene_length=info["ref_seq_lenght"],
-            alignment_length=info["alignment_length"],
-            phenotypes=info["phenotypes"],
-            ref_database=info["ref_database"][0],
-            ref_id=info["ref_id"],
-            element_type=category,
-            element_subtype=_assign_res_subtype(info, category),
-        )
+        try:
+            gene = ResistanceGene(
+                gene_symbol=info["name"],
+                accession=info["ref_acc"],
+                depth=info["depth"],
+                identity=info["identity"],
+                coverage=info["coverage"],
+                ref_start_pos=info["ref_start_pos"],
+                ref_end_pos=info["ref_end_pos"],
+                ref_gene_length=info["ref_seq_length"],
+                alignment_length=info["alignment_length"],
+                phenotypes=info["phenotypes"],
+                ref_database=info["ref_database"][0],
+                ref_id=info["ref_id"],
+                element_type=category,
+                element_subtype=_assign_res_subtype(info, category),
+            )
+        except:
+            import pdb; pdb.set_trace()
         results.append(gene)
     return results
 
