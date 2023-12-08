@@ -115,11 +115,15 @@ def test_cdm_input_cmd(ecoli_quast_path, ecoli_bwa_path, ecoli_chewbbaca_path):
         result = runner.invoke(
             create_cdm_input,
             [
-                "--quast", ecoli_quast_path, 
-                "--quality", ecoli_bwa_path, 
-                "--cgmlst", ecoli_chewbbaca_path,
-                output_fname
-            ])
+                "--quast",
+                ecoli_quast_path,
+                "--quality",
+                ecoli_bwa_path,
+                "--cgmlst",
+                ecoli_chewbbaca_path,
+                output_fname,
+            ],
+        )
 
         # test successful execution of command
         assert result.exit_code == 0

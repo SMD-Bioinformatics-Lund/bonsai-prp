@@ -4,7 +4,7 @@ import logging
 from typing import List
 
 import click
-from pydantic import ValidationError, TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
 from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
@@ -283,8 +283,7 @@ def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
         LOG.info("Parse cgmlst results")
         res: MethodIndex = parse_cgmlst_results(cgmlst, correct_alleles=correct_alleles)
         n_missing_loci = QcMethodIndex(
-            software=QcSoftware.CHEWBBACA,
-            result={"n_missing": res.result.n_missing}
+            software=QcSoftware.CHEWBBACA, result={"n_missing": res.result.n_missing}
         )
         results.append(n_missing_loci)
     # cast output as pydantic type for easy serialization

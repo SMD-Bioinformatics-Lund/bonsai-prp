@@ -110,8 +110,10 @@ class GeneBase(BaseModel):
     )
     close_seq_name: Optional[str] = Field(
         default=None,
-        description=("Name of the closest competing hit if there "
-                     "are multiple equaly good hits"),
+        description=(
+            "Name of the closest competing hit if there "
+            "are multiple equaly good hits"
+        ),
     )
 
 

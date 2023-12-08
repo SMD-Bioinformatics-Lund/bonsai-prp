@@ -3,7 +3,7 @@ import logging
 import re
 from typing import Any, Dict, Tuple
 
-from ...models.phenotype import ElementTypeResult, ElementType, ElementAmrSubtype
+from ...models.phenotype import ElementAmrSubtype, ElementType, ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
