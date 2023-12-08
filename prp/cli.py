@@ -86,7 +86,7 @@ def cli():
 @click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.argument("output", type=click.File("w"))
-def create_output(
+def create_bonsai_input(
     sample_id,
     run_metadata,
     quast,

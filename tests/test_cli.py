@@ -2,7 +2,7 @@
 
 from click.testing import CliRunner
 
-from prp.cli import create_output, print_schema
+from prp.cli import create_bonsai_input, print_schema
 
 
 def test_create_output_saureus(
@@ -26,7 +26,7 @@ def test_create_output_saureus(
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(
-            create_output,
+            create_bonsai_input,
             [
                 "-i",
                 sample_id,
