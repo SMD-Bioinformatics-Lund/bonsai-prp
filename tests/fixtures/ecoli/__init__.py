@@ -1,6 +1,7 @@
 """Ecoli input data fixutres."""
 
 import pytest
+import json
 
 from ..fixtures import data_path
 
@@ -58,3 +59,10 @@ def ecoli_chewbbaca_path(data_path):
 @pytest.fixture()
 def ecoli_bracken_path(data_path):
     return str(data_path.joinpath("ecoli", "bracken.out"))
+
+
+@pytest.fixture()
+def ecoli_cdm_input(data_path):
+    path = data_path.joinpath("ecoli", "cdm_input.json")
+    with open(path) as inpt:
+        return json.load(inpt)
