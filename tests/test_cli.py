@@ -2,7 +2,7 @@
 
 from click.testing import CliRunner
 
-from prp.cli import create_bonsai_input, print_schema
+from prp.cli import create_bonsai_input, create_cdm_input, print_schema
 
 
 def test_create_output_saureus(
@@ -77,7 +77,7 @@ def test_create_output_ecoli(
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(
-            create_output,
+            create_bonsai_input,
             [
                 "-i",
                 sample_id,
@@ -107,9 +107,19 @@ def test_create_output_ecoli(
         assert result.exit_code == 0
 
 
-def test_print_schema_cmd():
-    """Test print schema command."""
+def test_cdm_input_cmd(ecoli_quast_path, ecoli_bwa_path, ecoli_chewbbaca_path):
+    """Test command for creating CDM input."""
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(print_schema)
+        output_fname = "test_ouptut"
+        result = runner.invoke(
+            create_cdm_input,
+            [
+                "--quast", ecoli_quast_path, 
+                "--quality", ecoli_bwa_path, 
+                "--cgmlst", ecoli_chewbbaca_path,
+                output_fname
+            ])
+
+        # test successful execution of command
         assert result.exit_code == 0

@@ -2,9 +2,10 @@
 from enum import Enum
 from typing import Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from .base import RWModel
+from .typing import TypingSoftware
 
 
 class QcSoftware(Enum):
@@ -13,6 +14,7 @@ class QcSoftware(Enum):
     QUAST = "quast"
     FASTQC = "fastqc"
     POSTALIGNQC = "postalignqc"
+    CHEWBBACA = TypingSoftware.CHEWBBACA.value
 
 
 class QuastQcResult(BaseModel):
@@ -42,6 +44,12 @@ class PostAlignQcResult(BaseModel):
     dup_reads: int
 
 
+class GenomeCompleteness(BaseModel):
+    """Alignment QC metrics."""
+
+    n_missing: int = Field(..., description="Number of missing cgMLST alleles")
+
+
 class QcMethodIndex(RWModel):
     """QC results container.
 
@@ -51,4 +59,4 @@ class QcMethodIndex(RWModel):
 
     software: QcSoftware
     version: str | None = None
-    result: QuastQcResult | PostAlignQcResult
+    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness

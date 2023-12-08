@@ -4,11 +4,11 @@ import logging
 from typing import List
 
 import click
-from pydantic import ValidationError
+from pydantic import ValidationError, TypeAdapter
 
 from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
-from .models.qc import QcMethodIndex
+from .models.qc import QcMethodIndex, QcSoftware
 from .models.sample import MethodIndex, PipelineResult
 from .models.typing import TypingMethod
 from .parse import (
@@ -258,3 +258,38 @@ def validate(output):
         click.secho(err)
     else:
         click.secho(f'The file "{output.name}" is valid', fg="green")
+
+
+@cli.command()
+@click.option("-q", "--quast", type=click.File(), help="Quast quality control metrics")
+@click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
+@click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
+@click.option("--correct_alleles", is_flag=True, help="Correct alleles")
+@click.argument("output", type=click.File("w"))
+def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
+    """Format QC metrics into CDM compatible input file."""
+    results = []
+    if quality:
+        LOG.info("Parse quality results")
+        res: QcMethodIndex = parse_postalignqc_results(quality)
+        results.append(res)
+
+    if quast:
+        LOG.info("Parse quast results")
+        res: QcMethodIndex = parse_quast_results(quast)
+        results.append(res)
+
+    if cgmlst:
+        LOG.info("Parse cgmlst results")
+        res: MethodIndex = parse_cgmlst_results(cgmlst, correct_alleles=correct_alleles)
+        n_missing_loci = QcMethodIndex(
+            software=QcSoftware.CHEWBBACA,
+            result={"n_missing": res.result.n_missing}
+        )
+        results.append(n_missing_loci)
+    # cast output as pydantic type for easy serialization
+    qc_data = TypeAdapter(List[QcMethodIndex])
+
+    LOG.info("Storing results to: %s", output.name)
+    output.write(qc_data.dump_json(results, indent=3).decode("utf-8"))
+    click.secho("Finished generating QC output", fg="green")
