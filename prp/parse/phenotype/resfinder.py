@@ -113,6 +113,26 @@ def _parse_resfinder_amr_genes(
     return results
 
 
+def get_nt_change(ref_codon: str, alt_codon: str) -> Tuple[str, str]:
+    """Get nucleotide change from codons
+
+    Ref: TCG, Alt: TTG => Tuple[C, T]
+
+    :param ref_codon: Reference codeon
+    :type ref_codon: str
+    :param str: Alternatve codon
+    :type str: str
+    :return: Returns nucleotide changed from the reference.
+    :rtype: Tuple[str, str]
+    """    
+    ref_nt = ""
+    alt_nt = ""
+    for ref, alt in zip(ref_codon, alt_codon):
+        if not ref == alt:
+            ref_nt += ref
+            alt_nt += alt
+    return ref_nt.upper(), alt_nt.upper()
+
 def _parse_resfinder_amr_variants(
     resfinder_result, limit_to_phenotypes=None
 ) -> Tuple[ResistanceVariant, ...]:
@@ -144,13 +164,15 @@ def _parse_resfinder_amr_variants(
         if not "seq_regions" in info:
             # igenes = _default_resistance().genes
             igenes = [""]
+        
+        ref_nt, alt_nt = get_nt_change(info["ref_codon"], info["var_codon"])
         variant = ResistanceVariant(
             variant_type=var_type,
             genes=igenes,
             phenotypes=info["phenotypes"],
             position=info["ref_start_pos"],
-            ref_nt=info["ref_codon"],
-            alt_nt=info["var_codon"],
+            ref_nt=ref_nt,
+            alt_nt=alt_nt,
             depth=info["depth"],
             ref_database=info["ref_database"],
             ref_id=info["ref_id"],
