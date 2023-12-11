@@ -85,7 +85,7 @@ def cli():
 @click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
 @click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
-@click.argument("output", type=click.File("w"))
+@click.option("-o", "--output", required=True, type=click.File("w"), help="output filepath")
 def create_bonsai_input(
     sample_id,
     run_metadata,
@@ -247,7 +247,7 @@ def print_schema():
 
 
 @cli.command()
-@click.argument("output", type=click.File("r"))
+@click.option("-o", "--output", required=True, type=click.File("r"))
 def validate(output):
     """Validate output format of result json file."""
     js = json.load(output)
@@ -265,7 +265,7 @@ def validate(output):
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
 @click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
-@click.argument("output", type=click.File("w"))
+@click.option("-o", "--output", required=True, type=click.File("w"), help="output filepath")
 def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
     """Format QC metrics into CDM compatible input file."""
     results = []
