@@ -133,6 +133,32 @@ def get_nt_change(ref_codon: str, alt_codon: str) -> Tuple[str, str]:
             alt_nt += alt
     return ref_nt.upper(), alt_nt.upper()
 
+
+def format_nt_change(ref: str, alt: str, var_type: VariantType, start_pos: int, end_pos: int = None, ) -> str:
+    """Format nucleotide change
+
+    :param ref: Reference sequence
+    :type ref: str
+    :param alt: Alternate sequence
+    :type alt: str
+    :param pos: Position
+    :type pos: int
+    :param var_type: Type of change
+    :type var_type: VariantType
+    :return: Formatted nucleotide
+    :rtype: str
+    """
+    fmt_change = ""
+    match var_type:
+        case VariantType.SUBSTITUTION:
+            f"g.{start_pos}{ref}>{alt}"
+        case VariantType.DELETION:
+            f"g.{start_pos}_{end_pos}del"
+        case VariantType.INSERTION:
+            f"g.{start_pos}_{end_pos}ins{alt}"
+    return fmt_change
+
+
 def _parse_resfinder_amr_variants(
     resfinder_result, limit_to_phenotypes=None
 ) -> Tuple[ResistanceVariant, ...]:
@@ -165,14 +191,24 @@ def _parse_resfinder_amr_variants(
             # igenes = _default_resistance().genes
             igenes = [""]
         
+        # get gene symbol and accession nr
+        gene_symbol, _, gene_accnr = info['seq_regions'][0].split(';;')
+
         ref_nt, alt_nt = get_nt_change(info["ref_codon"], info["var_codon"])
+        nt_change = format_nt_change(ref=ref_nt, alt=alt_nt, start_pos=info['ref_start_pos'], end_pos=info['ref_end_pos'], var_type=var_type)
         variant = ResistanceVariant(
             variant_type=var_type,
+            gene_symbol=gene_symbol,
+            close_seq_name=gene_accnr,
             genes=igenes,
             phenotypes=info["phenotypes"],
             position=info["ref_start_pos"],
             ref_nt=ref_nt,
             alt_nt=alt_nt,
+            ref_aa=info['ref_aa'],
+            alt_aa=info['var_aa'],
+            nucleotide_change=nt_change,
+            protein_change=info['seq_var'],
             depth=info["depth"],
             ref_database=info["ref_database"],
             ref_id=info["ref_id"],
