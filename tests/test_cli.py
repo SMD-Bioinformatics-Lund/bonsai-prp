@@ -51,6 +51,7 @@ def test_create_output_saureus(
                 saureus_mlst_path,
                 "--cgmlst",
                 saureus_chewbbaca_path,
+                "--output",
                 output_file,
             ],
         )
@@ -102,6 +103,7 @@ def test_create_output_ecoli(
                 ecoli_mlst_path,
                 "--cgmlst",
                 ecoli_chewbbaca_path,
+                "--output",
                 output_file,
             ],
         )
@@ -122,6 +124,7 @@ def test_cdm_input_cmd(ecoli_quast_path, ecoli_bwa_path, ecoli_chewbbaca_path, e
                 ecoli_bwa_path,
                 "--cgmlst",
                 ecoli_chewbbaca_path,
+                "--output",
                 output_fname,
             ],
         )
