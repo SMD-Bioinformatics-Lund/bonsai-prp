@@ -2,7 +2,7 @@
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from .base import RWModel
 
@@ -59,6 +59,14 @@ class ElementVirulenceSubtype(Enum):
     """Categories of resistance and virulence genes."""
 
     VIR = "VIRULENCE"
+
+
+class PhenotypeInfo(RWModel):
+    """Phenotype information."""
+
+    type: ElementType = Field(..., description="Trait category, for example AMR, STRESS etc.")
+    group: str = Field(..., description="Name of the group an trait belongs to.")
+    name: str
 
 
 class DatabaseReference(RWModel):
@@ -120,7 +128,7 @@ class GeneBase(BaseModel):
 class ResistanceGene(GeneBase, DatabaseReference):
     """Container for resistance gene information"""
 
-    phenotypes: List[str] = []
+    phenotypes: List[PhenotypeInfo] = []
 
 
 class VirulenceGene(GeneBase, DatabaseReference):
@@ -137,6 +145,8 @@ class VariantBase(DatabaseReference):
     position: int
     ref_nt: str
     alt_nt: str
+    ref_aa: str
+    alt_aa: str
     # prediction info
     depth: Optional[float] = None
     contig_id: Optional[str] = None
@@ -169,7 +179,7 @@ class VariantBase(DatabaseReference):
 class ResistanceVariant(VariantBase):
     """Container for resistance variant information"""
 
-    phenotypes: List[str]
+    phenotypes: List[PhenotypeInfo] = []
 
 
 class ElementTypeResult(BaseModel):

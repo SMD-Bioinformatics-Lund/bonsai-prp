@@ -6,8 +6,13 @@
 
 ### Fixed
 
+ - Bug that prevented parsing of AMRfinder results
+
 ### Changed
 
+ - Resfinder variant describe changed NT instead of codon.
+ - Antibiotic class is stored with phenotypes.
+ - Accession nr, gene symbol and AA change is stored for Resfinder variants
 
 ## [0.1.0]
 
