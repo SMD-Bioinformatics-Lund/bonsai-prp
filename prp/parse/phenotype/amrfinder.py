@@ -63,7 +63,7 @@ def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...
     # concat resistance profile
     sr_profile = {
         "susceptible": [],
-        "resistant": [pheno.name for gene in genes for pheno in gene.phenotypes]
+        "resistant": list({ pheno.name for gene in genes for pheno in gene.phenotypes })
     }
     return ElementTypeResult(phenotypes=sr_profile, genes=genes, mutations=[])
 
