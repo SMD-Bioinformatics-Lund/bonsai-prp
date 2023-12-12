@@ -9,9 +9,10 @@ from ...models.phenotype import (
     ElementStressSubtype,
     ElementType,
     ElementTypeResult,
+    PhenotypeInfo,
 )
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType, PhenotypeInfo
+from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
 from .utils import _default_resistance
 
@@ -32,7 +33,7 @@ STRESS_FACTORS = {
 
 def lookup_antibiotic_class(antibiotic: str) -> str:
     """Lookup antibiotic class for antibiotic name.
-    
+
     Antibiotic classes are sourced from resfinder db v2.2.1
     """
     lookup_table = {
@@ -235,12 +236,16 @@ def _parse_resfinder_amr_genes(
 
         # get element type by peeking at first phenotype
         first_pheno = info["phenotypes"][0]
-        res_category = ElementType(resfinder_result["phenotypes"][first_pheno]["category"].upper())
+        res_category = ElementType(
+            resfinder_result["phenotypes"][first_pheno]["category"].upper()
+        )
         element_subtype = _assign_res_subtype(info, res_category)
 
         # format phenotypes
         phenotype = [
-            PhenotypeInfo(type=res_category, res_class=lookup_antibiotic_class(phe), name=phe) 
+            PhenotypeInfo(
+                type=res_category, res_class=lookup_antibiotic_class(phe), name=phe
+            )
             for phe in info["phenotypes"]
         ]
 
@@ -361,7 +366,9 @@ def _parse_resfinder_amr_variants(
             var_type=var_type,
         )
         phenotype = [
-            PhenotypeInfo(type=ElementType.AMR, res_class=lookup_antibiotic_class(phe), name=phe) 
+            PhenotypeInfo(
+                type=ElementType.AMR, res_class=lookup_antibiotic_class(phe), name=phe
+            )
             for phe in info["phenotypes"]
         ]
         variant = ResistanceVariant(

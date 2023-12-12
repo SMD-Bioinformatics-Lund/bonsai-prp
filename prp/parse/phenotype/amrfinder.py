@@ -4,9 +4,9 @@ from typing import Tuple
 
 import pandas as pd
 
-from ...models.phenotype import ElementType, ElementTypeResult
+from ...models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceGene, VirulenceGene, PhenotypeInfo
+from ...models.phenotype import ResistanceGene, VirulenceGene
 from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
@@ -28,14 +28,19 @@ def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...
                     type=element_type,
                     res_class=element_type,
                     name=element_type,
-                ))
+                )
+            )
         elif isinstance(res_sub_class, str):
-            phenotypes.extend([
-                PhenotypeInfo(
-                    type=element_type,
-                    res_class=res_class.lower(),
-                    name=annot.lower(),
-                ) for annot in res_sub_class.split("/")])
+            phenotypes.extend(
+                [
+                    PhenotypeInfo(
+                        type=element_type,
+                        res_class=res_class.lower(),
+                        name=annot.lower(),
+                    )
+                    for annot in res_sub_class.split("/")
+                ]
+            )
         # store resistance gene
         gene = ResistanceGene(
             accession=prediction["close_seq_accn"],
@@ -59,11 +64,11 @@ def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...
             phenotypes=phenotypes,
         )
         genes.append(gene)
-        
+
     # concat resistance profile
     sr_profile = {
         "susceptible": [],
-        "resistant": list({ pheno.name for gene in genes for pheno in gene.phenotypes })
+        "resistant": list({pheno.name for gene in genes for pheno in gene.phenotypes}),
     }
     return ElementTypeResult(phenotypes=sr_profile, genes=genes, mutations=[])
 
@@ -92,9 +97,9 @@ def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> ElementTyp
         hits = hits.drop(columns=["Protein identifier", "HMM id", "HMM description"])
         hits = hits.where(pd.notnull(hits), None)
         # group predictions based on their element type
-        predictions = hits.loc[lambda row: row.element_type == element_type.value].to_dict(
-            orient="records"
-        )
+        predictions = hits.loc[
+            lambda row: row.element_type == element_type.value
+        ].to_dict(orient="records")
         results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
     return MethodIndex(type=element_type, result=results, software=Software.AMRFINDER)
 
