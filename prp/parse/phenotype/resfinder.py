@@ -244,7 +244,7 @@ def _parse_resfinder_amr_genes(
         # format phenotypes
         phenotype = [
             PhenotypeInfo(
-                type=res_category, res_class=lookup_antibiotic_class(phe), name=phe
+                type=res_category, group=lookup_antibiotic_class(phe), name=phe
             )
             for phe in info["phenotypes"]
         ]
@@ -367,7 +367,7 @@ def _parse_resfinder_amr_variants(
         )
         phenotype = [
             PhenotypeInfo(
-                type=ElementType.AMR, res_class=lookup_antibiotic_class(phe), name=phe
+                type=ElementType.AMR, group=lookup_antibiotic_class(phe), name=phe
             )
             for phe in info["phenotypes"]
         ]

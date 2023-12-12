@@ -2,7 +2,7 @@
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from .base import RWModel
 
@@ -62,10 +62,10 @@ class ElementVirulenceSubtype(Enum):
 
 
 class PhenotypeInfo(RWModel):
-    """Refernece to a database."""
+    """Phenotype information."""
 
-    type: ElementType
-    res_class: str
+    type: ElementType = Field(..., description="Trait category, for example AMR, STRESS etc.")
+    group: str = Field(..., description="Name of the group an trait belongs to.")
     name: str
 
 

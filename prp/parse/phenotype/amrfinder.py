@@ -26,7 +26,7 @@ def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...
             phenotypes.append(
                 PhenotypeInfo(
                     type=element_type,
-                    res_class=element_type,
+                    group=element_type,
                     name=element_type,
                 )
             )
@@ -35,7 +35,7 @@ def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...
                 [
                     PhenotypeInfo(
                         type=element_type,
-                        res_class=res_class.lower(),
+                        group=res_class.lower(),
                         name=annot.lower(),
                     )
                     for annot in res_sub_class.split("/")
