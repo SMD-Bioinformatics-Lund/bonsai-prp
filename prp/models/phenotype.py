@@ -61,6 +61,14 @@ class ElementVirulenceSubtype(Enum):
     VIR = "VIRULENCE"
 
 
+class PhenotypeInfo(RWModel):
+    """Refernece to a database."""
+
+    type: ElementType
+    res_class: str
+    name: str
+
+
 class DatabaseReference(RWModel):
     """Refernece to a database."""
 
@@ -110,15 +118,17 @@ class GeneBase(BaseModel):
     )
     close_seq_name: Optional[str] = Field(
         default=None,
-        description=("Name of the closest competing hit if there "
-                     "are multiple equaly good hits"),
+        description=(
+            "Name of the closest competing hit if there "
+            "are multiple equaly good hits"
+        ),
     )
 
 
 class ResistanceGene(GeneBase, DatabaseReference):
     """Container for resistance gene information"""
 
-    phenotypes: List[str] = []
+    phenotypes: List[PhenotypeInfo] = []
 
 
 class VirulenceGene(GeneBase, DatabaseReference):
@@ -169,7 +179,7 @@ class VariantBase(DatabaseReference):
 class ResistanceVariant(VariantBase):
     """Container for resistance variant information"""
 
-    phenotypes: List[str]
+    phenotypes: List[PhenotypeInfo] = []
 
 
 class ElementTypeResult(BaseModel):

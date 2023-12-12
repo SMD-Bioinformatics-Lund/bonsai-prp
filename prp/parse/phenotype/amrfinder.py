@@ -6,7 +6,7 @@ import pandas as pd
 
 from ...models.phenotype import ElementType, ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceGene, VirulenceGene
+from ...models.phenotype import ResistanceGene, VirulenceGene, PhenotypeInfo
 from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
@@ -16,6 +16,27 @@ def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...
     """Parse amrfinder prediction results from amrfinderplus."""
     genes = []
     for prediction in predictions:
+        element_type = ElementType(prediction["element_type"])
+        res_class = prediction["Class"]
+        res_sub_class = prediction["Subclass"]
+
+        # classification to phenotype object
+        phenotypes = []
+        if res_class is None:
+            phenotypes.append(
+                PhenotypeInfo(
+                    type=element_type,
+                    res_class=element_type,
+                    name=element_type,
+                ))
+        elif isinstance(res_sub_class, str):
+            phenotypes.extend([
+                PhenotypeInfo(
+                    type=element_type,
+                    res_class=res_class.lower(),
+                    name=annot.lower(),
+                ) for annot in res_sub_class.split("/")])
+        # store resistance gene
         gene = ResistanceGene(
             accession=prediction["close_seq_accn"],
             identity=prediction["ref_seq_identity"],
@@ -28,16 +49,23 @@ def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...
             ass_start_pos=prediction["Start"],
             ass_end_pos=prediction["Stop"],
             strand=prediction["Strand"],
-            element_type=prediction["element_type"],
+            element_type=element_type,
             element_subtype=prediction["element_subtype"],
             target_length=prediction["target_length"],
-            res_class=prediction["Class"],
-            res_subclass=prediction["Subclass"],
+            res_class=res_class,
+            res_subclass=res_sub_class,
             method=prediction["Method"],
             close_seq_name=prediction["close_seq_name"],
+            phenotypes=phenotypes,
         )
         genes.append(gene)
-    return ElementTypeResult(phenotypes={}, genes=genes, mutations=[])
+        
+    # concat resistance profile
+    sr_profile = {
+        "susceptible": [],
+        "resistant": [pheno.name for gene in genes for pheno in gene.phenotypes]
+    }
+    return ElementTypeResult(phenotypes=sr_profile, genes=genes, mutations=[])
 
 
 def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> ElementTypeResult:
@@ -64,7 +92,7 @@ def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> ElementTyp
         hits = hits.drop(columns=["Protein identifier", "HMM id", "HMM description"])
         hits = hits.where(pd.notnull(hits), None)
         # group predictions based on their element type
-        predictions = hits.loc[lambda row: row.element_type == element_type].to_dict(
+        predictions = hits.loc[lambda row: row.element_type == element_type.value].to_dict(
             orient="records"
         )
         results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
