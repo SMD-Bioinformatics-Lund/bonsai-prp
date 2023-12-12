@@ -1,0 +1,46 @@
+[
+  {
+    "software": "postalignqc",
+    "version": null,
+    "result": {
+      "ins_size": 375,
+      "ins_size_dev": 328,
+      "mean_cov": 210,
+      "pct_above_x": {
+        "1": 99.8908335372424,
+        "500": 0.0,
+        "250": 8.28531811957226,
+        "10": 99.8664503084393,
+        "1000": 0.0,
+        "30": 99.8493219487695,
+        "100": 99.7996110703293
+      },
+      "mapped_reads": 6078594,
+      "tot_reads": 7579030,
+      "iqr_median": 0.19047619047619,
+      "dup_pct": 0.0,
+      "dup_reads": 0
+    }
+  },
+  {
+    "software": "quast",
+    "version": null,
+    "result": {
+      "total_length": 5103744,
+      "reference_length": 4641652,
+      "largest_contig": 359420,
+      "n_contigs": 109,
+      "n50": 173071,
+      "assembly_gc": 50.81,
+      "reference_gc": 50.79,
+      "duplication_ratio": 1.001
+    }
+  },
+  {
+    "software": "chewbbaca",
+    "version": null,
+    "result": {
+      "n_missing": 4228
+    }
+  }
+]

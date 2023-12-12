@@ -2,6 +2,8 @@
 
 ### Added
 
+ - CLI command for generating QC report for CDM
+
 ### Fixed
 
 ### Changed
