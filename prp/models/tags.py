@@ -36,7 +36,7 @@ class TagSeverity(Enum):
     """Defined severity classes of tags"""
 
     INFO = "info"
-    PASSED = "pass"
+    PASSED = "success"
     WARNING = "warning"
     DANGER = "danger"
 
