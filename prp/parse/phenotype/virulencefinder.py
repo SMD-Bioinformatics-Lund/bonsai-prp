@@ -32,7 +32,7 @@ def _parse_virulencefinder_vir_results(pred: str) -> ElementTypeResult:
                 # Some genes doesnt have accession numbers
                 accnr = None if gn['accession'] == 'NA' else gn['accession']
                 gene = VirulenceGene(
-                    name=gn["virulence_gene"],
+                    gene_symbol=gn["virulence_gene"],
                     accession=accnr,
                     identity=gn["identity"],
                     coverage=gn["coverage"],
