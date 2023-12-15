@@ -12,7 +12,6 @@ LOG = logging.getLogger(__name__)
 
 def _parse_virulencefinder_vir_results(pred: str) -> ElementTypeResult:
     """Parse virulence prediction results from ARIBA."""
-    results = {}
     # parse virulence finder results
     species = list(k for k in pred["virulencefinder"]["results"])
     vir_genes = []
@@ -46,7 +45,7 @@ def _parse_virulencefinder_vir_results(pred: str) -> ElementTypeResult:
                     element_type=ElementType.VIR,
                     element_subtype=subtype,
                 )
-            vir_genes.append(gene)
+                vir_genes.append(gene)
     return ElementTypeResult(genes=vir_genes, phenotypes={}, mutations=[])
 
 
