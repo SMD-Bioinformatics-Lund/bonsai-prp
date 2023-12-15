@@ -59,6 +59,8 @@ class ElementVirulenceSubtype(Enum):
     """Categories of resistance and virulence genes."""
 
     VIR = "VIRULENCE"
+    ANTIGEN = "ANTIGEN"
+    TOXIN = "TOXIN"
 
 
 class PhenotypeInfo(RWModel):
@@ -133,8 +135,6 @@ class ResistanceGene(GeneBase, DatabaseReference):
 
 class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
-
-    virulence_category: Optional[str] = None
 
 
 class VariantBase(DatabaseReference):
