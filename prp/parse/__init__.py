@@ -15,4 +15,5 @@ from .typing import (
     parse_mlst_results,
     parse_mykrobe_lineage_results,
     parse_tbprofiler_lineage_results,
+    parse_virulencefinder_stx_typing,
 )

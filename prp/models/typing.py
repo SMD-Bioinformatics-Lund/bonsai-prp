@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import Field
 
 from .base import RWModel
+from .phenotype import VirulenceGene
 
 
 class TypingSoftware(Enum):
@@ -15,6 +16,7 @@ class TypingSoftware(Enum):
     MLST = "mlst"
     TBPROFILER = "tbprofiler"
     MYKROBE = "mykrobe"
+    VIRULENCEFINDER = "virulencefinder"
 
 
 class TypingMethod(Enum):
@@ -23,6 +25,7 @@ class TypingMethod(Enum):
     MLST = "mlst"
     CGMLST = "cgmlst"
     LINEAGE = "lineage"
+    STX = "stx"
 
 
 class ChewbbacaErrors(str, Enum):
@@ -88,6 +91,10 @@ class TypingResultLineage(ResultLineageBase):
 
     main_lin: str
     sublin: str
+
+
+class TypingResultGeneAllele(VirulenceGene):
+    """Identification of individual gene alleles."""
 
 
 CgmlstAlleles = Dict[str, int | None | ChewbbacaErrors | MlstErrors | List[int]]

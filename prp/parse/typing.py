@@ -3,17 +3,19 @@
 import csv
 import json
 import logging
-from typing import List
+from typing import List, TextIO
 
 from ..models.sample import MethodIndex
 from ..models.typing import (
     LineageInformation,
     TypingMethod,
     TypingResultCgMlst,
+    TypingResultGeneAllele,
     TypingResultLineage,
     TypingResultMlst,
 )
 from ..models.typing import TypingSoftware as Software
+from .phenotype.virulencefinder import parse_vir_gene
 
 LOG = logging.getLogger(__name__)
 
@@ -168,3 +170,30 @@ def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage
         lineages=lineages,
     )
     return MethodIndex(type=method, software=Software.MYKROBE, result=result_obj)
+
+
+def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
+    with open(path) as inpt:
+        pred_obj = json.load(inpt)
+        # if has valid results
+        pred_result = None
+        if "virulencefinder" in pred_obj:
+            results = pred_obj["virulencefinder"]["results"]
+            species = list(results)
+            for assay, result in results[species[0]].items():
+                # skip non typing results
+                if not assay == "stx":
+                    continue
+
+                # if no stx gene was identified
+                if isinstance(result, str):
+                    continue
+
+                # take first result as the valid prediction
+                hit = next(iter(result.values()))
+                vir_gene = parse_vir_gene(hit)
+                gene = TypingResultGeneAllele(**vir_gene.model_dump())
+                pred_result = MethodIndex(
+                    type=TypingMethod.STX, software=Software.VIRULENCEFINDER, result=gene
+                )
+    return pred_result

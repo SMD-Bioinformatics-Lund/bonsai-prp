@@ -24,6 +24,7 @@ from .parse import (
     parse_resfinder_amr_pred,
     parse_tbprofiler_amr_pred,
     parse_tbprofiler_lineage_results,
+    parse_virulencefinder_stx_typing,
     parse_virulencefinder_vir_pred,
 )
 from .parse.metadata import get_database_info, parse_run_info
@@ -85,7 +86,9 @@ def cli():
 @click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
 @click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
-@click.option("-o", "--output", required=True, type=click.File("w"), help="output filepath")
+@click.option(
+    "-o", "--output", required=True, type=click.File("w"), help="output filepath"
+)
 def create_bonsai_input(
     sample_id,
     run_metadata,
@@ -164,9 +167,15 @@ def create_bonsai_input(
     # get virulence factors in sample
     if virulencefinder:
         LOG.info("Parse virulencefinder results")
+        # virulence genes
         vir: MethodIndex | None = parse_virulencefinder_vir_pred(virulencefinder)
         if vir is not None:
             results["element_type_result"].append(vir)
+
+        # stx typing
+        res: MethodIndex | None = parse_virulencefinder_stx_typing(virulencefinder)
+        if res is not None:
+            results["typing_result"].append(res)
 
     # species id
     if kraken:
@@ -265,7 +274,9 @@ def validate(output):
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
 @click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
-@click.option("-o", "--output", required=True, type=click.File("w"), help="output filepath")
+@click.option(
+    "-o", "--output", required=True, type=click.File("w"), help="output filepath"
+)
 def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
     """Format QC metrics into CDM compatible input file."""
     results = []

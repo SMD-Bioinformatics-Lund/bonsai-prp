@@ -11,6 +11,7 @@ from .species import SpeciesPredictionResult
 from .typing import (
     TypingMethod,
     TypingResultCgMlst,
+    TypingResultGeneAllele,
     TypingResultLineage,
     TypingResultMlst,
     TypingSoftware,
@@ -23,7 +24,11 @@ class MethodIndex(RWModel):
     type: Union[ElementType, TypingMethod]
     software: PredictionSoftware | TypingSoftware | None
     result: Union[
-        ElementTypeResult, TypingResultMlst, TypingResultCgMlst, TypingResultLineage
+        ElementTypeResult,
+        TypingResultMlst,
+        TypingResultCgMlst,
+        TypingResultLineage,
+        TypingResultGeneAllele,
     ]
 
 
