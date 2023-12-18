@@ -3,6 +3,7 @@
 ### Added
 
  - CLI command for generating QC report for CDM
+ - Parsing of Virulencefinder STX typing
 
 ### Fixed
 
