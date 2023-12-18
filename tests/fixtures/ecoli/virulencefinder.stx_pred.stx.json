@@ -9,8 +9,8 @@
       "file_format": "fastq"
     },
     "run_info": {
-      "date": "06.12.2023",
-      "time": "15:54:36"
+      "date": "15.12.2023",
+      "time": "16:16:22"
     },
     "results": {
       "Escherichia coli": {
@@ -112,6 +112,20 @@
             "protein_function": "  lipoprotein NlpI precursor",
             "coverage": 100,
             "hit_id": "nlpI:1:CP000243"
+          },
+          "stx2c-O157-FLY16:52:AB015057:52": {
+            "virulence_gene": "stx2c-O157-FLY16",
+            "identity": 99.92,
+            "HSP_length": 1241,
+            "template_length": 1241,
+            "position_in_ref": "1..1242",
+            "contig_name": "NA",
+            "positions_in_contig": "NA..NA",
+            "note": "52",
+            "accession": "AB015057",
+            "protein_function": "   stx2c-O157-FLY16",
+            "coverage": 100,
+            "hit_id": "stx2c-O157-FLY16:52:AB015057:52"
           },
           "afaA:1:X76688": {
             "virulence_gene": "afaA",
@@ -364,6 +378,22 @@
             "protein_function": " homologs of the Shigella flexneri SHI-2 pathogenicity island gene shiA",
             "coverage": 100,
             "hit_id": "shiA:3:CP058222"
+          }
+        },
+        "stx": {
+          "stx2:52:AB015057:52": {
+            "virulence_gene": "stx2",
+            "identity": 100,
+            "HSP_length": 1241,
+            "template_length": 1241,
+            "position_in_ref": "1..1242",
+            "contig_name": "NA",
+            "positions_in_contig": "NA..NA",
+            "note": "52",
+            "accession": "AB015057",
+            "protein_function": "O157 FLY16, variant c",
+            "coverage": 100,
+            "hit_id": "stx2:52:AB015057:52"
           }
         }
       }

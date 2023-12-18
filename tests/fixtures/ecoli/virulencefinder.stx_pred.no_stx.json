@@ -9,8 +9,8 @@
       "file_format": "fastq"
     },
     "run_info": {
-      "date": "06.12.2023",
-      "time": "15:54:36"
+      "date": "15.12.2023",
+      "time": "16:16:22"
     },
     "results": {
       "Escherichia coli": {
@@ -365,7 +365,8 @@
             "coverage": 100,
             "hit_id": "shiA:3:CP058222"
           }
-        }
+        },
+        "stx": "No hit found"
       }
     }
   }

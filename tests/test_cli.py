@@ -1,6 +1,7 @@
 """Test PRP cli functions."""
 
 import json
+
 from click.testing import CliRunner
 
 from prp.cli import create_bonsai_input, create_cdm_input, print_schema
@@ -65,7 +66,7 @@ def test_create_output_ecoli(
     ecoli_amrfinder_path,
     ecoli_resfinder_path,
     ecoli_resfinder_meta_path,
-    ecoli_virulencefinder_path,
+    ecoli_virulencefinder_stx_pred_no_stx_path,
     ecoli_virulencefinder_meta_path,
     ecoli_mlst_path,
     ecoli_chewbbaca_path,
@@ -94,7 +95,7 @@ def test_create_output_ecoli(
                 "--resfinder",
                 ecoli_resfinder_path,
                 "--virulencefinder",
-                ecoli_virulencefinder_path,
+                ecoli_virulencefinder_stx_pred_no_stx_path,
                 "--process-metadata",
                 ecoli_resfinder_meta_path,
                 "--process-metadata",
@@ -110,7 +111,9 @@ def test_create_output_ecoli(
         assert result.exit_code == 0
 
 
-def test_cdm_input_cmd(ecoli_quast_path, ecoli_bwa_path, ecoli_chewbbaca_path, ecoli_cdm_input):
+def test_cdm_input_cmd(
+    ecoli_quast_path, ecoli_bwa_path, ecoli_chewbbaca_path, ecoli_cdm_input
+):
     """Test command for creating CDM input."""
     runner = CliRunner()
     with runner.isolated_filesystem():

@@ -1,7 +1,8 @@
 """Ecoli input data fixutres."""
 
-import pytest
 import json
+
+import pytest
 
 from ..fixtures import data_path
 
@@ -37,8 +38,18 @@ def ecoli_resfinder_meta_path(data_path):
 
 
 @pytest.fixture()
-def ecoli_virulencefinder_path(data_path):
+def ecoli_virulencefinder_wo_stx_path(data_path):
     return str(data_path.joinpath("ecoli", "virulencefinder.json"))
+
+
+@pytest.fixture()
+def ecoli_virulencefinder_stx_pred_stx_path(data_path):
+    return str(data_path.joinpath("ecoli", "virulencefinder.stx_pred.stx.json"))
+
+
+@pytest.fixture()
+def ecoli_virulencefinder_stx_pred_no_stx_path(data_path):
+    return str(data_path.joinpath("ecoli", "virulencefinder.stx_pred.no_stx.json"))
 
 
 @pytest.fixture()

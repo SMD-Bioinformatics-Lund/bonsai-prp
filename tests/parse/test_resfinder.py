@@ -11,4 +11,4 @@ def test_get_nt_changes_from_condons():
 
     ref_nt, alt_nt = get_nt_change(ref_codon, alt_codon)
 
-    assert ref_nt == 'C' and alt_nt == 'T'
+    assert ref_nt == "C" and alt_nt == "T"
