@@ -64,7 +64,7 @@ def cli():
 @click.option(
     "-a",
     "--amrfinder",
-    type=str,
+    type=click.Path(),
     help="amrfinderplus anti-microbial resistance results",
 )
 @click.option("-m", "--mlst", type=click.File(), help="MLST prediction results")
@@ -72,7 +72,7 @@ def cli():
 @click.option(
     "-v",
     "--virulencefinder",
-    type=click.File(),
+    type=click.Path(),
     help="Virulence factor prediction results",
 )
 @click.option(
