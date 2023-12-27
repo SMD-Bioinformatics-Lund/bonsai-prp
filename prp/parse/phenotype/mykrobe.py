@@ -33,22 +33,27 @@ def _parse_mykrobe_amr_genes(mykrobe_result) -> Tuple[ResistanceGene, ...]:
     results = []
     for element_type in mykrobe_result:
         # skip non-resistance yeilding
-        if not mykrobe_result[element_type]["predict"].upper() == "R":
+        if not element_type["susceptibility"].upper() == "R":
             continue
+        
+        try:
+            depth = element_type["genes"].split(':')[-1]
+            coverage = element_type["genes"].split(':')[-2]
+        except KeyError:
+            depth = None
+            coverage = None
 
-        hits = mykrobe_result[element_type]["called_by"]
-        for hit_name, hit in hits.items():
-            gene = ResistanceGene(
-                gene_symbol=hit_name.split("_")[0],
-                accession=None,
-                depth=hit["info"]["coverage"]["alternate"]["median_depth"],
-                identity=None,
-                coverage=hit["info"]["coverage"]["alternate"]["percent_coverage"],
-                phenotypes=[element_type.lower()],
-                element_type=ElementType.AMR,
-                element_subtype=ElementAmrSubtype.AMR,
-            )
-            results.append(gene)
+        gene = ResistanceGene(
+            gene_symbol=element_type["variants"].split("_")[0],
+            accession=None,
+            depth=depth,
+            identity=None,
+            coverage=coverage,
+            phenotypes=[element_type["drug"].lower()],
+            element_type=ElementType.AMR,
+            element_subtype=ElementAmrSubtype.AMR,
+        )
+        results.append(gene)
     return results
 
 
