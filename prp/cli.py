@@ -189,9 +189,10 @@ def create_bonsai_input(
     # mykrobe
     if mykrobe:
         LOG.info("Parse mykrobe results")
-        pred_res = pd.read_csv(mykrobe, quotechar='"', orient='records')
+        pred_res = pd.read_csv(mykrobe, quotechar='"')
         pred_res.columns.values[3] = "variants"
         pred_res.columns.values[4] = "genes"
+        pred_res = pred_res.to_dict(orient="records")
 
         # verify that sample id is in prediction result
         if not sample_id in pred_res[0]["sample"]:
