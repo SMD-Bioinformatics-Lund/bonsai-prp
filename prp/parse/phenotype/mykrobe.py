@@ -3,7 +3,7 @@ import logging
 import re
 from typing import Any, Dict, Tuple
 
-from ...models.phenotype import ElementAmrSubtype, ElementType, ElementTypeResult, PhenotypeInfo
+from ...models.phenotype import ElementAmrSubtype, ElementType, ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
@@ -35,14 +35,14 @@ def _parse_mykrobe_amr_genes(mykrobe_result) -> Tuple[ResistanceGene, ...]:
         # skip non-resistance yeilding
         if not element_type["susceptibility"].upper() == "R":
             continue
-        
+
         try:
             depth = float(element_type["genes"].split(':')[-1])
             coverage = float(element_type["genes"].split(':')[-2])
         except AttributeError:
             depth = None
             coverage = None
-        
+
         gene = ResistanceGene(
             gene_symbol=element_type["variants"].split("_")[0],
             accession=None,

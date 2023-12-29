@@ -1,8 +1,8 @@
 """Definition of the PRP command-line interface."""
 import json
 import logging
-import pandas as pd
 from typing import List
+import pandas as pd
 
 import click
 from pydantic import TypeAdapter, ValidationError

@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict, Tuple
 
 from ...models.metadata import SoupVersions
-from ...models.phenotype import ElementTypeResult, ElementType, PhenotypeInfo
+from ...models.phenotype import ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceVariant
 from ...models.sample import MethodIndex

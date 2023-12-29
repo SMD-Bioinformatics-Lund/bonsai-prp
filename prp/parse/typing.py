@@ -3,7 +3,7 @@
 import csv
 import json
 import logging
-from typing import List, TextIO
+from typing import List
 
 from ..models.sample import MethodIndex
 from ..models.typing import (
@@ -154,7 +154,8 @@ def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage
 
 
 def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
-    with open(path) as inpt:
+    """Parse virulencefinder's output re stx typing"""
+    with open(path, "rb") as inpt:
         pred_obj = json.load(inpt)
         # if has valid results
         pred_result = None
@@ -175,6 +176,8 @@ def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
                 vir_gene = parse_vir_gene(hit)
                 gene = TypingResultGeneAllele(**vir_gene.model_dump())
                 pred_result = MethodIndex(
-                    type=TypingMethod.STX, software=Software.VIRULENCEFINDER, result=gene
+                    type=TypingMethod.STX, 
+                    software=Software.VIRULENCEFINDER, 
+                    result=gene
                 )
     return pred_result
