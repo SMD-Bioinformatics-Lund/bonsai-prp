@@ -3,7 +3,7 @@ import logging
 from typing import Any, Dict, Tuple
 
 from ...models.metadata import SoupVersions
-from ...models.phenotype import ElementTypeResult
+from ...models.phenotype import ElementTypeResult, ElementType, PhenotypeInfo
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceVariant
 from ...models.sample import MethodIndex
@@ -50,10 +50,17 @@ def _parse_tbprofiler_amr_variants(tbprofiler_result) -> Tuple[ResistanceVariant
 
     for hit in tbprofiler_result["dr_variants"]:
         var_type = "substitution"
+
         variant = ResistanceVariant(
             variant_type=var_type,
             genes=[hit["gene"]],
-            phenotypes=hit["gene_associated_drugs"],
+            phenotypes=[
+                PhenotypeInfo(
+                    type=ElementType.AMR,
+                    group=ElementType.AMR,
+                    name=ElementType.AMR,
+                )
+            ],
             position=int(hit["genome_pos"]),
             ref_nt=hit["ref"],
             alt_nt=hit["alt"],
