@@ -1,5 +1,6 @@
 """Shared utility functions."""
 from ...models.phenotype import ElementTypeResult, ResistanceGene
+from ...models.phenotype import ElementType, PhenotypeInfo
 
 
 def _default_resistance() -> ElementTypeResult:
@@ -48,6 +49,13 @@ def _default_variant() -> ElementTypeResult:
     )
     mutations = [mutation]
     return ElementTypeResult(phenotypes=[], genes=[], mutations=mutations)
+
+def _default_amr_phenotype() -> PhenotypeInfo:
+    return PhenotypeInfo(
+        type = ElementType.AMR,
+        group = ElementType.AMR,
+        name = ElementType.AMR,
+    )
 
 
 def is_prediction_result_empty(result: ElementTypeResult) -> bool:

@@ -7,7 +7,7 @@ from ...models.phenotype import ElementAmrSubtype, ElementType, ElementTypeResul
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
-from .utils import is_prediction_result_empty
+from .utils import is_prediction_result_empty, _default_amr_phenotype
 
 LOG = logging.getLogger(__name__)
 
@@ -50,13 +50,7 @@ def _parse_mykrobe_amr_genes(mykrobe_result) -> Tuple[ResistanceGene, ...]:
             identity=None,
             coverage=coverage,
             drugs=[element_type["drug"].lower()],
-            phenotypes=[
-                PhenotypeInfo(
-                    type=ElementType.AMR,
-                    group=ElementType.AMR,
-                    name=ElementType.AMR,
-                )
-            ],
+            phenotypes=[_default_amr_phenotype()],
             element_type=ElementType.AMR,
             element_subtype=ElementAmrSubtype.AMR,
         )
@@ -120,13 +114,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[ResistanceVariant, ...]
         variant = ResistanceVariant(
             variant_type=var_type,
             genes=[element_type["variants"].split("_")[0]],
-            phenotypes=[
-                PhenotypeInfo(
-                    type=ElementType.AMR,
-                    group=ElementType.AMR,
-                    name=ElementType.AMR,
-                )
-            ],
+            phenotypes=[_default_amr_phenotype()],
             position=position,
             ref_nt=ref_nt,
             alt_nt=alt_nt,

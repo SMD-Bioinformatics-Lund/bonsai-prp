@@ -7,7 +7,7 @@ from ...models.phenotype import ElementTypeResult, ElementType, PhenotypeInfo
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceVariant
 from ...models.sample import MethodIndex
-from .utils import _default_variant
+from .utils import _default_variant, _default_amr_phenotype
 
 LOG = logging.getLogger(__name__)
 
@@ -54,13 +54,7 @@ def _parse_tbprofiler_amr_variants(tbprofiler_result) -> Tuple[ResistanceVariant
         variant = ResistanceVariant(
             variant_type=var_type,
             genes=[hit["gene"]],
-            phenotypes=[
-                PhenotypeInfo(
-                    type=ElementType.AMR,
-                    group=ElementType.AMR,
-                    name=ElementType.AMR,
-                )
-            ],
+            phenotypes=[_default_amr_phenotype()],
             position=int(hit["genome_pos"]),
             ref_nt=hit["ref"],
             alt_nt=hit["alt"],
