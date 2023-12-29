@@ -148,8 +148,8 @@ class VariantBase(DatabaseReference):
     position: int
     ref_nt: str
     alt_nt: str
-    ref_aa: str
-    alt_aa: str
+    ref_aa: Optional[str] = None
+    alt_aa: Optional[str] = None
     # prediction info
     depth: Optional[float] = None
     contig_id: Optional[str] = None
