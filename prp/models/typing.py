@@ -57,7 +57,7 @@ class LineageInformation(RWModel):
     rd: str | None = None
     fraction: float | None = None
     variant: str | None = None
-    coverage: Dict[str, Any] = None
+    coverage: Dict[str, Any] | None = None
 
 
 class ResultMlstBase(RWModel):
