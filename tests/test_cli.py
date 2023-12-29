@@ -139,3 +139,44 @@ def test_cdm_input_cmd(
         with open(output_fname) as inpt:
             cmd_output = json.load(inpt)
             assert cmd_output == ecoli_cdm_input
+
+
+
+def test_create_output_saureus(
+    mtuberculosis_analysis_meta_path,
+    mtuberculosis_bracken_path,
+    mtuberculosis_bwa_path,
+    mtuberculosis_mykrobe_path,
+    mtuberculosis_quast_path,
+    mtuberculosis_tbprofiler_path,
+):
+    """Test creating a analysis summary using M. tuberculosis data.
+
+    The test is intended as an end-to-end test.
+    """
+    sample_id = "test_mtuberculosis_1"
+    output_file = f"{sample_id}.json"
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            create_bonsai_input,
+            [
+                "-i",
+                sample_id,
+                "--run-metadata",
+                mtuberculosis_analysis_meta_path,
+                "--kraken",
+                mtuberculosis_bracken_path,
+                "--quality",
+                mtuberculosis_bwa_path,
+                "--mykrobe",
+                mtuberculosis_mykrobe_path,
+                "--quast",
+                mtuberculosis_quast_path,
+                "--tbprofiler",
+                mtuberculosis_tbprofiler_path,
+                "--output",
+                output_file,
+            ],
+        )
+        assert result.exit_code == 0
