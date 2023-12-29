@@ -132,37 +132,18 @@ def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage
     """Parse mykrobe results for lineage object."""
     LOG.info("Parsing lineage results")
     lineages = []
-    lineage_pred = pred_res["phylogenetics"]["lineage"]
-    if "calls_summary" in lineage_pred:
-        lineage_calls = lineage_pred["calls"]
-        sublin = list(lineage_calls)[0]
-        lineage_info = lineage_calls[sublin]
-        for lineage in lineage_info:
-            genotypes = list(
-                list(lineage_pred["calls_summary"].values())[0]["genotypes"].keys()
-            )
-            main_lin = genotypes[0]
-            try:
-                variant = list(lineage_info[lineage].keys())[0]
-            except AttributeError:
-                variant = None
-            try:
-                coverage = lineage_info[lineage][variant]["info"]["coverage"][
-                    "alternate"
-                ]
-            except (KeyError, TypeError):
-                coverage = None
-            lin_array = LineageInformation(
-                lineage=lineage, variant=variant, coverage=coverage
-            )
-            lineages.append(lin_array)
-    else:
-        genotypes = list(lineage_pred)
-        main_lin, sublin = genotypes[0], genotypes[0]
-        lin_array = LineageInformation(
-            lineage=genotypes[0], coverage=lineage_pred[genotypes[0]]
-        )
-        lineages.append(lin_array)
+    for lineage in pred_res:
+        if not lineage["susceptibility"].upper() == "R":
+            continue
+        split_lin = lineage["lineage"].split('.')
+        main_lin = split_lin[0]
+        sublin = lineage["lineage"]
+        lin_idxs = lineage["lineage"].lstrip("lineage").split('.')
+        try:
+            coverage = float(lineage["genes"].split(':')[-2])
+        except AttributeError:
+            coverage = None
+        lineages = [LineageInformation(lineage="lineage" + '.'.join(lin_idxs[:idx+1]), variant=lineage["variants"].split(':')[0], coverage=coverage) for idx in range(len(lin_idxs))]
     # cast to lineage object
     result_obj = TypingResultLineage(
         main_lin=main_lin,
