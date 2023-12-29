@@ -4,7 +4,7 @@ import json
 
 from click.testing import CliRunner
 
-from prp.cli import create_bonsai_input, create_cdm_input, print_schema
+from prp.cli import create_bonsai_input, create_cdm_input
 
 
 def test_create_output_saureus(
@@ -136,13 +136,13 @@ def test_cdm_input_cmd(
         assert result.exit_code == 0
 
         # test correct output format
-        with open(output_fname) as inpt:
+        with open(output_fname, "rb") as inpt:
             cmd_output = json.load(inpt)
             assert cmd_output == ecoli_cdm_input
 
 
 
-def test_create_output_saureus(
+def test_create_output_mtuberculosis(
     mtuberculosis_analysis_meta_path,
     mtuberculosis_bracken_path,
     mtuberculosis_bwa_path,
