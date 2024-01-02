@@ -7,5 +7,6 @@ import pytest
 
 @pytest.fixture()
 def data_path():
+    """Get path of this file"""
     conftest_path = Path(__file__)
     return conftest_path.parent
