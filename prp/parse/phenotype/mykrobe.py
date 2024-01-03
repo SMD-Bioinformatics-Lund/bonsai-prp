@@ -28,33 +28,6 @@ def _get_mykrobe_amr_sr_profie(mykrobe_result):
     return {"susceptible": list(susceptible), "resistant": list(resistant)}
 
 
-def _parse_mykrobe_amr_genes(mykrobe_result) -> Tuple[ResistanceGene, ...]:
-    """Get resistance genes from mykrobe result."""
-    results = []
-    for element_type in mykrobe_result:
-        # skip non-resistance yeilding
-        if not element_type["susceptibility"].upper() == "R":
-            continue
-
-        try:
-            depth = float(element_type["genes"].split(':')[-1])
-            coverage = float(element_type["genes"].split(':')[-2])
-        except AttributeError:
-            depth = None
-            coverage = None
-
-        gene = ResistanceGene(
-            gene_symbol=element_type["variants"].split("_")[0],
-            depth=depth,
-            coverage=coverage,
-            drugs=[element_type["drug"].lower()],
-            element_type=ElementType.AMR,
-            element_subtype=ElementAmrSubtype.AMR,
-        )
-        results.append(gene)
-    return results
-
-
 def get_mutation_type(var_nom: str) -> Tuple[VariantType, str, str, int]:
     """Extract mutation type from Mykrobe mutation description.
 
