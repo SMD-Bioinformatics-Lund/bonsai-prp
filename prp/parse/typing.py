@@ -139,11 +139,7 @@ def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage
         main_lin = split_lin[0]
         sublin = lineage["lineage"]
         lin_idxs = lineage["lineage"].lstrip("lineage").split('.')
-        try:
-            coverage = float(lineage["genes"].split(':')[-2])
-        except AttributeError:
-            coverage = None
-        lineages = [LineageInformation(lineage="lineage" + '.'.join(lin_idxs[:idx+1]), variant=lineage["variants"].split(':')[0], coverage=coverage) for idx in range(len(lin_idxs))]
+        lineages = [LineageInformation(lineage="lineage" + '.'.join(lin_idxs[:idx+1])) for idx in range(len(lin_idxs))]
     # cast to lineage object
     result_obj = TypingResultLineage(
         main_lin=main_lin,

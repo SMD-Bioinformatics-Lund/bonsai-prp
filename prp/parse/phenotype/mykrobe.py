@@ -3,9 +3,9 @@ import logging
 import re
 from typing import Any, Dict, Tuple
 
-from ...models.phenotype import ElementAmrSubtype, ElementType, ElementTypeResult
+from ...models.phenotype import ElementType, ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
+from ...models.phenotype import ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
 from .utils import is_prediction_result_empty
 
@@ -72,23 +72,24 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[ResistanceVariant, ...]
         if element_type["variants"] is None:
             continue
 
-        try:
-            depth = float(element_type["genes"].split(':')[-1])
-        except AttributeError:
-            depth = None
-
         var_info = element_type["variants"].split("-")[1].split(":")[0]
         _, ref_nt, alt_nt, position = get_mutation_type(var_info)
         var_nom = element_type["variants"].split("-")[0].split("_")[1]
-        var_type, *_ = get_mutation_type(var_nom)
+        var_type, ref_aa, alt_aa, _ = get_mutation_type(var_nom)
         variant = ResistanceVariant(
             variant_type=var_type,
             gene_symbol=element_type["variants"].split("_")[0],
             position=position,
             ref_nt=ref_nt,
             alt_nt=alt_nt,
-            depth=depth,
+            ref_aa=ref_aa if len(ref_aa)==1 and len(alt_aa)==1 else None,
+            alt_aa=alt_aa if len(ref_aa)==1 and len(alt_aa)==1 else None,
+            depth=float(element_type["variants"].split(':')[-1]),
             change=var_nom,
+            nucleotide_change="c." + var_info,
+            protein_change="p." + var_nom,
+            element_type=ElementType.AMR,
+            method=element_type["genotype_model"],
             drugs=[element_type["drug"].lower()],
         )
         results.append(variant)
