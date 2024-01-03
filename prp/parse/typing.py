@@ -176,8 +176,8 @@ def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
                 vir_gene = parse_vir_gene(hit)
                 gene = TypingResultGeneAllele(**vir_gene.model_dump())
                 pred_result = MethodIndex(
-                    type=TypingMethod.STX, 
-                    software=Software.VIRULENCEFINDER, 
+                    type=TypingMethod.STX,
+                    software=Software.VIRULENCEFINDER,
                     result=gene
                 )
     return pred_result

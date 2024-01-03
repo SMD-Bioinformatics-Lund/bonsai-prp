@@ -14,7 +14,6 @@ from ...models.phenotype import (
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
-from .utils import _default_resistance
 
 LOG = logging.getLogger(__name__)
 
@@ -221,7 +220,7 @@ def _parse_resfinder_amr_genes(
     """Get resistance genes from resfinder result."""
     results = []
     if not "seq_regions" in resfinder_result:
-        return _default_resistance().genes
+        return [ResistanceGene()]
 
     for info in resfinder_result["seq_regions"].values():
         # Get only acquired resistance genes
@@ -327,7 +326,6 @@ def _parse_resfinder_amr_variants(
 ) -> Tuple[ResistanceVariant, ...]:
     """Get resistance genes from resfinder result."""
     results = []
-    igenes = []
     for info in resfinder_result["seq_variations"].values():
         # Get only variants from desired phenotypes
         if limit_to_phenotypes is not None:
@@ -350,9 +348,6 @@ def _parse_resfinder_amr_variants(
             var_type = VariantType.DELETION
         else:
             raise ValueError("Output has no known mutation type")
-        if not "seq_regions" in info:
-            # igenes = _default_resistance().genes
-            igenes = [""]
 
         # get gene symbol and accession nr
         gene_symbol, _, gene_accnr = info["seq_regions"][0].split(";;")
@@ -376,7 +371,6 @@ def _parse_resfinder_amr_variants(
             gene_symbol=gene_symbol,
             accession=gene_accnr,
             close_seq_name=gene_accnr,
-            genes=igenes,
             phenotypes=phenotype,
             position=info["ref_start_pos"],
             ref_nt=ref_nt,
