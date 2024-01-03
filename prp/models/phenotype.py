@@ -144,7 +144,6 @@ class VariantBase(DatabaseReference):
     """Container for mutation information"""
 
     variant_type: VariantType
-    genes: List[str]
     position: int
     ref_nt: str
     alt_nt: str
