@@ -58,6 +58,7 @@ def _parse_tbprofiler_amr_variants(tbprofiler_result) -> Tuple[ResistanceVariant
             ref_nt=hit["ref"],
             alt_nt=hit["alt"],
             depth=hit["depth"],
+            freq=float(hit["freq"]),
             ref_database=tbprofiler_result["db_version"]["name"],
             type=hit["type"],
             nucleotide_change=hit["nucleotide_change"],

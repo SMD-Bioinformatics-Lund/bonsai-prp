@@ -72,27 +72,31 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[ResistanceVariant, ...]
         if element_type["variants"] is None:
             continue
 
-        var_info = element_type["variants"].split("-")[1].split(":")[0]
-        _, ref_nt, alt_nt, position = get_mutation_type(var_info)
-        var_nom = element_type["variants"].split("-")[0].split("_")[1]
-        var_type, ref_aa, alt_aa, _ = get_mutation_type(var_nom)
-        variant = ResistanceVariant(
-            variant_type=var_type,
-            gene_symbol=element_type["variants"].split("_")[0],
-            position=position,
-            ref_nt=ref_nt,
-            alt_nt=alt_nt,
-            ref_aa=ref_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
-            alt_aa=alt_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
-            depth=float(element_type["variants"].split(":")[-1]),
-            change=var_nom,
-            nucleotide_change="c." + var_info,
-            protein_change="p." + var_nom,
-            element_type=ElementType.AMR,
-            method=element_type["genotype_model"],
-            drugs=[element_type["drug"].lower()],
-        )
-        results.append(variant)
+        variants = element_type["variants"].split(";")
+        for var in variants:
+            var_info = var.split("-")[1].split(":")[0]
+            _, ref_nt, alt_nt, position = get_mutation_type(var_info)
+            var_nom = var.split("-")[0].split("_")[1]
+            var_type, ref_aa, alt_aa, _ = get_mutation_type(var_nom)
+            variant = ResistanceVariant(
+                variant_type=var_type,
+                gene_symbol=var.split("_")[0],
+                position=position,
+                ref_nt=ref_nt,
+                alt_nt=alt_nt,
+                ref_aa=ref_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
+                alt_aa=alt_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
+                conf=float(var.split(":")[-1]),
+                alt_kmer_count=float(var.split(":")[-2]),
+                ref_kmer_count=float(var.split(":")[-3]),
+                change=var_nom,
+                nucleotide_change="c." + var_info,
+                protein_change="p." + var_nom,
+                element_type=ElementType.AMR,
+                method=element_type["genotype_model"],
+                drugs=[element_type["drug"].lower()],
+            )
+            results.append(variant)
     return results
 
 
