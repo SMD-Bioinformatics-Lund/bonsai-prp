@@ -4,6 +4,7 @@ import logging
 from typing import List
 
 import click
+import pandas as pd
 from pydantic import TypeAdapter, ValidationError
 
 from .models.metadata import SoupType, SoupVersion
@@ -188,10 +189,13 @@ def create_bonsai_input(
     # mykrobe
     if mykrobe:
         LOG.info("Parse mykrobe results")
-        pred_res = json.load(mykrobe)
+        pred_res = pd.read_csv(mykrobe, quotechar='"')
+        pred_res.columns.values[3] = "variants"
+        pred_res.columns.values[4] = "genes"
+        pred_res = pred_res.to_dict(orient="records")
 
         # verify that sample id is in prediction result
-        if not sample_id in pred_res:
+        if not sample_id in pred_res[0]["sample"]:
             LOG.warning(
                 "Sample id %s is not in Mykrobe result, possible sample mixup",
                 sample_id,
@@ -202,17 +206,17 @@ def create_bonsai_input(
         results["run_metadata"]["databases"].append(
             SoupVersion(
                 name="mykrobe-predictor",
-                version=pred_res[sample_id]["version"]["mykrobe-predictor"],
+                version=pred_res[0]["mykrobe_version"],
                 type=SoupType.DB,
             )
         )
         # parse mykrobe result
-        amr_res = parse_mykrobe_amr_pred(pred_res[sample_id], ElementType.AMR)
+        amr_res = parse_mykrobe_amr_pred(pred_res, ElementType.AMR)
         if amr_res is not None:
             results["element_type_result"].append(amr_res)
 
         lin_res: MethodIndex = parse_mykrobe_lineage_results(
-            pred_res[sample_id], TypingMethod.LINEAGE
+            pred_res, TypingMethod.LINEAGE
         )
         results["typing_result"].append(lin_res)
 

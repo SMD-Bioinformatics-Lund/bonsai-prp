@@ -3,9 +3,9 @@ import logging
 import re
 from typing import Any, Dict, Tuple
 
-from ...models.phenotype import ElementAmrSubtype, ElementType, ElementTypeResult
+from ...models.phenotype import ElementType, ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
+from ...models.phenotype import ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
 from .utils import is_prediction_result_empty
 
@@ -21,35 +21,11 @@ def _get_mykrobe_amr_sr_profie(mykrobe_result):
         return {}
 
     for element_type in mykrobe_result:
-        if mykrobe_result[element_type]["predict"].upper() == "R":
-            resistant.add(element_type)
+        if element_type["susceptibility"].upper() == "R":
+            resistant.add(element_type["drug"])
         else:
-            susceptible.add(element_type)
+            susceptible.add(element_type["drug"])
     return {"susceptible": list(susceptible), "resistant": list(resistant)}
-
-
-def _parse_mykrobe_amr_genes(mykrobe_result) -> Tuple[ResistanceGene, ...]:
-    """Get resistance genes from mykrobe result."""
-    results = []
-    for element_type in mykrobe_result:
-        # skip non-resistance yeilding
-        if not mykrobe_result[element_type]["predict"].upper() == "R":
-            continue
-
-        hits = mykrobe_result[element_type]["called_by"]
-        for hit_name, hit in hits.items():
-            gene = ResistanceGene(
-                gene_symbol=hit_name.split("_")[0],
-                accession=None,
-                depth=hit["info"]["coverage"]["alternate"]["median_depth"],
-                identity=None,
-                coverage=hit["info"]["coverage"]["alternate"]["percent_coverage"],
-                phenotypes=[element_type.lower()],
-                element_type=ElementType.AMR,
-                element_subtype=ElementAmrSubtype.AMR,
-            )
-            results.append(gene)
-    return results
 
 
 def get_mutation_type(var_nom: str) -> Tuple[VariantType, str, str, int]:
@@ -90,34 +66,35 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[ResistanceVariant, ...]
 
     for element_type in mykrobe_result:
         # skip non-resistance yeilding
-        if not mykrobe_result[element_type]["predict"].upper() == "R":
+        if not element_type["susceptibility"].upper() == "R":
             continue
 
-        hits = mykrobe_result[element_type]["called_by"]
-        for hit in hits:
-            if hits[hit]["variant"] is not None:
-                continue
+        if element_type["variants"] is None:
+            continue
 
-            var_info = hit.split("-")[1]
+        variants = element_type["variants"].split(";")
+        for var in variants:
+            var_info = var.split("-")[1].split(":")[0]
             _, ref_nt, alt_nt, position = get_mutation_type(var_info)
-            var_nom = hit.split("-")[0].split("_")[1]
-            var_type, *_ = get_mutation_type(var_nom)
+            var_nom = var.split("-")[0].split("_")[1]
+            var_type, ref_aa, alt_aa, _ = get_mutation_type(var_nom)
             variant = ResistanceVariant(
                 variant_type=var_type,
-                genes=[hit.split("_")[0]],
-                phenotypes=[element_type],
+                gene_symbol=var.split("_")[0],
                 position=position,
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
-                depth=hits[hit]["info"]["coverage"]["alternate"]["median_depth"],
-                ref_database=None,
-                ref_id=None,
-                type=None,
+                ref_aa=ref_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
+                alt_aa=alt_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
+                conf=float(var.split(":")[-1]),
+                alt_kmer_count=float(var.split(":")[-2]),
+                ref_kmer_count=float(var.split(":")[-3]),
                 change=var_nom,
-                nucleotide_change=None,
-                protein_change=None,
-                annotation=None,
-                drugs=None,
+                nucleotide_change="c." + var_info,
+                protein_change="p." + var_nom,
+                element_type=ElementType.AMR,
+                method=element_type["genotype_model"],
+                drugs=[element_type["drug"].lower()],
             )
             results.append(variant)
     return results
@@ -128,11 +105,10 @@ def parse_mykrobe_amr_pred(
 ) -> ElementTypeResult | None:
     """Parse mykrobe resistance prediction results."""
     LOG.info("Parsing mykrobe prediction")
-    pred = prediction["susceptibility"]
     resistance = ElementTypeResult(
-        phenotypes=_get_mykrobe_amr_sr_profie(pred),
-        genes=_parse_mykrobe_amr_genes(pred),
-        mutations=_parse_mykrobe_amr_variants(pred),
+        phenotypes=_get_mykrobe_amr_sr_profie(prediction),
+        genes=[],
+        mutations=_parse_mykrobe_amr_variants(prediction),
     )
 
     # verify prediction result

@@ -14,6 +14,7 @@ LOG = logging.getLogger(__name__)
 def parse_vir_gene(
     info: Dict[str, Any], subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR
 ) -> VirulenceGene:
+    """Parse virulence gene prediction results."""
     start_pos, end_pos = map(int, info["position_in_ref"].split(".."))
     # Some genes doesnt have accession numbers
     accnr = None if info["accession"] == "NA" else info["accession"]
@@ -35,7 +36,7 @@ def parse_vir_gene(
 
 
 def _parse_virulencefinder_vir_results(pred: str) -> ElementTypeResult:
-    """Parse virulence prediction results from ARIBA."""
+    """Parse virulence prediction results from virulencefinder."""
     # parse virulence finder results
     species = list(k for k in pred["virulencefinder"]["results"])
     vir_genes = []
@@ -66,7 +67,7 @@ def parse_virulencefinder_vir_pred(path: str) -> ElementTypeResult | None:
     :rtype: ElementTypeResult | None
     """
     LOG.info("Parsing virulencefinder virulence prediction")
-    with open(path) as inpt:
+    with open(path, "rb") as inpt:
         pred = json.load(inpt)
         if "virulencefinder" in pred:
             results: ElementTypeResult = _parse_virulencefinder_vir_results(pred)

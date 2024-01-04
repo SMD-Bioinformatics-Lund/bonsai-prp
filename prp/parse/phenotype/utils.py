@@ -1,53 +1,14 @@
 """Shared utility functions."""
-from ...models.phenotype import ElementTypeResult, ResistanceGene
+from typing import Tuple
+from ...models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo, VariantType
 
 
-def _default_resistance() -> ElementTypeResult:
-    gene = ResistanceGene(
-        name=None,
-        virulence_category=None,
-        accession=None,
-        depth=None,
-        identity=None,
-        coverage=None,
-        ref_start_pos=None,
-        ref_end_pos=None,
-        ref_gene_length=None,
-        alignment_length=None,
-        ref_database=None,
-        phenotypes=[],
-        ref_id=None,
-        contig_id=None,
-        sequence_name=None,
-        ass_start_pos=None,
-        ass_end_pos=None,
-        strand=None,
-        element_type=None,
-        element_subtype=None,
-        target_length=None,
-        res_class=None,
-        res_subclass=None,
-        method=None,
-        close_seq_name=None,
+def _default_amr_phenotype() -> PhenotypeInfo:
+    return PhenotypeInfo(
+        type=ElementType.AMR,
+        group=ElementType.AMR,
+        name=ElementType.AMR,
     )
-    genes = [
-        gene,
-    ]
-    return ElementTypeResult(phenotypes=[], genes=genes, mutations=[])
-
-
-def _default_variant() -> ElementTypeResult:
-    mutation = ResistanceGene(
-        variant_type=None,
-        genes=None,
-        phenotypes=[],
-        position=None,
-        ref_nt=None,
-        alt_nt=None,
-        depth=None,
-    )
-    mutations = [mutation]
-    return ElementTypeResult(phenotypes=[], genes=[], mutations=mutations)
 
 
 def is_prediction_result_empty(result: ElementTypeResult) -> bool:
@@ -60,3 +21,55 @@ def is_prediction_result_empty(result: ElementTypeResult) -> bool:
     """
     n_entries = len(result.genes) + len(result.mutations)
     return n_entries == 1
+
+
+def get_nt_change(ref_codon: str, alt_codon: str) -> Tuple[str, str]:
+    """Get nucleotide change from codons
+
+    Ref: TCG, Alt: TTG => Tuple[C, T]
+
+    :param ref_codon: Reference codeon
+    :type ref_codon: str
+    :param str: Alternatve codon
+    :type str: str
+    :return: Returns nucleotide changed from the reference.
+    :rtype: Tuple[str, str]
+    """
+    ref_nt = ""
+    alt_nt = ""
+    for ref, alt in zip(ref_codon, alt_codon):
+        if not ref == alt:
+            ref_nt += ref
+            alt_nt += alt
+    return ref_nt.upper(), alt_nt.upper()
+
+
+def format_nt_change(
+    ref: str,
+    alt: str,
+    var_type: VariantType,
+    start_pos: int,
+    end_pos: int = None,
+) -> str:
+    """Format nucleotide change
+
+    :param ref: Reference sequence
+    :type ref: str
+    :param alt: Alternate sequence
+    :type alt: str
+    :param pos: Position
+    :type pos: int
+    :param var_type: Type of change
+    :type var_type: VariantType
+    :return: Formatted nucleotide
+    :rtype: str
+    """
+    fmt_change = ""
+    match var_type:
+        case VariantType.SUBSTITUTION:
+            f"g.{start_pos}{ref}>{alt}"
+        case VariantType.DELETION:
+            f"g.{start_pos}_{end_pos}del"
+        case VariantType.INSERTION:
+            f"g.{start_pos}_{end_pos}ins{alt}"
+    return fmt_change

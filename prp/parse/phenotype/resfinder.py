@@ -14,7 +14,7 @@ from ...models.phenotype import (
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
 from ...models.sample import MethodIndex
-from .utils import _default_resistance
+from .utils import format_nt_change, get_nt_change
 
 LOG = logging.getLogger(__name__)
 
@@ -221,7 +221,7 @@ def _parse_resfinder_amr_genes(
     """Get resistance genes from resfinder result."""
     results = []
     if not "seq_regions" in resfinder_result:
-        return _default_resistance().genes
+        return [ResistanceGene()]
 
     for info in resfinder_result["seq_regions"].values():
         # Get only acquired resistance genes
@@ -270,64 +270,11 @@ def _parse_resfinder_amr_genes(
     return results
 
 
-def get_nt_change(ref_codon: str, alt_codon: str) -> Tuple[str, str]:
-    """Get nucleotide change from codons
-
-    Ref: TCG, Alt: TTG => Tuple[C, T]
-
-    :param ref_codon: Reference codeon
-    :type ref_codon: str
-    :param str: Alternatve codon
-    :type str: str
-    :return: Returns nucleotide changed from the reference.
-    :rtype: Tuple[str, str]
-    """
-    ref_nt = ""
-    alt_nt = ""
-    for ref, alt in zip(ref_codon, alt_codon):
-        if not ref == alt:
-            ref_nt += ref
-            alt_nt += alt
-    return ref_nt.upper(), alt_nt.upper()
-
-
-def format_nt_change(
-    ref: str,
-    alt: str,
-    var_type: VariantType,
-    start_pos: int,
-    end_pos: int = None,
-) -> str:
-    """Format nucleotide change
-
-    :param ref: Reference sequence
-    :type ref: str
-    :param alt: Alternate sequence
-    :type alt: str
-    :param pos: Position
-    :type pos: int
-    :param var_type: Type of change
-    :type var_type: VariantType
-    :return: Formatted nucleotide
-    :rtype: str
-    """
-    fmt_change = ""
-    match var_type:
-        case VariantType.SUBSTITUTION:
-            f"g.{start_pos}{ref}>{alt}"
-        case VariantType.DELETION:
-            f"g.{start_pos}_{end_pos}del"
-        case VariantType.INSERTION:
-            f"g.{start_pos}_{end_pos}ins{alt}"
-    return fmt_change
-
-
 def _parse_resfinder_amr_variants(
     resfinder_result, limit_to_phenotypes=None
 ) -> Tuple[ResistanceVariant, ...]:
     """Get resistance genes from resfinder result."""
     results = []
-    igenes = []
     for info in resfinder_result["seq_variations"].values():
         # Get only variants from desired phenotypes
         if limit_to_phenotypes is not None:
@@ -350,9 +297,6 @@ def _parse_resfinder_amr_variants(
             var_type = VariantType.DELETION
         else:
             raise ValueError("Output has no known mutation type")
-        if not "seq_regions" in info:
-            # igenes = _default_resistance().genes
-            igenes = [""]
 
         # get gene symbol and accession nr
         gene_symbol, _, gene_accnr = info["seq_regions"][0].split(";;")
@@ -376,7 +320,6 @@ def _parse_resfinder_amr_variants(
             gene_symbol=gene_symbol,
             accession=gene_accnr,
             close_seq_name=gene_accnr,
-            genes=igenes,
             phenotypes=phenotype,
             position=info["ref_start_pos"],
             ref_nt=ref_nt,

@@ -2,9 +2,13 @@
 
 ### Added
 
+ - Pytest for Mycobacterium tuberculosis
+
 ### Fixed
 
 ### Changed
+
+ - Mykrobe output parser handles csv format instead of json
 
 ## [0.2.0]
 

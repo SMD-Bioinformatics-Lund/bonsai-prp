@@ -1,0 +1,568 @@
+{
+  "sample_id": "test_mtuberculosis_1",
+  "run_metadata": {
+    "run": {
+      "pipeline": "main.nf",
+      "version": "1.0.0",
+      "commit": "null",
+      "analysis_profile": "mycobacterium_tuberculosis",
+      "configuration_files": [
+        "/fs1/pipelines/jasen/nextflow.config"
+      ],
+      "workflow_name": "shrivelled_bassi",
+      "sample_name": "test_mtuberculosis_1",
+      "sequencing_platform": "illumina",
+      "sequencing_type": "PE",
+      "command": "nextflow run /fs1/pipelines/jasen/main.nf -profile mycobacterium_tuberculosis --csv /fs1/ryan/pipelines/jasen/test-csvs/prp_test_samples_mtuberculosis.csv --queue high -with-singularity /fs1/pipelines/jasen/container/jasen_2023_02-28.sif -with-report /fs1/nextflow//reports/mtuberculosis-val.jasen-mtuberculosis-dev.report.html -with-trace /fs1/nextflow//reports/mtuberculosis-val.jasen-mtuberculosis-dev.trace.txt -with-timeline /fs1/nextflow//reports/mtuberculosis-val.jasen-mtuberculosis-dev.timeline.html -work-dir /fs1/nextflow//mtuberculosis-val.jasen-mtuberculosis-dev -resume",
+      "date": "2023-12-27T13:52:15.507160+01:00"
+    },
+    "databases": [
+      {
+        "name": "mykrobe-predictor",
+        "version": "v0.12.2",
+        "type": "database"
+      },
+      {
+        "name": "tbdb",
+        "version": "c2fb9a2",
+        "type": "database"
+      }
+    ]
+  },
+  "qc": [
+    {
+      "software": "quast",
+      "version": null,
+      "result": {
+        "total_length": 4279497,
+        "reference_length": 4411532,
+        "largest_contig": 121726,
+        "n_contigs": 262,
+        "n50": 34433,
+        "assembly_gc": 65.44,
+        "reference_gc": 65.61,
+        "duplication_ratio": 1.0
+      }
+    },
+    {
+      "software": "postalignqc",
+      "version": null,
+      "result": {
+        "ins_size": 264,
+        "ins_size_dev": 213,
+        "mean_cov": 199,
+        "pct_above_x": {
+          "10": 99.9898416844028,
+          "250": 12.4392427641267,
+          "1": 100.0,
+          "1000": 0.0,
+          "30": 99.8976462131901,
+          "500": 0.0275675668101908,
+          "100": 98.3363831632575
+        },
+        "mapped_reads": 6022294,
+        "tot_reads": 6136081,
+        "iqr_median": 0.292929292929293,
+        "dup_pct": 0.0,
+        "dup_reads": 0
+      }
+    }
+  ],
+  "species_prediction": [
+    {
+      "scientific_name": "Mycobacterium tuberculosis",
+      "taxonomy_id": 1773,
+      "taxonomy_lvl": "species",
+      "kraken_assigned_reads": 308488,
+      "added_reads": 5518842,
+      "fraction_total_reads": 0.98023
+    },
+    {
+      "scientific_name": "Mycobacterium sp. 3/86Rv",
+      "taxonomy_id": 2041046,
+      "taxonomy_lvl": "species",
+      "kraken_assigned_reads": 322,
+      "added_reads": 35106,
+      "fraction_total_reads": 0.00596
+    },
+    {
+      "scientific_name": "Mycobacterium canettii",
+      "taxonomy_id": 78331,
+      "taxonomy_lvl": "species",
+      "kraken_assigned_reads": 28588,
+      "added_reads": 6553,
+      "fraction_total_reads": 0.00591
+    },
+    {
+      "scientific_name": "Homo sapiens",
+      "taxonomy_id": 9606,
+      "taxonomy_lvl": "species",
+      "kraken_assigned_reads": 11046,
+      "added_reads": 22,
+      "fraction_total_reads": 0.00186
+    },
+    {
+      "scientific_name": "Rothia mucilaginosa",
+      "taxonomy_id": 43675,
+      "taxonomy_lvl": "species",
+      "kraken_assigned_reads": 6301,
+      "added_reads": 167,
+      "fraction_total_reads": 0.00109
+    }
+  ],
+  "schema_version": 1,
+  "typing_result": [
+    {
+      "type": "lineage",
+      "software": "mykrobe",
+      "result": {
+        "lineages": [
+          {
+            "lin": null,
+            "family": null,
+            "spoligotype": null,
+            "rd": null,
+            "fraction": null,
+            "variant": "rpsL_K88R-AAG781821AGG",
+            "coverage": null
+          },
+          {
+            "lin": null,
+            "family": null,
+            "spoligotype": null,
+            "rd": null,
+            "fraction": null,
+            "variant": "rpsL_K88R-AAG781821AGG",
+            "coverage": null
+          },
+          {
+            "lin": null,
+            "family": null,
+            "spoligotype": null,
+            "rd": null,
+            "fraction": null,
+            "variant": "rpsL_K88R-AAG781821AGG",
+            "coverage": null
+          }
+        ],
+        "main_lin": "lineage2",
+        "sublin": "lineage2.2.4"
+      }
+    },
+    {
+      "type": "lineage",
+      "software": "tbprofiler",
+      "result": {
+        "lineages": [
+          {
+            "lin": "lineage2",
+            "family": "East-Asian",
+            "spoligotype": "Beijing",
+            "rd": "RD105",
+            "fraction": null,
+            "variant": null,
+            "coverage": null
+          },
+          {
+            "lin": "lineage2.2",
+            "family": "East-Asian (Beijing)",
+            "spoligotype": "Beijing-RD207",
+            "rd": "RD105;RD207",
+            "fraction": null,
+            "variant": null,
+            "coverage": null
+          },
+          {
+            "lin": "lineage2.2.1",
+            "family": "East-Asian (Beijing)",
+            "spoligotype": "Beijing-RD181",
+            "rd": "RD105;RD207;RD181",
+            "fraction": null,
+            "variant": null,
+            "coverage": null
+          }
+        ],
+        "main_lin": "lineage2",
+        "sublin": "lineage2.2.1"
+      }
+    }
+  ],
+  "element_type_result": [
+    {
+      "type": "AMR",
+      "software": "mykrobe",
+      "result": {
+        "phenotypes": {
+          "susceptible": [
+            "Kanamycin",
+            "Ethambutol",
+            "Levofloxacin",
+            "Ethionamide",
+            "Ciprofloxacin",
+            "Pyrazinamide",
+            "Ofloxacin",
+            "Delamanid",
+            "Capreomycin",
+            "Linezolid",
+            "Amikacin",
+            "Moxifloxacin"
+          ],
+          "resistant": [
+            "Rifampicin",
+            "Streptomycin",
+            "Isoniazid"
+          ]
+        },
+        "genes": [
+          {
+            "ref_database": null,
+            "ref_id": null,
+            "accession": null,
+            "depth": null,
+            "identity": null,
+            "coverage": null,
+            "ref_start_pos": null,
+            "ref_end_pos": null,
+            "drugs": [
+              "isoniazid"
+            ],
+            "ref_gene_length": null,
+            "alignment_length": null,
+            "contig_id": null,
+            "gene_symbol": "katG",
+            "sequence_name": null,
+            "ass_start_pos": null,
+            "ass_end_pos": null,
+            "strand": null,
+            "element_type": "AMR",
+            "element_subtype": "AMR",
+            "res_class": null,
+            "res_subclass": null,
+            "method": null,
+            "close_seq_name": null,
+            "phenotypes": [
+              {
+                "type": "AMR",
+                "group": "AMR",
+                "name": "AMR"
+              }
+            ]
+          },
+          {
+            "ref_database": null,
+            "ref_id": null,
+            "accession": null,
+            "depth": null,
+            "identity": null,
+            "coverage": null,
+            "ref_start_pos": null,
+            "ref_end_pos": null,
+            "drugs": [
+              "rifampicin"
+            ],
+            "ref_gene_length": null,
+            "alignment_length": null,
+            "contig_id": null,
+            "gene_symbol": "rpoB",
+            "sequence_name": null,
+            "ass_start_pos": null,
+            "ass_end_pos": null,
+            "strand": null,
+            "element_type": "AMR",
+            "element_subtype": "AMR",
+            "res_class": null,
+            "res_subclass": null,
+            "method": null,
+            "close_seq_name": null,
+            "phenotypes": [
+              {
+                "type": "AMR",
+                "group": "AMR",
+                "name": "AMR"
+              }
+            ]
+          },
+          {
+            "ref_database": null,
+            "ref_id": null,
+            "accession": null,
+            "depth": null,
+            "identity": null,
+            "coverage": null,
+            "ref_start_pos": null,
+            "ref_end_pos": null,
+            "drugs": [
+              "streptomycin"
+            ],
+            "ref_gene_length": null,
+            "alignment_length": null,
+            "contig_id": null,
+            "gene_symbol": "rpsL",
+            "sequence_name": null,
+            "ass_start_pos": null,
+            "ass_end_pos": null,
+            "strand": null,
+            "element_type": "AMR",
+            "element_subtype": "AMR",
+            "res_class": null,
+            "res_subclass": null,
+            "method": null,
+            "close_seq_name": null,
+            "phenotypes": [
+              {
+                "type": "AMR",
+                "group": "AMR",
+                "name": "AMR"
+              }
+            ]
+          }
+        ],
+        "mutations": []
+      }
+    },
+    {
+      "type": "AMR",
+      "software": "tbprofiler",
+      "result": {
+        "phenotypes": {
+          "susceptible": [
+            "ofloxacin",
+            "moxifloxacin",
+            "delamanid",
+            "kanamycin",
+            "amikacin",
+            "ethambutol",
+            "ethionamide",
+            "ciprofloxacin",
+            "levofloxacin",
+            "pyrazinamide",
+            "linezolid",
+            "capreomycin"
+          ],
+          "resistant": [
+            "streptomycin",
+            "isoniazid",
+            "rifampicin"
+          ]
+        },
+        "genes": [],
+        "mutations": [
+          {
+            "ref_database": "tbdb",
+            "ref_id": null,
+            "variant_type": "substitution",
+            "genes": [
+              "rpoB"
+            ],
+            "position": 761104,
+            "ref_nt": "TCATGGA",
+            "alt_nt": "T",
+            "ref_aa": null,
+            "alt_aa": null,
+            "depth": 151.0,
+            "contig_id": null,
+            "gene_symbol": null,
+            "sequence_name": null,
+            "ass_start_pos": null,
+            "ass_end_pos": null,
+            "strand": null,
+            "element_type": null,
+            "element_subtype": null,
+            "target_length": null,
+            "res_class": null,
+            "res_subclass": null,
+            "method": null,
+            "close_seq_name": null,
+            "type": "conservative_inframe_deletion",
+            "change": null,
+            "nucleotide_change": "c.1300_1305delATGGAC",
+            "protein_change": "p.Met434_Asp435del",
+            "annotation": [
+              {
+                "type": "who_confidence",
+                "drug": "rifampicin",
+                "who_confidence": "Assoc w R - interim"
+              }
+            ],
+            "drugs": [
+              {
+                "type": "drug",
+                "drug": "rifampicin",
+                "literature": "https://www.who.int/publications/i/item/9789240028173",
+                "confers": "resistance",
+                "who confidence": "Assoc w R - interim"
+              }
+            ],
+            "phenotypes": [
+              {
+                "type": "AMR",
+                "group": "AMR",
+                "name": "AMR"
+              }
+            ]
+          },
+          {
+            "ref_database": "tbdb",
+            "ref_id": null,
+            "variant_type": "substitution",
+            "genes": [
+              "rpsL"
+            ],
+            "position": 781822,
+            "ref_nt": "A",
+            "alt_nt": "G",
+            "ref_aa": null,
+            "alt_aa": null,
+            "depth": 236.0,
+            "contig_id": null,
+            "gene_symbol": null,
+            "sequence_name": null,
+            "ass_start_pos": null,
+            "ass_end_pos": null,
+            "strand": null,
+            "element_type": null,
+            "element_subtype": null,
+            "target_length": null,
+            "res_class": null,
+            "res_subclass": null,
+            "method": null,
+            "close_seq_name": null,
+            "type": "missense_variant",
+            "change": null,
+            "nucleotide_change": "c.263A>G",
+            "protein_change": "p.Lys88Arg",
+            "annotation": [
+              {
+                "type": "who_confidence",
+                "drug": "streptomycin",
+                "who_confidence": "Assoc w R"
+              }
+            ],
+            "drugs": [
+              {
+                "type": "drug",
+                "drug": "streptomycin",
+                "confers": "resistance",
+                "who confidence": "Assoc w R"
+              }
+            ],
+            "phenotypes": [
+              {
+                "type": "AMR",
+                "group": "AMR",
+                "name": "AMR"
+              }
+            ]
+          },
+          {
+            "ref_database": "tbdb",
+            "ref_id": null,
+            "variant_type": "substitution",
+            "genes": [
+              "katG"
+            ],
+            "position": 2155168,
+            "ref_nt": "C",
+            "alt_nt": "G",
+            "ref_aa": null,
+            "alt_aa": null,
+            "depth": 152.0,
+            "contig_id": null,
+            "gene_symbol": null,
+            "sequence_name": null,
+            "ass_start_pos": null,
+            "ass_end_pos": null,
+            "strand": null,
+            "element_type": null,
+            "element_subtype": null,
+            "target_length": null,
+            "res_class": null,
+            "res_subclass": null,
+            "method": null,
+            "close_seq_name": null,
+            "type": "missense_variant",
+            "change": null,
+            "nucleotide_change": "c.944G>C",
+            "protein_change": "p.Ser315Thr",
+            "annotation": [
+              {
+                "type": "who_confidence",
+                "drug": "isoniazid",
+                "who_confidence": "Assoc w R"
+              }
+            ],
+            "drugs": [
+              {
+                "type": "drug",
+                "drug": "isoniazid",
+                "confers": "resistance",
+                "who confidence": "Assoc w R"
+              }
+            ],
+            "phenotypes": [
+              {
+                "type": "AMR",
+                "group": "AMR",
+                "name": "AMR"
+              }
+            ]
+          },
+          {
+            "ref_database": "tbdb",
+            "ref_id": null,
+            "variant_type": "substitution",
+            "genes": [
+              "gid"
+            ],
+            "position": 4407686,
+            "ref_nt": "C",
+            "alt_nt": "A",
+            "ref_aa": null,
+            "alt_aa": null,
+            "depth": 221.0,
+            "contig_id": null,
+            "gene_symbol": null,
+            "sequence_name": null,
+            "ass_start_pos": null,
+            "ass_end_pos": null,
+            "strand": null,
+            "element_type": null,
+            "element_subtype": null,
+            "target_length": null,
+            "res_class": null,
+            "res_subclass": null,
+            "method": null,
+            "close_seq_name": null,
+            "type": "stop_gained",
+            "change": null,
+            "nucleotide_change": "c.517G>T",
+            "protein_change": "p.Glu173*",
+            "annotation": [
+              {
+                "type": "who_confidence",
+                "drug": "streptomycin",
+                "who_confidence": "Assoc w R - interim"
+              }
+            ],
+            "drugs": [
+              {
+                "type": "drug",
+                "drug": "streptomycin",
+                "literature": "https://www.who.int/publications/i/item/9789240028173",
+                "confers": "resistance",
+                "who confidence": "Assoc w R - interim"
+              }
+            ],
+            "phenotypes": [
+              {
+                "type": "AMR",
+                "group": "AMR",
+                "name": "AMR"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

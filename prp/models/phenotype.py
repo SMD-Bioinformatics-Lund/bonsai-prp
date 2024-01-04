@@ -2,7 +2,7 @@
 from enum import Enum
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from .base import RWModel
 
@@ -90,6 +90,7 @@ class GeneBase(BaseModel):
     coverage: Optional[float] = None
     ref_start_pos: Optional[int] = None
     ref_end_pos: Optional[int] = None
+    drugs: Optional[List[Union[Dict, str]]] = None
     ref_gene_length: Optional[int] = Field(
         default=None,
         alias="target_length",
@@ -143,14 +144,17 @@ class VariantBase(DatabaseReference):
     """Container for mutation information"""
 
     variant_type: VariantType
-    genes: List[str]
     position: int
     ref_nt: str
     alt_nt: str
-    ref_aa: str
-    alt_aa: str
+    ref_aa: Optional[str] = None
+    alt_aa: Optional[str] = None
     # prediction info
+    conf: Optional[int] = None
+    alt_kmer_count: Optional[int] = None
+    ref_kmer_count: Optional[int] = None
     depth: Optional[float] = None
+    freq: Optional[float] = None
     contig_id: Optional[str] = None
     gene_symbol: Optional[str] = None
     sequence_name: Optional[str] = Field(
@@ -175,7 +179,7 @@ class VariantBase(DatabaseReference):
     nucleotide_change: Optional[str] = None
     protein_change: Optional[str] = None
     annotation: Optional[List[Dict]] = None
-    drugs: Optional[List[Dict]] = None
+    drugs: Optional[List[Union[Dict, str]]] = None
 
 
 class ResistanceVariant(VariantBase):
