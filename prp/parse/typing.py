@@ -135,11 +135,14 @@ def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage
     for lineage in pred_res:
         if not lineage["susceptibility"].upper() == "R":
             continue
-        split_lin = lineage["lineage"].split('.')
+        split_lin = lineage["lineage"].split(".")
         main_lin = split_lin[0]
         sublin = lineage["lineage"]
-        lin_idxs = lineage["lineage"].lstrip("lineage").split('.')
-        lineages = [LineageInformation(lineage="lineage" + '.'.join(lin_idxs[:idx+1])) for idx in range(len(lin_idxs))]
+        lin_idxs = lineage["lineage"].lstrip("lineage").split(".")
+        lineages = [
+            LineageInformation(lineage="lineage" + ".".join(lin_idxs[: idx + 1]))
+            for idx in range(len(lin_idxs))
+        ]
     # cast to lineage object
     result_obj = TypingResultLineage(
         main_lin=main_lin,
@@ -174,6 +177,6 @@ def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
                 pred_result = MethodIndex(
                     type=TypingMethod.STX,
                     software=Software.VIRULENCEFINDER,
-                    result=gene
+                    result=gene,
                 )
     return pred_result

@@ -90,7 +90,7 @@ class GeneBase(BaseModel):
     coverage: Optional[float] = None
     ref_start_pos: Optional[int] = None
     ref_end_pos: Optional[int] = None
-    drugs: Optional[List[Union[Dict,str]]] = None
+    drugs: Optional[List[Union[Dict, str]]] = None
     ref_gene_length: Optional[int] = Field(
         default=None,
         alias="target_length",
@@ -175,7 +175,7 @@ class VariantBase(DatabaseReference):
     nucleotide_change: Optional[str] = None
     protein_change: Optional[str] = None
     annotation: Optional[List[Dict]] = None
-    drugs: Optional[List[Union[Dict,str]]] = None
+    drugs: Optional[List[Union[Dict, str]]] = None
 
 
 class ResistanceVariant(VariantBase):

@@ -67,7 +67,7 @@ def parse_virulencefinder_vir_pred(path: str) -> ElementTypeResult | None:
     :rtype: ElementTypeResult | None
     """
     LOG.info("Parsing virulencefinder virulence prediction")
-    with open(path, 'rb') as inpt:
+    with open(path, "rb") as inpt:
         pred = json.load(inpt)
         if "virulencefinder" in pred:
             results: ElementTypeResult = _parse_virulencefinder_vir_results(pred)

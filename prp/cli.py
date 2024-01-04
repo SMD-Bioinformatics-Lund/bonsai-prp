@@ -2,9 +2,9 @@
 import json
 import logging
 from typing import List
-import pandas as pd
 
 import click
+import pandas as pd
 from pydantic import TypeAdapter, ValidationError
 
 from .models.metadata import SoupType, SoupVersion
