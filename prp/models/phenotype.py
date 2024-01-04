@@ -150,7 +150,11 @@ class VariantBase(DatabaseReference):
     ref_aa: Optional[str] = None
     alt_aa: Optional[str] = None
     # prediction info
+    conf: Optional[int] = None
+    alt_kmer_count: Optional[int] = None
+    ref_kmer_count: Optional[int] = None
     depth: Optional[float] = None
+    freq: Optional[float] = None
     contig_id: Optional[str] = None
     gene_symbol: Optional[str] = None
     sequence_name: Optional[str] = Field(
