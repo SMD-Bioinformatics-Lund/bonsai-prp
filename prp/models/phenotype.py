@@ -151,9 +151,13 @@ class VariantBase(DatabaseReference):
     alt_nt: str
     ref_aa: Optional[str] = None
     alt_aa: Optional[str] = None
+
     # prediction info
     depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
     frequency: Optional[float] = Field(None, description="Alt allele frequency.")
+    passed_qc: bool = Field(..., description="Describe if variant has passed the tool qc check")
+
+    # variant location
     contig_id: Optional[str] = None
     gene_symbol: Optional[str] = None
     sequence_name: Optional[str] = Field(
