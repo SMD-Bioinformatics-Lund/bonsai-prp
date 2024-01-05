@@ -142,45 +142,26 @@ class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
 
 
-class VariantBase(DatabaseReference):
+class VariantBase(RWModel):
     """Container for mutation information"""
 
     # classification
     variant_type: VariantType
-    element_type: Optional[ElementType] = None
-    element_subtype: Optional[str] = None
-    res_class: Optional[str] = None
-    res_subclass: Optional[str] = None
     phenotypes: List[PhenotypeInfo] = []
 
     # variant location
-    contig_id: Optional[str] = None
-    gene_symbol: Optional[str] = None
-    sequence_name: Optional[str] = Field(
-        default=None, description="Reference sequence name"
-    )
+    gene_symbol: str
+    accession: Optional[str] = None
     position: int
     ref_nt: str
     alt_nt: str
     ref_aa: Optional[str] = None
     alt_aa: Optional[str] = None
 
-    # assembly based
-    ass_start_pos: Optional[int] = Field(
-        default=None, description="Assembly start position"
-    )
-    ass_end_pos: Optional[int] = Field(
-        default=None, description="Assembly end position"
-    )
-    strand: Optional[SequenceStand] = None
-    target_length: Optional[int] = None
-    close_seq_name: Optional[str] = None
-    change: Optional[str] = None
-
     # prediction info
     depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
     frequency: Optional[float] = Field(None, description="Alt allele frequency.")
-    method: Optional[str] = Field(None, description="Prediction method used to call variant")
+    method: str = Field(..., description="Prediction method used to call variant")
     passed_qc: bool = Field(..., description="Describe if variant has passed the tool qc check")
 
 
@@ -197,8 +178,10 @@ class MykrobeVariant(VariantBase):
 class TbProfilerVariant(VariantBase):
     """Container for TbProfiler variant information"""
 
-    type: str
-    annotation: List[Any]
+    variant_effect: str
+    hgvs_nt_change: Optional[str] = Field(..., description="DNA change in HGVS format")
+    hgvs_aa_change: Optional[str] = Field(..., description="Protein change in HGVS format")
+
 
 class ElementTypeResult(BaseModel):
     """Phenotype result data model.

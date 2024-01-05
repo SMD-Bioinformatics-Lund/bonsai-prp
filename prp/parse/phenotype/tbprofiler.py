@@ -50,6 +50,10 @@ def _get_tbprofiler_amr_sr_profie(tbprofiler_result):
 
 def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]:
     """Get resistance genes from tbprofiler result."""
+    variant_caller = None
+    for prog in predictions['pipeline']:
+        if prog['Analysis'].lower() == 'variant calling':
+            variant_caller = prog['Program']
     results = []
 
     # tbprofiler report three categories of variants
@@ -75,24 +79,24 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
                 var_type = VariantType.INSERTION
 
             variant = TbProfilerVariant(
-                # positional
+                # classificatoin
                 variant_type=var_type,
+                phenotypes=parse_drug_resistance_info(hit["drugs"]),
+                # location
                 gene_symbol=hit["gene"],
-                phenotypes=[],
+                accession=hit["feature_id"],
                 position=int(hit["genome_pos"]),
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
-                # call metrics
+                # consequense
+                variant_effect=hit["type"],
+                hgvs_nt_change=hit["nucleotide_change"],
+                hgvs_aa_change=hit["protein_change"],
+                # prediction info
                 depth=hit["depth"],
                 frequency=float(hit["freq"]),
+                method=variant_caller,
                 passed_qc=passed_qc,
-                type=hit["type"],
-                # geno -> pheno
-                ref_database=predictions["db_version"]["name"],
-                nucleotide_change=hit["nucleotide_change"],
-                protein_change=hit["protein_change"],
-                annotation=hit["annotation"],
-                phenotype=parse_drug_resistance_info(hit["drugs"]),
             )
             results.append(variant)
     return results

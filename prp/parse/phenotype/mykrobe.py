@@ -98,21 +98,22 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
 
             # cast to variant object
             variant = MykrobeVariant(
+                # classification
                 variant_type=var_type,
+                phenotypes=phenotype,
+                # location
                 gene_symbol=gene,
                 position=position,
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
                 ref_aa=ref_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
                 alt_aa=alt_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
+                # variant info
+                method=element_type["genotype_model"],
                 depth=int(ref_depth) + int(alt_depth),
                 frequency=int(alt_depth) / (int(ref_depth) + int(alt_depth)),
-                passed_qc=True,
                 confidence=int(conf),
-                change=aa_change,
-                element_type=ElementType.AMR,
-                method=element_type["genotype_model"],
-                phenotype=phenotype,
+                passed_qc=True,
             )
             results.append(variant)
     return results
