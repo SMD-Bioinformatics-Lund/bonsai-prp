@@ -3,11 +3,16 @@ import logging
 import re
 from typing import Any, Dict, Tuple
 
-from ...models.phenotype import ElementType, ElementTypeResult
+from ...models.phenotype import (
+    ElementType,
+    ElementTypeResult,
+    MykrobeVariant,
+    PhenotypeInfo,
+)
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceVariant, VariantType
+from ...models.phenotype import VariantType
 from ...models.sample import MethodIndex
-from .utils import is_prediction_result_empty
+from .utils import get_nt_change, is_prediction_result_empty
 
 LOG = logging.getLogger(__name__)
 
@@ -60,7 +65,7 @@ def get_mutation_type(var_nom: str) -> Tuple[VariantType, str, str, int]:
     return mut_type, ref_codon, alt_codon, position
 
 
-def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[ResistanceVariant, ...]:
+def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
     """Get resistance genes from mykrobe result."""
     results = []
 
@@ -72,29 +77,45 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[ResistanceVariant, ...]
         if element_type["variants"] is None:
             continue
 
+        # generate phenotype info
+        phenotype = [PhenotypeInfo(name=element_type["drug"], type=ElementType.AMR)]
+
         variants = element_type["variants"].split(";")
-        for var in variants:
-            var_info = var.split("-")[1].split(":")[0]
-            _, ref_nt, alt_nt, position = get_mutation_type(var_info)
-            var_nom = var.split("-")[0].split("_")[1]
-            var_type, ref_aa, alt_aa, _ = get_mutation_type(var_nom)
-            variant = ResistanceVariant(
+        # Mykrobe CSV variant format
+        # <gene>_<amino acid change>-<dna change>:<ref depth>:<alt depth>:<genotype confidence>
+        # ref: https://github.com/Mykrobe-tools/mykrobe/wiki/AMR-prediction-output
+        PATTERN = re.compile(r"(.+)_(.+)-(.+):(\d+):(\d+):(\d+)", re.I)
+        for variant in variants:
+            # extract variant info using regex
+            match = re.search(PATTERN, variant)
+            gene, aa_change, dna_change, ref_depth, alt_depth, conf = match.groups()
+
+            # get type of variant
+            var_type, ref_aa, alt_aa, _ = get_mutation_type(aa_change)
+
+            # reduce codon to nt change for substitutions
+            _, ref_nt, alt_nt, position = get_mutation_type(dna_change)
+            if var_type == VariantType.SUBSTITUTION:
+                ref_nt, alt_nt = get_nt_change(ref_nt, alt_nt)
+
+            # cast to variant object
+            variant = MykrobeVariant(
+                # classification
                 variant_type=var_type,
-                gene_symbol=var.split("_")[0],
+                phenotypes=phenotype,
+                # location
+                gene_symbol=gene,
                 position=position,
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
                 ref_aa=ref_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
                 alt_aa=alt_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
-                conf=float(var.split(":")[-1]),
-                alt_kmer_count=float(var.split(":")[-2]),
-                ref_kmer_count=float(var.split(":")[-3]),
-                change=var_nom,
-                nucleotide_change="c." + var_info,
-                protein_change="p." + var_nom,
-                element_type=ElementType.AMR,
+                # variant info
                 method=element_type["genotype_model"],
-                drugs=[element_type["drug"].lower()],
+                depth=int(ref_depth) + int(alt_depth),
+                frequency=int(alt_depth) / (int(ref_depth) + int(alt_depth)),
+                confidence=int(conf),
+                passed_qc=True,
             )
             results.append(variant)
     return results

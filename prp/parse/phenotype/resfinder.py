@@ -12,7 +12,7 @@ from ...models.phenotype import (
     PhenotypeInfo,
 )
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
+from ...models.phenotype import ResfinderGene, ResfinderVariant, VariantType
 from ...models.sample import MethodIndex
 from .utils import format_nt_change, get_nt_change
 
@@ -217,12 +217,9 @@ def _get_resfinder_amr_sr_profie(resfinder_result, limit_to_phenotypes=None):
 
 def _parse_resfinder_amr_genes(
     resfinder_result, limit_to_phenotypes=None
-) -> List[ResistanceGene]:
+) -> List[ResfinderGene]:
     """Get resistance genes from resfinder result."""
     results = []
-    if not "seq_regions" in resfinder_result:
-        return [ResistanceGene()]
-
     for info in resfinder_result["seq_regions"].values():
         # Get only acquired resistance genes
         if not info["ref_database"][0].startswith("Res"):
@@ -244,27 +241,31 @@ def _parse_resfinder_amr_genes(
         # format phenotypes
         phenotype = [
             PhenotypeInfo(
-                type=res_category, group=lookup_antibiotic_class(phe), name=phe
+                type=res_category,
+                name=phe,
+                group=lookup_antibiotic_class(phe),
+                reference=info["pmids"],
             )
             for phe in info["phenotypes"]
         ]
 
         # store results
-        gene = ResistanceGene(
+        gene = ResfinderGene(
+            # info
             gene_symbol=info["name"],
             accession=info["ref_acc"],
-            depth=info["depth"],
-            identity=info["identity"],
-            coverage=info["coverage"],
+            element_type=res_category,
+            element_subtype=element_subtype,
+            phenotypes=phenotype,
+            # position
             ref_start_pos=info["ref_start_pos"],
             ref_end_pos=info["ref_end_pos"],
             ref_gene_length=info["ref_seq_length"],
             alignment_length=info["alignment_length"],
-            phenotypes=phenotype,
-            ref_database=info["ref_database"][0],
-            ref_id=info["ref_id"],
-            element_type=res_category,
-            element_subtype=element_subtype,
+            # prediction
+            depth=info["depth"],
+            identity=info["identity"],
+            coverage=info["coverage"],
         )
         results.append(gene)
     return results
@@ -272,8 +273,14 @@ def _parse_resfinder_amr_genes(
 
 def _parse_resfinder_amr_variants(
     resfinder_result, limit_to_phenotypes=None
-) -> Tuple[ResistanceVariant, ...]:
+) -> Tuple[ResfinderVariant, ...]:
     """Get resistance genes from resfinder result."""
+    # get prediction method
+    prediction_method = None
+    for exec in resfinder_result["software_executions"].values():
+        prediction_method = exec["parameters"]["method"]
+
+    # parse prediction result
     results = []
     for info in resfinder_result["seq_variations"].values():
         # Get only variants from desired phenotypes
@@ -302,35 +309,27 @@ def _parse_resfinder_amr_variants(
         gene_symbol, _, gene_accnr = info["seq_regions"][0].split(";;")
 
         ref_nt, alt_nt = get_nt_change(info["ref_codon"], info["var_codon"])
-        nt_change = format_nt_change(
-            ref=ref_nt,
-            alt=alt_nt,
-            start_pos=info["ref_start_pos"],
-            end_pos=info["ref_end_pos"],
-            var_type=var_type,
-        )
         phenotype = [
             PhenotypeInfo(
                 type=ElementType.AMR, group=lookup_antibiotic_class(phe), name=phe
             )
             for phe in info["phenotypes"]
         ]
-        variant = ResistanceVariant(
+        variant = ResfinderVariant(
             variant_type=var_type,
+            phenotypes=phenotype,
+            # position
             gene_symbol=gene_symbol,
             accession=gene_accnr,
-            close_seq_name=gene_accnr,
-            phenotypes=phenotype,
             position=info["ref_start_pos"],
             ref_nt=ref_nt,
             alt_nt=alt_nt,
             ref_aa=info["ref_aa"],
             alt_aa=info["var_aa"],
-            nucleotide_change=nt_change,
-            protein_change=info["seq_var"],
+            # consequense
             depth=info["depth"],
-            ref_database=info["ref_database"],
-            ref_id=info["ref_id"],
+            method=prediction_method,
+            passed_qc=True,  # resfinder only presents variants passing qc
         )
         results.append(variant)
     return results

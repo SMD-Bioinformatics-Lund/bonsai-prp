@@ -1,6 +1,6 @@
 """Datamodels used for prediction results."""
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -66,11 +66,13 @@ class ElementVirulenceSubtype(Enum):
 class PhenotypeInfo(RWModel):
     """Phenotype information."""
 
+    name: str
+    group: str | None = Field(None, description="Name of the group a trait belongs to.")
     type: ElementType = Field(
         ..., description="Trait category, for example AMR, STRESS etc."
     )
-    group: str = Field(..., description="Name of the group an trait belongs to.")
-    name: str
+    reference: List[str] = Field([], description="References supporting trait")
+    note: str | None = Field(None, description="Note, can be used for confidence score")
 
 
 class DatabaseReference(RWModel):
@@ -83,54 +85,59 @@ class DatabaseReference(RWModel):
 class GeneBase(BaseModel):
     """Container for gene information"""
 
-    accession: Optional[str] = None
-    # prediction info
-    depth: Optional[float] = None
-    identity: Optional[float] = None
-    coverage: Optional[float] = None
-    ref_start_pos: Optional[int] = None
-    ref_end_pos: Optional[int] = None
-    drugs: Optional[List[Union[Dict, str]]] = None
-    ref_gene_length: Optional[int] = Field(
-        default=None,
-        alias="target_length",
-        description="The length of the query protein or gene.",
-    )
-    alignment_length: Optional[int] = None
-    # amrfinder extra info
-    contig_id: Optional[str] = None
+    # basic info
     gene_symbol: Optional[str] = None
+    accession: Optional[str] = None
     sequence_name: Optional[str] = Field(
         default=None, description="Reference sequence name"
     )
-    ass_start_pos: Optional[int] = Field(
-        default=None, description="Start position on the assembly"
-    )
-    ass_end_pos: Optional[int] = Field(
-        default=None, description="End position on the assembly"
-    )
-    strand: Optional[SequenceStand] = None
     element_type: ElementType = Field(
         description="The predominant function fo the gene."
     )
     element_subtype: Union[
         ElementStressSubtype, ElementAmrSubtype, ElementVirulenceSubtype
     ] = Field(description="Further functional categorization of the genes.")
+    # position
+    ref_start_pos: Optional[int] = Field(
+        None, description="Alignment start in reference"
+    )
+    ref_end_pos: Optional[int] = Field(None, description="Alignment end in reference")
+    ref_gene_length: Optional[int] = Field(
+        default=None,
+        alias="target_length",
+        description="The length of the reference protein or gene.",
+    )
+
+    # prediction
+    method: Optional[str] = Field(None, description="Method used to predict gene")
+    identity: Optional[float] = Field(
+        None, description="Identity to reference sequence"
+    )
+    coverage: Optional[float] = Field(
+        None, description="Ratio reference sequence covered"
+    )
+
+
+class AmrFinderGene(GeneBase):
+    """Container for Resfinder gene prediction information"""
+
+    contig_id: str
+    query_start_pos: int = Field(
+        default=None, description="Start position on the assembly"
+    )
+    query_end_pos: int = Field(default=None, description="End position on the assembly")
+    strand: SequenceStand
     res_class: Optional[str] = None
     res_subclass: Optional[str] = None
-    method: Optional[str] = Field(
-        default=None, description="Generic description of the prediction method"
-    )
-    close_seq_name: Optional[str] = Field(
-        default=None,
-        description=(
-            "Name of the closest competing hit if there "
-            "are multiple equaly good hits"
-        ),
-    )
 
 
-class ResistanceGene(GeneBase, DatabaseReference):
+class AmrFinderResistanceGene(AmrFinderGene):
+    """AMRfinder resistance gene information."""
+
+    phenotypes: List[PhenotypeInfo] = []
+
+
+class ResistanceGene(GeneBase):
     """Container for resistance gene information"""
 
     phenotypes: List[PhenotypeInfo] = []
@@ -139,53 +146,62 @@ class ResistanceGene(GeneBase, DatabaseReference):
 class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
 
+    depth: Optional[float] = Field(
+        None, description="Ammount of sequence data supporting the gene."
+    )
 
-class VariantBase(DatabaseReference):
+
+class ResfinderGene(ResistanceGene):
+    """Container for Resfinder gene prediction information"""
+
+    depth: Optional[float] = Field(
+        None, description="Ammount of sequence data supporting the gene."
+    )
+
+
+class VariantBase(RWModel):
     """Container for mutation information"""
 
+    # classification
     variant_type: VariantType
+    phenotypes: List[PhenotypeInfo] = []
+
+    # variant location
+    gene_symbol: str
+    accession: Optional[str] = None
     position: int
     ref_nt: str
     alt_nt: str
     ref_aa: Optional[str] = None
     alt_aa: Optional[str] = None
+
     # prediction info
-    conf: Optional[int] = None
-    alt_kmer_count: Optional[int] = None
-    ref_kmer_count: Optional[int] = None
-    depth: Optional[float] = None
-    freq: Optional[float] = None
-    contig_id: Optional[str] = None
-    gene_symbol: Optional[str] = None
-    sequence_name: Optional[str] = Field(
-        default=None, description="Reference sequence name"
+    depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
+    frequency: Optional[float] = Field(None, description="Alt allele frequency.")
+    method: str = Field(..., description="Prediction method used to call variant")
+    passed_qc: bool = Field(
+        ..., description="Describe if variant has passed the tool qc check"
     )
-    ass_start_pos: Optional[int] = Field(
-        default=None, description="Assembly start position"
-    )
-    ass_end_pos: Optional[int] = Field(
-        default=None, description="Assembly end position"
-    )
-    strand: Optional[SequenceStand] = None
-    element_type: Optional[ElementType] = None
-    element_subtype: Optional[str] = None
-    target_length: Optional[int] = None
-    res_class: Optional[str] = None
-    res_subclass: Optional[str] = None
-    method: Optional[str] = None
-    close_seq_name: Optional[str] = None
-    type: Optional[str] = None
-    change: Optional[str] = None
-    nucleotide_change: Optional[str] = None
-    protein_change: Optional[str] = None
-    annotation: Optional[List[Dict]] = None
-    drugs: Optional[List[Union[Dict, str]]] = None
 
 
-class ResistanceVariant(VariantBase):
-    """Container for resistance variant information"""
+class ResfinderVariant(VariantBase):
+    """Container for ResFinder variant information"""
 
-    phenotypes: List[PhenotypeInfo] = []
+
+class MykrobeVariant(VariantBase):
+    """Container for Mykrobe variant information"""
+
+    confidence: int
+
+
+class TbProfilerVariant(VariantBase):
+    """Container for TbProfiler variant information"""
+
+    variant_effect: str
+    hgvs_nt_change: Optional[str] = Field(..., description="DNA change in HGVS format")
+    hgvs_aa_change: Optional[str] = Field(
+        ..., description="Protein change in HGVS format"
+    )
 
 
 class ElementTypeResult(BaseModel):
@@ -196,5 +212,5 @@ class ElementTypeResult(BaseModel):
     """
 
     phenotypes: Dict[str, List[str]]
-    genes: List[Union[ResistanceGene, VirulenceGene]]
-    mutations: List[ResistanceVariant]
+    genes: List[Union[AmrFinderGene, ResfinderGene, VirulenceGene]]
+    mutations: List[Union[ResfinderVariant, TbProfilerVariant, MykrobeVariant]]

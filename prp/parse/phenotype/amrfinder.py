@@ -4,15 +4,22 @@ from typing import Tuple
 
 import pandas as pd
 
-from ...models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo
+from ...models.phenotype import (
+    AmrFinderGene,
+    AmrFinderResistanceGene,
+    ElementType,
+    ElementTypeResult,
+    PhenotypeInfo,
+)
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceGene, VirulenceGene
 from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
 
 
-def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...]:
+def _parse_amrfinder_amr_results(
+    predictions: dict,
+) -> Tuple[AmrFinderResistanceGene, ...]:
     """Parse amrfinder prediction results from amrfinderplus."""
     genes = []
     for prediction in predictions:
@@ -42,26 +49,26 @@ def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[ResistanceGene, ...
                 ]
             )
         # store resistance gene
-        gene = ResistanceGene(
-            accession=prediction["close_seq_accn"],
-            identity=prediction["ref_seq_identity"],
-            coverage=prediction["ref_seq_cov"],
-            ref_gene_length=prediction["ref_seq_len"],
-            alignment_length=prediction["align_len"],
-            contig_id=prediction["contig_id"],
+        gene = AmrFinderResistanceGene(
+            # info
             gene_symbol=prediction["gene_symbol"],
+            accession=prediction["close_seq_accn"],
             sequence_name=prediction["sequence_name"],
-            ass_start_pos=prediction["Start"],
-            ass_end_pos=prediction["Stop"],
-            strand=prediction["Strand"],
+            # gene classification
             element_type=element_type,
             element_subtype=prediction["element_subtype"],
-            target_length=prediction["target_length"],
-            res_class=res_class,
-            res_subclass=res_sub_class,
-            method=prediction["Method"],
-            close_seq_name=prediction["close_seq_name"],
             phenotypes=phenotypes,
+            # position
+            contig_id=prediction["contig_id"],
+            query_start_pos=prediction["Start"],
+            query_end_pos=prediction["Stop"],
+            strand=prediction["Strand"],
+            ref_gene_length=prediction["ref_seq_len"],
+            alignment_length=prediction["align_len"],
+            # prediction
+            method=prediction["Method"],
+            identity=prediction["ref_seq_identity"],
+            coverage=prediction["ref_seq_cov"],
         )
         genes.append(gene)
 
@@ -108,33 +115,25 @@ def _parse_amrfinder_vir_results(predictions: dict) -> ElementTypeResult:
     """Parse amrfinder prediction results from amrfinderplus."""
     genes = []
     for prediction in predictions:
-        gene = VirulenceGene(
-            name=None,
-            virulence_category=None,
-            accession=prediction["close_seq_accn"],
-            depth=None,
-            identity=prediction["ref_seq_identity"],
-            coverage=prediction["ref_seq_cov"],
-            ref_start_pos=None,
-            ref_end_pos=None,
-            ref_gene_length=prediction["ref_seq_len"],
-            alignment_length=prediction["align_len"],
-            ref_database=None,
-            phenotypes=[],
-            ref_id=None,
-            contig_id=prediction["contig_id"],
+        gene = AmrFinderGene(
+            # info
             gene_symbol=prediction["gene_symbol"],
+            accession=prediction["close_seq_accn"],
             sequence_name=prediction["sequence_name"],
-            ass_start_pos=int(prediction["Start"]),
-            ass_end_pos=int(prediction["Stop"]),
-            strand=prediction["Strand"],
+            # gene classification
             element_type=prediction["element_type"],
             element_subtype=prediction["element_subtype"],
-            target_length=int(prediction["target_length"]),
-            res_class=prediction["Class"],
-            res_subclass=prediction["Subclass"],
+            # position
+            contig_id=prediction["contig_id"],
+            query_start_pos=prediction["Start"],
+            query_end_pos=prediction["Stop"],
+            strand=prediction["Strand"],
+            ref_gene_length=prediction["ref_seq_len"],
+            alignment_length=prediction["align_len"],
+            # prediction
             method=prediction["Method"],
-            close_seq_name=prediction["close_seq_name"],
+            identity=prediction["ref_seq_identity"],
+            coverage=prediction["ref_seq_cov"],
         )
         genes.append(gene)
     return ElementTypeResult(phenotypes={}, genes=genes, mutations=[])
