@@ -67,12 +67,12 @@ class PhenotypeInfo(RWModel):
     """Phenotype information."""
 
     name: str
-    group: str | None = Field(..., description="Name of the group a trait belongs to.")
+    group: str | None = Field(None, description="Name of the group a trait belongs to.")
     type: ElementType = Field(
         ..., description="Trait category, for example AMR, STRESS etc."
     )
-    reference: List[str] = Field(..., description="References supporting trait")
-    note: str | None = Field(..., description="Note, can be used for confidence score")
+    reference: List[str] = Field([], description="References supporting trait")
+    note: str | None = Field(None, description="Note, can be used for confidence score")
 
 
 class DatabaseReference(RWModel):
@@ -152,7 +152,6 @@ class VariantBase(DatabaseReference):
     ref_aa: Optional[str] = None
     alt_aa: Optional[str] = None
     # prediction info
-    confidence: Optional[int] = None
     depth: Optional[int] = Field(..., description="Total depth, ref + alt.")
     frequency: Optional[float] = Field(..., description="Alt allele frequency.")
     contig_id: Optional[str] = None
@@ -175,8 +174,6 @@ class VariantBase(DatabaseReference):
     method: Optional[str] = None
     close_seq_name: Optional[str] = None
     change: Optional[str] = None
-    nucleotide_change: Optional[str] = None
-    protein_change: Optional[str] = None
     phenotypes: List[PhenotypeInfo] = []
 
 
@@ -187,8 +184,7 @@ class ResfinderVariant(VariantBase):
 class MykrobeVariant(VariantBase):
     """Container for Mykrobe variant information"""
 
-    alt_kmer_count: Optional[int] = None
-    ref_kmer_count: Optional[int] = None
+    confidence: int
 
 
 class TbProfilerVariant(VariantBase):
