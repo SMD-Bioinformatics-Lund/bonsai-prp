@@ -48,37 +48,53 @@ def _get_tbprofiler_amr_sr_profie(tbprofiler_result):
     return {"susceptible": list(susceptible), "resistant": list(resistant)}
 
 
-def _parse_tbprofiler_amr_variants(tbprofiler_result) -> Tuple[TbProfilerVariant, ...]:
+def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]:
     """Get resistance genes from tbprofiler result."""
     results = []
 
-    for hit in tbprofiler_result["dr_variants"]:
-        ref_nt = hit["ref"]
-        alt_nt = hit["alt"]
-        if len(ref_nt) == len(alt_nt):
-            var_type = VariantType.SUBSTITUTION
-        elif len(ref_nt) > len(alt_nt):
-            var_type = VariantType.DELETION
+    # tbprofiler report three categories of variants
+    # - dr_variants: known resistance variants
+    # - qc_fail_variants: known resistance variants failing qc
+    # - other_variants: variants not in the database but in genes associated with resistance
+    for result_type in ['dr_variants', 'qc_fail_variants']:
+        # associated with passed/ failed qc
+        if result_type == 'dr_variants':
+            passed_qc = True
         else:
-            var_type = VariantType.INSERTION
+            passed_qc = False
 
-        variant = TbProfilerVariant(
-            variant_type=var_type,
-            gene_symbol=hit["gene"],
-            phenotypes=[],
-            position=int(hit["genome_pos"]),
-            ref_nt=ref_nt,
-            alt_nt=alt_nt,
-            depth=hit["depth"],
-            frequency=float(hit["freq"]),
-            ref_database=tbprofiler_result["db_version"]["name"],
-            type=hit["type"],
-            nucleotide_change=hit["nucleotide_change"],
-            protein_change=hit["protein_change"],
-            annotation=hit["annotation"],
-            phenotype=hit["drugs"],
-        )
-        results.append(variant)
+        # parse variants
+        for hit in predictions.get(result_type, []):
+            ref_nt = hit["ref"]
+            alt_nt = hit["alt"]
+            if len(ref_nt) == len(alt_nt):
+                var_type = VariantType.SUBSTITUTION
+            elif len(ref_nt) > len(alt_nt):
+                var_type = VariantType.DELETION
+            else:
+                var_type = VariantType.INSERTION
+
+            variant = TbProfilerVariant(
+                # positional
+                variant_type=var_type,
+                gene_symbol=hit["gene"],
+                phenotypes=[],
+                position=int(hit["genome_pos"]),
+                ref_nt=ref_nt,
+                alt_nt=alt_nt,
+                # call metrics
+                depth=hit["depth"],
+                frequency=float(hit["freq"]),
+                passed_qc=passed_qc,
+                type=hit["type"],
+                # geno -> pheno
+                ref_database=predictions["db_version"]["name"],
+                nucleotide_change=hit["nucleotide_change"],
+                protein_change=hit["protein_change"],
+                annotation=hit["annotation"],
+                phenotype=parse_drug_resistance_info(hit["drugs"]),
+            )
+            results.append(variant)
     return results
 
 
@@ -103,11 +119,12 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
                 drug["confers"],
                 drug_type,
             )
+        reference = drug.get("literature")
         phenotypes.append(
             PhenotypeInfo(
                 name=drug["drug"],
                 type=drug_type,
-                reference=[drug["litterature"]],
+                reference=[] if reference is None else [reference],
                 note=drug["who confidence"],
             )
         )
