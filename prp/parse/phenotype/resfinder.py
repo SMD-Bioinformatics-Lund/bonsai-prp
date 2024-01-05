@@ -321,7 +321,7 @@ def _parse_resfinder_amr_variants(
             accession=gene_accnr,
             close_seq_name=gene_accnr,
             phenotypes=phenotype,
-            qc_passed=True,  # resfinder only presents variants passing qc
+            passed_qc=True,  # resfinder only presents variants passing qc
             position=info["ref_start_pos"],
             ref_nt=ref_nt,
             alt_nt=alt_nt,
