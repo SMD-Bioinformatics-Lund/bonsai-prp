@@ -152,8 +152,8 @@ class VariantBase(DatabaseReference):
     ref_aa: Optional[str] = None
     alt_aa: Optional[str] = None
     # prediction info
-    depth: Optional[int] = Field(..., description="Total depth, ref + alt.")
-    frequency: Optional[float] = Field(..., description="Alt allele frequency.")
+    depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
+    frequency: Optional[float] = Field(None, description="Alt allele frequency.")
     contig_id: Optional[str] = None
     gene_symbol: Optional[str] = None
     sequence_name: Optional[str] = Field(
