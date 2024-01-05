@@ -85,52 +85,31 @@ class DatabaseReference(RWModel):
 class GeneBase(BaseModel):
     """Container for gene information"""
 
-    accession: Optional[str] = None
-    # prediction info
-    depth: Optional[float] = None
-    identity: Optional[float] = None
-    coverage: Optional[float] = None
-    ref_start_pos: Optional[int] = None
-    ref_end_pos: Optional[int] = None
-    drugs: Optional[List[Union[Dict, str]]] = None
-    ref_gene_length: Optional[int] = Field(
-        default=None,
-        alias="target_length",
-        description="The length of the query protein or gene.",
-    )
-    alignment_length: Optional[int] = None
-    # amrfinder extra info
-    contig_id: Optional[str] = None
+    # basic info
     gene_symbol: Optional[str] = None
+    accession: Optional[str] = None
     sequence_name: Optional[str] = Field(
         default=None, description="Reference sequence name"
     )
-    ass_start_pos: Optional[int] = Field(
-        default=None, description="Start position on the assembly"
-    )
-    ass_end_pos: Optional[int] = Field(
-        default=None, description="End position on the assembly"
-    )
-    strand: Optional[SequenceStand] = None
     element_type: ElementType = Field(
         description="The predominant function fo the gene."
     )
     element_subtype: Union[
         ElementStressSubtype, ElementAmrSubtype, ElementVirulenceSubtype
     ] = Field(description="Further functional categorization of the genes.")
-    res_class: Optional[str] = None
-    res_subclass: Optional[str] = None
-    method: Optional[str] = Field(
-        default=None, description="Generic description of the prediction method"
-    )
-    close_seq_name: Optional[str] = Field(
+    # position
+    ref_start_pos: Optional[int] = Field(None, description="Alignment start in reference")
+    ref_end_pos: Optional[int] = Field(None, description="Alignment end in reference")
+    ref_gene_length: Optional[int] = Field(
         default=None,
-        description=(
-            "Name of the closest competing hit if there "
-            "are multiple equaly good hits"
-        ),
+        alias="target_length",
+        description="The length of the reference protein or gene.",
     )
 
+    # prediction
+    method: Optional[str] = Field(None, description="Method used to predict gene")
+    identity: Optional[float] = Field(None, description="Identity to reference sequence")
+    coverage: Optional[float] = Field(None, description="Ratio reference sequence covered")
 
 class ResistanceGene(GeneBase, DatabaseReference):
     """Container for resistance gene information"""
@@ -140,6 +119,27 @@ class ResistanceGene(GeneBase, DatabaseReference):
 
 class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
+
+    depth: Optional[float] = Field(None, description="Ammount of sequence data supporting the gene.")
+
+class ResfinderGene(ResistanceGene):
+    """Container for Resfinder gene prediction information"""
+
+    depth: Optional[float] = Field(None, description="Ammount of sequence data supporting the gene.")
+
+class AmrFinderGene(ResistanceGene):
+    """Container for Resfinder gene prediction information"""
+
+    contig_id: str
+    query_start_pos: int = Field(
+        default=None, description="Start position on the assembly"
+    )
+    query_end_pos: int = Field(
+        default=None, description="End position on the assembly"
+    )
+    strand: SequenceStand
+    res_class: Optional[str] = None
+    res_subclass: Optional[str] = None
 
 
 class VariantBase(RWModel):
@@ -191,5 +191,5 @@ class ElementTypeResult(BaseModel):
     """
 
     phenotypes: Dict[str, List[str]]
-    genes: List[Union[ResistanceGene, VirulenceGene]]
+    genes: List[Union[AmrFinderGene, ResfinderGene, VirulenceGene]]
     mutations: List[Union[ResfinderVariant, TbProfilerVariant, MykrobeVariant]]
