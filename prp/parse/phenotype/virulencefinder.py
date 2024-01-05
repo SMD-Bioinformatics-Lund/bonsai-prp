@@ -19,19 +19,21 @@ def parse_vir_gene(
     # Some genes doesnt have accession numbers
     accnr = None if info["accession"] == "NA" else info["accession"]
     return VirulenceGene(
+        # info
         gene_symbol=info["virulence_gene"],
         accession=accnr,
-        identity=info["identity"],
-        coverage=info["coverage"],
         sequence_name=info["protein_function"].strip(),
+        # gene classification
+        element_type=ElementType.VIR,
+        element_subtype=subtype,
+        # position
         ref_start_pos=start_pos,
         ref_end_pos=end_pos,
         ref_gene_length=info["template_length"],
         alignment_length=info["HSP_length"],
-        ref_database="virulencefinder",
-        ref_id=info["hit_id"],
-        element_type=ElementType.VIR,
-        element_subtype=subtype,
+        # prediction
+        identity=info["identity"],
+        coverage=info["coverage"],
     )
 
 

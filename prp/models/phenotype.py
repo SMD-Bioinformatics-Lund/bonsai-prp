@@ -111,7 +111,29 @@ class GeneBase(BaseModel):
     identity: Optional[float] = Field(None, description="Identity to reference sequence")
     coverage: Optional[float] = Field(None, description="Ratio reference sequence covered")
 
-class ResistanceGene(GeneBase, DatabaseReference):
+
+class AmrFinderGene(GeneBase):
+    """Container for Resfinder gene prediction information"""
+
+    contig_id: str
+    query_start_pos: int = Field(
+        default=None, description="Start position on the assembly"
+    )
+    query_end_pos: int = Field(
+        default=None, description="End position on the assembly"
+    )
+    strand: SequenceStand
+    res_class: Optional[str] = None
+    res_subclass: Optional[str] = None
+
+
+class AmrFinderResistanceGene(AmrFinderGene):
+    """AMRfinder resistance gene information."""
+
+    phenotypes: List[PhenotypeInfo] = []
+
+
+class ResistanceGene(GeneBase):
     """Container for resistance gene information"""
 
     phenotypes: List[PhenotypeInfo] = []
@@ -127,19 +149,6 @@ class ResfinderGene(ResistanceGene):
 
     depth: Optional[float] = Field(None, description="Ammount of sequence data supporting the gene.")
 
-class AmrFinderGene(ResistanceGene):
-    """Container for Resfinder gene prediction information"""
-
-    contig_id: str
-    query_start_pos: int = Field(
-        default=None, description="Start position on the assembly"
-    )
-    query_end_pos: int = Field(
-        default=None, description="End position on the assembly"
-    )
-    strand: SequenceStand
-    res_class: Optional[str] = None
-    res_subclass: Optional[str] = None
 
 
 class VariantBase(RWModel):
