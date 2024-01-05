@@ -1,6 +1,11 @@
 """Shared utility functions."""
 from typing import Tuple
-from ...models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo, VariantType
+from ...models.phenotype import (
+    ElementType,
+    ElementTypeResult,
+    PhenotypeInfo,
+    VariantType,
+)
 
 
 def _default_amr_phenotype() -> PhenotypeInfo:

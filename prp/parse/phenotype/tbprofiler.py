@@ -3,7 +3,13 @@ import logging
 from typing import Any, Dict, Tuple, List
 
 from ...models.metadata import SoupVersions
-from ...models.phenotype import ElementTypeResult, TbProfilerVariant, VariantType, PhenotypeInfo, ElementType
+from ...models.phenotype import (
+    ElementTypeResult,
+    TbProfilerVariant,
+    VariantType,
+    PhenotypeInfo,
+    ElementType,
+)
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.sample import MethodIndex
 
@@ -47,8 +53,8 @@ def _parse_tbprofiler_amr_variants(tbprofiler_result) -> Tuple[TbProfilerVariant
     results = []
 
     for hit in tbprofiler_result["dr_variants"]:
-        ref_nt = hit['ref']
-        alt_nt = hit['alt']
+        ref_nt = hit["ref"]
+        alt_nt = hit["alt"]
         if len(ref_nt) == len(alt_nt):
             var_type = VariantType.SUBSTITUTION
         elif len(ref_nt) > len(alt_nt):
@@ -83,18 +89,28 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
     :type drugs: List[Dict[str, str]]
     :return: Formatted phenotype info
     :rtype: List[PhenotypeInfo]
-    """    
+    """
     phenotypes = []
     for drug in drugs:
         # assign element type
-        if drug['type'] == 'drug' and drug['confers'] == 'resistance':
+        if drug["type"] == "drug" and drug["confers"] == "resistance":
             drug_type = ElementType.AMR
         else:
             drug_type = ElementType.AMR
-            LOG.warning("Unknown TbProfiler drug; drug: %s, confers: %s; default to %s", drug['type'], drug['confers'], drug_type)
-        phenotypes.append(PhenotypeInfo(
-            name=drug['drug'], type=drug_type, reference=[drug['litterature']], note=drug['who confidence']
-        ))
+            LOG.warning(
+                "Unknown TbProfiler drug; drug: %s, confers: %s; default to %s",
+                drug["type"],
+                drug["confers"],
+                drug_type,
+            )
+        phenotypes.append(
+            PhenotypeInfo(
+                name=drug["drug"],
+                type=drug_type,
+                reference=[drug["litterature"]],
+                note=drug["who confidence"],
+            )
+        )
     return phenotypes
 
 
