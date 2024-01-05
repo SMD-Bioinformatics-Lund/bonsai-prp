@@ -145,17 +145,13 @@ class VirulenceGene(GeneBase, DatabaseReference):
 class VariantBase(DatabaseReference):
     """Container for mutation information"""
 
+    # classification
     variant_type: VariantType
-    position: int
-    ref_nt: str
-    alt_nt: str
-    ref_aa: Optional[str] = None
-    alt_aa: Optional[str] = None
-
-    # prediction info
-    depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
-    frequency: Optional[float] = Field(None, description="Alt allele frequency.")
-    passed_qc: bool = Field(..., description="Describe if variant has passed the tool qc check")
+    element_type: Optional[ElementType] = None
+    element_subtype: Optional[str] = None
+    res_class: Optional[str] = None
+    res_subclass: Optional[str] = None
+    phenotypes: List[PhenotypeInfo] = []
 
     # variant location
     contig_id: Optional[str] = None
@@ -163,6 +159,13 @@ class VariantBase(DatabaseReference):
     sequence_name: Optional[str] = Field(
         default=None, description="Reference sequence name"
     )
+    position: int
+    ref_nt: str
+    alt_nt: str
+    ref_aa: Optional[str] = None
+    alt_aa: Optional[str] = None
+
+    # assembly based
     ass_start_pos: Optional[int] = Field(
         default=None, description="Assembly start position"
     )
@@ -170,15 +173,15 @@ class VariantBase(DatabaseReference):
         default=None, description="Assembly end position"
     )
     strand: Optional[SequenceStand] = None
-    element_type: Optional[ElementType] = None
-    element_subtype: Optional[str] = None
     target_length: Optional[int] = None
-    res_class: Optional[str] = None
-    res_subclass: Optional[str] = None
-    method: Optional[str] = None
     close_seq_name: Optional[str] = None
     change: Optional[str] = None
-    phenotypes: List[PhenotypeInfo] = []
+
+    # prediction info
+    depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
+    frequency: Optional[float] = Field(None, description="Alt allele frequency.")
+    method: Optional[str] = Field(None, description="Prediction method used to call variant")
+    passed_qc: bool = Field(..., description="Describe if variant has passed the tool qc check")
 
 
 class ResfinderVariant(VariantBase):
