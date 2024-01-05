@@ -66,11 +66,13 @@ class ElementVirulenceSubtype(Enum):
 class PhenotypeInfo(RWModel):
     """Phenotype information."""
 
+    name: str
+    group: str | None = Field(..., description="Name of the group a trait belongs to.")
     type: ElementType = Field(
         ..., description="Trait category, for example AMR, STRESS etc."
     )
-    group: str = Field(..., description="Name of the group an trait belongs to.")
-    name: str
+    reference: List[str] = Field(..., description="References supporting trait")
+    note: str | None = Field(..., description="Note, can be used for confidence score")
 
 
 class DatabaseReference(RWModel):
