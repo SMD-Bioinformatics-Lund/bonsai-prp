@@ -1,6 +1,6 @@
 """Datamodels used for prediction results."""
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any
 
 from pydantic import BaseModel, Field
 
@@ -152,11 +152,9 @@ class VariantBase(DatabaseReference):
     ref_aa: Optional[str] = None
     alt_aa: Optional[str] = None
     # prediction info
-    conf: Optional[int] = None
-    alt_kmer_count: Optional[int] = None
-    ref_kmer_count: Optional[int] = None
-    depth: Optional[float] = None
-    freq: Optional[float] = None
+    confidence: Optional[int] = None
+    depth: Optional[int] = Field(..., description="Total depth, ref + alt.")
+    frequency: Optional[float] = Field(..., description="Alt allele frequency.")
     contig_id: Optional[str] = None
     gene_symbol: Optional[str] = None
     sequence_name: Optional[str] = Field(
@@ -176,19 +174,28 @@ class VariantBase(DatabaseReference):
     res_subclass: Optional[str] = None
     method: Optional[str] = None
     close_seq_name: Optional[str] = None
-    type: Optional[str] = None
     change: Optional[str] = None
     nucleotide_change: Optional[str] = None
     protein_change: Optional[str] = None
-    annotation: Optional[List[Dict]] = None
-    drugs: Optional[List[Union[Dict, str]]] = None
-
-
-class ResistanceVariant(VariantBase):
-    """Container for resistance variant information"""
-
     phenotypes: List[PhenotypeInfo] = []
 
+
+class ResfinderVariant(VariantBase):
+    """Container for ResFinder variant information"""
+
+
+class MykrobeVariant(VariantBase):
+    """Container for Mykrobe variant information"""
+
+    alt_kmer_count: Optional[int] = None
+    ref_kmer_count: Optional[int] = None
+
+
+class TbProfilerVariant(VariantBase):
+    """Container for TbProfiler variant information"""
+
+    type: str
+    annotation: List[Any]
 
 class ElementTypeResult(BaseModel):
     """Phenotype result data model.
@@ -199,4 +206,4 @@ class ElementTypeResult(BaseModel):
 
     phenotypes: Dict[str, List[str]]
     genes: List[Union[ResistanceGene, VirulenceGene]]
-    mutations: List[ResistanceVariant]
+    mutations: List[Union[ResfinderVariant, TbProfilerVariant, MykrobeVariant]]

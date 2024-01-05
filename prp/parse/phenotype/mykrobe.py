@@ -5,7 +5,7 @@ from typing import Any, Dict, Tuple
 
 from ...models.phenotype import ElementType, ElementTypeResult
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceVariant, VariantType
+from ...models.phenotype import MykrobeVariant, VariantType
 from ...models.sample import MethodIndex
 from .utils import is_prediction_result_empty
 
@@ -60,7 +60,7 @@ def get_mutation_type(var_nom: str) -> Tuple[VariantType, str, str, int]:
     return mut_type, ref_codon, alt_codon, position
 
 
-def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[ResistanceVariant, ...]:
+def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
     """Get resistance genes from mykrobe result."""
     results = []
 

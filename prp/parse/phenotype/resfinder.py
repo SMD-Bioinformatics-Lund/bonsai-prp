@@ -12,7 +12,7 @@ from ...models.phenotype import (
     PhenotypeInfo,
 )
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResistanceGene, ResistanceVariant, VariantType
+from ...models.phenotype import ResistanceGene, ResfinderVariant, VariantType
 from ...models.sample import MethodIndex
 from .utils import format_nt_change, get_nt_change
 
@@ -272,7 +272,7 @@ def _parse_resfinder_amr_genes(
 
 def _parse_resfinder_amr_variants(
     resfinder_result, limit_to_phenotypes=None
-) -> Tuple[ResistanceVariant, ...]:
+) -> Tuple[ResfinderVariant, ...]:
     """Get resistance genes from resfinder result."""
     results = []
     for info in resfinder_result["seq_variations"].values():
@@ -315,7 +315,7 @@ def _parse_resfinder_amr_variants(
             )
             for phe in info["phenotypes"]
         ]
-        variant = ResistanceVariant(
+        variant = ResfinderVariant(
             variant_type=var_type,
             gene_symbol=gene_symbol,
             accession=gene_accnr,
