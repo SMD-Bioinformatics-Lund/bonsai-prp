@@ -86,7 +86,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
         for variant in variants:
             # extract variant info using regex
             match = re.search(PATTERN, variant)
-            name, aa_change, dna_change, ref_depth, alt_depth, conf = match.groups()
+            gene, aa_change, dna_change, ref_depth, alt_depth, conf = match.groups()
 
             # get type of variant
             var_type, ref_aa, alt_aa, _ = get_mutation_type(aa_change)
@@ -99,7 +99,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
             # cast to variant object
             variant = MykrobeVariant(
                 variant_type=var_type,
-                gene_symbol=name,
+                gene_symbol=gene,
                 position=position,
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
@@ -107,6 +107,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
                 alt_aa=alt_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
                 depth=int(ref_depth) + int(alt_depth),
                 frequency=int(alt_depth) / (int(ref_depth) + int(alt_depth)),
+                passed_qc=True,
                 confidence=int(conf),
                 change=aa_change,
                 element_type=ElementType.AMR,
