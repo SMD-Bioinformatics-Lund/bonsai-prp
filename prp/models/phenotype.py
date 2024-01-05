@@ -127,8 +127,6 @@ class AmrFinderGene(GeneBase):
     )
     query_end_pos: int = Field(default=None, description="End position on the assembly")
     strand: SequenceStand
-    res_class: Optional[str] = None
-    res_subclass: Optional[str] = None
 
 
 class AmrFinderResistanceGene(AmrFinderGene):
