@@ -1,16 +1,11 @@
 """Parse TBprofiler result."""
 import logging
-from typing import Any, Dict, Tuple, List
+from typing import Any, Dict, List, Tuple
 
 from ...models.metadata import SoupVersions
-from ...models.phenotype import (
-    ElementTypeResult,
-    TbProfilerVariant,
-    VariantType,
-    PhenotypeInfo,
-    ElementType,
-)
+from ...models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo
 from ...models.phenotype import PredictionSoftware as Software
+from ...models.phenotype import TbProfilerVariant, VariantType
 from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
@@ -51,18 +46,18 @@ def _get_tbprofiler_amr_sr_profie(tbprofiler_result):
 def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]:
     """Get resistance genes from tbprofiler result."""
     variant_caller = None
-    for prog in predictions['pipeline']:
-        if prog['Analysis'].lower() == 'variant calling':
-            variant_caller = prog['Program']
+    for prog in predictions["pipeline"]:
+        if prog["Analysis"].lower() == "variant calling":
+            variant_caller = prog["Program"]
     results = []
 
     # tbprofiler report three categories of variants
     # - dr_variants: known resistance variants
     # - qc_fail_variants: known resistance variants failing qc
     # - other_variants: variants not in the database but in genes associated with resistance
-    for result_type in ['dr_variants', 'qc_fail_variants']:
+    for result_type in ["dr_variants", "qc_fail_variants"]:
         # associated with passed/ failed qc
-        if result_type == 'dr_variants':
+        if result_type == "dr_variants":
             passed_qc = True
         else:
             passed_qc = False

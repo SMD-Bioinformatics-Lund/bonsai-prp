@@ -1,5 +1,6 @@
 """Shared utility functions."""
 from typing import Tuple
+
 from ...models.phenotype import (
     ElementType,
     ElementTypeResult,

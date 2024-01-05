@@ -241,7 +241,10 @@ def _parse_resfinder_amr_genes(
         # format phenotypes
         phenotype = [
             PhenotypeInfo(
-                type=res_category, name=phe, group=lookup_antibiotic_class(phe), reference=info['pmids']
+                type=res_category,
+                name=phe,
+                group=lookup_antibiotic_class(phe),
+                reference=info["pmids"],
             )
             for phe in info["phenotypes"]
         ]
@@ -274,9 +277,9 @@ def _parse_resfinder_amr_variants(
     """Get resistance genes from resfinder result."""
     # get prediction method
     prediction_method = None
-    for exec in resfinder_result['software_executions'].values():
-        prediction_method = exec['parameters']['method']
-    
+    for exec in resfinder_result["software_executions"].values():
+        prediction_method = exec["parameters"]["method"]
+
     # parse prediction result
     results = []
     for info in resfinder_result["seq_variations"].values():

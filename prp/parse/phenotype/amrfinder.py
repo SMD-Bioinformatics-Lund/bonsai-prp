@@ -4,15 +4,22 @@ from typing import Tuple
 
 import pandas as pd
 
-from ...models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo
+from ...models.phenotype import (
+    AmrFinderGene,
+    AmrFinderResistanceGene,
+    ElementType,
+    ElementTypeResult,
+    PhenotypeInfo,
+)
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import AmrFinderGene, AmrFinderResistanceGene
 from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
 
 
-def _parse_amrfinder_amr_results(predictions: dict) -> Tuple[AmrFinderResistanceGene, ...]:
+def _parse_amrfinder_amr_results(
+    predictions: dict,
+) -> Tuple[AmrFinderResistanceGene, ...]:
     """Parse amrfinder prediction results from amrfinderplus."""
     genes = []
     for prediction in predictions:

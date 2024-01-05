@@ -1,6 +1,6 @@
 """Datamodels used for prediction results."""
 from enum import Enum
-from typing import Dict, List, Optional, Union, Any
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -98,7 +98,9 @@ class GeneBase(BaseModel):
         ElementStressSubtype, ElementAmrSubtype, ElementVirulenceSubtype
     ] = Field(description="Further functional categorization of the genes.")
     # position
-    ref_start_pos: Optional[int] = Field(None, description="Alignment start in reference")
+    ref_start_pos: Optional[int] = Field(
+        None, description="Alignment start in reference"
+    )
     ref_end_pos: Optional[int] = Field(None, description="Alignment end in reference")
     ref_gene_length: Optional[int] = Field(
         default=None,
@@ -108,8 +110,12 @@ class GeneBase(BaseModel):
 
     # prediction
     method: Optional[str] = Field(None, description="Method used to predict gene")
-    identity: Optional[float] = Field(None, description="Identity to reference sequence")
-    coverage: Optional[float] = Field(None, description="Ratio reference sequence covered")
+    identity: Optional[float] = Field(
+        None, description="Identity to reference sequence"
+    )
+    coverage: Optional[float] = Field(
+        None, description="Ratio reference sequence covered"
+    )
 
 
 class AmrFinderGene(GeneBase):
@@ -119,9 +125,7 @@ class AmrFinderGene(GeneBase):
     query_start_pos: int = Field(
         default=None, description="Start position on the assembly"
     )
-    query_end_pos: int = Field(
-        default=None, description="End position on the assembly"
-    )
+    query_end_pos: int = Field(default=None, description="End position on the assembly")
     strand: SequenceStand
     res_class: Optional[str] = None
     res_subclass: Optional[str] = None
@@ -142,13 +146,17 @@ class ResistanceGene(GeneBase):
 class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
 
-    depth: Optional[float] = Field(None, description="Ammount of sequence data supporting the gene.")
+    depth: Optional[float] = Field(
+        None, description="Ammount of sequence data supporting the gene."
+    )
+
 
 class ResfinderGene(ResistanceGene):
     """Container for Resfinder gene prediction information"""
 
-    depth: Optional[float] = Field(None, description="Ammount of sequence data supporting the gene.")
-
+    depth: Optional[float] = Field(
+        None, description="Ammount of sequence data supporting the gene."
+    )
 
 
 class VariantBase(RWModel):
@@ -171,7 +179,9 @@ class VariantBase(RWModel):
     depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
     frequency: Optional[float] = Field(None, description="Alt allele frequency.")
     method: str = Field(..., description="Prediction method used to call variant")
-    passed_qc: bool = Field(..., description="Describe if variant has passed the tool qc check")
+    passed_qc: bool = Field(
+        ..., description="Describe if variant has passed the tool qc check"
+    )
 
 
 class ResfinderVariant(VariantBase):
@@ -189,7 +199,9 @@ class TbProfilerVariant(VariantBase):
 
     variant_effect: str
     hgvs_nt_change: Optional[str] = Field(..., description="DNA change in HGVS format")
-    hgvs_aa_change: Optional[str] = Field(..., description="Protein change in HGVS format")
+    hgvs_aa_change: Optional[str] = Field(
+        ..., description="Protein change in HGVS format"
+    )
 
 
 class ElementTypeResult(BaseModel):
