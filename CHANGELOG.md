@@ -12,7 +12,7 @@
 
  - Added reference, note fields to PhenotypeInfo
  - Mykrobe output parser handles csv format instead of json
- - Split generic ResistanceVariant to one specified for individual tools
+ - Split generic ResistanceVariant and ResistanceGene to one specified for individual tools
 
 ## [0.2.0]
 
