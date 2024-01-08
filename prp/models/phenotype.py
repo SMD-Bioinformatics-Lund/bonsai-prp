@@ -176,6 +176,7 @@ class VariantBase(RWModel):
     # prediction info
     depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
     frequency: Optional[float] = Field(None, description="Alt allele frequency.")
+    confidence: Optional[int] = Field(None, description="Genotype confidence.")
     method: str = Field(..., description="Prediction method used to call variant")
     passed_qc: bool = Field(
         ..., description="Describe if variant has passed the tool qc check"
@@ -188,8 +189,6 @@ class ResfinderVariant(VariantBase):
 
 class MykrobeVariant(VariantBase):
     """Container for Mykrobe variant information"""
-
-    confidence: int
 
 
 class TbProfilerVariant(VariantBase):
