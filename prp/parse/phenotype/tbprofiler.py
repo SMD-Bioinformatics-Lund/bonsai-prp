@@ -119,17 +119,14 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
                 drug_type,
             )
         reference = drug.get("literature")
-        try:
-            phenotypes.append(
-                PhenotypeInfo(
-                    name=drug["drug"],
-                    type=drug_type,
-                    reference=[] if reference is None else [reference],
-                    note=drug.get("who confidence"),
-                )
+        phenotypes.append(
+            PhenotypeInfo(
+                name=drug["drug"],
+                type=drug_type,
+                reference=[] if reference is None else [reference],
+                note=drug.get("who confidence"),
             )
-        except:
-            import pdb; pdb.set_trace()
+        )
     return phenotypes
 
 
