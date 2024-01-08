@@ -55,12 +55,12 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
     # - dr_variants: known resistance variants
     # - qc_fail_variants: known resistance variants failing qc
     # - other_variants: variants not in the database but in genes associated with resistance
-    for result_type in ["dr_variants", "qc_fail_variants"]:
+    for result_type in ["dr_variants", "other_variants", "qc_fail_variants"]:
         # associated with passed/ failed qc
-        if result_type == "dr_variants":
-            passed_qc = True
-        else:
+        if result_type == "qc_fail_variants":
             passed_qc = False
+        else:
+            passed_qc = True
 
         # parse variants
         for hit in predictions.get(result_type, []):
