@@ -76,7 +76,7 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
             variant = TbProfilerVariant(
                 # classificatoin
                 variant_type=var_type,
-                phenotypes=parse_drug_resistance_info(hit["drugs"]),
+                phenotypes=parse_drug_resistance_info(hit.get("drugs", [])),
                 # location
                 gene_symbol=hit["gene"],
                 accession=hit["feature_id"],
