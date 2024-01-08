@@ -197,3 +197,11 @@ def test_create_output_mtuberculosis(
             ],
         )
         assert result.exit_code == 0
+
+        # test that the correct output was generated
+        with open(output_file) as inpt:
+            prp_output = json.load(inpt)
+        # get prediction softwares in ouptut
+        prediction_sw = {res['software'] for res in prp_output['element_type_result']}
+        # test that resfinder, amrfinder and virulence finder result is in output
+        assert len({'mykrobe', 'tbprofiler'} & prediction_sw) == 2

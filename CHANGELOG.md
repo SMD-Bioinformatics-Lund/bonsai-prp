@@ -13,6 +13,7 @@
  - Added reference, note fields to PhenotypeInfo
  - Mykrobe output parser handles csv format instead of json
  - Split generic ResistanceVariant and ResistanceGene to one specified for individual tools
+ - Include non resistance yeilding variants from tbprofiler
 
 ## [0.2.0]
 
