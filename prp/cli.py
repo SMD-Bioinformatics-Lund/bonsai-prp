@@ -215,10 +215,11 @@ def create_bonsai_input(
         if amr_res is not None:
             results["element_type_result"].append(amr_res)
 
-        lin_res: MethodIndex = parse_mykrobe_lineage_results(
+        lin_res: MethodIndex | None = parse_mykrobe_lineage_results(
             pred_res, TypingMethod.LINEAGE
         )
-        results["typing_result"].append(lin_res)
+        if lin_res is not None:
+            results["typing_result"].append(lin_res)
 
     # tbprofiler
     if tbprofiler:

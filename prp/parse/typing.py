@@ -128,13 +128,11 @@ def parse_tbprofiler_lineage_results(pred_res: dict, method) -> TypingResultLine
     return MethodIndex(type=method, software=Software.TBPROFILER, result=result_obj)
 
 
-def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage:
+def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage | None:
     """Parse mykrobe results for lineage object."""
     LOG.info("Parsing lineage results")
-    lineages = []
-    for lineage in pred_res:
-        if not lineage["susceptibility"].upper() == "R":
-            continue
+    if len(pred_res) > 0:
+        lineage = pred_res[0]
         split_lin = lineage["lineage"].split(".")
         main_lin = split_lin[0]
         sublin = lineage["lineage"]
@@ -143,13 +141,13 @@ def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage
             LineageInformation(lineage="lineage" + ".".join(lin_idxs[: idx + 1]))
             for idx in range(len(lin_idxs))
         ]
-    # cast to lineage object
-    result_obj = TypingResultLineage(
-        main_lin=main_lin,
-        sublin=sublin,
-        lineages=lineages,
-    )
-    return MethodIndex(type=method, software=Software.MYKROBE, result=result_obj)
+        # cast to lineage object
+        result_obj = TypingResultLineage(
+            main_lin=main_lin,
+            sublin=sublin,
+            lineages=lineages,
+        )
+        return MethodIndex(type=method, software=Software.MYKROBE, result=result_obj)
 
 
 def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
