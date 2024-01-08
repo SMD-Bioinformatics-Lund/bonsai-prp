@@ -58,6 +58,14 @@ def test_create_output_saureus(
         )
         assert result.exit_code == 0
 
+        # test that the correct output was generated
+        with open(output_file) as inpt:
+            prp_output = json.load(inpt)
+        # get prediction softwares in ouptut
+        prediction_sw = {res['software'] for res in prp_output['element_type_result']}
+        # test that resfinder, amrfinder and virulence finder result is in output
+        assert len({'resfinder', 'amrfinder', 'virulencefinder'} & prediction_sw) == 3
+
 
 def test_create_output_ecoli(
     ecoli_analysis_meta_path,
@@ -108,7 +116,16 @@ def test_create_output_ecoli(
                 output_file,
             ],
         )
+        # test successful execution
         assert result.exit_code == 0
+
+        # test that the correct output was generated
+        with open(output_file) as inpt:
+            prp_output = json.load(inpt)
+        # get prediction softwares in ouptut
+        prediction_sw = {res['software'] for res in prp_output['element_type_result']}
+        # test that resfinder, amrfinder and virulence finder result is in output
+        assert len({'resfinder', 'amrfinder', 'virulencefinder'} & prediction_sw) == 3
 
 
 def test_cdm_input_cmd(
