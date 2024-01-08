@@ -26,7 +26,7 @@ def is_prediction_result_empty(result: ElementTypeResult) -> bool:
     :rtype: bool
     """
     n_entries = len(result.genes) + len(result.mutations)
-    return n_entries == 1
+    return n_entries == 0
 
 
 def get_nt_change(ref_codon: str, alt_codon: str) -> Tuple[str, str]:

@@ -1,6 +1,7 @@
 """Parse Mykrobe results."""
 import logging
 import re
+import numpy as np
 from typing import Any, Dict, Tuple
 
 from ...models.phenotype import (
@@ -28,8 +29,11 @@ def _get_mykrobe_amr_sr_profie(mykrobe_result):
     for element_type in mykrobe_result:
         if element_type["susceptibility"].upper() == "R":
             resistant.add(element_type["drug"])
-        else:
+        elif element_type["susceptibility"].upper() == "S":
             susceptible.add(element_type["drug"])
+        else:
+            # skip rows if no resistance predictions were identified
+            continue
     return {"susceptible": list(susceptible), "resistant": list(resistant)}
 
 
