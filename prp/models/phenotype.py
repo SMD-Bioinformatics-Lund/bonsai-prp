@@ -209,5 +209,5 @@ class ElementTypeResult(BaseModel):
     """
 
     phenotypes: Dict[str, List[str]]
-    genes: List[Union[AmrFinderResistanceGene, ResfinderGene, VirulenceGene]]
-    mutations: List[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]
+    genes: List[Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene, VirulenceGene]]
+    variants: List[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]
