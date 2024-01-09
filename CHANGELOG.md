@@ -2,6 +2,14 @@
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [0.3.0]
+
+### Added
+
  - Pytest for Mycobacterium tuberculosis
 
 ### Fixed
