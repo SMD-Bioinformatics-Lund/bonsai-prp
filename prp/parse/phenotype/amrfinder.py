@@ -77,7 +77,7 @@ def _parse_amrfinder_amr_results(
         "susceptible": [],
         "resistant": list({pheno.name for gene in genes for pheno in gene.phenotypes}),
     }
-    return ElementTypeResult(phenotypes=sr_profile, genes=genes, mutations=[])
+    return ElementTypeResult(phenotypes=sr_profile, genes=genes, variants=[])
 
 
 def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> ElementTypeResult:
@@ -136,7 +136,7 @@ def _parse_amrfinder_vir_results(predictions: dict) -> ElementTypeResult:
             coverage=prediction["ref_seq_cov"],
         )
         genes.append(gene)
-    return ElementTypeResult(phenotypes={}, genes=genes, mutations=[])
+    return ElementTypeResult(phenotypes={}, genes=genes, variants=[])
 
 
 def parse_amrfinder_vir_pred(file: str):

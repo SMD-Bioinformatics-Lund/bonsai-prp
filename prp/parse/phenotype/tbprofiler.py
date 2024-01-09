@@ -138,7 +138,7 @@ def parse_tbprofiler_amr_pred(
     resistance = ElementTypeResult(
         phenotypes=_get_tbprofiler_amr_sr_profie(prediction),
         genes=[],
-        mutations=_parse_tbprofiler_amr_variants(prediction),
+        variants=_parse_tbprofiler_amr_variants(prediction),
     )
     return MethodIndex(
         type=resistance_category, software=Software.TBPROFILER, result=resistance

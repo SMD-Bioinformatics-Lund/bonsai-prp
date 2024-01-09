@@ -133,7 +133,7 @@ def parse_mykrobe_amr_pred(
     resistance = ElementTypeResult(
         phenotypes=_get_mykrobe_amr_sr_profie(prediction),
         genes=[],
-        mutations=_parse_mykrobe_amr_variants(prediction),
+        variants=_parse_mykrobe_amr_variants(prediction),
     )
 
     # verify prediction result
