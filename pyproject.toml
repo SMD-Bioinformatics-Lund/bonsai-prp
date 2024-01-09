@@ -1,5 +1,5 @@
 [project]
-name = "jasen-prp"
+name = "bonsai-prp"
 dynamic = ["version"]
 authors = [
   {name = "Markus Johansson", email = "markus.h.johansson@skane.se"},
