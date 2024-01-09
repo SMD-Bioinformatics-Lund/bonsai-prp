@@ -94,7 +94,9 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
                 passed_qc=passed_qc,
             )
             results.append(variant)
-    return results
+    # sort variants
+    variants = sorted(results, key=lambda entry: (entry.gene_symbol, entry.position))
+    return variants
 
 
 def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInfo]:

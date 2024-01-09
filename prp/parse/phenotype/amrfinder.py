@@ -77,6 +77,8 @@ def _parse_amrfinder_amr_results(
         "susceptible": [],
         "resistant": list({pheno.name for gene in genes for pheno in gene.phenotypes}),
     }
+    # sort genes
+    genes = sorted(genes, key=lambda entry: (entry.gene_symbol, entry.coverage))
     return ElementTypeResult(phenotypes=sr_profile, genes=genes, variants=[])
 
 
@@ -136,6 +138,8 @@ def _parse_amrfinder_vir_results(predictions: dict) -> ElementTypeResult:
             coverage=prediction["ref_seq_cov"],
         )
         genes.append(gene)
+    # sort genes
+    genes = sorted(genes, key=lambda entry: (entry.gene_symbol, entry.coverage))
     return ElementTypeResult(phenotypes={}, genes=genes, variants=[])
 
 

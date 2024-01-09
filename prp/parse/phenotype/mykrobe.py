@@ -122,7 +122,9 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
                 passed_qc=True,
             )
             results.append(variant)
-    return results
+    # sort variants
+    variants = sorted(results, key=lambda entry: (entry.gene_symbol, entry.position))
+    return variants
 
 
 def parse_mykrobe_amr_pred(
