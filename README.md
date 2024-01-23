@@ -6,12 +6,12 @@
 * python=3.10
 
 ## Using prp
-### Use the help argument for information regarding the Jasentool's methods
+### Use the help argument for information regarding the prp's methods
 ```
 prp --help
 ```
 
-### Use the method help argument for information regarding the input for each of Jasentool's methods (`create-bonsai-input`, `create-cdm-input`, `print-schema`, `validate`)
+### Use the method help argument for information regarding the input for each of prp's methods (`create-bonsai-input`, `create-cdm-input`, `print-schema`, `validate`)
 ```
 prp <method> --help
 ```
