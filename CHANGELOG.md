@@ -2,6 +2,9 @@
 
 ### Added
 
+ - Workflow for docker image to be pushed to dockerhub
+ - Image build file (Dockerfile)
+
 ### Fixed
 
 ### Changed
