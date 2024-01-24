@@ -4,10 +4,13 @@
 
  - Workflow for docker image to be pushed to dockerhub
  - Image build file (Dockerfile)
+ - Add get_db_version and reformat_date_str to utils.py
 
 ### Fixed
 
 ### Changed
+
+ - Move utils.py from prp/parse/phenotype to prp/parse
 
 ## [0.3.0]
 

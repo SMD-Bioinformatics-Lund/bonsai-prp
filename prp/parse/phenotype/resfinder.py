@@ -14,7 +14,7 @@ from ...models.phenotype import (
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import ResfinderGene, ResfinderVariant, VariantType
 from ...models.sample import MethodIndex
-from .utils import format_nt_change, get_nt_change
+from ..utils import get_nt_change
 
 LOG = logging.getLogger(__name__)
 

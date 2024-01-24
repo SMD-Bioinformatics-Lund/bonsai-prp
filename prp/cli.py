@@ -29,6 +29,7 @@ from .parse import (
     parse_virulencefinder_vir_pred,
 )
 from .parse.metadata import get_database_info, parse_run_info
+from .parse.utils import get_db_version
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
@@ -229,7 +230,7 @@ def create_bonsai_input(
         db_info = [
             SoupVersion(
                 name=pred_res["db_version"]["name"],
-                version=pred_res["db_version"]["commit"],
+                version=get_db_version(pred_res["db_version"]),
                 type=SoupType.DB,
             )
         ]
