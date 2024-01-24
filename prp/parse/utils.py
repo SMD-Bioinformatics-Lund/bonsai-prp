@@ -1,7 +1,8 @@
 """Shared utility functions."""
+from datetime import datetime
 from typing import Tuple
 
-from ...models.phenotype import (
+from ..models.phenotype import (
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
@@ -79,3 +80,16 @@ def format_nt_change(
         case VariantType.INSERTION:
             f"g.{start_pos}_{end_pos}ins{alt}"
     return fmt_change
+
+def reformat_date_str(input_date: str) -> str:
+    """Reformat date string into DDMMYY format"""
+    # Parse the date string
+    parsed_date = datetime.strptime(input_date, "%a %b %d %H:%M:%S %Y %z")
+
+    # Format as DDMMYY
+    formatted_date = parsed_date.strftime("%d%m%y")
+    return formatted_date
+
+def get_db_version(db_version: dict) -> str:
+    backup_version = db_version["name"] + "_" + reformat_date_str(db_version["Date"])
+    return db_version["commit"] if "commit" in db_version else backup_version
