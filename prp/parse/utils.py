@@ -87,7 +87,7 @@ def reformat_date_str(input_date: str) -> str:
     parsed_date = datetime.strptime(input_date, "%a %b %d %H:%M:%S %Y %z")
 
     # Format as DDMMYY
-    formatted_date = parsed_date.isoformat()
+    formatted_date = parsed_date.date().isoformat()
     return formatted_date
 
 def get_db_version(db_version: dict) -> str:
