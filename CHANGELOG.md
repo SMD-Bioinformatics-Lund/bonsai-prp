@@ -2,15 +2,24 @@
 
 ### Added
 
- - Workflow for docker image to be pushed to dockerhub
- - Image build file (Dockerfile)
- - Add get_db_version and reformat_date_str to utils.py
-
 ### Fixed
 
 ### Changed
 
+## [0.3.1]
+
+### Added
+
+ - Workflow for docker image to be pushed to dockerhub
+ - Image build file (Dockerfile)
+ - Add get_db_version and reformat_date_str to utils.py
+ - Workflow that builds and pushes to both dockerhub and PyPI
+
+### Fixed
+
+### Changed
  - Move utils.py from prp/parse/phenotype to prp/parse
+ - Docker/PyPI publishing workflow added workflow_dispatch, removed permissions and changed secret variable names
 
 ## [0.3.0]
 
