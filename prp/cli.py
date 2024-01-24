@@ -1,7 +1,6 @@
 """Definition of the PRP command-line interface."""
 import json
 import logging
-from datetime import datetime
 from typing import List
 
 import click
@@ -30,6 +29,7 @@ from .parse import (
     parse_virulencefinder_vir_pred,
 )
 from .parse.metadata import get_database_info, parse_run_info
+from .parse.utils import get_db_version
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
@@ -226,17 +226,11 @@ def create_bonsai_input(
     if tbprofiler:
         LOG.info("Parse tbprofiler results")
         pred_res = json.load(tbprofiler)
-        db_version = pred_res["db_version"]
-        input_date = db_version["Date"]
-        exp_format = "%a %b %d %H:%M:%S %Y %z"
-        formatted_date = datetime.strptime(input_date, exp_format).strftime("%d%m%y")
-        backup_version = db_version["name"] + "_" + formatted_date
-        version = db_version["commit"] if "commit" in db_version else backup_version
         db_info: List[SoupVersion] = []
         db_info = [
             SoupVersion(
                 name=pred_res["db_version"]["name"],
-                version=version,
+                version=get_db_version(pred_res["db_version"]),
                 type=SoupType.DB,
             )
         ]
