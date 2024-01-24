@@ -1,16 +1,38 @@
-name: Build and upload bonsai-prp Docker image on release
+name: Build and upload bonsai-prp to PyPI and Docker on release
+
 on:
   release:
-    types: [published] # trigger the job to build the image on release
+    types: [published]
   workflow_dispatch:
 
 jobs:
-  buildDocker:
-    name: build docker images
+  buildPypi:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout prp
-        uses: actions/checkout@v3
+    - uses: actions/checkout@v4.1.1
+    - name: Set up Python
+      uses: actions/setup-python@v5.0.0
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade build
+        python -m pip install --upgrade twine
+    - name: Build and publish
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python -m build
+        twine upload dist/*
+
+  buildDocker:
+    needs: pypi
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout prp
+        uses: actions/checkout@4.1.1
         with:
           fetch-depth: 0
 
@@ -20,6 +42,10 @@ jobs:
           registry: 'docker.io'
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Wait for PyPI to publish package
+        run: sleep 60s
+        shell: bash
 
       - name: Export tags to env
         run: |
