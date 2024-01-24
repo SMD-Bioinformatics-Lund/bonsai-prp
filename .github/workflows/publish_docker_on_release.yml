@@ -2,14 +2,12 @@ name: Build and upload bonsai-prp Docker image on release
 on:
   release:
     types: [published] # trigger the job to build the image on release
+  workflow_dispatch:
 
 jobs:
   buildDocker:
     name: build docker images
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
     steps:
       - name: checkout prp
         uses: actions/checkout@v3
@@ -20,8 +18,8 @@ jobs:
         uses: docker/login-action@v3.0.0
         with:
           registry: 'docker.io'
-          username: ${{ secrets.PRP_LOGIN }}
-          password: ${{ secrets.PRP_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Export tags to env
         run: |
