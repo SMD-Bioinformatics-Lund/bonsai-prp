@@ -8,6 +8,8 @@
 
 ### Changed
 
+ - Workflow that publishes to PyPI and Dockerhub separated into two workflows for testing
+
 ## [0.3.1]
 
 ### Added
