@@ -18,6 +18,7 @@
 ### Fixed
 
 ### Changed
+
  - Move utils.py from prp/parse/phenotype to prp/parse
  - Docker/PyPI publishing workflow added workflow_dispatch, removed permissions and changed secret variable names
 
