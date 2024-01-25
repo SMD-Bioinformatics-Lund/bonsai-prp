@@ -21,7 +21,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install python=3.10
           pip install --upgrade pip
 
       - name: Log in to the Container registry
