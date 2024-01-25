@@ -2,6 +2,8 @@
 
 ### Added
 
+ - Python setup to publish_on_release.yml for docker
+
 ### Fixed
 
 ### Changed
