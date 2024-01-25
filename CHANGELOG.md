@@ -17,6 +17,8 @@
 
 ### Fixed
 
+ - Git action versions
+
 ### Changed
 
  - Move utils.py from prp/parse/phenotype to prp/parse
