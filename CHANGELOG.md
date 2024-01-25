@@ -2,8 +2,6 @@
 
 ### Added
 
- - Python setup to publish_on_release.yml for docker
-
 ### Fixed
 
 ### Changed
@@ -16,6 +14,7 @@
  - Image build file (Dockerfile)
  - Add get_db_version and reformat_date_str to utils.py
  - Workflow that builds and pushes to both dockerhub and PyPI
+ - Python setup to publish_on_release.yml for docker
 
 ### Fixed
 
