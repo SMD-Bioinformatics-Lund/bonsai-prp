@@ -5,9 +5,7 @@ FROM python:3.8
 WORKDIR /usr/src/app
 
 # Clone the repository and install dependencies
-RUN git clone --depth 1 https://github.com/Clinical-Genomics-Lund/bonsai-prp.git && \
-    cd bonsai-prp && \
-    pip install -e . && \
+RUN pip install bonsai-prp && \
     pip install biopython
 
 # Set umask
