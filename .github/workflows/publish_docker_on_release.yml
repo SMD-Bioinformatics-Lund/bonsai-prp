@@ -1,4 +1,4 @@
-name: Build and upload bonsai-prp to PyPI and Docker on release
+name: Build and upload bonsai-prp to Docker on release
 
 on:
   release:
