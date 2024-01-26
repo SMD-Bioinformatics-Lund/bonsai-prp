@@ -1,4 +1,4 @@
-name: Build and upload bonsai-prp to PyPI on release
+name: Publish PyPI
 
 on:
   release:
