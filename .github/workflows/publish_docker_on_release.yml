@@ -1,9 +1,9 @@
-name: Build and upload bonsai-prp to Docker on release
+name: Publish Docker
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Publish PyPI"]
+    types: [completed]
 
 jobs:
   docker:
