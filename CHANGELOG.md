@@ -9,6 +9,7 @@
 ### Changed
 
  - Workflow that publishes to PyPI and Dockerhub separated into two workflows for testing
+ - Publish to docker workflow started on completion of PyPI publishing
 
 ## [0.3.1]
 
