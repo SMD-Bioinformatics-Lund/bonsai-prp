@@ -171,9 +171,7 @@ def test_create_output_mtuberculosis(
     output_file = f"{sample_id}.json"
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            create_bonsai_input,
-            [
+        args = [
                 "-i",
                 sample_id,
                 "--run-metadata",
@@ -190,8 +188,8 @@ def test_create_output_mtuberculosis(
                 mtuberculosis_tbprofiler_path,
                 "--output",
                 output_file,
-            ],
-        )
+            ]
+        result = runner.invoke(create_bonsai_input, args)
         assert result.exit_code == 0
 
         # test that the correct output was generated
