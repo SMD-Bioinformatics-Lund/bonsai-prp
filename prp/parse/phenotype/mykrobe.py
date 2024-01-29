@@ -11,7 +11,7 @@ from ...models.phenotype import (
     PhenotypeInfo,
 )
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import VariantType
+from ...models.phenotype import VariantType, VariantSubType
 from ...models.sample import MethodIndex
 from .utils import get_nt_change, is_prediction_result_empty
 
@@ -37,7 +37,7 @@ def _get_mykrobe_amr_sr_profie(mykrobe_result):
     return {"susceptible": list(susceptible), "resistant": list(resistant)}
 
 
-def get_mutation_type(var_nom: str) -> Tuple[VariantType, str, str, int]:
+def get_mutation_type(var_nom: str) -> Tuple[VariantSubType, str, str, int]:
     """Extract mutation type from Mykrobe mutation description.
 
     GCG7569GTG -> mutation type, ref_nt, alt_nt, pos
@@ -45,7 +45,7 @@ def get_mutation_type(var_nom: str) -> Tuple[VariantType, str, str, int]:
     :param var_nom: Mykrobe mutation description
     :type var_nom: str
     :return: Return variant type, ref_codon, alt_codont and position
-    :rtype: Tuple[VariantType, str, str, int]
+    :rtype: Tuple[VariantSubType, str, str, int]
     """
     mut_type = None
     ref_codon = None
@@ -61,12 +61,15 @@ def get_mutation_type(var_nom: str) -> Tuple[VariantType, str, str, int]:
     alt_codon = var_nom[alt_idx:]
     position = int(var_nom[ref_idx:alt_idx])
     if len(ref_codon) > len(alt_codon):
-        mut_type = VariantType.DELETION
+        var_type = VariantType.SV
+        var_sub_type = VariantSubType.DELETION
     elif len(ref_codon) < len(alt_codon):
-        mut_type = VariantType.INSERTION
+        var_type = VariantType.SV
+        var_sub_type = VariantSubType.INSERTION
     else:
-        mut_type = VariantType.SUBSTITUTION
-    return mut_type, ref_codon, alt_codon, position
+        var_type = VariantType.SNV
+        var_sub_type = VariantSubType.SUBSTITUTION
+    return var_type, var_sub_type, ref_codon, alt_codon, position
 
 
 def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
@@ -95,21 +98,23 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
             gene, aa_change, dna_change, ref_depth, alt_depth, conf = match.groups()
 
             # get type of variant
-            var_type, ref_aa, alt_aa, _ = get_mutation_type(aa_change)
+            var_type, var_sub_type, ref_aa, alt_aa, _ = get_mutation_type(aa_change)
 
             # reduce codon to nt change for substitutions
-            _, ref_nt, alt_nt, position = get_mutation_type(dna_change)
-            if var_type == VariantType.SUBSTITUTION:
+            _, _, ref_nt, alt_nt, position = get_mutation_type(dna_change)
+            if var_sub_type == VariantSubType.SUBSTITUTION:
                 ref_nt, alt_nt = get_nt_change(ref_nt, alt_nt)
 
             # cast to variant object
             variant = MykrobeVariant(
                 # classification
                 variant_type=var_type,
+                variant_subtype=var_sub_type,
                 phenotypes=phenotype,
                 # location
-                gene_symbol=gene,
-                position=position,
+                reference_sequence=gene,
+                start=position,
+                end=position + len(alt_nt),
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
                 ref_aa=ref_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
@@ -123,7 +128,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
             )
             results.append(variant)
     # sort variants
-    variants = sorted(results, key=lambda entry: (entry.gene_symbol, entry.position))
+    variants = sorted(results, key=lambda entry: (entry.reference_sequence, entry.start))
     return variants
 
 

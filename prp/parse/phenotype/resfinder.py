@@ -12,7 +12,7 @@ from ...models.phenotype import (
     PhenotypeInfo,
 )
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResfinderGene, ResfinderVariant, VariantType
+from ...models.phenotype import ResfinderGene, ResfinderVariant, VariantType, VariantSubType
 from ...models.sample import MethodIndex
 from .utils import format_nt_change, get_nt_change
 
@@ -298,12 +298,13 @@ def _parse_resfinder_amr_variants(
         else:
             info["depth"] = 0
         # translate variation type bools into classifier
+        var_type = VariantType.SNV
         if info["substitution"]:
-            var_type = VariantType.SUBSTITUTION
+            var_sub_type = VariantSubType.SUBSTITUTION
         elif info["insertion"]:
-            var_type = VariantType.INSERTION
+            var_sub_type = VariantSubType.INSERTION
         elif info["deletion"]:
-            var_type = VariantType.DELETION
+            var_sub_type = VariantSubType.DELETION
         else:
             raise ValueError("Output has no known mutation type")
 
@@ -319,11 +320,13 @@ def _parse_resfinder_amr_variants(
         ]
         variant = ResfinderVariant(
             variant_type=var_type,
+            variant_subtype=var_sub_type,
             phenotypes=phenotype,
             # position
-            gene_symbol=gene_symbol,
+            reference_sequence=gene_symbol,
             accession=gene_accnr,
-            position=info["ref_start_pos"],
+            start=info["ref_start_pos"],
+            end=info["ref_end_pos"],
             ref_nt=ref_nt,
             alt_nt=alt_nt,
             ref_aa=info["ref_aa"],
@@ -335,7 +338,7 @@ def _parse_resfinder_amr_variants(
         )
         results.append(variant)
     # sort variants
-    variants = sorted(results, key=lambda entry: (entry.gene_symbol, entry.position))
+    variants = sorted(results, key=lambda entry: (entry.reference_sequence, entry.start))
     return variants
 
 

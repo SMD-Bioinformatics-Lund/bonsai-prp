@@ -27,9 +27,19 @@ class PredictionSoftware(Enum):
 class VariantType(Enum):
     """Types of variants."""
 
-    SUBSTITUTION = "substitution"
-    INSERTION = "insertion"
-    DELETION = "deletion"
+    SNV = "SNV"
+    SV = "SV"
+    STR = "STR"
+
+class VariantSubType(Enum):
+    """Variant subtypes."""
+
+    INSERTION = "INS"
+    DELETION = "DEL"
+    SUBSTITUTION = "SUB"
+    INVERSION = "INV"
+    DUPLICATION = "DUP"
+    TRANSLOCATION = "BND"
 
 
 class ElementType(Enum):
@@ -162,12 +172,14 @@ class VariantBase(RWModel):
 
     # classification
     variant_type: VariantType
+    variant_subtype: VariantSubType
     phenotypes: List[PhenotypeInfo] = []
 
     # variant location
-    gene_symbol: str
+    reference_sequence: str = Field(..., description="Reference sequence such as chromosome, gene or contig id.", alias='gene_symbol')
     accession: Optional[str] = None
-    position: int
+    start: int
+    end: int
     ref_nt: str
     alt_nt: str
     ref_aa: Optional[str] = None

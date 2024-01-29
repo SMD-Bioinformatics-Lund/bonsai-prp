@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple
 from ...models.metadata import SoupVersions
 from ...models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import TbProfilerVariant, VariantType
+from ...models.phenotype import TbProfilerVariant, VariantType, VariantSubType
 from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
@@ -66,21 +66,25 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
         for hit in predictions.get(result_type, []):
             ref_nt = hit["ref"]
             alt_nt = hit["alt"]
+            var_type = VariantType.SNV
             if len(ref_nt) == len(alt_nt):
-                var_type = VariantType.SUBSTITUTION
+                var_sub_type = VariantSubType.SUBSTITUTION
             elif len(ref_nt) > len(alt_nt):
-                var_type = VariantType.DELETION
+                var_sub_type = VariantSubType.DELETION
             else:
-                var_type = VariantType.INSERTION
+                var_sub_type = VariantSubType.INSERTION
 
+            start_pos = int(hit["genome_pos"])
             variant = TbProfilerVariant(
                 # classificatoin
                 variant_type=var_type,
+                variant_subtype=var_sub_type,
                 phenotypes=parse_drug_resistance_info(hit.get("drugs", [])),
                 # location
-                gene_symbol=hit["gene"],
+                reference_sequence=hit["gene"],
                 accession=hit["feature_id"],
-                position=int(hit["genome_pos"]),
+                start=start_pos,
+                end=start_pos + len(alt_nt),
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
                 # consequense
@@ -95,7 +99,7 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
             )
             results.append(variant)
     # sort variants
-    variants = sorted(results, key=lambda entry: (entry.gene_symbol, entry.position))
+    variants = sorted(results, key=lambda entry: (entry.reference_sequence, entry.start))
     return variants
 
 
