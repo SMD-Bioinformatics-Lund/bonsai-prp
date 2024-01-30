@@ -1,11 +1,11 @@
 """Data model definition of input/ output data"""
-from typing import List, Union
+from typing import List, Union, Optional
 
 from pydantic import Field
 
 from .base import RWModel
 from .metadata import RunMetadata
-from .phenotype import ElementType, ElementTypeResult, PredictionSoftware
+from .phenotype import ElementType, ElementTypeResult, PredictionSoftware, VariantBase
 from .qc import QcMethodIndex
 from .species import SpeciesPredictionResult
 from .typing import (
@@ -49,3 +49,6 @@ class PipelineResult(SampleBase):
     typing_result: List[MethodIndex] = Field(..., alias="typingResult")
     # optional phenotype prediction
     element_type_result: List[MethodIndex] = Field(..., alias="elementTypeResult")
+    # optional variant info
+    snv_vcf: Optional[List[VariantBase]] = None
+    sv_vcf: Optional[List[VariantBase]] = None
