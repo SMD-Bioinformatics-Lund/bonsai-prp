@@ -4,10 +4,13 @@
 
  - Workflow for docker image to be pushed to dockerhub
  - Image build file (Dockerfile)
+ - Add optional SNV and structural variants to sample output
 
 ### Fixed
 
 ### Changed
+
+ - Changed VariantTypes and added VariantSuptype classification
 
 ## [0.3.0]
 
