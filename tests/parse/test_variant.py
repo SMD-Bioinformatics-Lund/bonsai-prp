@@ -1,5 +1,15 @@
 """Test parse variants."""
 from prp.parse.variant import load_variants
 
-def test_parse_variants(mtuberculosis_sv_path):
-    load_variants(mtuberculosis_sv_path)
+def test_parse_sv_variants(mtuberculosis_sv_vcf_path):
+    """Test loading of varians."""
+
+    variants = load_variants(mtuberculosis_sv_vcf_path)
+    assert len(variants) == 2
+
+
+def test_parse_snv_variants(mtuberculosis_snv_vcf_path):
+    """Test loading of varians."""
+
+    variants = load_variants(mtuberculosis_snv_vcf_path)
+    assert len(variants) == 2

@@ -1,10 +1,31 @@
 """Parse variant from VCF files."""
 
 from cyvcf2 import VCF, Variant
-from prp.models.phenotype import VariantBase
+from typing import List
+from prp.models.phenotype import VariantBase, VariantType
 import logging
 
 LOG = logging.getLogger(__name__)
+
+
+def _get_variant_type(variant):
+    """Parse variant type."""
+    match variant.var_type:
+        case "snv":
+            var_type = VariantType.SNV
+        case other:
+            var_type = VariantType(variant.var_type.upper())
+    return var_type
+
+
+def _get_variant_subtype(variant):
+    """Parse variant type."""
+    match variant.var_subtype:
+        case "tv":
+            var_type = VariantType.SUB
+        case other:
+            var_type = VariantType(variant.var_type.upper())
+    return var_type
 
 
 def parse_variant(variant: Variant):
@@ -23,22 +44,25 @@ def parse_variant(variant: Variant):
     else:
         passed_qc = False
 
-    var_obj = VariantBase(
-            variant_type=variant.var_type.upper(),
-            variant_subtype=variant.var_subtype.upper(),
-            gene_symbol=variant.CHROM,
-            start=variant.start,
-            end=variant.end,
-            ref_nt=variant.REF,
-            alt_nt=variant.ALT[0], # haploid
-            method=variant.INFO.get("SVMETHOD"),
-            confidence=variant.QUAL,
-            passed_qc=passed_qc,
-    )
+    try:
+        var_obj = VariantBase(
+                variant_type=variant.var_type.upper(),
+                variant_subtype=variant.var_subtype.upper(),
+                gene_symbol=variant.CHROM,
+                start=variant.start,
+                end=variant.end,
+                ref_nt=variant.REF,
+                alt_nt=variant.ALT[0], # haploid
+                method=variant.INFO.get("SVMETHOD"),
+                confidence=variant.QUAL,
+                passed_qc=passed_qc,
+        )
+    except:
+        import pdb; pdb.set_trace()
     return var_obj
 
 
-def load_variants(variant_file):
+def load_variants(variant_file: str) -> List[VariantBase]:
     """Load variants."""
     vcf_obj = VCF(variant_file)
     try:
@@ -50,5 +74,8 @@ def load_variants(variant_file):
     vcf_obj = VCF(variant_file)
 
     # parse header from vcf file
+    variants = []
     for variant_no, variant in enumerate(vcf_obj):
-        parse_variant(variant)
+        variants.append(parse_variant(variant))
+
+    return variants
