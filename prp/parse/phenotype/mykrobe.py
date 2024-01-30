@@ -1,7 +1,6 @@
 """Parse Mykrobe results."""
 import logging
 import re
-import numpy as np
 from typing import Any, Dict, Tuple
 
 from ...models.phenotype import (
@@ -13,7 +12,7 @@ from ...models.phenotype import (
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import VariantType, VariantSubType
 from ...models.sample import MethodIndex
-from .utils import get_nt_change, is_prediction_result_empty
+from ..utils import get_nt_change, is_prediction_result_empty
 
 LOG = logging.getLogger(__name__)
 

@@ -1,11 +1,11 @@
 # Use an official Python runtime as a parent image
-FROM python:3.8
+FROM python:3.10
 
 # Set the working directory in the container
 WORKDIR /usr/src/app
 
 # Clone the repository and install dependencies
-RUN pip install bonsai-prp \
+RUN pip install bonsai-prp && \
     pip install biopython
 
 # Set umask
@@ -15,7 +15,7 @@ RUN umask 0002
 LABEL authors="Markus Johansson <markus.h.johansson@skane.se>, Ryan Kennedy <ryan.kennedy@skane.se>" \
       maintainers="Markus Johansson <markus.h.johansson@skane.se>, Ryan Kennedy <ryan.kennedy@skane.se>" \
       description="Docker image for bonsai-prp" \
-      version="0.3.0"
+      version="0.3.1"
 
 # Default command to run when the container starts
 CMD ["python"]

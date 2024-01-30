@@ -2,15 +2,35 @@
 
 ### Added
 
- - Workflow for docker image to be pushed to dockerhub
- - Image build file (Dockerfile)
  - Add optional SNV and structural variants to sample output
 
 ### Fixed
 
+ - Dockerfile python version
+
 ### Changed
 
+ - Workflow that publishes to PyPI and Dockerhub separated into two workflows for testing
+ - Publish to docker workflow started on completion of PyPI publishing
  - Changed VariantTypes and added VariantSuptype classification
+
+## [0.3.1]
+
+### Added
+
+ - Workflow for docker image to be pushed to dockerhub
+ - Image build file (Dockerfile)
+ - Add get_db_version and reformat_date_str to utils.py
+ - Workflow that builds and pushes to both dockerhub and PyPI
+
+### Fixed
+
+ - Git action versions
+
+### Changed
+
+ - Move utils.py from prp/parse/phenotype to prp/parse
+ - Docker/PyPI publishing workflow added workflow_dispatch, removed permissions and changed secret variable names
 
 ## [0.3.0]
 
