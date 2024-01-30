@@ -28,6 +28,7 @@ class VariantType(Enum):
     """Types of variants."""
 
     SNV = "SNV"
+    MNV = "MNV"
     SV = "SV"
     STR = "STR"
 
@@ -37,6 +38,8 @@ class VariantSubType(Enum):
     INSERTION = "INS"
     DELETION = "DEL"
     SUBSTITUTION = "SUB"
+    TRANSISTION = "TS"
+    TRANSVERTION = "TV"
     INVERSION = "INV"
     DUPLICATION = "DUP"
     TRANSLOCATION = "BND"
@@ -188,9 +191,9 @@ class VariantBase(RWModel):
     # prediction info
     depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
     frequency: Optional[float] = Field(None, description="Alt allele frequency.")
-    confidence: Optional[int] = Field(None, description="Genotype confidence.")
-    method: str = Field(..., description="Prediction method used to call variant")
-    passed_qc: bool = Field(
+    confidence: Optional[float] = Field(None, description="Genotype confidence.")
+    method: Optional[str] = Field(..., description="Prediction method used to call variant")
+    passed_qc: Optional[bool] = Field(
         ..., description="Describe if variant has passed the tool qc check"
     )
 
