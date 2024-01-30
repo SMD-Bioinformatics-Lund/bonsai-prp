@@ -8,7 +8,7 @@ from .phenotype import (
     parse_tbprofiler_amr_pred,
     parse_virulencefinder_vir_pred,
 )
-from .qc import parse_postalignqc_results, parse_quast_results
+from .qc import parse_postalignqc_results, parse_quast_results, parse_alignment_results
 from .species import parse_kraken_result
 from .typing import (
     parse_cgmlst_results,
