@@ -1,11 +1,10 @@
 """Parse output of QC tools."""
 import os
 import csv
-import json
 import logging
 import subprocess
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict
 from click.types import File
 
 from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult
@@ -47,7 +46,7 @@ class QC:
                 cnt += 1
                 tot_bases += 1
                 for min_val in thresholds:
-                    if int(line[cov_field]) >= min_val:
+                    if int(line[cov_field]) >= int(min_val):
                         above_cnt[min_val] += 1
 
             above_pct = {min_val: 100 * (above_cnt[min_val] / tot_bases) for min_val in thresholds}
@@ -87,7 +86,9 @@ class QC:
         LOG.info(f"RUNNING: {' '.join(cmd)}")
         result = subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True)
         if result.stderr:
-            print(result.stderr)
+            print(f"stderr: {result.stderr}")
+        if result.stdout:
+            print(f"stdout: {result.stdout}")
 
     def run(self) -> dict:
         """Run QC info extraction"""
@@ -116,7 +117,8 @@ class QC:
                         self.results['fold_80'] = vals[33]
 
         LOG.info("Collecting basic stats...")
-        flagstat = subprocess.check_output(f"sambamba flagstat {'-t '+ str(self.cpus) if self.cpus else ''} {self.bam}", shell=True, text=True).splitlines()
+        sambamba_flagstat_cmd = f"sambamba flagstat {'-t '+ str(self.cpus) if self.cpus else ''} {self.bam}"
+        flagstat = subprocess.check_output(sambamba_flagstat_cmd, shell=True, text=True).splitlines()
         num_reads = int(flagstat[0].split()[0])
         dup_reads = int(flagstat[3].split()[0])
         mapped_reads = int(flagstat[4].split()[0])
@@ -137,18 +139,18 @@ class QC:
             os.remove(f"{self.bam}.ins.pdf")
 
         out_prefix = f"{self.bam}_postalnQC"
-        thresholds = [1, 10, 30, 100, 250, 500, 1000]
+        thresholds = ["1", "10", "30", "100", "250", "500", "1000"]
         if not os.path.exists(f"{self.bam}.bai"):
             LOG.info(f"Indexing bam file: {self.bam}.bai")
-            sambamba_depth_cmd = ["sambamba", "index", self.bam]
-            self.system_p(sambamba_depth_cmd)
+            sambamba_index_cmd = ["sambamba", "index", self.bam]
+            self.system_p(sambamba_index_cmd)
 
         LOG.info("Collecting depth stats...")
         sambamba_depth_cmd = ["sambamba", "depth", "base", "-c", "0"]
         if self.cpus:
-            sambamba_depth_cmd.append("-t " + str(self.cpus))
+            sambamba_depth_cmd.extend(["-t", str(self.cpus)])
         if self.bed:
-            sambamba_depth_cmd.append("-L " + self.bed)
+            sambamba_depth_cmd.extend(["-L", self.bed])
         sambamba_depth_cmd.extend([self.bam, "-o", f"{out_prefix}.basecov.bed"])
         self.system_p(sambamba_depth_cmd)
         pct_above, mean_cov, iqr_median = self.parse_basecov_bed(f"{out_prefix}.basecov.bed", thresholds)
@@ -224,4 +226,4 @@ def parse_alignment_results(sample_id: str, bam: str, reference: str, cpus: int,
     qc = QC(sample_id, bam.name, reference.name, cpus, bed, baits)
     qc_dict = qc.run()
     qc_res = parse_postalignqc_results(qc_dict)
-    return QcMethodIndex(software=QcSoftware.POSTALIGNQC, result=qc_res)
+    return qc_res

@@ -320,7 +320,7 @@ def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
 @click.option("-e", "--bed", type=click.File(), help="bed file")
 @click.option("-a", "--baits", type=click.File(), help="baits file")
 @click.option("-r", "--reference", required=True, type=click.File(), help="reference fasta")
-@click.option("-c", "--cpus", type=click.INT, help="cpus")
+@click.option("-c", "--cpus", type=click.INT, default=1, help="cpus")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
 )
