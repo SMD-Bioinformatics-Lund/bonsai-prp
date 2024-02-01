@@ -2,9 +2,15 @@
 
 ### Added
 
+ - Add create-qc-result as sub arguement
+ - Add QC class and parse_alignment_results to qc.py
+ - Add picard, samtools and sambamba to Dockerfile
+
 ### Fixed
 
  - Dockerfile python version
+ - Pydantic models
+ - Python version error in Dockerfile
 
 ### Changed
 
