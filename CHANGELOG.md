@@ -5,6 +5,7 @@
  - Add create-qc-result as sub arguement
  - Add QC class and parse_alignment_results to qc.py
  - Add picard, samtools and sambamba to Dockerfile
+ - Add quartile1, median & quartile3 to postalignqc results and respective model
 
 ### Fixed
 
