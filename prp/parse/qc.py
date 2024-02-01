@@ -27,6 +27,31 @@ class QC:
         """Write out json file"""
         with open(output_filepath, 'w', encoding="utf-8") as json_file:
             json_file.write(json_result)
+    
+    def convert2intervals(self, bed_baits, dict_file):
+        """Convert files to interval lists"""
+        bed2int_cmd = ["picard", "-XX:-UsePerfData", "BedToIntervalList", "-I", bed_baits, "-O", f"{bed_baits}.interval_list", "-SD", dict_file]
+        self.system_p(bed2int_cmd)
+    
+    def parse_hsmetrics(self, hsmetrics):
+        with open(hsmetrics, "r", encoding="utf-8") as fin:
+            for line in fin:
+                if line.startswith("## METRICS CLASS"):
+                    next(fin)
+                    vals = next(fin).split("\t")
+                    self.results['pct_on_target'] = vals[18]
+                    self.results['fold_enrichment'] = vals[26]
+                    self.results['median_coverage'] = vals[23]
+                    self.results['fold_80'] = vals[33]
+    
+    def parse_ismetrics(self, ismetrics):
+        with open(ismetrics, "r", encoding="utf-8") as ins:
+            for line in ins:
+                if line.startswith("## METRICS CLASS"):
+                    next(ins)
+                    vals = next(ins).split("\t")
+                    self.results['ins_size'] = vals[0]
+                    self.results['ins_size_dev'] = vals[1]
 
     def parse_basecov_bed(self, basecov_fpath, thresholds):
         """Parse base coverage bed file"""
@@ -83,7 +108,7 @@ class QC:
 
     def system_p(self, cmd):
         """Execute subproces"""
-        LOG.info(f"RUNNING: {' '.join(cmd)}")
+        LOG.info("RUNNING: %s", ' '.join(cmd))
         result = subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, text=True)
         if result.stderr:
             print(f"stderr: {result.stderr}")
@@ -97,25 +122,21 @@ class QC:
             dict_file = self.reference
             if not dict_file.endswith(".dict"):
                 dict_file += ".dict"
+            
+            # Convert bed/baits file to interval list
             if not os.path.isfile(f"{self.bed}.interval_list"):
-                bed2int_cmd = ["picard", "-XX:-UsePerfData", "BedToIntervalList", "-I", self.bed, "-O", f"{self.bed}.interval_list", "-SD", dict_file]
-                self.system_p(bed2int_cmd)
+                self.convert2intervals(self.bed, dict_file)
             if not os.path.isfile(f"{self.baits}.interval_list"):
-                baits2int_cmd = ["picard", "-XX:-UsePerfData", "BedToIntervalList", "-I", self.baits, "-O", f"{self.baits}.interval_list", "-SD", dict_file]
-                self.system_p(baits2int_cmd)
+                self.convert2intervals(self.baits, dict_file)
+            
+            # Run picard hsmetrics command
             hsmet_cmd = ["picard", "-XX:-UsePerfData", "CollectHsMetrics", "-I", self.bam, "-O", f"{self.bam}.hsmetrics", "-R", self.reference, "-BAIT_INTERVALS", f"{self.baits}.interval_list", "-TARGET_INTERVALS", f"{self.bed}.interval_list"]
             self.system_p(hsmet_cmd)
 
-            with open(f"{self.bam}.hsmetrics", "r", encoding="utf-8") as fin:
-                for line in fin:
-                    if line.startswith("## METRICS CLASS"):
-                        next(fin)
-                        vals = next(fin).split("\t")
-                        self.results['pct_on_target'] = vals[18]
-                        self.results['fold_enrichment'] = vals[26]
-                        self.results['median_coverage'] = vals[23]
-                        self.results['fold_80'] = vals[33]
+            # Parse hsmetrics output file
+            self.parse_hsmetrics(f"{self.bam}.hsmetrics")
 
+        # Collect basic sequencing statistics
         LOG.info("Collecting basic stats...")
         sambamba_flagstat_cmd = f"sambamba flagstat {'-t '+ str(self.cpus) if self.cpus else ''} {self.bam}"
         flagstat = subprocess.check_output(sambamba_flagstat_cmd, shell=True, text=True).splitlines()
@@ -123,28 +144,29 @@ class QC:
         dup_reads = int(flagstat[3].split()[0])
         mapped_reads = int(flagstat[4].split()[0])
 
+        # Get insert size metrics
         if self.paired:
             LOG.info("Collect insert sizes...")
             cmd = ["picard", "-XX:-UsePerfData", "CollectInsertSizeMetrics", "-I", self.bam, "-O", f"{self.bam}.inssize", "-H", f"{self.bam}.ins.pdf", "-STOP_AFTER", "1000000"]
             self.system_p(cmd)
-            with open(f"{self.bam}.inssize", "r", encoding="utf-8") as ins:
-                for line in ins:
-                    if line.startswith("## METRICS CLASS"):
-                        next(ins)
-                        vals = next(ins).split("\t")
-                        self.results['ins_size'] = vals[0]
-                        self.results['ins_size_dev'] = vals[1]
 
+            # Parse ismetrics output file
+            self.parse_ismetrics(f"{self.bam}.inssize")
+
+            # Remove ismetrics files after parsing
             os.remove(f"{self.bam}.inssize")
             os.remove(f"{self.bam}.ins.pdf")
 
         out_prefix = f"{self.bam}_postalnQC"
         thresholds = ["1", "10", "30", "100", "250", "500", "1000"]
+
+        # Index bam file if .bai does not exist
         if not os.path.exists(f"{self.bam}.bai"):
-            LOG.info(f"Indexing bam file: {self.bam}.bai")
+            LOG.info("Indexing bam file: %s.bai", self.bam)
             sambamba_index_cmd = ["sambamba", "index", self.bam]
             self.system_p(sambamba_index_cmd)
 
+        # Generate sambamba depth command
         LOG.info("Collecting depth stats...")
         sambamba_depth_cmd = ["sambamba", "depth", "base", "-c", "0"]
         if self.cpus:
@@ -153,6 +175,8 @@ class QC:
             sambamba_depth_cmd.extend(["-L", self.bed])
         sambamba_depth_cmd.extend([self.bam, "-o", f"{out_prefix}.basecov.bed"])
         self.system_p(sambamba_depth_cmd)
+
+        # Parse base coverage file
         pct_above, mean_cov, iqr_median = self.parse_basecov_bed(f"{out_prefix}.basecov.bed", thresholds)
         os.remove(f"{out_prefix}.basecov.bed")
 
