@@ -3,6 +3,7 @@ import os
 import csv
 import logging
 import subprocess
+import pandas as pd
 
 from typing import Any, Dict
 from click.types import File
@@ -54,50 +55,28 @@ class QC:
                     self.results['ins_size_dev'] = vals[1]
 
     def parse_basecov_bed(self, basecov_fpath, thresholds):
-        """Parse base coverage bed file"""
-        with open(basecov_fpath, "r", encoding="utf-8") as cov_fh:
-            head_str = cov_fh.readline().strip().lstrip("#")
-            head = head_str.split("\t")
-            cov_field = head.index("COV")
+        """Parse base coverage bed file using pandas"""
+        df = pd.read_csv(basecov_fpath, sep='\t', comment='#', header=0)
 
-            tot_bases = 0
-            above_cnt = {min_val: 0 for min_val in thresholds}
+        tot_bases = len(df)
+        pct_above = {min_val: len(df[df['COV'] >= int(min_val)]) for min_val in thresholds}
+        pct_above = {min_val: 100 * (pct_above[min_val] / tot_bases) for min_val in thresholds}
 
-            tot, cnt = 0, 0
-            levels = {}
-            for line in cov_fh:
-                line = line.strip().split("\t")
-                tot += int(line[2])
-                cnt += 1
-                tot_bases += 1
-                for min_val in thresholds:
-                    if int(line[cov_field]) >= int(min_val):
-                        above_cnt[min_val] += 1
+        mean_cov = df['COV'].mean()
 
-            above_pct = {min_val: 100 * (above_cnt[min_val] / tot_bases) for min_val in thresholds}
+        # Calculate the inter-quartile range / median (IQR/median)
+        quartile1 = df['COV'].quantile(0.25)
+        median = df['COV'].median()
+        quartile3 = df['COV'].quantile(0.75)
 
-            mean_cov = tot / cnt
+        iqr_median = quartile3 - quartile1 if quartile1 and quartile3 and median else None
 
-            # Calculate the inter-quartile range / median (IQR/median)
-            q1_num = cnt / 4
-            q3_num = 3 * cnt / 4
-            median_num = cnt / 2
-            sum_val = 0
-            quartile1, quartile3, median = None, None, None
-            iqr_median = "9999"
-            for level in sorted(levels):
-                sum_val += levels[level]
-                if sum_val >= q1_num and not quartile1:
-                    quartile1 = level
-                if sum_val >= median_num and not median:
-                    median = level
-                if sum_val >= q3_num and not quartile3:
-                    quartile3 = level
-
-            if quartile1 and quartile3 and median:
-                iqr_median = (quartile3 - quartile1) / median
-
-            return above_pct, mean_cov, iqr_median
+        self.results['pct_above_x'] = pct_above
+        self.results['mean_cov'] = mean_cov
+        self.results['iqr_median'] = iqr_median
+        self.results['quartile1'] = quartile1
+        self.results['median'] = median
+        self.results['quartile3'] = quartile3
 
     def is_paired(self):
         """Check if reads are paired"""
@@ -177,17 +156,14 @@ class QC:
         self.system_p(sambamba_depth_cmd)
 
         # Parse base coverage file
-        pct_above, mean_cov, iqr_median = self.parse_basecov_bed(f"{out_prefix}.basecov.bed", thresholds)
+        self.parse_basecov_bed(f"{out_prefix}.basecov.bed", thresholds)
         os.remove(f"{out_prefix}.basecov.bed")
 
-        self.results['pct_above_x'] = pct_above
         self.results['tot_reads'] = num_reads
         self.results['mapped_reads'] = mapped_reads
         self.results['dup_reads'] = dup_reads
         self.results['dup_pct'] = dup_reads / mapped_reads
         self.results['sample_id'] = self.sample_id
-        self.results['mean_cov'] = mean_cov
-        self.results['iqr_median'] = iqr_median
 
         return self.results
 
@@ -236,6 +212,9 @@ def parse_postalignqc_results(qc_dict: Dict[str, Any]) -> QcMethodIndex:
         mapped_reads=int(qc_dict["mapped_reads"]),
         tot_reads=int(qc_dict["tot_reads"]),
         iqr_median=float(qc_dict["iqr_median"]),
+        quartile1=float(qc_dict["quartile1"]),
+        median=float(qc_dict["median"]),
+        quartile3=float(qc_dict["quartile3"]),
     )
     return QcMethodIndex(software=QcSoftware.POSTALIGNQC, result=qc_res)
 
