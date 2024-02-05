@@ -24,17 +24,17 @@ class QC:
         self.reference = reference
         self.paired = self.is_paired()
 
-    def write_json_result(self, json_result, output_filepath):
+    def write_json_result(self, json_result: str, output_filepath: str):
         """Write out json file"""
         with open(output_filepath, 'w', encoding="utf-8") as json_file:
             json_file.write(json_result)
 
-    def convert2intervals(self, bed_baits, dict_file):
+    def convert2intervals(self, bed_baits: str, dict_file: str):
         """Convert files to interval lists"""
         bed2int_cmd = ["java", "-jar", "/usr/bin/picard.jar", "BedToIntervalList", "-I", bed_baits, "-O", f"{bed_baits}.interval_list", "-SD", dict_file]
         self.system_p(bed2int_cmd)
 
-    def parse_hsmetrics(self, hsmetrics):
+    def parse_hsmetrics(self, hsmetrics: str):
         """Parse hs metrics"""
         with open(hsmetrics, "r", encoding="utf-8") as fin:
             for line in fin:
@@ -46,7 +46,7 @@ class QC:
                     self.results['median_coverage'] = vals[23]
                     self.results['fold_80'] = vals[33]
 
-    def parse_ismetrics(self, ismetrics):
+    def parse_ismetrics(self, ismetrics: str):
         """Parse insert size metrics"""
         with open(ismetrics, "r", encoding="utf-8") as ins:
             for line in ins:
@@ -56,7 +56,7 @@ class QC:
                     self.results['ins_size'] = vals[5]
                     self.results['ins_size_dev'] = vals[6]
 
-    def parse_basecov_bed(self, basecov_fpath, thresholds):
+    def parse_basecov_bed(self, basecov_fpath: str, thresholds: list):
         """Parse base coverage bed file using pandas"""
         df = pd.read_csv(basecov_fpath, sep='\t', comment='#', header=0)
 
@@ -80,13 +80,13 @@ class QC:
         self.results['median'] = median
         self.results['quartile3'] = quartile3
 
-    def is_paired(self):
+    def is_paired(self) -> bool:
         """Check if reads are paired"""
         line = subprocess.check_output(f"samtools view {self.bam} | head -n 1| awk '{{print $2}}'", shell=True, text=True)
         remainder = int(line) % 2
         return bool(remainder)
 
-    def system_p(self, cmd):
+    def system_p(self, cmd: list):
         """Execute subproces"""
         LOG.info("RUNNING: %s", ' '.join(cmd))
         result = subprocess.run(cmd, check=True, text=True)
@@ -176,7 +176,7 @@ def parse_quast_results(file: File) -> QcMethodIndex:
         sep (str): seperator
 
     Returns:
-        AssemblyQc: list of key-value pairs
+        QuastQcResult: list of key-value pairs
     """
     LOG.info("Parsing tsv file: %s", file.name)
     creader = csv.reader(file, delimiter="\t")
