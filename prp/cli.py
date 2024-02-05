@@ -127,8 +127,7 @@ def create_bonsai_input(
         results["qc"].append(res)
     if quality:
         LOG.info("Parse quality results")
-        qc_dict = json.load(quality)
-        res: QcMethodIndex = parse_postalignqc_results(qc_dict)
+        res: QcMethodIndex = parse_postalignqc_results(quality)
         results["qc"].append(res)
 
     # typing
@@ -290,8 +289,7 @@ def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
     results = []
     if quality:
         LOG.info("Parse quality results")
-        qc_dict = json.load(quality)
-        res: QcMethodIndex = parse_postalignqc_results(qc_dict)
+        res: QcMethodIndex = parse_postalignqc_results(quality)
         results.append(res)
 
     if quast:
@@ -326,14 +324,7 @@ def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
 )
 def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> None:
     """Generate QC metrics regarding bam file"""
-    results = []
     if bam and reference:
         LOG.info("Parse alignment results")
-        res: MethodIndex = parse_alignment_results(sample_id, bam, reference, cpus, bed, baits)
-        results.append(res)
-    # cast output as pydantic type for easy serialization
-    qc_data = TypeAdapter(List[QcMethodIndex])
-
-    LOG.info("Storing results to: %s", output.name)
-    output.write(qc_data.dump_json(results, indent=3).decode("utf-8"))
+        parse_alignment_results(sample_id, bam, reference, cpus, output, bed, baits)
     click.secho("Finished generating QC output", fg="green")
