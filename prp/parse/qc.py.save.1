@@ -53,8 +53,8 @@ class QC:
                 if line.startswith("## METRICS CLASS"):
                     next(ins)
                     vals = next(ins).split("\t")
-                    self.results['ins_size'] = vals[5]
-                    self.results['ins_size_dev'] = vals[6]
+                    self.results['ins_size'] = vals[0]
+                    self.results['ins_size_dev'] = vals[1]
 
     def parse_basecov_bed(self, basecov_fpath, thresholds):
         """Parse base coverage bed file using pandas"""
@@ -227,7 +227,7 @@ def parse_alignment_results(sample_id: str, bam: str, reference: str, cpus: int,
         PostAlignQc: list of key-value pairs
     """
     LOG.info("Parsing bam file: %s", bam.name)
-    qc = QC(sample_id, bam.name, reference.name, cpus, getattr(bed, 'name', None), getattr(baits, 'name', None))
+    qc = QC(sample_id, bam.name, reference.name, cpus, bed.name if , baits)
     qc_dict = qc.run()
     qc_res = parse_postalignqc_results(qc_dict)
     return qc_res
