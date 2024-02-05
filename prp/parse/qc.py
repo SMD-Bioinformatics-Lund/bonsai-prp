@@ -1,6 +1,7 @@
 """Parse output of QC tools."""
 import os
 import csv
+import json
 import logging
 import subprocess
 import pandas as pd
@@ -24,17 +25,17 @@ class QC:
         self.reference = reference
         self.paired = self.is_paired()
 
-    def write_json_result(self, json_result: str, output_filepath: str):
+    def write_json_result(self, json_result: dict, output_filepath: str) -> None:
         """Write out json file"""
         with open(output_filepath, 'w', encoding="utf-8") as json_file:
-            json_file.write(json_result)
+            json.dump(json_result, json_file, indent=4)
 
-    def convert2intervals(self, bed_baits: str, dict_file: str):
+    def convert2intervals(self, bed_baits: str, dict_file: str) -> None:
         """Convert files to interval lists"""
         bed2int_cmd = ["java", "-jar", "/usr/bin/picard.jar", "BedToIntervalList", "-I", bed_baits, "-O", f"{bed_baits}.interval_list", "-SD", dict_file]
         self.system_p(bed2int_cmd)
 
-    def parse_hsmetrics(self, hsmetrics: str):
+    def parse_hsmetrics(self, hsmetrics: str) -> None:
         """Parse hs metrics"""
         with open(hsmetrics, "r", encoding="utf-8") as fin:
             for line in fin:
@@ -46,7 +47,7 @@ class QC:
                     self.results['median_coverage'] = vals[23]
                     self.results['fold_80'] = vals[33]
 
-    def parse_ismetrics(self, ismetrics: str):
+    def parse_ismetrics(self, ismetrics: str) -> None:
         """Parse insert size metrics"""
         with open(ismetrics, "r", encoding="utf-8") as ins:
             for line in ins:
@@ -56,7 +57,7 @@ class QC:
                     self.results['ins_size'] = vals[5]
                     self.results['ins_size_dev'] = vals[6]
 
-    def parse_basecov_bed(self, basecov_fpath: str, thresholds: list):
+    def parse_basecov_bed(self, basecov_fpath: str, thresholds: list) -> None:
         """Parse base coverage bed file using pandas"""
         df = pd.read_csv(basecov_fpath, sep='\t', comment='#', header=0)
 
@@ -86,7 +87,7 @@ class QC:
         remainder = int(line) % 2
         return bool(remainder)
 
-    def system_p(self, cmd: list):
+    def system_p(self, cmd: list) -> None:
         """Execute subproces"""
         LOG.info("RUNNING: %s", ' '.join(cmd))
         result = subprocess.run(cmd, check=True, text=True)
@@ -195,7 +196,7 @@ def parse_quast_results(file: File) -> QcMethodIndex:
     return QcMethodIndex(software=QcSoftware.QUAST, result=qc_res)
 
 
-def parse_postalignqc_results(qc_dict: Dict[str, Any]) -> QcMethodIndex:
+def parse_postalignqc_results(input_file: File) -> QcMethodIndex:
     """Parse postalignqc json file and extract relevant metrics.
 
     Args:
@@ -204,7 +205,8 @@ def parse_postalignqc_results(qc_dict: Dict[str, Any]) -> QcMethodIndex:
     Returns:
         PostAlignQc: list of key-value pairs
     """
-    LOG.info("Parsing qc dict")
+    LOG.info("Parsing json file: %s", input_file.name)
+    qc_dict = json.load(input_file)
     qc_res = PostAlignQcResult(
         ins_size=int(float(qc_dict["ins_size"])),
         ins_size_dev=int(float(qc_dict["ins_size_dev"])),
@@ -220,14 +222,14 @@ def parse_postalignqc_results(qc_dict: Dict[str, Any]) -> QcMethodIndex:
     return QcMethodIndex(software=QcSoftware.POSTALIGNQC, result=qc_res)
 
 
-def parse_alignment_results(sample_id: str, bam: str, reference: str, cpus: int, bed: str = None, baits: str = None) -> QcMethodIndex:
+def parse_alignment_results(sample_id: str, bam: File, reference: File, cpus: int, output: File, bed: File = None, baits: File = None) -> None:
     """Parse bam file and extract relevant metrics.
 
     Returns:
-        PostAlignQc: list of key-value pairs
+        None
     """
     LOG.info("Parsing bam file: %s", bam.name)
     qc = QC(sample_id, bam.name, reference.name, cpus, getattr(bed, 'name', None), getattr(baits, 'name', None))
     qc_dict = qc.run()
-    qc_res = parse_postalignqc_results(qc_dict)
-    return qc_res
+    LOG.info("Storing results to: %s", output.name)
+    qc.write_json_result(qc_dict, output.name)
