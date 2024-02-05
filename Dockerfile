@@ -5,7 +5,7 @@ FROM python:3.11 AS build-stage
 WORKDIR /usr/src/app
 
 # Copy the contents of the local directory into the container
-#COPY . .
+COPY . .
 
 # Install wget
 RUN apt-get update && \
@@ -14,8 +14,8 @@ RUN apt-get update && \
 
 # Pip install bonsai-prp & dependencies
 RUN pip install --upgrade pip && \
-    #pip install . && \
-    pip install bonsai-prp && \
+    pip install . && \
+    #pip install bonsai-prp && \
     pip install biopython 
 
 # Download and install Sambamba
@@ -44,11 +44,10 @@ WORKDIR /usr/src/app
 
 # Install openjdk-17
 RUN apt-get update && \
-    apt-get install -y openjdk-17-jre-headless && \
+    apt-get install -y openjdk-17-jre-headless r-base && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy only the necessary files from the builder image
-COPY --from=build-stage /usr/src/app /usr/src/app
 COPY --from=build-stage /usr/bin/sambamba /usr/bin/sambamba
 COPY --from=build-stage /usr/bin/picard.jar /usr/bin/picard.jar
 COPY --from=build-stage /usr/local/bin/samtools /usr/local/bin/samtools
