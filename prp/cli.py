@@ -15,6 +15,7 @@ from .models.typing import TypingMethod
 from .parse import (
     parse_amrfinder_amr_pred,
     parse_amrfinder_vir_pred,
+    parse_alignment_results,
     parse_cgmlst_results,
     parse_kraken_result,
     parse_mlst_results,
@@ -308,4 +309,22 @@ def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
 
     LOG.info("Storing results to: %s", output.name)
     output.write(qc_data.dump_json(results, indent=3).decode("utf-8"))
+    click.secho("Finished generating QC output", fg="green")
+
+
+@cli.command()
+@click.option("-i", "--sample-id", required=True, help="Sample identifier")
+@click.option("-b", "--bam", required=True, type=click.File(), help="bam file")
+@click.option("-e", "--bed", type=click.File(), help="bed file")
+@click.option("-a", "--baits", type=click.File(), help="baits file")
+@click.option("-r", "--reference", required=True, type=click.File(), help="reference fasta")
+@click.option("-c", "--cpus", type=click.INT, default=1, help="cpus")
+@click.option(
+    "-o", "--output", required=True, type=click.File("w"), help="output filepath"
+)
+def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> None:
+    """Generate QC metrics regarding bam file"""
+    if bam and reference:
+        LOG.info("Parse alignment results")
+        parse_alignment_results(sample_id, bam, reference, cpus, output, bed, baits)
     click.secho("Finished generating QC output", fg="green")

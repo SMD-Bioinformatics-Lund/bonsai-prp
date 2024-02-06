@@ -84,7 +84,10 @@ def format_nt_change(
 def reformat_date_str(input_date: str) -> str:
     """Reformat date string into DDMMYY format"""
     # Parse the date string
-    parsed_date = datetime.strptime(input_date, "%a %b %d %H:%M:%S %Y %z")
+    try:
+        parsed_date = datetime.strptime(input_date, "%Y-%m-%d %H:%M:%S.%f")
+    except ValueError:
+        parsed_date = datetime.strptime(input_date, "%a %b %d %H:%M:%S %Y %z")
 
     # Format as DDMMYY
     formatted_date = parsed_date.date().isoformat()
