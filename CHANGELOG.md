@@ -4,14 +4,16 @@
 
  - Add create-qc-result as sub arguement
  - Add QC class and parse_alignment_results to qc.py
- - Add picard, samtools and sambamba to Dockerfile
+ - Add picard, sambamba, java and r-base to Dockerfile
  - Add quartile1, median & quartile3 to postalignqc results and respective model
+ - Add fx for formatting datetime for manually generated tbdbs
 
 ### Fixed
 
  - Dockerfile python version
  - Pydantic models
  - Python version error in Dockerfile
+ - Test files regarding q1, median and q3
 
 ### Changed
 
