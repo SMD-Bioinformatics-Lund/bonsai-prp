@@ -29,13 +29,6 @@ RUN wget https://github.com/broadinstitute/picard/releases/download/3.1.1/picard
     chmod +x picard.jar && \
     mv picard.jar /usr/bin/picard.jar
 
-# Download and compile samtools
-RUN wget https://github.com/samtools/samtools/releases/download/1.19.2/samtools-1.19.2.tar.bz2 && \
-    tar -xvf samtools-1.19.2.tar.bz2 && \
-    rm samtools-1.19.2.tar.bz2 && \
-    cd samtools-1.19.2 && \
-    make install
-
 # Stage 2: Final image
 FROM python:3.11
 
@@ -50,7 +43,6 @@ RUN apt-get update && \
 # Copy only the necessary files from the builder image
 COPY --from=build-stage /usr/bin/sambamba /usr/bin/sambamba
 COPY --from=build-stage /usr/bin/picard.jar /usr/bin/picard.jar
-COPY --from=build-stage /usr/local/bin/samtools /usr/local/bin/samtools
 COPY --from=build-stage /usr/local/bin/prp /usr/local/bin/prp
 COPY --from=build-stage /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 

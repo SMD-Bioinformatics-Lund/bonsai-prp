@@ -5,6 +5,7 @@ import json
 import logging
 import subprocess
 import pandas as pd
+import pysam
 
 from typing import Any, Dict
 from click.types import File
@@ -46,6 +47,7 @@ class QC:
                     self.results['fold_enrichment'] = vals[26]
                     self.results['median_coverage'] = vals[23]
                     self.results['fold_80'] = vals[33]
+                    break
 
     def parse_ismetrics(self, ismetrics: str) -> None:
         """Parse insert size metrics"""
@@ -56,6 +58,7 @@ class QC:
                     vals = next(ins).split("\t")
                     self.results['ins_size'] = vals[5]
                     self.results['ins_size_dev'] = vals[6]
+                    break
 
     def parse_basecov_bed(self, basecov_fpath: str, thresholds: list) -> None:
         """Parse base coverage bed file using pandas"""
@@ -83,12 +86,14 @@ class QC:
 
     def is_paired(self) -> bool:
         """Check if reads are paired"""
-        line = subprocess.check_output(f"samtools view {self.bam} | head -n 1| awk '{{print $2}}'", shell=True, text=True)
-        remainder = int(line) % 2
-        return bool(remainder)
+        bam_file = pysam.AlignmentFile(self.bam)
+        for read in bam_file:
+            return read.is_paired
+        # If no reads are found or read is None, return False
+        return False
 
     def system_p(self, cmd: list) -> None:
-        """Execute subproces"""
+        """Execute subprocess"""
         LOG.info("RUNNING: %s", ' '.join(cmd))
         result = subprocess.run(cmd, check=True, text=True)
         if result.stderr:
@@ -222,12 +227,8 @@ def parse_postalignqc_results(input_file: File) -> QcMethodIndex:
     return QcMethodIndex(software=QcSoftware.POSTALIGNQC, result=qc_res)
 
 
-def parse_alignment_results(sample_id: str, bam: File, reference: File, cpus: int, output: File, bed: File = None, baits: File = None) -> None:
-    """Parse bam file and extract relevant metrics.
-
-    Returns:
-        None
-    """
+def parse_alignment_results(sample_id: str, bam: File, reference: File, cpus: int, output: File, bed: File | None = None, baits: File | None = None) -> None:
+    """Parse bam file and extract relevant metrics"""
     LOG.info("Parsing bam file: %s", bam.name)
     qc = QC(sample_id, bam.name, reference.name, cpus, getattr(bed, 'name', None), getattr(baits, 'name', None))
     qc_dict = qc.run()
