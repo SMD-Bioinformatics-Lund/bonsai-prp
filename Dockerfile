@@ -59,7 +59,7 @@ RUN /bin/bash -c "source ~/.bashrc"
 LABEL authors="Markus Johansson <markus.h.johansson@skane.se>, Ryan Kennedy <ryan.kennedy@skane.se>" \
       maintainers="Markus Johansson <markus.h.johansson@skane.se>, Ryan Kennedy <ryan.kennedy@skane.se>" \
       description="Docker image for bonsai-prp" \
-      version="0.3.1"
+      version="0.4.0"
 
 # Default command to run when the container starts
 CMD ["python"]

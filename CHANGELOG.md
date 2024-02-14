@@ -2,6 +2,14 @@
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [0.4.0]
+
+### Added
+
  - Add create-qc-result as sub arguement
  - Add QC class and parse_alignment_results to qc.py
  - Add picard, sambamba, java and r-base to Dockerfile
