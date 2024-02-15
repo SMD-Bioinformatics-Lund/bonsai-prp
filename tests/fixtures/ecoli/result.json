@@ -28,6 +28,11 @@
         "type": "database"
       },
       {
+        "name": "serotypefinder",
+        "version": "ada62c62a7fa74032448bb2273d1f7045c59fdda",
+        "type": "database"
+      },
+      {
         "name": "virulencefinder",
         "version": "041b8b30ede055f92cbd8eaf3679ca7554857514",
         "type": "database"
@@ -7785,6 +7790,26 @@
         },
         "n_novel": 68,
         "n_missing": 4228
+      }
+    },
+    {
+      "type": "H_type",
+      "software": "serotypefinder",
+      "result": {
+        "ref_database": null,
+        "ref_id": null,
+        "gene_symbol": "fliC",
+        "accession": "AJ884569",
+        "sequence_name": "H8",
+        "element_type": "ANTIGEN",
+        "element_subtype": "ANTIGEN",
+        "ref_start_pos": 1,
+        "ref_end_pos": 1480,
+        "ref_gene_length": null,
+        "method": null,
+        "identity": 99.93,
+        "coverage": 100.0,
+        "depth": null
       }
     }
   ],
