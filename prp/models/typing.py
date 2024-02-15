@@ -17,6 +17,7 @@ class TypingSoftware(Enum):
     TBPROFILER = "tbprofiler"
     MYKROBE = "mykrobe"
     VIRULENCEFINDER = "virulencefinder"
+    SEROTYPEFINDER = "serotypefinder"
 
 
 class TypingMethod(Enum):
@@ -26,6 +27,8 @@ class TypingMethod(Enum):
     CGMLST = "cgmlst"
     LINEAGE = "lineage"
     STX = "stx"
+    OTYPE = "O_type"
+    HTYPE = "H_type"
 
 
 class ChewbbacaErrors(str, Enum):
