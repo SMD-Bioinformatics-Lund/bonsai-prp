@@ -2,6 +2,10 @@
 
 ### Added
 
+ - Add models for serotypefinder results
+ - Add fx to parse serotypefinder results
+ - Add --serotypefinder arg to cli
+
 ### Fixed
 
 ### Changed
