@@ -193,7 +193,7 @@ def create_bonsai_input(
         # OH typing
         res: MethodIndex | None = parse_serotypefinder_oh_typing(serotypefinder)
         if res is not None:
-            results["typing_result"].append(res)
+            results["typing_result"].extend(res)
 
     # species id
     if kraken:

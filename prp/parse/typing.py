@@ -182,11 +182,11 @@ def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
 
 
 def parse_serotypefinder_oh_typing(path: str) -> MethodIndex | None:
-    """Parse serotypefinder's output re stx typing"""
+    """Parse serotypefinder's output re OH typing"""
     with open(path, "rb") as inpt:
         pred_obj = json.load(inpt)
         # if has valid results
-        pred_result = None
+        pred_result = []
         if "serotypefinder" in pred_obj:
             results = pred_obj["serotypefinder"]["results"]
             for serotype in results:
@@ -198,9 +198,9 @@ def parse_serotypefinder_oh_typing(path: str) -> MethodIndex | None:
                 hit = next(iter(results[serotype].values()))
                 vir_gene = parse_serotype_gene(hit)
                 gene = TypingResultGeneAllele(**vir_gene.model_dump())
-                pred_result = MethodIndex(
+                pred_result.append(MethodIndex(
                     type=serotype,
                     software=Software.SEROTYPEFINDER,
                     result=gene,
-                )
+                ))
     return pred_result
