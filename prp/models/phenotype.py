@@ -153,7 +153,9 @@ class ResistanceGene(GeneBase):
 class SerotypeGene(GeneBase):
     """Container for serotype gene information"""
 
-    phenotypes: List[PhenotypeInfo] = []
+    depth: Optional[float] = Field(
+        None, description="Amount of sequence data supporting the gene."
+    )
 
 
 class VirulenceGene(GeneBase, DatabaseReference):
@@ -168,7 +170,7 @@ class ResfinderGene(ResistanceGene):
     """Container for Resfinder gene prediction information"""
 
     depth: Optional[float] = Field(
-        None, description="Ammount of sequence data supporting the gene."
+        None, description="Amount of sequence data supporting the gene."
     )
 
 
@@ -224,5 +226,5 @@ class ElementTypeResult(BaseModel):
     """
 
     phenotypes: Dict[str, List[str]]
-    genes: List[Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene, VirulenceGene, SerotypeGene]]
+    genes: List[Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene, VirulenceGene]]
     variants: List[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]
