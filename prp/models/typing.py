@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import Field
 
 from .base import RWModel
-from .phenotype import VirulenceGene
+from .phenotype import VirulenceGene, SerotypeGene
 
 
 class TypingSoftware(Enum):
@@ -96,7 +96,7 @@ class TypingResultLineage(ResultLineageBase):
     sublin: str
 
 
-class TypingResultGeneAllele(VirulenceGene):
+class TypingResultGeneAllele(VirulenceGene, SerotypeGene):
     """Identification of individual gene alleles."""
 
 
