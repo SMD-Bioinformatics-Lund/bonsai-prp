@@ -9,7 +9,10 @@
 
 ### Fixed
 
+ - Handle amrfinder --organism output
+
 ### Changed
+
  - Update pytest functions to incl. serotypefinder results for ecoli
 
 ## [0.4.0]
