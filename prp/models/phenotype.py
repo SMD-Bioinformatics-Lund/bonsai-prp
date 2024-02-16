@@ -55,6 +55,7 @@ class ElementAmrSubtype(Enum):
     """Categories of resistance genes."""
 
     AMR = "AMR"
+    POINT = "POINT"
 
 
 class ElementVirulenceSubtype(Enum):
