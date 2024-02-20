@@ -68,6 +68,18 @@ def ecoli_virulencefinder_meta_path(data_path):
 
 
 @pytest.fixture()
+def ecoli_serotypefinder_path(data_path):
+    """Get path for ecoli stx prediction file"""
+    return str(data_path.joinpath("ecoli", "serotypefinder.json"))
+
+
+@pytest.fixture()
+def ecoli_serotypefinder_meta_path(data_path):
+    """Get path for ecoli serotypefinder meta file"""
+    return str(data_path.joinpath("ecoli", "serotypefinder_meta.json"))
+
+
+@pytest.fixture()
 def ecoli_mlst_path(data_path):
     """Get path for ecoli mlst file"""
     return str(data_path.joinpath("ecoli", "mlst.json"))

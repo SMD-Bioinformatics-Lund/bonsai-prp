@@ -14,6 +14,7 @@ from .typing import (
     parse_cgmlst_results,
     parse_mlst_results,
     parse_mykrobe_lineage_results,
+    parse_serotypefinder_oh_typing,
     parse_tbprofiler_lineage_results,
     parse_virulencefinder_stx_typing,
 )

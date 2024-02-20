@@ -2,9 +2,18 @@
 
 ### Added
 
+ - Add models for serotypefinder results
+ - Add fx to parse serotypefinder results
+ - Add --serotypefinder arg to cli
+ - Add files for pytest re serotypefinder results for ecoli
+
 ### Fixed
 
+ - Handle amrfinder --organism output
+
 ### Changed
+
+ - Update pytest functions to incl. serotypefinder results for ecoli
 
 ## [0.4.0]
 

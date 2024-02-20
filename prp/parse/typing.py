@@ -16,6 +16,7 @@ from ..models.typing import (
 )
 from ..models.typing import TypingSoftware as Software
 from .phenotype.virulencefinder import parse_vir_gene
+from .phenotype.serotypefinder import parse_serotype_gene
 
 LOG = logging.getLogger(__name__)
 
@@ -177,4 +178,29 @@ def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
                     software=Software.VIRULENCEFINDER,
                     result=gene,
                 )
+    return pred_result
+
+
+def parse_serotypefinder_oh_typing(path: str) -> MethodIndex | None:
+    """Parse serotypefinder's output re OH typing"""
+    with open(path, "rb") as inpt:
+        pred_obj = json.load(inpt)
+        # if has valid results
+        pred_result = []
+        if "serotypefinder" in pred_obj:
+            results = pred_obj["serotypefinder"]["results"]
+            for serotype in results:
+                # if no serotype gene was identified
+                if isinstance(results[serotype], str):
+                    continue
+
+                # take first result as the valid prediction
+                hit = next(iter(results[serotype].values()))
+                vir_gene = parse_serotype_gene(hit)
+                gene = TypingResultGeneAllele(**vir_gene.model_dump())
+                pred_result.append(MethodIndex(
+                    type=serotype,
+                    software=Software.SEROTYPEFINDER,
+                    result=gene,
+                ))
     return pred_result

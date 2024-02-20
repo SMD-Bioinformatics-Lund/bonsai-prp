@@ -24,6 +24,7 @@ from .parse import (
     parse_postalignqc_results,
     parse_quast_results,
     parse_resfinder_amr_pred,
+    parse_serotypefinder_oh_typing,
     parse_tbprofiler_amr_pred,
     parse_tbprofiler_lineage_results,
     parse_virulencefinder_stx_typing,
@@ -83,11 +84,17 @@ def cli():
     "-r",
     "--resfinder",
     type=click.File(),
-    help="resfinder resistance prediction results",
+    help="Resfinder resistance prediction results",
+)
+@click.option(
+    "-s",
+    "--serotypefinder",
+    type=click.Path(),
+    help="Serotypefinder serotype prediction results",
 )
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
-@click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
-@click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
+@click.option("-k", "--mykrobe", type=click.File(), help="Mykrobe results")
+@click.option("-t", "--tbprofiler", type=click.File(), help="Tb-profiler results")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
@@ -103,6 +110,7 @@ def create_bonsai_input(
     virulencefinder,
     amrfinder,
     resfinder,
+    serotypefinder,
     quality,
     mykrobe,
     tbprofiler,
@@ -179,6 +187,13 @@ def create_bonsai_input(
         res: MethodIndex | None = parse_virulencefinder_stx_typing(virulencefinder)
         if res is not None:
             results["typing_result"].append(res)
+
+    if serotypefinder:
+        LOG.info("Parse serotypefinder results")
+        # OH typing
+        res: MethodIndex | None = parse_serotypefinder_oh_typing(serotypefinder)
+        if res is not None:
+            results["typing_result"].extend(res)
 
     # species id
     if kraken:
