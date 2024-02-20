@@ -153,10 +153,6 @@ class ResistanceGene(GeneBase):
 class SerotypeGene(GeneBase):
     """Container for serotype gene information"""
 
-    depth: Optional[float] = Field(
-        None, description="Amount of sequence data supporting the gene."
-    )
-
 
 class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
