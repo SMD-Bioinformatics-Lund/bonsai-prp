@@ -174,6 +174,7 @@ class VariantBase(RWModel):
     """Container for mutation information"""
 
     # classification
+    id: int
     variant_type: VariantType
     variant_subtype: VariantSubType
     phenotypes: List[PhenotypeInfo] = []
