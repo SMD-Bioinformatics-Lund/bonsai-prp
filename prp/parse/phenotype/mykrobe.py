@@ -8,6 +8,7 @@ from ...models.phenotype import (
     ElementTypeResult,
     MykrobeVariant,
     PhenotypeInfo,
+    AnnotationType,
 )
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import VariantType, VariantSubType
@@ -84,14 +85,19 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
             continue
 
         # generate phenotype info
-        phenotype = [PhenotypeInfo(name=element_type["drug"], type=ElementType.AMR)]
+        phenotype = [PhenotypeInfo(
+            name=element_type["drug"], 
+            type=ElementType.AMR,
+            annotation_type=AnnotationType.TOOL,
+            annotation_author=Software.MYKROBE.value,
+        )]
 
         variants = element_type["variants"].split(";")
         # Mykrobe CSV variant format
         # <gene>_<amino acid change>-<dna change>:<ref depth>:<alt depth>:<genotype confidence>
         # ref: https://github.com/Mykrobe-tools/mykrobe/wiki/AMR-prediction-output
         PATTERN = re.compile(r"(.+)_(.+)-(.+):(\d+):(\d+):(\d+)", re.I)
-        for variant in variants:
+        for var_id, variant in enumerate(variants, start=1):
             # extract variant info using regex
             match = re.search(PATTERN, variant)
             gene, aa_change, dna_change, ref_depth, alt_depth, conf = match.groups()
@@ -107,6 +113,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
             # cast to variant object
             variant = MykrobeVariant(
                 # classification
+                id=var_id,
                 variant_type=var_type,
                 variant_subtype=var_sub_type,
                 phenotypes=phenotype,

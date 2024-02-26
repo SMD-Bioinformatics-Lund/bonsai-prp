@@ -22,7 +22,8 @@ def _get_variant_type(variant) -> VariantType:
     return var_type
 
 
-def parse_variant(variant: Variant, caller: str | None=None):
+def parse_variant(variant: Variant, var_id: int, caller: str | None=None):
+    """Parse variant info from VCF row."""
     # get major category
     depth = variant.gt_depths
     frequency = variant.gt_alt_freqs
@@ -42,6 +43,7 @@ def parse_variant(variant: Variant, caller: str | None=None):
 
     try:
         var_obj = VariantBase(
+                id=var_id,
                 variant_type=var_type,
                 variant_subtype=variant.var_subtype.upper(),
                 gene_symbol=variant.CHROM,
@@ -81,7 +83,7 @@ def load_variants(variant_file: str) -> List[VariantBase]:
 
     # parse header from vcf file
     variants = []
-    for variant in vcf_obj:
-        variants.append(parse_variant(variant, caller=variant_caller))
+    for var_id, variant in enumerate(vcf_obj, start=1):
+        variants.append(parse_variant(variant, var_id=var_id, caller=variant_caller))
 
     return variants

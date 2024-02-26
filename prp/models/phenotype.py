@@ -76,6 +76,13 @@ class ElementVirulenceSubtype(Enum):
     TOXIN = "TOXIN"
 
 
+class AnnotationType(Enum):
+    """Valid annotation types."""
+
+    TOOL = "tool"
+    USER = "user"
+
+
 class PhenotypeInfo(RWModel):
     """Phenotype information."""
 
@@ -84,6 +91,10 @@ class PhenotypeInfo(RWModel):
     type: ElementType = Field(
         ..., description="Trait category, for example AMR, STRESS etc."
     )
+    # how was the annotation made
+    annotation_type: AnnotationType = Field(..., description="Annotation type")
+    annotation_author: str | None = Field(None, description="Annotation author")
+    # what information substansiate the annotation
     reference: List[str] = Field([], description="References supporting trait")
     note: str | None = Field(None, description="Note, can be used for confidence score")
 

@@ -10,6 +10,7 @@ from ...models.phenotype import (
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
+    AnnotationType
 )
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.sample import MethodIndex
@@ -35,6 +36,8 @@ def _parse_amrfinder_amr_results(
                     type=element_type,
                     group=element_type,
                     name=element_type,
+                    annotation_type=AnnotationType.TOOL,
+                    annotation_author=Software.AMRFINDER.value,
                 )
             )
         elif isinstance(res_sub_class, str):
@@ -44,6 +47,7 @@ def _parse_amrfinder_amr_results(
                         type=element_type,
                         group=res_class.lower(),
                         name=annot.lower(),
+                        annotation_type=AnnotationType.TOOL,
                     )
                     for annot in res_sub_class.split("/")
                 ]
