@@ -6,6 +6,7 @@ from typing import List
 import click
 import pandas as pd
 from pydantic import TypeAdapter, ValidationError
+from pathlib import Path
 
 from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
@@ -29,7 +30,8 @@ from .parse import (
     parse_virulencefinder_vir_pred,
     load_variants,
 )
-from .parse.metadata import get_database_info, parse_run_info
+from .parse.mapping import get_reference_seq_accnr
+from .parse.metadata import get_database_info, parse_run_info, get_gb_genome_version
 from .parse.utils import get_db_version
 
 logging.basicConfig(
@@ -88,6 +90,9 @@ def cli():
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
 @click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
 @click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
+@click.option("--reference-genome", type=click.Path(), help="reference-genome in gff format")
+@click.option("--genome-annotation", type=click.Path(), multiple=True, help="Genome annotaitons bed format")
+@click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
 @click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
@@ -108,6 +113,9 @@ def create_bonsai_input(
     quality,
     mykrobe,
     tbprofiler,
+    bam,
+    reference_genome,
+    genome_annotation,
     snv_vcf,
     sv_vcf,
     correct_alleles,
@@ -249,10 +257,28 @@ def create_bonsai_input(
 
     # parse SNV and SV variants.
     if snv_vcf:
-        results["snv_vcf"] = load_variants(snv_vcf)
+        results["snv_variants"] = load_variants(snv_vcf)
 
     if sv_vcf:
-        results["sv_vcf"] = load_variants(sv_vcf)
+        results["sv_variants"] = load_variants(sv_vcf)
+
+    # entries for reference genome and read mapping
+    if bam and reference_genome:
+        # verify that everything pertains to the same reference genome
+        bam_ref_genome = get_reference_seq_accnr(bam)
+        ref_genome_accnr = get_gb_genome_version(reference_genome)
+        if ref_genome_accnr != bam_ref_genome:
+            raise click.UsageError(f"Read mapping used as different reference genome; bam accnr: {bam_ref_genome}; gbff accnr: {ref_genome_accnr}")
+        
+        # store file names
+        results["reference_genome"] = Path(reference_genome).name
+        results["read_mapping"] = Path(bam).name
+        annotations = [Path(annot).name for annot in genome_annotation]
+        for vcf in [sv_vcf, snv_vcf]:
+            if vcf:
+                annotations.append(Path(vcf).name)
+        # store annotation results
+        results["genome_annotation"] = annotations if len(annotations) > 0 else None
 
     try:
         output_data = PipelineResult(

@@ -50,5 +50,9 @@ class PipelineResult(SampleBase):
     # optional phenotype prediction
     element_type_result: List[MethodIndex] = Field(..., alias="elementTypeResult")
     # optional variant info
-    snv_vcf: Optional[List[VariantBase]] = None
-    sv_vcf: Optional[List[VariantBase]] = None
+    snv_variants: Optional[List[VariantBase]] = None
+    sv_variants: Optional[List[VariantBase]] = None
+    # optional alignment info
+    reference_genome: Optional[str] = None
+    read_mapping: Optional[str] = None
+    genome_annotation: Optional[List[str]] = None

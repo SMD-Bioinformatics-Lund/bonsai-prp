@@ -41,23 +41,19 @@ def parse_variant(variant: Variant, var_id: int, caller: str | None=None):
 
     var_type: VariantType = _get_variant_type(variant)
 
-    try:
-        var_obj = VariantBase(
-                id=var_id,
-                variant_type=var_type,
-                variant_subtype=variant.var_subtype.upper(),
-                gene_symbol=variant.CHROM,
-                start=variant.start,
-                end=variant.end,
-                ref_nt=variant.REF,
-                alt_nt=variant.ALT[0], # haploid
-                method=variant.INFO.get("SVMETHOD", caller),
-                confidence=variant.QUAL,
-                passed_qc=passed_qc,
-        )
-    except Exception as err:
-        foo = err
-        import pdb; pdb.set_trace()
+    var_obj = VariantBase(
+            id=var_id,
+            variant_type=var_type,
+            variant_subtype=variant.var_subtype.upper(),
+            gene_symbol=variant.CHROM,
+            start=variant.start,
+            end=variant.end,
+            ref_nt=variant.REF,
+            alt_nt=variant.ALT[0], # haploid
+            method=variant.INFO.get("SVMETHOD", caller),
+            confidence=variant.QUAL,
+            passed_qc=passed_qc,
+    )
     return var_obj
 
 
