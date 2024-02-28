@@ -11,7 +11,7 @@ from pathlib import Path
 from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex, QcSoftware
-from .models.sample import MethodIndex, PipelineResult
+from .models.sample import MethodIndex, ReferenceGenome, PipelineResult
 from .models.typing import TypingMethod
 from .parse import (
     parse_amrfinder_amr_pred,
@@ -90,7 +90,8 @@ def cli():
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
 @click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
 @click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
-@click.option("--reference-genome", type=click.Path(), help="reference-genome in gff format")
+@click.option("--reference-genome-fasta", type=click.Path(), help="reference genome fasta file")
+@click.option("--reference-genome-gff", type=click.Path(), help="reference-genome in gff format")
 @click.option("--genome-annotation", type=click.Path(), multiple=True, help="Genome annotaitons bed format")
 @click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
@@ -114,7 +115,8 @@ def create_bonsai_input(
     mykrobe,
     tbprofiler,
     bam,
-    reference_genome,
+    reference_genome_fasta,
+    reference_genome_gff,
     genome_annotation,
     snv_vcf,
     sv_vcf,
@@ -263,15 +265,21 @@ def create_bonsai_input(
         results["sv_variants"] = load_variants(sv_vcf)
 
     # entries for reference genome and read mapping
-    if bam and reference_genome:
+    if all([bam, reference_genome_fasta, reference_genome_gff]):
         # verify that everything pertains to the same reference genome
         bam_ref_genome = get_reference_seq_accnr(bam)
-        ref_genome_accnr = get_gb_genome_version(reference_genome)
-        if ref_genome_accnr != bam_ref_genome:
-            raise click.UsageError(f"Read mapping used as different reference genome; bam accnr: {bam_ref_genome}; gbff accnr: {ref_genome_accnr}")
+        ref_accession, ref_name  = get_gb_genome_version(reference_genome_gff)
+        if ref_accession != bam_ref_genome:
+            raise click.UsageError(f"Read mapping used as different reference genome; bam accnr: {bam_ref_genome}; gbff accnr: {ref_accession}")
         
         # store file names
-        results["reference_genome"] = Path(reference_genome).name
+        fasta_idx_path = Path(f"{reference_genome_fasta}.fai")
+        results["reference_genome"] = ReferenceGenome(
+            name=ref_name,
+            accession=ref_accession,
+            fasta=Path(reference_genome_fasta).name,
+            fasta_index=fasta_idx_path.name if fasta_idx_path.is_file() else None,
+        )
         results["read_mapping"] = Path(bam).name
         annotations = [Path(annot).name for annot in genome_annotation]
         for vcf in [sv_vcf, snv_vcf]:

@@ -44,4 +44,4 @@ def parse_run_info(run_metadata: TextIO) -> RunInformation:
 def get_gb_genome_version(gff_path: str) -> str:
     handler = SeqIO.parse(gff_path, "gb")
     record = next(handler.records)
-    return record.id
+    return record.id, record.description

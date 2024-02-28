@@ -41,6 +41,14 @@ class SampleBase(RWModel):
     species_prediction: SpeciesPredictionResult = Field(..., alias="speciesPrediction")
 
 
+class ReferenceGenome(RWModel):
+    """Reference genome."""
+    name: str
+    accession: str
+    fasta: str
+    fasta_index: str
+
+
 class PipelineResult(SampleBase):
     """Input format of sample object from pipeline."""
 
@@ -53,6 +61,6 @@ class PipelineResult(SampleBase):
     snv_variants: Optional[List[VariantBase]] = None
     sv_variants: Optional[List[VariantBase]] = None
     # optional alignment info
-    reference_genome: Optional[str] = None
+    reference_genome: Optional[ReferenceGenome] = None
     read_mapping: Optional[str] = None
     genome_annotation: Optional[List[str]] = None
