@@ -47,6 +47,7 @@ class ReferenceGenome(RWModel):
     accession: str
     fasta: str
     fasta_index: str
+    genes: str
 
 
 class PipelineResult(SampleBase):
