@@ -279,12 +279,20 @@ def create_bonsai_input(
             accession=ref_accession,
             fasta=Path(reference_genome_fasta).name,
             fasta_index=fasta_idx_path.name if fasta_idx_path.is_file() else None,
+            genes=reference_genome_gff,
         )
-        results["read_mapping"] = Path(bam).name
-        annotations = [Path(annot).name for annot in genome_annotation]
+        results["read_mapping"] = bam
+        # add annotations
+        annotations = [
+            {"name": f"annotation_{i}", "file": Path(annot).name} 
+            for i, annot in enumerate(genome_annotation, start=1)
+        ]
         for vcf in [sv_vcf, snv_vcf]:
             if vcf:
-                annotations.append(Path(vcf).name)
+                name = "SNV" if vcf == sv_vcf else "SV"
+                annotations.append({
+                    "name": name, "file": Path(vcf).name
+                })
         # store annotation results
         results["genome_annotation"] = annotations if len(annotations) > 0 else None
 

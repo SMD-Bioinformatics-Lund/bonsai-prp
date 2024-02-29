@@ -1,5 +1,5 @@
 """Data model definition of input/ output data"""
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Dict
 
 from pydantic import Field
 
@@ -63,4 +63,4 @@ class PipelineResult(SampleBase):
     # optional alignment info
     reference_genome: Optional[ReferenceGenome] = None
     read_mapping: Optional[str] = None
-    genome_annotation: Optional[List[str]] = None
+    genome_annotation: Optional[List[Dict[str, str]]] = None
