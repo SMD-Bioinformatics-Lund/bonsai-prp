@@ -6,7 +6,41 @@
 
 ### Fixed
 
+### Changed
+
+## [0.5.0]
+
+### Added
+
+ - Add models for serotypefinder results
+ - Add fx to parse serotypefinder results
+ - Add --serotypefinder arg to cli
+ - Add files for pytest re serotypefinder results for ecoli
+
+### Fixed
+
+ - Handle amrfinder --organism output
+
+### Changed
+
+ - Update pytest functions to incl. serotypefinder results for ecoli
+
+## [0.4.0]
+
+### Added
+
+ - Add create-qc-result as sub arguement
+ - Add QC class and parse_alignment_results to qc.py
+ - Add picard, sambamba, java and r-base to Dockerfile
+ - Add quartile1, median & quartile3 to postalignqc results and respective model
+ - Add fx for formatting datetime for manually generated tbdbs
+
+### Fixed
+
  - Dockerfile python version
+ - Pydantic models
+ - Python version error in Dockerfile
+ - Test files regarding q1, median and q3
 
 ### Changed
 

@@ -20,6 +20,7 @@ class PredictionSoftware(Enum):
     AMRFINDER = "amrfinder"
     RESFINDER = "resfinder"
     VIRFINDER = "virulencefinder"
+    SEROTYPEFINDER = "serotypefinder"
     MYKROBE = "mykrobe"
     TBPROFILER = "tbprofiler"
 
@@ -51,6 +52,7 @@ class ElementType(Enum):
     AMR = "AMR"
     STRESS = "STRESS"
     VIR = "VIRULENCE"
+    ANTIGEN = "ANTIGEN"
 
 
 class ElementStressSubtype(Enum):
@@ -63,9 +65,10 @@ class ElementStressSubtype(Enum):
 
 
 class ElementAmrSubtype(Enum):
-    """Categories of resistance and virulence genes."""
+    """Categories of resistance genes."""
 
     AMR = "AMR"
+    POINT = "POINT"
 
 
 class ElementVirulenceSubtype(Enum):
@@ -81,6 +84,12 @@ class AnnotationType(Enum):
 
     TOOL = "tool"
     USER = "user"
+
+    
+class ElementSerotypeSubtype(Enum):
+    """Categories of serotype genes."""
+
+    ANTIGEN = "ANTIGEN"
 
 
 class PhenotypeInfo(RWModel):
@@ -119,7 +128,7 @@ class GeneBase(BaseModel):
         description="The predominant function fo the gene."
     )
     element_subtype: Union[
-        ElementStressSubtype, ElementAmrSubtype, ElementVirulenceSubtype
+        ElementStressSubtype, ElementAmrSubtype, ElementVirulenceSubtype, ElementSerotypeSubtype
     ] = Field(description="Further functional categorization of the genes.")
     # position
     ref_start_pos: Optional[int] = Field(
@@ -165,11 +174,15 @@ class ResistanceGene(GeneBase):
     phenotypes: List[PhenotypeInfo] = []
 
 
+class SerotypeGene(GeneBase):
+    """Container for serotype gene information"""
+
+
 class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
 
     depth: Optional[float] = Field(
-        None, description="Ammount of sequence data supporting the gene."
+        None, description="Amount of sequence data supporting the gene."
     )
 
 
@@ -177,7 +190,7 @@ class ResfinderGene(ResistanceGene):
     """Container for Resfinder gene prediction information"""
 
     depth: Optional[float] = Field(
-        None, description="Ammount of sequence data supporting the gene."
+        None, description="Amount of sequence data supporting the gene."
     )
 
 

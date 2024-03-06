@@ -28,6 +28,11 @@
         "type": "database"
       },
       {
+        "name": "serotypefinder",
+        "version": "ada62c62a7fa74032448bb2273d1f7045c59fdda",
+        "type": "database"
+      },
+      {
         "name": "virulencefinder",
         "version": "041b8b30ede055f92cbd8eaf3679ca7554857514",
         "type": "database"
@@ -53,23 +58,24 @@
       "software": "postalignqc",
       "version": null,
       "result": {
-        "ins_size": 375,
-        "ins_size_dev": 328,
+        "ins_size": 391,
+        "ins_size_dev": 124,
         "mean_cov": 210,
         "pct_above_x": {
-          "1": 99.8908335372424,
+          "1": 99.89083353724237,
+          "10": 99.86645030843925,
+          "30": 99.84932194876947,
+          "100": 99.79961107032929,
+          "250": 8.285318119572263,
           "500": 0.0,
-          "250": 8.28531811957226,
-          "10": 99.8664503084393,
-          "1000": 0.0,
-          "30": 99.8493219487695,
-          "100": 99.7996110703293
+          "1000": 0.0
         },
         "mapped_reads": 6078594,
         "tot_reads": 7579030,
-        "iqr_median": 0.19047619047619,
-        "dup_pct": 0.0,
-        "dup_reads": 0
+        "iqr_median": 40.0,
+        "quartile1": 190.0,
+        "median": 210.0,
+        "quartile3": 230.0
       }
     }
   ],
@@ -7784,6 +7790,26 @@
         },
         "n_novel": 68,
         "n_missing": 4228
+      }
+    },
+    {
+      "type": "H_type",
+      "software": "serotypefinder",
+      "result": {
+        "ref_database": null,
+        "ref_id": null,
+        "gene_symbol": "fliC",
+        "accession": "AJ884569",
+        "sequence_name": "H8",
+        "element_type": "ANTIGEN",
+        "element_subtype": "ANTIGEN",
+        "ref_start_pos": 1,
+        "ref_end_pos": 1480,
+        "ref_gene_length": null,
+        "method": null,
+        "identity": 99.93,
+        "coverage": 100.0,
+        "depth": null
       }
     }
   ],

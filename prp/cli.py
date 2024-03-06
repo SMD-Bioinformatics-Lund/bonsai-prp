@@ -16,6 +16,7 @@ from .models.typing import TypingMethod
 from .parse import (
     parse_amrfinder_amr_pred,
     parse_amrfinder_vir_pred,
+    parse_alignment_results,
     parse_cgmlst_results,
     parse_kraken_result,
     parse_mlst_results,
@@ -24,6 +25,7 @@ from .parse import (
     parse_postalignqc_results,
     parse_quast_results,
     parse_resfinder_amr_pred,
+    parse_serotypefinder_oh_typing,
     parse_tbprofiler_amr_pred,
     parse_tbprofiler_lineage_results,
     parse_virulencefinder_stx_typing,
@@ -85,7 +87,13 @@ def cli():
     "-r",
     "--resfinder",
     type=click.File(),
-    help="resfinder resistance prediction results",
+    help="Resfinder resistance prediction results",
+)
+@click.option(
+    "-s",
+    "--serotypefinder",
+    type=click.Path(),
+    help="Serotypefinder serotype prediction results",
 )
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
 @click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
@@ -96,6 +104,7 @@ def cli():
 @click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
 @click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
+
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
@@ -111,6 +120,7 @@ def create_bonsai_input(
     virulencefinder,
     amrfinder,
     resfinder,
+    serotypefinder,
     quality,
     mykrobe,
     tbprofiler,
@@ -193,6 +203,13 @@ def create_bonsai_input(
         res: MethodIndex | None = parse_virulencefinder_stx_typing(virulencefinder)
         if res is not None:
             results["typing_result"].append(res)
+
+    if serotypefinder:
+        LOG.info("Parse serotypefinder results")
+        # OH typing
+        res: MethodIndex | None = parse_serotypefinder_oh_typing(serotypefinder)
+        if res is not None:
+            results["typing_result"].extend(res)
 
     # species id
     if kraken:
@@ -362,4 +379,22 @@ def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
 
     LOG.info("Storing results to: %s", output.name)
     output.write(qc_data.dump_json(results, indent=3).decode("utf-8"))
+    click.secho("Finished generating QC output", fg="green")
+
+
+@cli.command()
+@click.option("-i", "--sample-id", required=True, help="Sample identifier")
+@click.option("-b", "--bam", required=True, type=click.File(), help="bam file")
+@click.option("-e", "--bed", type=click.File(), help="bed file")
+@click.option("-a", "--baits", type=click.File(), help="baits file")
+@click.option("-r", "--reference", required=True, type=click.File(), help="reference fasta")
+@click.option("-c", "--cpus", type=click.INT, default=1, help="cpus")
+@click.option(
+    "-o", "--output", required=True, type=click.File("w"), help="output filepath"
+)
+def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> None:
+    """Generate QC metrics regarding bam file"""
+    if bam and reference:
+        LOG.info("Parse alignment results")
+        parse_alignment_results(sample_id, bam, reference, cpus, output, bed, baits)
     click.secho("Finished generating QC output", fg="green")
