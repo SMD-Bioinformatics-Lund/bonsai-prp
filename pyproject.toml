@@ -23,6 +23,7 @@ dependencies = [
     "click==8.1.7",
     "pydantic==2.5.2",
     "pandas==2.1.3",
+    "Biopython==1.83",
     "cyvcf2",
     "pysam"
 ]
