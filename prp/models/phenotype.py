@@ -100,6 +100,8 @@ class PhenotypeInfo(RWModel):
     type: ElementType = Field(
         ..., description="Trait category, for example AMR, STRESS etc."
     )
+    # annotation of the expected resistance level
+    resistance_level: str | None = None
     # how was the annotation made
     annotation_type: AnnotationType = Field(..., description="Annotation type")
     annotation_author: str | None = Field(None, description="Annotation author")
