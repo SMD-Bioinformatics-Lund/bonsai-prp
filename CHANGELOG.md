@@ -2,6 +2,8 @@
 
 ### Added
 
+ - Add optional SNV and structural variants to sample output
+
 ### Fixed
 
 ### Changed
@@ -44,6 +46,7 @@
 
  - Workflow that publishes to PyPI and Dockerhub separated into two workflows for testing
  - Publish to docker workflow started on completion of PyPI publishing
+ - Changed VariantTypes and added VariantSuptype classification
 
 ## [0.3.1]
 

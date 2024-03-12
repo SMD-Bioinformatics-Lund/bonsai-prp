@@ -166,6 +166,8 @@ def test_create_output_mtuberculosis(
     mtuberculosis_bracken_path,
     mtuberculosis_bwa_path,
     mtuberculosis_mykrobe_path,
+    mtuberculosis_snv_vcf_path,
+    mtuberculosis_sv_vcf_path,
     mtuberculosis_quast_path,
     mtuberculosis_tbprofiler_path,
 ):
@@ -177,9 +179,7 @@ def test_create_output_mtuberculosis(
     output_file = f"{sample_id}.json"
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            create_bonsai_input,
-            [
+        args = [
                 "-i",
                 sample_id,
                 "--run-metadata",
@@ -190,14 +190,18 @@ def test_create_output_mtuberculosis(
                 mtuberculosis_bwa_path,
                 "--mykrobe",
                 mtuberculosis_mykrobe_path,
+                "--snv-vcf",
+                mtuberculosis_snv_vcf_path,
+                "--sv-vcf",
+                mtuberculosis_sv_vcf_path,
                 "--quast",
                 mtuberculosis_quast_path,
                 "--tbprofiler",
                 mtuberculosis_tbprofiler_path,
                 "--output",
                 output_file,
-            ],
-        )
+            ]
+        result = runner.invoke(create_bonsai_input, args)
         assert result.exit_code == 0
 
         # test that the correct output was generated

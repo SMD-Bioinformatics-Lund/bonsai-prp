@@ -18,3 +18,4 @@ from .typing import (
     parse_tbprofiler_lineage_results,
     parse_virulencefinder_stx_typing,
 )
+from .variant import load_variants

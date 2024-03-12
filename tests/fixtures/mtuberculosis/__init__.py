@@ -39,3 +39,15 @@ def mtuberculosis_quast_path(data_path):
 def mtuberculosis_tbprofiler_path(data_path):
     """Get path for mtuberculosis tbprofiler file"""
     return str(data_path.joinpath("mtuberculosis", "tbprofiler.json"))
+
+
+@pytest.fixture()
+def mtuberculosis_snv_vcf_path(data_path):
+    """Get path for mtuberculosis meta file"""
+    return str(data_path.joinpath("mtuberculosis", "snv.vcf"))
+
+
+@pytest.fixture()
+def mtuberculosis_sv_vcf_path(data_path):
+    """Get path for mtuberculosis meta file"""
+    return str(data_path.joinpath("mtuberculosis", "sv.vcf"))

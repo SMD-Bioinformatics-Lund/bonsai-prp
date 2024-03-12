@@ -1,11 +1,11 @@
 """Data model definition of input/ output data"""
-from typing import List, Union
+from typing import List, Union, Optional, Dict
 
 from pydantic import Field
 
 from .base import RWModel
 from .metadata import RunMetadata
-from .phenotype import ElementType, ElementTypeResult, PredictionSoftware
+from .phenotype import ElementType, ElementTypeResult, PredictionSoftware, VariantBase
 from .qc import QcMethodIndex
 from .species import SpeciesPredictionResult
 from .typing import (
@@ -41,6 +41,15 @@ class SampleBase(RWModel):
     species_prediction: SpeciesPredictionResult = Field(..., alias="speciesPrediction")
 
 
+class ReferenceGenome(RWModel):
+    """Reference genome."""
+    name: str
+    accession: str
+    fasta: str
+    fasta_index: str
+    genes: str
+
+
 class PipelineResult(SampleBase):
     """Input format of sample object from pipeline."""
 
@@ -49,3 +58,10 @@ class PipelineResult(SampleBase):
     typing_result: List[MethodIndex] = Field(..., alias="typingResult")
     # optional phenotype prediction
     element_type_result: List[MethodIndex] = Field(..., alias="elementTypeResult")
+    # optional variant info
+    snv_variants: Optional[List[VariantBase]] = None
+    sv_variants: Optional[List[VariantBase]] = None
+    # optional alignment info
+    reference_genome: Optional[ReferenceGenome] = None
+    read_mapping: Optional[str] = None
+    genome_annotation: Optional[List[Dict[str, str]]] = None

@@ -10,9 +10,10 @@ from ...models.phenotype import (
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
+    AnnotationType
 )
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResfinderGene, ResfinderVariant, VariantType
+from ...models.phenotype import ResfinderGene, ResfinderVariant, VariantType, VariantSubType
 from ...models.sample import MethodIndex
 from ..utils import get_nt_change
 
@@ -244,6 +245,8 @@ def _parse_resfinder_amr_genes(
                 type=res_category,
                 name=phe,
                 group=lookup_antibiotic_class(phe),
+                annotation_type=AnnotationType.TOOL,
+                annotation_author=Software.RESFINDER.value,
                 reference=info["pmids"],
             )
             for phe in info["phenotypes"]
@@ -284,7 +287,7 @@ def _parse_resfinder_amr_variants(
 
     # parse prediction result
     results = []
-    for info in resfinder_result["seq_variations"].values():
+    for var_id, info in enumerate(resfinder_result["seq_variations"].values(), start=1):
         # Get only variants from desired phenotypes
         if limit_to_phenotypes is not None:
             intersect = set(info["phenotypes"]) & set(limit_to_phenotypes)
@@ -298,12 +301,13 @@ def _parse_resfinder_amr_variants(
         else:
             info["depth"] = 0
         # translate variation type bools into classifier
+        var_type = VariantType.SNV
         if info["substitution"]:
-            var_type = VariantType.SUBSTITUTION
+            var_sub_type = VariantSubType.SUBSTITUTION
         elif info["insertion"]:
-            var_type = VariantType.INSERTION
+            var_sub_type = VariantSubType.INSERTION
         elif info["deletion"]:
-            var_type = VariantType.DELETION
+            var_sub_type = VariantSubType.DELETION
         else:
             raise ValueError("Output has no known mutation type")
 
@@ -313,17 +317,21 @@ def _parse_resfinder_amr_variants(
         ref_nt, alt_nt = get_nt_change(info["ref_codon"], info["var_codon"])
         phenotype = [
             PhenotypeInfo(
-                type=ElementType.AMR, group=lookup_antibiotic_class(phe), name=phe
+                type=ElementType.AMR, group=lookup_antibiotic_class(phe), name=phe, 
+                annotation_type=AnnotationType.TOOL,
             )
             for phe in info["phenotypes"]
         ]
         variant = ResfinderVariant(
+            id=var_id,
             variant_type=var_type,
+            variant_subtype=var_sub_type,
             phenotypes=phenotype,
             # position
-            gene_symbol=gene_symbol,
+            reference_sequence=gene_symbol,
             accession=gene_accnr,
-            position=info["ref_start_pos"],
+            start=info["ref_start_pos"],
+            end=info["ref_end_pos"],
             ref_nt=ref_nt,
             alt_nt=alt_nt,
             ref_aa=info["ref_aa"],
@@ -335,7 +343,7 @@ def _parse_resfinder_amr_variants(
         )
         results.append(variant)
     # sort variants
-    variants = sorted(results, key=lambda entry: (entry.gene_symbol, entry.position))
+    variants = sorted(results, key=lambda entry: (entry.reference_sequence, entry.start))
     return variants
 
 

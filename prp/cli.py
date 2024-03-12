@@ -6,11 +6,12 @@ from typing import List
 import click
 import pandas as pd
 from pydantic import TypeAdapter, ValidationError
+from pathlib import Path
 
 from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex, QcSoftware
-from .models.sample import MethodIndex, PipelineResult
+from .models.sample import MethodIndex, ReferenceGenome, PipelineResult
 from .models.typing import TypingMethod
 from .parse import (
     parse_amrfinder_amr_pred,
@@ -29,8 +30,10 @@ from .parse import (
     parse_tbprofiler_lineage_results,
     parse_virulencefinder_stx_typing,
     parse_virulencefinder_vir_pred,
+    load_variants,
 )
-from .parse.metadata import get_database_info, parse_run_info
+from .parse.mapping import get_reference_seq_accnr
+from .parse.metadata import get_database_info, parse_run_info, get_gb_genome_version
 from .parse.utils import get_db_version
 
 logging.basicConfig(
@@ -93,8 +96,15 @@ def cli():
     help="Serotypefinder serotype prediction results",
 )
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
-@click.option("-k", "--mykrobe", type=click.File(), help="Mykrobe results")
-@click.option("-t", "--tbprofiler", type=click.File(), help="Tb-profiler results")
+@click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
+@click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
+@click.option("--reference-genome-fasta", type=click.Path(), help="reference genome fasta file")
+@click.option("--reference-genome-gff", type=click.Path(), help="reference-genome in gff format")
+@click.option("--genome-annotation", type=click.Path(), multiple=True, help="Genome annotaitons bed format")
+@click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
+@click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
+@click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
+
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
@@ -114,6 +124,12 @@ def create_bonsai_input(
     quality,
     mykrobe,
     tbprofiler,
+    bam,
+    reference_genome_fasta,
+    reference_genome_gff,
+    genome_annotation,
+    snv_vcf,
+    sv_vcf,
     correct_alleles,
     output,
 ):  # pylint: disable=too-many-arguments
@@ -257,6 +273,45 @@ def create_bonsai_input(
         results["typing_result"].append(lin_res)
         amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res, ElementType.AMR)
         results["element_type_result"].append(amr_res)
+
+    # parse SNV and SV variants.
+    if snv_vcf:
+        results["snv_variants"] = load_variants(snv_vcf)
+
+    if sv_vcf:
+        results["sv_variants"] = load_variants(sv_vcf)
+
+    # entries for reference genome and read mapping
+    if all([bam, reference_genome_fasta, reference_genome_gff]):
+        # verify that everything pertains to the same reference genome
+        bam_ref_genome = get_reference_seq_accnr(bam)
+        ref_accession, ref_name  = get_gb_genome_version(reference_genome_gff)
+        if ref_accession != bam_ref_genome:
+            raise click.UsageError(f"Read mapping used as different reference genome; bam accnr: {bam_ref_genome}; gbff accnr: {ref_accession}")
+        
+        # store file names
+        fasta_idx_path = Path(f"{reference_genome_fasta}.fai")
+        results["reference_genome"] = ReferenceGenome(
+            name=ref_name,
+            accession=ref_accession,
+            fasta=Path(reference_genome_fasta).name,
+            fasta_index=fasta_idx_path.name if fasta_idx_path.is_file() else None,
+            genes=reference_genome_gff,
+        )
+        results["read_mapping"] = bam
+        # add annotations
+        annotations = [
+            {"name": f"annotation_{i}", "file": Path(annot).name} 
+            for i, annot in enumerate(genome_annotation, start=1)
+        ]
+        for vcf in [sv_vcf, snv_vcf]:
+            if vcf:
+                name = "SNV" if vcf == sv_vcf else "SV"
+                annotations.append({
+                    "name": name, "file": Path(vcf).name
+                })
+        # store annotation results
+        results["genome_annotation"] = annotations if len(annotations) > 0 else None
 
     try:
         output_data = PipelineResult(

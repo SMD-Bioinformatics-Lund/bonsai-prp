@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple
 from ...models.metadata import SoupVersions
 from ...models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import TbProfilerVariant, VariantType
+from ...models.phenotype import TbProfilerVariant, VariantType, VariantSubType, AnnotationType
 from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
     # - dr_variants: known resistance variants
     # - qc_fail_variants: known resistance variants failing qc
     # - other_variants: variants not in the database but in genes associated with resistance
+    var_id = 1
     for result_type in ["dr_variants", "other_variants", "qc_fail_variants"]:
         # associated with passed/ failed qc
         if result_type == "qc_fail_variants":
@@ -66,21 +67,26 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
         for hit in predictions.get(result_type, []):
             ref_nt = hit["ref"]
             alt_nt = hit["alt"]
+            var_type = VariantType.SNV
             if len(ref_nt) == len(alt_nt):
-                var_type = VariantType.SUBSTITUTION
+                var_sub_type = VariantSubType.SUBSTITUTION
             elif len(ref_nt) > len(alt_nt):
-                var_type = VariantType.DELETION
+                var_sub_type = VariantSubType.DELETION
             else:
-                var_type = VariantType.INSERTION
+                var_sub_type = VariantSubType.INSERTION
 
+            start_pos = int(hit["genome_pos"])
             variant = TbProfilerVariant(
                 # classificatoin
+                id=var_id,
                 variant_type=var_type,
+                variant_subtype=var_sub_type,
                 phenotypes=parse_drug_resistance_info(hit.get("drugs", [])),
                 # location
-                gene_symbol=hit["gene"],
+                reference_sequence=hit["gene"],
                 accession=hit["feature_id"],
-                position=int(hit["genome_pos"]),
+                start=start_pos,
+                end=start_pos + len(alt_nt),
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
                 # consequense
@@ -93,9 +99,10 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
                 method=variant_caller,
                 passed_qc=passed_qc,
             )
+            var_id += 1 # increment variant id
             results.append(variant)
     # sort variants
-    variants = sorted(results, key=lambda entry: (entry.gene_symbol, entry.position))
+    variants = sorted(results, key=lambda entry: (entry.reference_sequence, entry.start))
     return variants
 
 
@@ -126,6 +133,8 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
                 name=drug["drug"],
                 type=drug_type,
                 reference=[] if reference is None else [reference],
+                annotation_type=AnnotationType.TOOL,
+                annotation_author=Software.TBPROFILER.value,
                 note=drug.get("who confidence"),
             )
         )

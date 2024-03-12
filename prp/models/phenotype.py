@@ -28,9 +28,22 @@ class PredictionSoftware(Enum):
 class VariantType(Enum):
     """Types of variants."""
 
-    SUBSTITUTION = "substitution"
-    INSERTION = "insertion"
-    DELETION = "deletion"
+    SNV = "SNV"
+    MNV = "MNV"
+    SV = "SV"
+    STR = "STR"
+
+class VariantSubType(Enum):
+    """Variant subtypes."""
+
+    INSERTION = "INS"
+    DELETION = "DEL"
+    SUBSTITUTION = "SUB"
+    TRANSISTION = "TS"
+    TRANSVERTION = "TV"
+    INVERSION = "INV"
+    DUPLICATION = "DUP"
+    TRANSLOCATION = "BND"
 
 
 class ElementType(Enum):
@@ -66,6 +79,13 @@ class ElementVirulenceSubtype(Enum):
     TOXIN = "TOXIN"
 
 
+class AnnotationType(Enum):
+    """Valid annotation types."""
+
+    TOOL = "tool"
+    USER = "user"
+
+    
 class ElementSerotypeSubtype(Enum):
     """Categories of serotype genes."""
 
@@ -80,6 +100,12 @@ class PhenotypeInfo(RWModel):
     type: ElementType = Field(
         ..., description="Trait category, for example AMR, STRESS etc."
     )
+    # annotation of the expected resistance level
+    resistance_level: str | None = None
+    # how was the annotation made
+    annotation_type: AnnotationType = Field(..., description="Annotation type")
+    annotation_author: str | None = Field(None, description="Annotation author")
+    # what information substansiate the annotation
     reference: List[str] = Field([], description="References supporting trait")
     note: str | None = Field(None, description="Note, can be used for confidence score")
 
@@ -174,13 +200,16 @@ class VariantBase(RWModel):
     """Container for mutation information"""
 
     # classification
+    id: int
     variant_type: VariantType
+    variant_subtype: VariantSubType
     phenotypes: List[PhenotypeInfo] = []
 
     # variant location
-    gene_symbol: str
+    reference_sequence: str = Field(..., description="Reference sequence such as chromosome, gene or contig id.", alias='gene_symbol')
     accession: Optional[str] = None
-    position: int
+    start: int
+    end: int
     ref_nt: str
     alt_nt: str
     ref_aa: Optional[str] = None
@@ -189,9 +218,9 @@ class VariantBase(RWModel):
     # prediction info
     depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
     frequency: Optional[float] = Field(None, description="Alt allele frequency.")
-    confidence: Optional[int] = Field(None, description="Genotype confidence.")
-    method: str = Field(..., description="Prediction method used to call variant")
-    passed_qc: bool = Field(
+    confidence: Optional[float] = Field(None, description="Genotype confidence.")
+    method: Optional[str] = Field(..., description="Prediction method used to call variant")
+    passed_qc: Optional[bool] = Field(
         ..., description="Describe if variant has passed the tool qc check"
     )
 
