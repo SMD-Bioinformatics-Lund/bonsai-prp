@@ -3,10 +3,13 @@
 ### Added
 
  - Add optional SNV and structural variants to sample output
+ - Add `n_read_pairs`
 
 ### Fixed
+ - Calculation of `iqr_median` (now called `coverage_uniformity`)
 
 ### Changed
+ - Renamed variables to be more informative (`median` to `median_cov`, `tot_reads` to `n_reads` & `mapped_reads` to `n_mapped_reads`)
 
 ## [0.5.0]
 
