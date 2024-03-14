@@ -37,11 +37,12 @@ class PostAlignQcResult(BaseModel):
     ins_size_dev: int
     mean_cov: int
     pct_above_x: Dict[str, float]
-    mapped_reads: int
-    tot_reads: int
-    iqr_median: float | None = None
+    n_reads: int
+    n_mapped_reads: int
+    n_read_pairs: int
+    coverage_uniformity: float | None = None
     quartile1: float
-    median: float
+    median_cov: float
     quartile3: float
 
 
