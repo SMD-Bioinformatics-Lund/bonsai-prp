@@ -1,10 +1,10 @@
 """Parse variant from VCF files."""
 
-from cyvcf2 import VCF, Variant
-from typing import List
-from prp.models.phenotype import VariantBase, VariantType
-import logging
 import re
+import logging
+from typing import List
+from cyvcf2 import VCF, Variant
+from prp.models.phenotype import VariantBase, VariantType
 
 LOG = logging.getLogger(__name__)
 SOURCE_PATTERN = r"##source=(.+)\n"

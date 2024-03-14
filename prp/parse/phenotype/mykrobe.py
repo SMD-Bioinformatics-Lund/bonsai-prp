@@ -86,7 +86,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
 
         # generate phenotype info
         phenotype = [PhenotypeInfo(
-            name=element_type["drug"], 
+            name=element_type["drug"],
             type=ElementType.AMR,
             annotation_type=AnnotationType.TOOL,
             annotation_author=Software.MYKROBE.value,

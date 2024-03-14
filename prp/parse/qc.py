@@ -7,7 +7,6 @@ import subprocess
 import pandas as pd
 import pysam
 
-from typing import Any, Dict
 from click.types import File
 
 from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult

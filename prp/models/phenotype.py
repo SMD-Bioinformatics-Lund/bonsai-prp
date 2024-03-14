@@ -1,6 +1,6 @@
 """Datamodels used for prediction results."""
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -85,7 +85,7 @@ class AnnotationType(Enum):
     TOOL = "tool"
     USER = "user"
 
-    
+
 class ElementSerotypeSubtype(Enum):
     """Categories of serotype genes."""
 
