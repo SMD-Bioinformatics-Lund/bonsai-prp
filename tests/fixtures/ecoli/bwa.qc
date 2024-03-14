@@ -11,13 +11,14 @@
         "1000": 0.0
     },
     "mean_cov": 210.04315187574855,
-    "iqr_median": 40.0,
+    "coverage_uniformity": 0.19047619047619047,
     "quartile1": 190.0,
-    "median": 210.0,
+    "median_cov": 210.0,
     "quartile3": 230.0,
-    "tot_reads": 7579030,
-    "mapped_reads": 6078594,
-    "dup_reads": 0,
+    "n_reads": 7579030,
+    "n_mapped_reads": 6078594,
+    "n_read_pairs": 7534608,
+    "n_dup_reads": 0,
     "dup_pct": 0.0,
     "sample_id": "ecoli_test_1"
 }

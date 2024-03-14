@@ -11,13 +11,14 @@
         "1000": 0.001473682969530131
     },
     "mean_cov": 95.14389806829637,
-    "iqr_median": 90.0,
+    "coverage_uniformity": 1.125,
     "quartile1": 43.0,
-    "median": 80.0,
+    "median_cov": 80.0,
     "quartile3": 133.0,
-    "tot_reads": 1211056,
-    "mapped_reads": 1014751,
-    "dup_reads": 0,
+    "n_reads": 1211056,
+    "n_mapped_reads": 1014751,
+    "n_read_pairs": 1203302,
+    "n_dup_reads": 0,
     "dup_pct": 0.0,
     "sample_id": "saureus_test_1"
 }
