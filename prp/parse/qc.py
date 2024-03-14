@@ -72,16 +72,17 @@ class QC:
 
         # Calculate the inter-quartile range / median (IQR/median)
         quartile1 = df['COV'].quantile(0.25)
-        median = df['COV'].median()
+        median_cov = df['COV'].median()
         quartile3 = df['COV'].quantile(0.75)
+        iqr = quartile3 - quartile1
 
-        iqr_median = quartile3 - quartile1 if quartile1 and quartile3 and median else None
+        coverage_uniformity = iqr / median_cov if quartile1 and quartile3 and median_cov else None
 
         self.results['pct_above_x'] = pct_above
         self.results['mean_cov'] = mean_cov
-        self.results['iqr_median'] = iqr_median
+        self.results['coverage_uniformity'] = coverage_uniformity
         self.results['quartile1'] = quartile1
-        self.results['median'] = median
+        self.results['median_cov'] = median_cov
         self.results['quartile3'] = quartile3
 
     def is_paired(self) -> bool:
@@ -126,9 +127,10 @@ class QC:
         LOG.info("Collecting basic stats...")
         sambamba_flagstat_cmd = f"sambamba flagstat {'-t '+ str(self.cpus) if self.cpus else ''} {self.bam}"
         flagstat = subprocess.check_output(sambamba_flagstat_cmd, shell=True, text=True).splitlines()
-        num_reads = int(flagstat[0].split()[0])
-        dup_reads = int(flagstat[3].split()[0])
-        mapped_reads = int(flagstat[4].split()[0])
+        n_reads = int(flagstat[0].split()[0])
+        n_dup_reads = int(flagstat[3].split()[0])
+        n_mapped_reads = int(flagstat[4].split()[0])
+        n_read_pairs = int(flagstat[5].split()[0])
 
         # Get insert size metrics
         if self.paired:
@@ -166,10 +168,11 @@ class QC:
         self.parse_basecov_bed(f"{out_prefix}.basecov.bed", thresholds)
         os.remove(f"{out_prefix}.basecov.bed")
 
-        self.results['tot_reads'] = num_reads
-        self.results['mapped_reads'] = mapped_reads
-        self.results['dup_reads'] = dup_reads
-        self.results['dup_pct'] = dup_reads / mapped_reads
+        self.results['n_reads'] = n_reads
+        self.results['n_mapped_reads'] = n_mapped_reads
+        self.results['n_read_pairs'] = n_read_pairs
+        self.results['n_dup_reads'] = n_dup_reads
+        self.results['dup_pct'] = n_dup_reads / n_mapped_reads
         self.results['sample_id'] = self.sample_id
 
         return self.results
@@ -217,11 +220,12 @@ def parse_postalignqc_results(input_file: File) -> QcMethodIndex:
         ins_size_dev=int(float(qc_dict["ins_size_dev"])),
         mean_cov=int(qc_dict["mean_cov"]),
         pct_above_x=qc_dict["pct_above_x"],
-        mapped_reads=int(qc_dict["mapped_reads"]),
-        tot_reads=int(qc_dict["tot_reads"]),
-        iqr_median=float(qc_dict["iqr_median"]),
+        n_reads=int(qc_dict["n_reads"]),
+        n_mapped_reads=int(qc_dict["n_mapped_reads"]),
+        n_read_pairs=int(qc_dict["n_read_pairs"]),
+        coverage_uniformity=float(qc_dict["coverage_uniformity"]),
         quartile1=float(qc_dict["quartile1"]),
-        median=float(qc_dict["median"]),
+        median_cov=float(qc_dict["median_cov"]),
         quartile3=float(qc_dict["quartile3"]),
     )
     return QcMethodIndex(software=QcSoftware.POSTALIGNQC, result=qc_res)
