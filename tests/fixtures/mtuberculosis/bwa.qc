@@ -11,13 +11,14 @@
         "1000": 0.0
     },
     "mean_cov": 199.06379457223684,
-    "iqr_median": 58.0,
+    "coverage_uniformity": 0.29292929292929293,
     "quartile1": 170.0,
-    "median": 198.0,
+    "median_cov": 198.0,
     "quartile3": 228.0,
-    "tot_reads": 6136081,
-    "mapped_reads": 6022294,
-    "dup_reads": 0,
+    "n_reads": 6136081,
+    "n_mapped_reads": 6022294,
+    "n_read_pairs": 6118272,
+    "n_dup_reads": 0,
     "dup_pct": 0.0,
     "sample_id": "tb_test_1"
 }

@@ -94,5 +94,6 @@ def reformat_date_str(input_date: str) -> str:
     return formatted_date
 
 def get_db_version(db_version: dict) -> str:
+    """Get database version"""
     backup_version = db_version["name"] + "_" + reformat_date_str(db_version["Date"])
     return db_version["commit"] if "commit" in db_version else backup_version

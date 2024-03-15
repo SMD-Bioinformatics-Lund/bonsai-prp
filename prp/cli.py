@@ -3,10 +3,10 @@ import json
 import logging
 from typing import List
 
+from pathlib import Path
 import click
 import pandas as pd
 from pydantic import TypeAdapter, ValidationError
-from pathlib import Path
 
 from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
@@ -288,7 +288,7 @@ def create_bonsai_input(
         ref_accession, ref_name  = get_gb_genome_version(reference_genome_gff)
         if ref_accession != bam_ref_genome:
             raise click.UsageError(f"Read mapping used as different reference genome; bam accnr: {bam_ref_genome}; gbff accnr: {ref_accession}")
-        
+
         # store file names
         fasta_idx_path = Path(f"{reference_genome_fasta}.fai")
         results["reference_genome"] = ReferenceGenome(
@@ -301,7 +301,7 @@ def create_bonsai_input(
         results["read_mapping"] = bam
         # add annotations
         annotations = [
-            {"name": f"annotation_{i}", "file": Path(annot).name} 
+            {"name": f"annotation_{i}", "file": Path(annot).name}
             for i, annot in enumerate(genome_annotation, start=1)
         ]
         for vcf in [sv_vcf, snv_vcf]:
