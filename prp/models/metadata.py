@@ -39,6 +39,8 @@ class RunInformation(RWModel):
     )
     workflow_name: str
     sample_name: str
+    lims_id: str
+    sequencing_run: str
     sequencing_platform: str
     sequencing_type: str
     command: str

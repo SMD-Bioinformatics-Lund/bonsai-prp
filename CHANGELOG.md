@@ -2,6 +2,8 @@
 
 ### Added
 
+ - Added `sequencing_run` and `lims_id` to output (bonsai input)
+
 ### Fixed
 
 ### Changed
