@@ -11,6 +11,8 @@
       ],
       "workflow_name": "berserk_elion",
       "sample_name": "saureus_test_1",
+      "lims_id": "saureus_lims_1",
+      "sequencing_run": "validering",
       "sequencing_platform": "illumina",
       "sequencing_type": "PE",
       "command": "nextflow run /fs1/pipelines/jasen/main.nf -profile staphylococcus_aureus --csv /fs1/ryan/pipelines/jasen/test-csvs/prp_test_samples_saureus.csv --queue normal -with-singularity /fs1/pipelines/jasen/container/jasen_2023_02-28.sif -with-report /fs1/nextflow//reports/saureus-test.jasen-saureus-dev.report.html -with-trace /fs1/nextflow//reports/saureus-test.jasen-saureus-dev.trace.txt -with-timeline /fs1/nextflow//reports/saureus-test.jasen-saureus-dev.timeline.html -work-dir /fs1/nextflow//saureus-test.jasen-saureus-dev",
