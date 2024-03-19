@@ -3,7 +3,8 @@
 ### Added
 
  - Added `sequencing_run` and `lims_id` to output (bonsai input)
- - Add function for annotating delly variants intersecting with resistance targets
+ - Added function for annotating delly variants intersecting with resistance targets
+ - Added capability of handling empty dictionaries from serotypefinder output
 
 ### Fixed
 

@@ -191,7 +191,7 @@ def parse_serotypefinder_oh_typing(path: str) -> MethodIndex | None:
             results = pred_obj["serotypefinder"]["results"]
             for serotype in results:
                 # if no serotype gene was identified
-                if isinstance(results[serotype], str):
+                if isinstance(results[serotype], str) or results[serotype] == {}:
                     continue
 
                 # take first result as the valid prediction
