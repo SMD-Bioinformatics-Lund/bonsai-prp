@@ -3,6 +3,7 @@
 ### Added
 
  - Added `sequencing_run` and `lims_id` to output (bonsai input)
+ - Added capability of handling empty dictionaries from serotypefinder output
 
 ### Fixed
 
