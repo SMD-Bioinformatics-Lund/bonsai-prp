@@ -2,6 +2,7 @@
 import json
 import logging
 from typing import List, TextIO
+
 from Bio import SeqIO
 
 from ..models.metadata import RunInformation, SoupVersion

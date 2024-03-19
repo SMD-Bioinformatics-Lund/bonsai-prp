@@ -3,9 +3,14 @@ import logging
 from typing import Any, Dict, List, Tuple
 
 from ...models.metadata import SoupVersions
-from ...models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo
+from ...models.phenotype import (
+    AnnotationType,
+    ElementType,
+    ElementTypeResult,
+    PhenotypeInfo,
+)
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import TbProfilerVariant, VariantType, VariantSubType, AnnotationType
+from ...models.phenotype import TbProfilerVariant, VariantSubType, VariantType
 from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
@@ -54,7 +59,8 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
     # tbprofiler report three categories of variants
     # - dr_variants: known resistance variants
     # - qc_fail_variants: known resistance variants failing qc
-    # - other_variants: variants not in the database but in genes associated with resistance
+    # - other_variants: variants not in the database but in genes 
+    #                   associated with resistance
     var_id = 1
     for result_type in ["dr_variants", "other_variants", "qc_fail_variants"]:
         # associated with passed/ failed qc
@@ -99,10 +105,12 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
                 method=variant_caller,
                 passed_qc=passed_qc,
             )
-            var_id += 1 # increment variant id
+            var_id += 1  # increment variant id
             results.append(variant)
     # sort variants
-    variants = sorted(results, key=lambda entry: (entry.reference_sequence, entry.start))
+    variants = sorted(
+        results, key=lambda entry: (entry.reference_sequence, entry.start)
+    )
     return variants
 
 

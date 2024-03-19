@@ -4,14 +4,14 @@ import re
 from typing import Any, Dict, Tuple
 
 from ...models.phenotype import (
+    AnnotationType,
     ElementType,
     ElementTypeResult,
     MykrobeVariant,
     PhenotypeInfo,
-    AnnotationType,
 )
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import VariantType, VariantSubType
+from ...models.phenotype import VariantSubType, VariantType
 from ...models.sample import MethodIndex
 from ..utils import get_nt_change, is_prediction_result_empty
 
@@ -85,21 +85,23 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
             continue
 
         # generate phenotype info
-        phenotype = [PhenotypeInfo(
-            name=element_type["drug"],
-            type=ElementType.AMR,
-            annotation_type=AnnotationType.TOOL,
-            annotation_author=Software.MYKROBE.value,
-        )]
+        phenotype = [
+            PhenotypeInfo(
+                name=element_type["drug"],
+                type=ElementType.AMR,
+                annotation_type=AnnotationType.TOOL,
+                annotation_author=Software.MYKROBE.value,
+            )
+        ]
 
         variants = element_type["variants"].split(";")
         # Mykrobe CSV variant format
         # <gene>_<amino acid change>-<dna change>:<ref depth>:<alt depth>:<genotype confidence>
         # ref: https://github.com/Mykrobe-tools/mykrobe/wiki/AMR-prediction-output
-        PATTERN = re.compile(r"(.+)_(.+)-(.+):(\d+):(\d+):(\d+)", re.I)
+        pattern = re.compile(r"(.+)_(.+)-(.+):(\d+):(\d+):(\d+)", re.I)
         for var_id, variant in enumerate(variants, start=1):
             # extract variant info using regex
-            match = re.search(PATTERN, variant)
+            match = re.search(pattern, variant)
             gene, aa_change, dna_change, ref_depth, alt_depth, conf = match.groups()
 
             # get type of variant
@@ -134,7 +136,9 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
             )
             results.append(variant)
     # sort variants
-    variants = sorted(results, key=lambda entry: (entry.reference_sequence, entry.start))
+    variants = sorted(
+        results, key=lambda entry: (entry.reference_sequence, entry.start)
+    )
     return variants
 
 

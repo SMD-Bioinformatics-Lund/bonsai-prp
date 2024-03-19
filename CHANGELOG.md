@@ -3,10 +3,13 @@
 ### Added
 
  - Added `sequencing_run` and `lims_id` to output (bonsai input)
+ - Add function for annotating delly variants intersecting with resistance targets
 
 ### Fixed
 
 ### Changed
+
+ - Removed sample id from Sample object
 
 ## [0.6.0]
 

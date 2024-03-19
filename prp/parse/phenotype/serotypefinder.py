@@ -2,14 +2,14 @@
 import logging
 from typing import Any, Dict
 
-from ...models.phenotype import ElementType, ElementSerotypeSubtype
-from ...models.phenotype import SerotypeGene
+from ...models.phenotype import ElementSerotypeSubtype, ElementType, SerotypeGene
 
 LOG = logging.getLogger(__name__)
 
 
 def parse_serotype_gene(
-    info: Dict[str, Any], subtype: ElementSerotypeSubtype = ElementSerotypeSubtype.ANTIGEN
+    info: Dict[str, Any],
+    subtype: ElementSerotypeSubtype = ElementSerotypeSubtype.ANTIGEN,
 ) -> SerotypeGene:
     """Parse serotype gene prediction results."""
     start_pos, end_pos = map(int, info["position_in_ref"].split(".."))
