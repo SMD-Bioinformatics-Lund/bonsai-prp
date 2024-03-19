@@ -3,6 +3,7 @@
 ### Added
 
  - Added `sequencing_run` and `lims_id` to output (bonsai input)
+ - Removed sample id from Sample object
 
 ### Fixed
 

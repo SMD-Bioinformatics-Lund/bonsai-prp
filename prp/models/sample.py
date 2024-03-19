@@ -34,8 +34,6 @@ class MethodIndex(RWModel):
 
 class SampleBase(RWModel):
     """Base datamodel for sample data structure"""
-
-    sample_id: str = Field(..., alias="sampleId", min_length=3, max_length=100)
     run_metadata: RunMetadata = Field(..., alias="runMetadata")
     qc: List[QcMethodIndex] = Field(...)
     species_prediction: SpeciesPredictionResult = Field(..., alias="speciesPrediction")
