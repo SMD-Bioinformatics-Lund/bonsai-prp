@@ -1,9 +1,11 @@
 """Parse variant from VCF files."""
 
-import re
 import logging
+import re
 from typing import List
+
 from cyvcf2 import VCF, Variant
+
 from prp.models.phenotype import VariantBase, VariantType
 
 LOG = logging.getLogger(__name__)
@@ -22,7 +24,7 @@ def _get_variant_type(variant) -> VariantType:
     return var_type
 
 
-def parse_variant(variant: Variant, var_id: int, caller: str | None=None):
+def parse_variant(variant: Variant, var_id: int, caller: str | None = None):
     """Parse variant info from VCF row."""
     # get major category
     depth = variant.gt_depths
@@ -42,17 +44,17 @@ def parse_variant(variant: Variant, var_id: int, caller: str | None=None):
     var_type: VariantType = _get_variant_type(variant)
 
     var_obj = VariantBase(
-            id=var_id,
-            variant_type=var_type,
-            variant_subtype=variant.var_subtype.upper(),
-            gene_symbol=variant.CHROM,
-            start=variant.start,
-            end=variant.end,
-            ref_nt=variant.REF,
-            alt_nt=variant.ALT[0], # haploid
-            method=variant.INFO.get("SVMETHOD", caller),
-            confidence=variant.QUAL,
-            passed_qc=passed_qc,
+        id=var_id,
+        variant_type=var_type,
+        variant_subtype=variant.var_subtype.upper(),
+        gene_symbol=variant.CHROM,
+        start=variant.start,
+        end=variant.end,
+        ref_nt=variant.REF,
+        alt_nt=variant.ALT[0],  # haploid
+        method=variant.INFO.get("SVMETHOD", caller),
+        confidence=variant.QUAL,
+        passed_qc=passed_qc,
     )
     return var_obj
 
@@ -96,14 +98,13 @@ def annotate_delly_variants(writer, vcf, annotation, annot_chrom=False):
             variant.CHROM = annotation.contigs[0]
         # get genes intersecting with SV
         genes = [
-            {'gene_symbol': gene[GENE_SYMBOL], 'locus_tag': gene[LOCUS_TAG]}
-            for gene 
-            in annotation.fetch(variant.CHROM, variant.start, variant.end)
+            {"gene_symbol": gene[GENE_SYMBOL], "locus_tag": gene[LOCUS_TAG]}
+            for gene in annotation.fetch(variant.CHROM, variant.start, variant.end)
         ]
         # add overlapping genes to INFO
         if len(genes) > 0:
-            variant.INFO['gene'] = ','.join([gene['gene_symbol'] for gene in genes])
-            variant.INFO['locus_tag'] = ','.join([gene['locus_tag'] for gene in genes])
+            variant.INFO["gene"] = ",".join([gene["gene_symbol"] for gene in genes])
+            variant.INFO["locus_tag"] = ",".join([gene["locus_tag"] for gene in genes])
             n_annotated += 1
 
         # write variant
