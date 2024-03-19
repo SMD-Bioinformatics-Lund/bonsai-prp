@@ -5,15 +5,20 @@ from typing import Any, Dict, List, Tuple
 
 from ...models.metadata import SoupVersions
 from ...models.phenotype import (
+    AnnotationType,
     ElementAmrSubtype,
     ElementStressSubtype,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
-    AnnotationType
 )
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import ResfinderGene, ResfinderVariant, VariantType, VariantSubType
+from ...models.phenotype import (
+    ResfinderGene,
+    ResfinderVariant,
+    VariantSubType,
+    VariantType,
+)
 from ...models.sample import MethodIndex
 from ..utils import get_nt_change
 
@@ -282,8 +287,8 @@ def _parse_resfinder_amr_variants(
     """Get resistance genes from resfinder result."""
     # get prediction method
     prediction_method = None
-    for exec in resfinder_result["software_executions"].values():
-        prediction_method = exec["parameters"]["method"]
+    for exec_info in resfinder_result["software_executions"].values():
+        prediction_method = exec_info["parameters"]["method"]
 
     # parse prediction result
     results = []
@@ -317,7 +322,9 @@ def _parse_resfinder_amr_variants(
         ref_nt, alt_nt = get_nt_change(info["ref_codon"], info["var_codon"])
         phenotype = [
             PhenotypeInfo(
-                type=ElementType.AMR, group=lookup_antibiotic_class(phe), name=phe, 
+                type=ElementType.AMR,
+                group=lookup_antibiotic_class(phe),
+                name=phe,
                 annotation_type=AnnotationType.TOOL,
             )
             for phe in info["phenotypes"]
@@ -343,7 +350,9 @@ def _parse_resfinder_amr_variants(
         )
         results.append(variant)
     # sort variants
-    variants = sorted(results, key=lambda entry: (entry.reference_sequence, entry.start))
+    variants = sorted(
+        results, key=lambda entry: (entry.reference_sequence, entry.start)
+    )
     return variants
 
 

@@ -26,13 +26,6 @@ def _get_variant_type(variant) -> VariantType:
 
 def parse_variant(variant: Variant, var_id: int, caller: str | None = None):
     """Parse variant info from VCF row."""
-    # get major category
-    depth = variant.gt_depths
-    frequency = variant.gt_alt_freqs
-    confidence = variant.gt_quals
-    start = variant.start
-    end = variant.end
-
     # check if variant passed qc filtering
     if len(variant.FILTERS) == 0:
         passed_qc = None
@@ -71,7 +64,7 @@ def load_variants(variant_file: str) -> List[VariantBase]:
     vcf_obj = VCF(variant_file)
     try:
         next(vcf_obj)
-    except StopIteration as error:
+    except StopIteration:
         LOG.warning("Variant file %s does not include any variants", variant_file)
         return None
     # re-read the variant file
@@ -88,8 +81,8 @@ def load_variants(variant_file: str) -> List[VariantBase]:
 
 
 def annotate_delly_variants(writer, vcf, annotation, annot_chrom=False):
-    LOCUS_TAG = 3
-    GENE_SYMBOL = 4
+    locus_tag = 3
+    gene_symbol = 4
     # annotate variant
     n_annotated = 0
     for variant in vcf:
@@ -98,7 +91,7 @@ def annotate_delly_variants(writer, vcf, annotation, annot_chrom=False):
             variant.CHROM = annotation.contigs[0]
         # get genes intersecting with SV
         genes = [
-            {"gene_symbol": gene[GENE_SYMBOL], "locus_tag": gene[LOCUS_TAG]}
+            {"gene_symbol": gene[gene_symbol], "locus_tag": gene[locus_tag]}
             for gene in annotation.fetch(variant.CHROM, variant.start, variant.end)
         ]
         # add overlapping genes to INFO

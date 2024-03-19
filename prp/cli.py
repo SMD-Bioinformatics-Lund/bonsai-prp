@@ -434,9 +434,9 @@ def annotate_delly(vcf, bed, output):
             raise click.UsageError(
                 f'"{variant.CHROM}" not in BED file and the file contains {len(annotation.contigs)} chromosomes'
             )
-        else:
-            annot_chrom = True
-            LOG.warning(f"Annotating variant chromosome to {annotation.contigs[0]}")
+        # if there is only one "chromosome" in the bed file
+        annot_chrom = True
+        LOG.warning("Annotating variant chromosome to %s", annotation.contigs[0])
     # reset vcf file
     vcf_obj = VCF(vcf)
     vcf_obj.add_info_to_header(
