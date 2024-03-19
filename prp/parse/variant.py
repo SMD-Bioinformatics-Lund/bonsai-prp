@@ -83,3 +83,29 @@ def load_variants(variant_file: str) -> List[VariantBase]:
         variants.append(parse_variant(variant, var_id=var_id, caller=variant_caller))
 
     return variants
+
+
+def annotate_delly_variants(writer, vcf, annotation, annot_chrom=False):
+    LOCUS_TAG = 3
+    GENE_SYMBOL = 4
+    # annotate variant
+    n_annotated = 0
+    for variant in vcf:
+        # update chromosome
+        if annot_chrom:
+            variant.CHROM = annotation.contigs[0]
+        # get genes intersecting with SV
+        genes = [
+            {'gene_symbol': gene[GENE_SYMBOL], 'locus_tag': gene[LOCUS_TAG]}
+            for gene 
+            in annotation.fetch(variant.CHROM, variant.start, variant.end)
+        ]
+        # add overlapping genes to INFO
+        if len(genes) > 0:
+            variant.INFO['gene'] = ','.join([gene['gene_symbol'] for gene in genes])
+            variant.INFO['locus_tag'] = ','.join([gene['locus_tag'] for gene in genes])
+            n_annotated += 1
+
+        # write variant
+        writer.write_record(variant)
+    LOG.info("Annotated %d SV variants", n_annotated)

@@ -4,8 +4,10 @@ import logging
 from typing import List
 
 from pathlib import Path
+import pysam
 import click
 import pandas as pd
+from cyvcf2 import VCF, Writer
 from pydantic import TypeAdapter, ValidationError
 
 from .models.metadata import SoupType, SoupVersion
@@ -32,6 +34,7 @@ from .parse import (
     parse_virulencefinder_vir_pred,
     load_variants,
 )
+from .parse.variant import annotate_delly_variants
 from .parse.mapping import get_reference_seq_accnr
 from .parse.metadata import get_database_info, parse_run_info, get_gb_genome_version
 from .parse.utils import get_db_version
@@ -46,7 +49,7 @@ OUTPUT_SCHEMA_VERSION = 1
 
 @click.group()
 def cli():
-    """Base CLI entrypoint."""
+    """Jasen pipeline result processing tool."""
 
 
 @cli.command()
@@ -398,3 +401,39 @@ def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> Non
         LOG.info("Parse alignment results")
         parse_alignment_results(sample_id, bam, reference, cpus, output, bed, baits)
     click.secho("Finished generating QC output", fg="green")
+
+
+@cli.command()
+@click.option('-v', '--vcf', type=click.Path(exists=True), help='VCF file')
+@click.option('-b', '--bed', type=click.Path(exists=True), help='BED file')
+@click.argument('output', type=click.Path(writable=True))
+def annotate_delly(vcf, bed, output):
+    """Annotate Delly SV varinats with genes in BED file."""
+    output = Path(output)
+    # load annotation
+    if bed is not None:
+        annotation = pysam.TabixFile(bed, parser=pysam.asTuple())
+    else:
+        raise click.UsageError('You must provide a annotation file.')
+    
+    vcf_obj = VCF(vcf)
+    variant = next(vcf_obj)
+    annot_chrom = False
+    if not variant.CHROM in annotation.contigs:
+        if len(annotation.contigs) > 1:
+            raise click.UsageError(
+                f'"{variant.CHROM}" not in BED file and the file contains {len(annotation.contigs)} chromosomes'
+            )
+        else:
+            annot_chrom = True
+            LOG.warning(f"Annotating variant chromosome to {annotation.contigs[0]}")
+    # reset vcf file
+    vcf_obj = VCF(vcf)
+    vcf_obj.add_info_to_header({'ID': 'gene', 'Description': 'overlapping gene', 'Type':'Character', 'Number': '1'})
+    vcf_obj.add_info_to_header({'ID': 'locus_tag', 'Description': 'overlapping tbdb locus tag', 'Type':'Character', 'Number': '1'})
+
+    # open vcf writer
+    writer = Writer(output.absolute(), vcf_obj)
+    annotate_delly_variants(writer, vcf_obj, annotation, annot_chrom=annot_chrom)
+
+    click.secho(f"Wrote annotated delly variants to {output}", fg='green')
