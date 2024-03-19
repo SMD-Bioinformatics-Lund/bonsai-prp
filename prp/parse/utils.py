@@ -81,6 +81,7 @@ def format_nt_change(
             f"g.{start_pos}_{end_pos}ins{alt}"
     return fmt_change
 
+
 def reformat_date_str(input_date: str) -> str:
     """Reformat date string into DDMMYY format"""
     # Parse the date string
@@ -92,6 +93,7 @@ def reformat_date_str(input_date: str) -> str:
     # Format as DDMMYY
     formatted_date = parsed_date.date().isoformat()
     return formatted_date
+
 
 def get_db_version(db_version: dict) -> str:
     """Get database version"""

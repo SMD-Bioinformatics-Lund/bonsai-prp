@@ -1,22 +1,25 @@
 """Definition of the PRP command-line interface."""
 import json
 import logging
+from pathlib import Path
 from typing import List
 
-from pathlib import Path
 import click
 import pandas as pd
+import pysam
+from cyvcf2 import VCF, Writer
 from pydantic import TypeAdapter, ValidationError
 
 from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex, QcSoftware
-from .models.sample import MethodIndex, ReferenceGenome, PipelineResult
+from .models.sample import MethodIndex, PipelineResult, ReferenceGenome
 from .models.typing import TypingMethod
 from .parse import (
+    load_variants,
+    parse_alignment_results,
     parse_amrfinder_amr_pred,
     parse_amrfinder_vir_pred,
-    parse_alignment_results,
     parse_cgmlst_results,
     parse_kraken_result,
     parse_mlst_results,
@@ -30,11 +33,11 @@ from .parse import (
     parse_tbprofiler_lineage_results,
     parse_virulencefinder_stx_typing,
     parse_virulencefinder_vir_pred,
-    load_variants,
 )
 from .parse.mapping import get_reference_seq_accnr
-from .parse.metadata import get_database_info, parse_run_info, get_gb_genome_version
+from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
 from .parse.utils import get_db_version
+from .parse.variant import annotate_delly_variants
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
@@ -46,7 +49,7 @@ OUTPUT_SCHEMA_VERSION = 1
 
 @click.group()
 def cli():
-    """Base CLI entrypoint."""
+    """Jasen pipeline result processing tool."""
 
 
 @cli.command()
@@ -98,13 +101,21 @@ def cli():
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
 @click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
 @click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
-@click.option("--reference-genome-fasta", type=click.Path(), help="reference genome fasta file")
-@click.option("--reference-genome-gff", type=click.Path(), help="reference-genome in gff format")
-@click.option("--genome-annotation", type=click.Path(), multiple=True, help="Genome annotaitons bed format")
+@click.option(
+    "--reference-genome-fasta", type=click.Path(), help="reference genome fasta file"
+)
+@click.option(
+    "--reference-genome-gff", type=click.Path(), help="reference-genome in gff format"
+)
+@click.option(
+    "--genome-annotation",
+    type=click.Path(),
+    multiple=True,
+    help="Genome annotaitons bed format",
+)
 @click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
 @click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
-
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
@@ -285,9 +296,11 @@ def create_bonsai_input(
     if all([bam, reference_genome_fasta, reference_genome_gff]):
         # verify that everything pertains to the same reference genome
         bam_ref_genome = get_reference_seq_accnr(bam)
-        ref_accession, ref_name  = get_gb_genome_version(reference_genome_gff)
+        ref_accession, ref_name = get_gb_genome_version(reference_genome_gff)
         if ref_accession != bam_ref_genome:
-            raise click.UsageError(f"Read mapping used as different reference genome; bam accnr: {bam_ref_genome}; gbff accnr: {ref_accession}")
+            raise click.UsageError(
+                f"Read mapping used as different reference genome; bam accnr: {bam_ref_genome}; gbff accnr: {ref_accession}"
+            )
 
         # store file names
         fasta_idx_path = Path(f"{reference_genome_fasta}.fai")
@@ -307,9 +320,7 @@ def create_bonsai_input(
         for vcf in [sv_vcf, snv_vcf]:
             if vcf:
                 name = "SNV" if vcf == sv_vcf else "SV"
-                annotations.append({
-                    "name": name, "file": Path(vcf).name
-                })
+                annotations.append({"name": name, "file": Path(vcf).name})
         # store annotation results
         results["genome_annotation"] = annotations if len(annotations) > 0 else None
 
@@ -387,7 +398,9 @@ def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
 @click.option("-b", "--bam", required=True, type=click.File(), help="bam file")
 @click.option("-e", "--bed", type=click.File(), help="bed file")
 @click.option("-a", "--baits", type=click.File(), help="baits file")
-@click.option("-r", "--reference", required=True, type=click.File(), help="reference fasta")
+@click.option(
+    "-r", "--reference", required=True, type=click.File(), help="reference fasta"
+)
 @click.option("-c", "--cpus", type=click.INT, default=1, help="cpus")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
@@ -398,3 +411,53 @@ def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> Non
         LOG.info("Parse alignment results")
         parse_alignment_results(sample_id, bam, reference, cpus, output, bed, baits)
     click.secho("Finished generating QC output", fg="green")
+
+
+@cli.command()
+@click.option("-v", "--vcf", type=click.Path(exists=True), help="VCF file")
+@click.option("-b", "--bed", type=click.Path(exists=True), help="BED file")
+@click.argument("output", type=click.Path(writable=True))
+def annotate_delly(vcf, bed, output):
+    """Annotate Delly SV varinats with genes in BED file."""
+    output = Path(output)
+    # load annotation
+    if bed is not None:
+        annotation = pysam.TabixFile(bed, parser=pysam.asTuple())
+    else:
+        raise click.UsageError("You must provide a annotation file.")
+
+    vcf_obj = VCF(vcf)
+    variant = next(vcf_obj)
+    annot_chrom = False
+    if not variant.CHROM in annotation.contigs:
+        if len(annotation.contigs) > 1:
+            raise click.UsageError(
+                f'"{variant.CHROM}" not in BED file and the file contains {len(annotation.contigs)} chromosomes'
+            )
+        # if there is only one "chromosome" in the bed file
+        annot_chrom = True
+        LOG.warning("Annotating variant chromosome to %s", annotation.contigs[0])
+    # reset vcf file
+    vcf_obj = VCF(vcf)
+    vcf_obj.add_info_to_header(
+        {
+            "ID": "gene",
+            "Description": "overlapping gene",
+            "Type": "Character",
+            "Number": "1",
+        }
+    )
+    vcf_obj.add_info_to_header(
+        {
+            "ID": "locus_tag",
+            "Description": "overlapping tbdb locus tag",
+            "Type": "Character",
+            "Number": "1",
+        }
+    )
+
+    # open vcf writer
+    writer = Writer(output.absolute(), vcf_obj)
+    annotate_delly_variants(writer, vcf_obj, annotation, annot_chrom=annot_chrom)
+
+    click.secho(f"Wrote annotated delly variants to {output}", fg="green")

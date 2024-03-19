@@ -33,6 +33,7 @@ class VariantType(Enum):
     SV = "SV"
     STR = "STR"
 
+
 class VariantSubType(Enum):
     """Variant subtypes."""
 
@@ -130,7 +131,10 @@ class GeneBase(BaseModel):
         description="The predominant function fo the gene."
     )
     element_subtype: Union[
-        ElementStressSubtype, ElementAmrSubtype, ElementVirulenceSubtype, ElementSerotypeSubtype
+        ElementStressSubtype,
+        ElementAmrSubtype,
+        ElementVirulenceSubtype,
+        ElementSerotypeSubtype,
     ] = Field(description="Further functional categorization of the genes.")
     # position
     ref_start_pos: Optional[int] = Field(
@@ -206,7 +210,11 @@ class VariantBase(RWModel):
     phenotypes: List[PhenotypeInfo] = []
 
     # variant location
-    reference_sequence: str = Field(..., description="Reference sequence such as chromosome, gene or contig id.", alias='gene_symbol')
+    reference_sequence: str = Field(
+        ...,
+        description="Reference sequence such as chromosome, gene or contig id.",
+        alias="gene_symbol",
+    )
     accession: Optional[str] = None
     start: int
     end: int
@@ -219,7 +227,9 @@ class VariantBase(RWModel):
     depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
     frequency: Optional[float] = Field(None, description="Alt allele frequency.")
     confidence: Optional[float] = Field(None, description="Genotype confidence.")
-    method: Optional[str] = Field(..., description="Prediction method used to call variant")
+    method: Optional[str] = Field(
+        ..., description="Prediction method used to call variant"
+    )
     passed_qc: Optional[bool] = Field(
         ..., description="Describe if variant has passed the tool qc check"
     )
@@ -251,5 +261,7 @@ class ElementTypeResult(BaseModel):
     """
 
     phenotypes: Dict[str, List[str]]
-    genes: List[Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene, VirulenceGene]]
+    genes: List[
+        Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene, VirulenceGene]
+    ]
     variants: List[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]

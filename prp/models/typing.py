@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import Field
 
 from .base import RWModel
-from .phenotype import VirulenceGene, SerotypeGene
+from .phenotype import SerotypeGene, VirulenceGene
 
 
 class TypingSoftware(Enum):

@@ -15,8 +15,8 @@ from ..models.typing import (
     TypingResultMlst,
 )
 from ..models.typing import TypingSoftware as Software
-from .phenotype.virulencefinder import parse_vir_gene
 from .phenotype.serotypefinder import parse_serotype_gene
+from .phenotype.virulencefinder import parse_vir_gene
 
 LOG = logging.getLogger(__name__)
 
@@ -198,9 +198,11 @@ def parse_serotypefinder_oh_typing(path: str) -> MethodIndex | None:
                 hit = next(iter(results[serotype].values()))
                 vir_gene = parse_serotype_gene(hit)
                 gene = TypingResultGeneAllele(**vir_gene.model_dump())
-                pred_result.append(MethodIndex(
-                    type=serotype,
-                    software=Software.SEROTYPEFINDER,
-                    result=gene,
-                ))
+                pred_result.append(
+                    MethodIndex(
+                        type=serotype,
+                        software=Software.SEROTYPEFINDER,
+                        result=gene,
+                    )
+                )
     return pred_result

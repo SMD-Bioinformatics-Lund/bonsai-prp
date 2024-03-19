@@ -7,10 +7,10 @@ import pandas as pd
 from ...models.phenotype import (
     AmrFinderGene,
     AmrFinderResistanceGene,
+    AnnotationType,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
-    AnnotationType
 )
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.sample import MethodIndex

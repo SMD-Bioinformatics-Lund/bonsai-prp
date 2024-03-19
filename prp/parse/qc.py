@@ -1,21 +1,25 @@
 """Parse output of QC tools."""
-import os
 import csv
 import json
 import logging
+import os
 import subprocess
+
 import pandas as pd
 import pysam
-
 from click.types import File
 
 from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult
 
 LOG = logging.getLogger(__name__)
 
+
 class QC:
     """Class for retrieving qc results"""
-    def __init__(self, sample_id, bam, reference, cpus, bed: str = None, baits: str = None):
+
+    def __init__(
+        self, sample_id, bam, reference, cpus, bed: str = None, baits: str = None
+    ):
         self.results = {}
         self.bam = bam
         self.bed = bed
@@ -27,12 +31,23 @@ class QC:
 
     def write_json_result(self, json_result: dict, output_filepath: str) -> None:
         """Write out json file"""
-        with open(output_filepath, 'w', encoding="utf-8") as json_file:
+        with open(output_filepath, "w", encoding="utf-8") as json_file:
             json.dump(json_result, json_file, indent=4)
 
     def convert2intervals(self, bed_baits: str, dict_file: str) -> None:
         """Convert files to interval lists"""
-        bed2int_cmd = ["java", "-jar", "/usr/bin/picard.jar", "BedToIntervalList", "-I", bed_baits, "-O", f"{bed_baits}.interval_list", "-SD", dict_file]
+        bed2int_cmd = [
+            "java",
+            "-jar",
+            "/usr/bin/picard.jar",
+            "BedToIntervalList",
+            "-I",
+            bed_baits,
+            "-O",
+            f"{bed_baits}.interval_list",
+            "-SD",
+            dict_file,
+        ]
         self.system_p(bed2int_cmd)
 
     def parse_hsmetrics(self, hsmetrics: str) -> None:
@@ -42,10 +57,10 @@ class QC:
                 if line.startswith("## METRICS CLASS"):
                     next(fin)
                     vals = next(fin).split("\t")
-                    self.results['pct_on_target'] = vals[18]
-                    self.results['fold_enrichment'] = vals[26]
-                    self.results['median_coverage'] = vals[23]
-                    self.results['fold_80'] = vals[33]
+                    self.results["pct_on_target"] = vals[18]
+                    self.results["fold_enrichment"] = vals[26]
+                    self.results["median_coverage"] = vals[23]
+                    self.results["fold_80"] = vals[33]
                     break
 
     def parse_ismetrics(self, ismetrics: str) -> None:
@@ -55,34 +70,40 @@ class QC:
                 if line.startswith("## METRICS CLASS"):
                     next(ins)
                     vals = next(ins).split("\t")
-                    self.results['ins_size'] = vals[5]
-                    self.results['ins_size_dev'] = vals[6]
+                    self.results["ins_size"] = vals[5]
+                    self.results["ins_size_dev"] = vals[6]
                     break
 
     def parse_basecov_bed(self, basecov_fpath: str, thresholds: list) -> None:
         """Parse base coverage bed file using pandas"""
-        df = pd.read_csv(basecov_fpath, sep='\t', comment='#', header=0)
+        df = pd.read_csv(basecov_fpath, sep="\t", comment="#", header=0)
 
         tot_bases = len(df)
-        pct_above = {min_val: len(df[df['COV'] >= int(min_val)]) for min_val in thresholds}
-        pct_above = {min_val: 100 * (pct_above[min_val] / tot_bases) for min_val in thresholds}
+        pct_above = {
+            min_val: len(df[df["COV"] >= int(min_val)]) for min_val in thresholds
+        }
+        pct_above = {
+            min_val: 100 * (pct_above[min_val] / tot_bases) for min_val in thresholds
+        }
 
-        mean_cov = df['COV'].mean()
+        mean_cov = df["COV"].mean()
 
         # Calculate the inter-quartile range / median (IQR/median)
-        quartile1 = df['COV'].quantile(0.25)
-        median_cov = df['COV'].median()
-        quartile3 = df['COV'].quantile(0.75)
+        quartile1 = df["COV"].quantile(0.25)
+        median_cov = df["COV"].median()
+        quartile3 = df["COV"].quantile(0.75)
         iqr = quartile3 - quartile1
 
-        coverage_uniformity = iqr / median_cov if quartile1 and quartile3 and median_cov else None
+        coverage_uniformity = (
+            iqr / median_cov if quartile1 and quartile3 and median_cov else None
+        )
 
-        self.results['pct_above_x'] = pct_above
-        self.results['mean_cov'] = mean_cov
-        self.results['coverage_uniformity'] = coverage_uniformity
-        self.results['quartile1'] = quartile1
-        self.results['median_cov'] = median_cov
-        self.results['quartile3'] = quartile3
+        self.results["pct_above_x"] = pct_above
+        self.results["mean_cov"] = mean_cov
+        self.results["coverage_uniformity"] = coverage_uniformity
+        self.results["quartile1"] = quartile1
+        self.results["median_cov"] = median_cov
+        self.results["quartile3"] = quartile3
 
     def is_paired(self) -> bool:
         """Check if reads are paired"""
@@ -94,7 +115,7 @@ class QC:
 
     def system_p(self, cmd: list) -> None:
         """Execute subprocess"""
-        LOG.info("RUNNING: %s", ' '.join(cmd))
+        LOG.info("RUNNING: %s", " ".join(cmd))
         result = subprocess.run(cmd, check=True, text=True)
         if result.stderr:
             print(f"stderr: {result.stderr}")
@@ -116,7 +137,22 @@ class QC:
                 self.convert2intervals(self.baits, dict_file)
 
             # Run picard hsmetrics command
-            hsmet_cmd = ["java", "-jar", "/usr/bin/picard.jar", "CollectHsMetrics", "-I", self.bam, "-O", f"{self.bam}.hsmetrics", "-R", self.reference, "-BAIT_INTERVALS", f"{self.baits}.interval_list", "-TARGET_INTERVALS", f"{self.bed}.interval_list"]
+            hsmet_cmd = [
+                "java",
+                "-jar",
+                "/usr/bin/picard.jar",
+                "CollectHsMetrics",
+                "-I",
+                self.bam,
+                "-O",
+                f"{self.bam}.hsmetrics",
+                "-R",
+                self.reference,
+                "-BAIT_INTERVALS",
+                f"{self.baits}.interval_list",
+                "-TARGET_INTERVALS",
+                f"{self.bed}.interval_list",
+            ]
             self.system_p(hsmet_cmd)
 
             # Parse hsmetrics output file
@@ -124,8 +160,12 @@ class QC:
 
         # Collect basic sequencing statistics
         LOG.info("Collecting basic stats...")
-        sambamba_flagstat_cmd = f"sambamba flagstat {'-t '+ str(self.cpus) if self.cpus else ''} {self.bam}"
-        flagstat = subprocess.check_output(sambamba_flagstat_cmd, shell=True, text=True).splitlines()
+        sambamba_flagstat_cmd = (
+            f"sambamba flagstat {'-t '+ str(self.cpus) if self.cpus else ''} {self.bam}"
+        )
+        flagstat = subprocess.check_output(
+            sambamba_flagstat_cmd, shell=True, text=True
+        ).splitlines()
         n_reads = int(flagstat[0].split()[0])
         n_dup_reads = int(flagstat[3].split()[0])
         n_mapped_reads = int(flagstat[4].split()[0])
@@ -134,7 +174,20 @@ class QC:
         # Get insert size metrics
         if self.paired:
             LOG.info("Collect insert sizes...")
-            cmd = ["java", "-jar", "/usr/bin/picard.jar", "CollectInsertSizeMetrics", "-I", self.bam, "-O", f"{self.bam}.inssize", "-H", f"{self.bam}.ins.pdf", "-STOP_AFTER", "1000000"]
+            cmd = [
+                "java",
+                "-jar",
+                "/usr/bin/picard.jar",
+                "CollectInsertSizeMetrics",
+                "-I",
+                self.bam,
+                "-O",
+                f"{self.bam}.inssize",
+                "-H",
+                f"{self.bam}.ins.pdf",
+                "-STOP_AFTER",
+                "1000000",
+            ]
             self.system_p(cmd)
 
             # Parse ismetrics output file
@@ -167,12 +220,12 @@ class QC:
         self.parse_basecov_bed(f"{out_prefix}.basecov.bed", thresholds)
         os.remove(f"{out_prefix}.basecov.bed")
 
-        self.results['n_reads'] = n_reads
-        self.results['n_mapped_reads'] = n_mapped_reads
-        self.results['n_read_pairs'] = n_read_pairs
-        self.results['n_dup_reads'] = n_dup_reads
-        self.results['dup_pct'] = n_dup_reads / n_mapped_reads
-        self.results['sample_id'] = self.sample_id
+        self.results["n_reads"] = n_reads
+        self.results["n_mapped_reads"] = n_mapped_reads
+        self.results["n_read_pairs"] = n_read_pairs
+        self.results["n_dup_reads"] = n_dup_reads
+        self.results["dup_pct"] = n_dup_reads / n_mapped_reads
+        self.results["sample_id"] = self.sample_id
 
         return self.results
 
@@ -230,10 +283,25 @@ def parse_postalignqc_results(input_file: File) -> QcMethodIndex:
     return QcMethodIndex(software=QcSoftware.POSTALIGNQC, result=qc_res)
 
 
-def parse_alignment_results(sample_id: str, bam: File, reference: File, cpus: int, output: File, bed: File | None = None, baits: File | None = None) -> None:
+def parse_alignment_results(
+    sample_id: str,
+    bam: File,
+    reference: File,
+    cpus: int,
+    output: File,
+    bed: File | None = None,
+    baits: File | None = None,
+) -> None:
     """Parse bam file and extract relevant metrics"""
     LOG.info("Parsing bam file: %s", bam.name)
-    qc = QC(sample_id, bam.name, reference.name, cpus, getattr(bed, 'name', None), getattr(baits, 'name', None))
+    qc = QC(
+        sample_id,
+        bam.name,
+        reference.name,
+        cpus,
+        getattr(bed, "name", None),
+        getattr(baits, "name", None),
+    )
     qc_dict = qc.run()
     LOG.info("Storing results to: %s", output.name)
     qc.write_json_result(qc_dict, output.name)
