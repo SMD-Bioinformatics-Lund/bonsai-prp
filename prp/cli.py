@@ -1,4 +1,6 @@
 """Definition of the PRP command-line interface."""
+from prp import VERSION as __version__
+
 import json
 import logging
 from pathlib import Path
@@ -48,6 +50,7 @@ OUTPUT_SCHEMA_VERSION = 1
 
 
 @click.group()
+@click.version_option(__version__)
 def cli():
     """Jasen pipeline result processing tool."""
 
