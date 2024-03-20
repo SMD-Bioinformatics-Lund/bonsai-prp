@@ -416,7 +416,9 @@ def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> Non
 @cli.command()
 @click.option("-v", "--vcf", type=click.Path(exists=True), help="VCF file")
 @click.option("-b", "--bed", type=click.Path(exists=True), help="BED file")
-@click.argument("output", type=click.Path(writable=True))
+@click.option(
+    "-o", "--output", required=True, type=click.File("w"), help="output filepath"
+)
 def annotate_delly(vcf, bed, output):
     """Annotate Delly SV varinats with genes in BED file."""
     output = Path(output)
