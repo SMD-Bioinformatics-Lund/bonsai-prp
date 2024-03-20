@@ -8,6 +8,8 @@
 
 ### Fixed
 
+ - Fixed `--output` arg re annotate delly
+
 ### Changed
 
  - Removed sample id from Sample object
