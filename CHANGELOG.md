@@ -13,6 +13,7 @@
 ### Changed
 
  - Removed sample id from Sample object
+ - Changed annotate delly output type
 
 ## [0.6.0]
 
