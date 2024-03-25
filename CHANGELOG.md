@@ -5,6 +5,8 @@
  - Added `sequencing_run` and `lims_id` to output (bonsai input)
  - Added function for annotating delly variants intersecting with resistance targets
  - Added capability of handling empty dictionaries from serotypefinder output
+ - Added pytest for `prp annotate-delly`
+ - Added `pyyaml` to docker image
 
 ### Fixed
 

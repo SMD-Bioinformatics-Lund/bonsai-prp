@@ -25,7 +25,8 @@ dependencies = [
     "pandas==2.1.3",
     "Biopython==1.83",
     "cyvcf2",
-    "pysam"
+    "pysam",
+    "pyyaml"
 ]
 
 [project.urls]

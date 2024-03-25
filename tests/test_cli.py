@@ -4,7 +4,7 @@ import json
 
 from click.testing import CliRunner
 
-from prp.cli import create_bonsai_input, create_cdm_input
+from prp.cli import create_bonsai_input, create_cdm_input, annotate_delly
 
 
 def test_create_output_saureus(
@@ -159,6 +159,36 @@ def test_cdm_input_cmd(
             cmd_output = json.load(inpt)
             assert cmd_output == ecoli_cdm_input
 
+
+def test_annotate_delly(
+    mtuberculosis_delly_bcf_path, converged_bed_path, annotated_delly_path
+):
+    """Test command for annotating delly output."""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        sample_id = "test_mtuberculosis_1"
+        output_fname = f"{sample_id}_annotated_delly.vcf"
+        result = runner.invoke(
+            annotate_delly,
+            [
+                "--vcf",
+                mtuberculosis_delly_bcf_path,
+                "--bed",
+                converged_bed_path,
+                "--output",
+                output_fname,
+            ],
+        )
+
+        # test successful execution of command
+        assert result.exit_code == 0
+
+        # test correct output format
+        with open(output_fname, "r", encoding="utf-8") as test_annotated_delly_output, \
+            open(annotated_delly_path, "r", encoding="utf-8") as annotated_delly_output:
+            test_contents = test_annotated_delly_output.read()
+            expected_contents = annotated_delly_output.read()
+            assert test_contents == expected_contents
 
 
 def test_create_output_mtuberculosis(
