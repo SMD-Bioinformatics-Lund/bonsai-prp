@@ -33,8 +33,8 @@ class QuastQcResult(BaseModel):
 class PostAlignQcResult(BaseModel):
     """Alignment QC metrics."""
 
-    ins_size: int
-    ins_size_dev: int
+    ins_size: int | None = None
+    ins_size_dev: int | None = None
     mean_cov: int
     pct_above_x: Dict[str, float]
     n_reads: int
