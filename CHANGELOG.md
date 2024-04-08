@@ -4,6 +4,9 @@
 
 ### Fixed
 
+ - Fixed `ins_size`, `ins_size_dev` & `coverage_uniformity` parsing and models
+ - Check first 1000 reads if paired instead of just first read
+
 ### Changed
 
 ## [0.7.0]
