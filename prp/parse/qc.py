@@ -28,6 +28,7 @@ class QC:
         self.baits = baits
         self.reference = reference
         self.paired = self.is_paired()
+        self.rm_files = True
 
     def write_json_result(self, json_result: dict, output_filepath: str) -> None:
         """Write out json file"""
@@ -108,9 +109,12 @@ class QC:
     def is_paired(self) -> bool:
         """Check if reads are paired"""
         bam_file = pysam.AlignmentFile(self.bam)
-        for read in bam_file:
-            return read.is_paired
-        # If no reads are found or read is None, return False
+        for i, read in enumerate(bam_file):
+            if read.is_paired:
+                return True
+            if i >= 1000:
+                break
+        # If no paired reads are found in the first 1000 reads or read is None, return False
         return False
 
     def system_p(self, cmd: list) -> None:
@@ -193,9 +197,10 @@ class QC:
             # Parse ismetrics output file
             self.parse_ismetrics(f"{self.bam}.inssize")
 
-            # Remove ismetrics files after parsing
-            os.remove(f"{self.bam}.inssize")
-            os.remove(f"{self.bam}.ins.pdf")
+            if self.rm_files:
+                # Remove ismetrics files
+                os.remove(f"{self.bam}.inssize")
+                os.remove(f"{self.bam}.ins.pdf")
 
         out_prefix = f"{self.bam}_postalnQC"
         thresholds = ["1", "10", "30", "100", "250", "500", "1000"]
@@ -218,7 +223,9 @@ class QC:
 
         # Parse base coverage file
         self.parse_basecov_bed(f"{out_prefix}.basecov.bed", thresholds)
-        os.remove(f"{out_prefix}.basecov.bed")
+        if self.rm_files:
+            # Remove base coverage file
+            os.remove(f"{out_prefix}.basecov.bed")
 
         self.results["n_reads"] = n_reads
         self.results["n_mapped_reads"] = n_mapped_reads
@@ -268,14 +275,14 @@ def parse_postalignqc_results(input_file: File) -> QcMethodIndex:
     LOG.info("Parsing json file: %s", input_file.name)
     qc_dict = json.load(input_file)
     qc_res = PostAlignQcResult(
-        ins_size=int(float(qc_dict["ins_size"])),
-        ins_size_dev=int(float(qc_dict["ins_size_dev"])),
+        ins_size=None if "ins_size" not in qc_dict else int(float(qc_dict["ins_size"])),
+        ins_size_dev=None if "ins_size_dev" not in qc_dict else int(float(qc_dict["ins_size_dev"])),
         mean_cov=int(qc_dict["mean_cov"]),
         pct_above_x=qc_dict["pct_above_x"],
         n_reads=int(qc_dict["n_reads"]),
         n_mapped_reads=int(qc_dict["n_mapped_reads"]),
         n_read_pairs=int(qc_dict["n_read_pairs"]),
-        coverage_uniformity=float(qc_dict["coverage_uniformity"]),
+        coverage_uniformity=float(qc_dict["coverage_uniformity"]) if qc_dict.get("coverage_uniformity") is not None else None,
         quartile1=float(qc_dict["quartile1"]),
         median_cov=float(qc_dict["median_cov"]),
         quartile3=float(qc_dict["quartile3"]),
