@@ -42,8 +42,7 @@ def parse_run_info(run_metadata: TextIO) -> RunInformation:
     return run_info
 
 
-def get_gb_genome_version(gff_path: str) -> str:
+def get_gb_genome_version(fasta_path: str) -> str:
     """Retrieve genbank genome version"""
-    handler = SeqIO.parse(gff_path, "gb")
-    record = next(handler.records)
-    return record.id, record.description
+    record = next(SeqIO.parse(fasta_path, "fasta"))
+    return record.id, record.description.rstrip(", complete genome")

@@ -1,6 +1,7 @@
 """Definition of the PRP command-line interface."""
 from prp import VERSION as __version__
 
+import os
 import json
 import logging
 from pathlib import Path
@@ -38,7 +39,7 @@ from .parse import (
 )
 from .parse.mapping import get_reference_seq_accnr
 from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
-from .parse.utils import get_db_version
+from .parse.utils import get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
 
 logging.basicConfig(
@@ -104,6 +105,7 @@ def cli():
 @click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
 @click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
 @click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
+@click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option(
     "--reference-genome-fasta", type=click.Path(), help="reference genome fasta file"
 )
@@ -114,9 +116,8 @@ def cli():
     "--genome-annotation",
     type=click.Path(),
     multiple=True,
-    help="Genome annotaitons bed format",
+    help="Genome annotations bed format",
 )
-@click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
 @click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
@@ -298,21 +299,16 @@ def create_bonsai_input(
     # entries for reference genome and read mapping
     if all([bam, reference_genome_fasta, reference_genome_gff]):
         # verify that everything pertains to the same reference genome
-        bam_ref_genome = get_reference_seq_accnr(bam)
-        ref_accession, ref_name = get_gb_genome_version(reference_genome_gff)
-        if ref_accession != bam_ref_genome:
-            raise click.UsageError(
-                f"Read mapping used as different reference genome; bam accnr: {bam_ref_genome}; gbff accnr: {ref_accession}"
-            )
-
+        ref_accession, ref_name = get_gb_genome_version(reference_genome_fasta)
         # store file names
-        fasta_idx_path = Path(f"{reference_genome_fasta}.fai")
+        reference_genome_fasta = os.path.realpath(reference_genome_fasta)
+        fasta_idx_path = os.path.realpath(f"{reference_genome_fasta}.fai")
         results["reference_genome"] = ReferenceGenome(
             name=ref_name,
             accession=ref_accession,
-            fasta=Path(reference_genome_fasta).name,
-            fasta_index=fasta_idx_path.name if fasta_idx_path.is_file() else None,
-            genes=reference_genome_gff,
+            fasta=reference_genome_fasta,
+            fasta_index=fasta_idx_path if Path(fasta_idx_path).is_file() else None,
+            genes=os.path.realpath(reference_genome_gff),
         )
         results["read_mapping"] = bam
         # add annotations
@@ -325,7 +321,7 @@ def create_bonsai_input(
                 name = "SNV" if vcf == sv_vcf else "SV"
                 annotations.append({"name": name, "file": Path(vcf).name})
         # store annotation results
-        results["genome_annotation"] = annotations if len(annotations) > 0 else None
+        results["genome_annotation"] = annotations if annotations else None
 
     try:
         output_data = PipelineResult(
@@ -338,6 +334,18 @@ def create_bonsai_input(
     LOG.info("Storing results to: %s", output.name)
     output.write(output_data.model_dump_json(indent=2))
     click.secho("Finished generating pipeline output", fg="green")
+
+
+@cli.command()
+@click.option("-i", "--input_dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Input directory to JASEN's outdir incl. speciesDir")
+@click.option("-o", "--output_dir", type=click.Path(file_okay=False, dir_okay=True), help="Output directory to incl. speciesDir [default: input_dir]")
+def rerun_bonsai_input(input_dir, output_dir) -> None:
+    """Rerun bonsai input creation for all samples in input directory."""
+    results = []
+    if input_dir:
+        LOG.info("Parse input directory")
+        input_arrays = parse_input_dir(input_dir)
+        results.append(input_arrays)
 
 
 @cli.command()
