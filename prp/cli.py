@@ -41,6 +41,7 @@ from .parse.mapping import get_reference_seq_accnr
 from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
 from .parse.utils import get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
+from .parse.utils import _get_path
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
@@ -120,6 +121,7 @@ def cli():
 )
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
 @click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
+@click.option("--symlink_dir", type=click.Path(), help="Dir for symlink")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
@@ -130,10 +132,10 @@ def create_bonsai_input(
     quast,
     process_metadata,
     kraken,
+    amrfinder,
     mlst,
     cgmlst,
     virulencefinder,
-    amrfinder,
     resfinder,
     serotypefinder,
     quality,
@@ -145,6 +147,7 @@ def create_bonsai_input(
     genome_annotation,
     snv_vcf,
     sv_vcf,
+    symlink_dir,
     correct_alleles,
     output,
 ):  # pylint: disable=too-many-arguments
@@ -301,16 +304,15 @@ def create_bonsai_input(
         # verify that everything pertains to the same reference genome
         ref_accession, ref_name = get_gb_genome_version(reference_genome_fasta)
         # store file names
-        reference_genome_fasta = os.path.realpath(reference_genome_fasta)
-        fasta_idx_path = os.path.realpath(f"{reference_genome_fasta}.fai")
+        fasta_idx_path = fasta_idx_path = Path(f"{reference_genome_fasta}.fai")
         results["reference_genome"] = ReferenceGenome(
             name=ref_name,
             accession=ref_accession,
-            fasta=reference_genome_fasta,
-            fasta_index=fasta_idx_path if Path(fasta_idx_path).is_file() else None,
-            genes=os.path.realpath(reference_genome_gff),
+            fasta=Path(reference_genome_fasta).name,
+            fasta_index=fasta_idx_path if fasta_idx_path.is_file() else None,
+            genes=Path(reference_genome_gff).name,
         )
-        results["read_mapping"] = bam
+        results["read_mapping"] = _get_path(symlink_dir, "bam", bam)
         # add annotations
         annotations = [
             {"name": f"annotation_{i}", "file": Path(annot).name}
@@ -318,8 +320,9 @@ def create_bonsai_input(
         ]
         for vcf in [sv_vcf, snv_vcf]:
             if vcf:
+                vcf = _get_path(symlink_dir, "vcf", vcf)
                 name = "SNV" if vcf == sv_vcf else "SV"
-                annotations.append({"name": name, "file": Path(vcf).name})
+                annotations.append({"name": name, "file": vcf})
         # store annotation results
         results["genome_annotation"] = annotations if annotations else None
 
@@ -337,15 +340,17 @@ def create_bonsai_input(
 
 
 @cli.command()
-@click.option("-i", "--input_dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Input directory to JASEN's outdir incl. speciesDir")
-@click.option("-o", "--output_dir", type=click.Path(file_okay=False, dir_okay=True), help="Output directory to incl. speciesDir [default: input_dir]")
-def rerun_bonsai_input(input_dir, output_dir) -> None:
+@click.option("-i", "--input-dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Input directory to JASEN's outdir incl. speciesDir")
+@click.option("-j", "--jasen-dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Path to JASEN directory")
+@click.option("-o", "--output-dir", type=click.Path(file_okay=False, dir_okay=True), help="Output directory to incl. speciesDir [default: input_dir]")
+@click.pass_context
+def rerun_bonsai_input(ctx, input_dir, jasen_dir, output_dir) -> None:
     """Rerun bonsai input creation for all samples in input directory."""
-    results = []
     if input_dir:
         LOG.info("Parse input directory")
-        input_arrays = parse_input_dir(input_dir)
-        results.append(input_arrays)
+        input_arrays = parse_input_dir(input_dir, jasen_dir, output_dir)
+        for input_array in input_arrays:
+            ctx.invoke(create_bonsai_input, **input_array)
 
 
 @cli.command()
