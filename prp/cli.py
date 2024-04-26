@@ -62,20 +62,20 @@ def cli():
 @click.option(
     "-u",
     "--run-metadata",
-    type=click.File(),
+    type=click.Path(),
     required=True,
     help="Analysis metadata from the pipeline in json format",
 )
-@click.option("-q", "--quast", type=click.File(), help="Quast quality control metrics")
+@click.option("-q", "--quast", type=click.Path(), help="Quast quality control metrics")
 @click.option(
     "-d",
     "--process-metadata",
-    type=click.File(),
+    type=click.Path(),
     multiple=True,
     help="Nextflow processes metadata from the pipeline in json format",
 )
 @click.option(
-    "-k", "--kraken", type=click.File(), help="Kraken species annotation results"
+    "-k", "--kraken", type=click.Path(), help="Kraken species annotation results"
 )
 @click.option(
     "-a",
@@ -83,8 +83,8 @@ def cli():
     type=click.Path(),
     help="amrfinderplus anti-microbial resistance results",
 )
-@click.option("-m", "--mlst", type=click.File(), help="MLST prediction results")
-@click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
+@click.option("-m", "--mlst", type=click.Path(), help="MLST prediction results")
+@click.option("-c", "--cgmlst", type=click.Path(), help="cgMLST prediction results")
 @click.option(
     "-v",
     "--virulencefinder",
@@ -94,7 +94,7 @@ def cli():
 @click.option(
     "-r",
     "--resfinder",
-    type=click.File(),
+    type=click.Path(),
     help="Resfinder resistance prediction results",
 )
 @click.option(
@@ -103,9 +103,9 @@ def cli():
     type=click.Path(),
     help="Serotypefinder serotype prediction results",
 )
-@click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
-@click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
-@click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
+@click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
+@click.option("-k", "--mykrobe", type=click.Path(), help="mykrobe results")
+@click.option("-t", "--tbprofiler", type=click.Path(), help="tbprofiler results")
 @click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option(
     "--reference-genome-fasta", type=click.Path(), help="reference genome fasta file"
@@ -124,7 +124,7 @@ def cli():
 @click.option("--symlink_dir", type=click.Path(), help="Dir for symlink")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
-    "-o", "--output", required=True, type=click.File("w"), help="output filepath"
+    "-o", "--output", required=True, type=click.Path(), help="output filepath"
 )
 def create_bonsai_input(
     sample_id,
@@ -185,16 +185,17 @@ def create_bonsai_input(
     # resfinder of different types
     if resfinder:
         LOG.info("Parse resistance results")
-        pred_res = json.load(resfinder)
-        methods = [
-            ElementType.AMR,
-            ElementType.STRESS,
-        ]
-        for method in methods:
-            res: MethodIndex = parse_resfinder_amr_pred(pred_res, method)
-            # exclude empty results from output
-            if len(res.result.genes) > 0 and len(res.result.variants) > 0:
-                results["element_type_result"].append(res)
+        with open(resfinder, "r", encoding="utf-8") as resfinder_json:
+            pred_res = json.load(resfinder_json)
+            methods = [
+                ElementType.AMR,
+                ElementType.STRESS,
+            ]
+            for method in methods:
+                res: MethodIndex = parse_resfinder_amr_pred(pred_res, method)
+                # exclude empty results from output
+                if len(res.result.genes) > 0 and len(res.result.variants) > 0:
+                    results["element_type_result"].append(res)
 
     # amrfinder
     if amrfinder:
@@ -275,22 +276,23 @@ def create_bonsai_input(
     # tbprofiler
     if tbprofiler:
         LOG.info("Parse tbprofiler results")
-        pred_res = json.load(tbprofiler)
-        db_info: List[SoupVersion] = []
-        db_info = [
-            SoupVersion(
-                name=pred_res["db_version"]["name"],
-                version=get_db_version(pred_res["db_version"]),
-                type=SoupType.DB,
+        with open(tbprofiler, "r", encoding="utf-8") as tbprofiler_json:
+            pred_res = json.load(tbprofiler_json)
+            db_info: List[SoupVersion] = []
+            db_info = [
+                SoupVersion(
+                    name=pred_res["db_version"]["name"],
+                    version=get_db_version(pred_res["db_version"]),
+                    type=SoupType.DB,
+                )
+            ]
+            results["run_metadata"]["databases"].extend(db_info)
+            lin_res: MethodIndex = parse_tbprofiler_lineage_results(
+                pred_res, TypingMethod.LINEAGE
             )
-        ]
-        results["run_metadata"]["databases"].extend(db_info)
-        lin_res: MethodIndex = parse_tbprofiler_lineage_results(
-            pred_res, TypingMethod.LINEAGE
-        )
-        results["typing_result"].append(lin_res)
-        amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res, ElementType.AMR)
-        results["element_type_result"].append(amr_res)
+            results["typing_result"].append(lin_res)
+            amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res, ElementType.AMR)
+            results["element_type_result"].append(amr_res)
 
     # parse SNV and SV variants.
     if snv_vcf:
@@ -334,8 +336,9 @@ def create_bonsai_input(
         click.secho("Input failed Validation", fg="red")
         click.secho(err)
         raise click.Abort
-    LOG.info("Storing results to: %s", output.name)
-    output.write(output_data.model_dump_json(indent=2))
+    LOG.info("Storing results to: %s", output)
+    with open(output, "w", encoding="utf-8") as fout:
+        fout.write(output_data.model_dump_json(indent=2))
     click.secho("Finished generating pipeline output", fg="green")
 
 
@@ -374,9 +377,9 @@ def validate(output):
 
 
 @cli.command()
-@click.option("-q", "--quast", type=click.File(), help="Quast quality control metrics")
-@click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
-@click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
+@click.option("-q", "--quast", type=click.Path(), help="Quast quality control metrics")
+@click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
+@click.option("-c", "--cgmlst", type=click.Path(), help="cgMLST prediction results")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"

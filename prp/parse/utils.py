@@ -130,7 +130,7 @@ def create_sample_array(species, input_dir, jasen_dir, sample_id, output_dir):
     kraken = os.path.abspath(os.path.join(input_dir, f"kraken/{sample_id}_bracken.out"))
     quality = os.path.abspath(os.path.join(input_dir, f"postalignqc/{sample_id}_bwa.qc"))
     quast = os.path.abspath(os.path.join(input_dir, f"quast/{sample_id}_quast.tsv"))
-    run_metadata = open(os.path.abspath(os.path.join(input_dir, f"analysis_metadata/{sample_id}_analysis_meta.json")), "r", encoding="UTF-8")
+    run_metadata = os.path.abspath(os.path.join(input_dir, f"analysis_metadata/{sample_id}_analysis_meta.json"))
     if species == "mtuberculosis":
         reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/mycobacterium_tuberculosis/NC_000962.3.fasta"))
         reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/mycobacterium_tuberculosis/NC_000962.3.gff"))
@@ -168,9 +168,9 @@ def create_sample_array(species, input_dir, jasen_dir, sample_id, output_dir):
         serotypefinder_meta = os.path.abspath(os.path.join(input_dir, f"serotypefinder/{sample_id}_serotypefinder_meta.json"))
         virulencefinder = os.path.abspath(os.path.join(input_dir, f"virulencefinder/{sample_id}_virulencefinder.json"))
         virulencefinder_meta = os.path.abspath(os.path.join(input_dir, f"virulencefinder/{sample_id}_virulencefinder_meta.json"))
-        process_metadata.append(open(resfinder_meta, "r", encoding="UTF-8"))
-        process_metadata.append(open(serotypefinder_meta, "r", encoding="UTF-8"))
-        process_metadata.append(open(virulencefinder_meta, "r", encoding="UTF-8"))
+        process_metadata.append(resfinder_meta)
+        process_metadata.append(serotypefinder_meta)
+        process_metadata.append(virulencefinder_meta)
         if species == "saureus":
             reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/staphylococcus_aureus/NC_002951.2.fasta"))
             reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/staphylococcus_aureus/NC_002951.2.gff"))

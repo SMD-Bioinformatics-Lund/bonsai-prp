@@ -37,20 +37,21 @@ def _process_allele_call(allele: str) -> str | List[str] | None:
     return result
 
 
-def parse_mlst_results(path: str) -> TypingResultMlst:
+def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
     """Parse mlst results from mlst to json object."""
     LOG.info("Parsing mlst results")
-    result = json.load(path)[0]
-    result_obj = TypingResultMlst(
-        scheme=result["scheme"],
-        sequence_type=None
-        if result["sequence_type"] == "-"
-        else result["sequence_type"],
-        alleles={
-            gene: _process_allele_call(allele)
-            for gene, allele in result["alleles"].items()
-        },
-    )
+    with open(mlst_fpath, "r", encoding="utf-8") as jsonfile:
+        result = json.load(jsonfile)[0]
+        result_obj = TypingResultMlst(
+            scheme=result["scheme"],
+            sequence_type=None
+            if result["sequence_type"] == "-"
+            else result["sequence_type"],
+            alleles={
+                gene: _process_allele_call(allele)
+                for gene, allele in result["alleles"].items()
+            },
+        )
     return MethodIndex(
         type=TypingMethod.MLST, software=Software.MLST, result=result_obj
     )

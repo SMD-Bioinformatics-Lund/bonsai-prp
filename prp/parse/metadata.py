@@ -19,26 +19,28 @@ def get_database_info(process_metadata: List[TextIO]) -> List[SoupVersion]:
     :rtype: List[SoupVersion]
     """
     db_info = []
-    for soup in process_metadata:
-        dbs = json.load(soup)
-        if isinstance(dbs, (list, tuple)):
-            for db in dbs:
-                db_info.append(SoupVersion(**db))
-        else:
-            db_info.append(SoupVersion(**dbs))
+    for soup_filepath in process_metadata:
+        with open(soup_filepath, "r", encoding="utf-8") as soup:
+            dbs = json.load(soup)
+            if isinstance(dbs, (list, tuple)):
+                for db in dbs:
+                    db_info.append(SoupVersion(**db))
+            else:
+                db_info.append(SoupVersion(**dbs))
     return db_info
 
 
-def parse_run_info(run_metadata: TextIO) -> RunInformation:
+def parse_run_info(run_metadata: str) -> RunInformation:
     """Parse nextflow analysis information
 
     :param run_metadata: Nextflow analysis metadata in json format.
-    :type run_metadata: TextIO
+    :type run_metadata: str
     :return: Analysis metadata record.
     :rtype: RunMetadata
     """
     LOG.info("Parse run metadata.")
-    run_info = RunInformation(**json.load(run_metadata))
+    with open(run_metadata, "r") as jsonfile:
+        run_info = RunInformation(**json.load(jsonfile))
     return run_info
 
 
