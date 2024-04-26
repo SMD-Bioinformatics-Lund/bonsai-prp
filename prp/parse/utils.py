@@ -108,7 +108,7 @@ def _get_path(symlink_dir: str, subdir: str, filepath: str) -> str:
     return os.path.join(symlink_dir, subdir, filepath) if symlink_dir else os.path.realpath(filepath)
 
 
-def parse_input_dir(input_dir: str, jasen_dir: str, output_dir: str):
+def parse_input_dir(input_dir: str, jasen_dir: str, symlink_dir: str, output_dir: str):
     input_arrays = []
     input_dir = input_dir.rstrip("/")
     species = input_dir.split("/")[-1]
@@ -118,12 +118,12 @@ def parse_input_dir(input_dir: str, jasen_dir: str, output_dir: str):
         for filename in os.listdir(analysis_results_dir):
             if filename.endswith(".json"):
                 sample_id = filename.rstrip("_result.json")
-                sample_array = create_sample_array(species, input_dir, jasen_dir, sample_id, output_dir)
+                sample_array = create_sample_array(species, input_dir, jasen_dir, sample_id, symlink_dir, output_dir)
                 input_arrays.append(sample_array)
     return input_arrays
 
 
-def create_sample_array(species, input_dir, jasen_dir, sample_id, output_dir):
+def create_sample_array(species, input_dir, jasen_dir, sample_id, symlink_dir, output_dir):
     output = os.path.abspath(os.path.join(output_dir, f"{sample_id}_result.json"))
     bam = os.path.abspath(os.path.join(input_dir, f"bam/{sample_id}.bam"))
     kraken = os.path.abspath(os.path.join(input_dir, f"kraken/{sample_id}_bracken.out"))
@@ -148,6 +148,7 @@ def create_sample_array(species, input_dir, jasen_dir, sample_id, output_dir):
             "sv_vcf": sv_vcf,
             "mykrobe": mykrobe,
             "tbprofiler": tbprofiler,
+            "symlink_dir": symlink_dir,
             "amrfinder": None,
             "cgmlst": None,
             "mlst": None,
@@ -191,6 +192,7 @@ def create_sample_array(species, input_dir, jasen_dir, sample_id, output_dir):
             "sv_vcf": None,
             "mykrobe": None,
             "tbprofiler": None,
+            "symlink_dir": symlink_dir,
             "amrfinder": amrfinder,
             "cgmlst": cgmlst,
             "mlst": mlst,

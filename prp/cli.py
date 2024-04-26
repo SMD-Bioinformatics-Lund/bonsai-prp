@@ -345,13 +345,14 @@ def create_bonsai_input(
 @cli.command()
 @click.option("-i", "--input-dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Input directory to JASEN's outdir incl. speciesDir")
 @click.option("-j", "--jasen-dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Path to JASEN directory")
+@click.option("-s", "--symlink_dir",  required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Path to symlink directory")
 @click.option("-o", "--output-dir", type=click.Path(file_okay=False, dir_okay=True), help="Output directory to incl. speciesDir [default: input_dir]")
 @click.pass_context
-def rerun_bonsai_input(ctx, input_dir, jasen_dir, output_dir) -> None:
+def rerun_bonsai_input(ctx, input_dir, jasen_dir, symlink_dir, output_dir) -> None:
     """Rerun bonsai input creation for all samples in input directory."""
     if input_dir:
         LOG.info("Parse input directory")
-        input_arrays = parse_input_dir(input_dir, jasen_dir, output_dir)
+        input_arrays = parse_input_dir(input_dir, jasen_dir, symlink_dir, output_dir)
         for input_array in input_arrays:
             ctx.invoke(create_bonsai_input, **input_array)
 
