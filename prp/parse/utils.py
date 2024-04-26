@@ -112,7 +112,6 @@ def parse_input_dir(input_dir: str, jasen_dir: str, output_dir: str):
     input_arrays = []
     input_dir = input_dir.rstrip("/")
     species = input_dir.split("/")[-1]
-    softwares = os.listdir(input_dir)
     output_dir = os.path.join(input_dir, "analysis_result") if not output_dir else output_dir
     if os.path.exists(input_dir):
         analysis_results_dir = os.path.join(input_dir, "analysis_result")

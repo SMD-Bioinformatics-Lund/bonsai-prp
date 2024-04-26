@@ -2,6 +2,9 @@
 
 ### Added
 
+ - Add `rerun_bonsai_input` to rerun bonsai-prp outputs when output format changes
+ - Add `symlink_dir` as possible filepaths prefix for IGV inputs
+
 ### Fixed
 
 ### Changed
