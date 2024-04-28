@@ -26,7 +26,8 @@ dependencies = [
     "Biopython==1.83",
     "cyvcf2",
     "pysam",
-    "pyyaml"
+    "pyyaml",
+    "requests"
 ]
 
 [project.urls]
