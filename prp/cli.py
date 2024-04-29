@@ -311,7 +311,7 @@ def create_bonsai_input(
             name=ref_name,
             accession=ref_accession,
             fasta=Path(reference_genome_fasta).name,
-            fasta_index=fasta_idx_path if fasta_idx_path.is_file() else None,
+            fasta_index=fasta_idx_path.name if fasta_idx_path.is_file() else None,
             genes=Path(reference_genome_gff).name,
         )
         results["read_mapping"] = _get_path(symlink_dir, "bam", bam)
