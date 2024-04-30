@@ -131,20 +131,23 @@ def create_sample_array(species, input_dir, jasen_dir, sample_id, symlink_dir, o
     quast = os.path.abspath(os.path.join(input_dir, f"quast/{sample_id}_quast.tsv"))
     run_metadata = os.path.abspath(os.path.join(input_dir, f"analysis_metadata/{sample_id}_analysis_meta.json"))
     if species == "mtuberculosis":
-        reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/mycobacterium_tuberculosis/NC_000962.3.fasta"))
-        reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/mycobacterium_tuberculosis/NC_000962.3.gff"))
+        reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/mycobacterium_tuberculosis/GCF_000195955.2.fasta"))
+        reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/mycobacterium_tuberculosis/GCF_000195955.2.gff"))
         sv_vcf = os.path.abspath(os.path.join(input_dir, f"annotate_delly/{sample_id}_annotated_delly.vcf"))
         mykrobe = os.path.abspath(os.path.join(input_dir, f"mykrobe/{sample_id}_mykrobe.csv"))
         tbprofiler = os.path.abspath(os.path.join(input_dir, f"tbprofiler_mergedb/{sample_id}_tbprofiler.json"))
         return {
             "output": output,
             "bam": bam,
+            "genome_annotation": [],
             "kraken": kraken,
             "quality": quality,
             "quast": quast,
             "reference_genome_fasta": reference_genome_fasta,
             "reference_genome_gff": reference_genome_gff,
             "run_metadata": run_metadata,
+            "sample_id": sample_id,
+            "snv_vcf": None,
             "sv_vcf": sv_vcf,
             "mykrobe": mykrobe,
             "tbprofiler": tbprofiler,
@@ -155,7 +158,7 @@ def create_sample_array(species, input_dir, jasen_dir, sample_id, symlink_dir, o
             "resfinder": None,
             "serotypefinder": None,
             "virulencefinder": None,
-            "process_metadata": None,
+            "process_metadata": [],
         }
     elif species == "saureus" or species == "ecoli" or species == "kpneumoniae":
         process_metadata = []
@@ -172,23 +175,26 @@ def create_sample_array(species, input_dir, jasen_dir, sample_id, symlink_dir, o
         process_metadata.append(serotypefinder_meta)
         process_metadata.append(virulencefinder_meta)
         if species == "saureus":
-            reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/staphylococcus_aureus/NC_002951.2.fasta"))
-            reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/staphylococcus_aureus/NC_002951.2.gff"))
+            reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/staphylococcus_aureus/GCF_000012045.1.fasta"))
+            reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/staphylococcus_aureus/GCF_000012045.1.gff"))
         if species == "ecoli":
-            reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/escherichia_coli/NC_000913.3.fasta"))
-            reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/escherichia_coli/NC_000913.3.gff"))
+            reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/escherichia_coli/GCF_000005845.2.fasta"))
+            reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/escherichia_coli/GCF_000005845.2.gff"))
         if species == "kpneumoniae":
-            reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/klebsiella_pneumoniae/NC_016845.1.fasta"))
-            reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/klebsiella_pneumoniae/NC_016845.1.gff"))
+            reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/klebsiella_pneumoniae/GCF_000240185.1.fasta"))
+            reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/klebsiella_pneumoniae/GCF_000240185.1.gff"))
         return {
             "output": output,
             "bam": bam,
+            "genome_annotation": [],
             "kraken": kraken,
             "quality": quality,
             "quast": quast,
             "reference_genome_fasta": reference_genome_fasta,
             "reference_genome_gff": reference_genome_gff,
             "run_metadata": run_metadata,
+            "sample_id": sample_id,
+            "snv_vcf": None,
             "sv_vcf": None,
             "mykrobe": None,
             "tbprofiler": None,
