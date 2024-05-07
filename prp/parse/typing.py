@@ -123,8 +123,8 @@ def parse_tbprofiler_lineage_results(pred_res: dict, method) -> TypingResultLine
     """Parse tbprofiler results for lineage object."""
     LOG.info("Parsing lineage results")
     result_obj = TypingResultLineage(
-        main_lin=pred_res["main_lin"],
-        sublin=pred_res["sublin"],
+        main_lin=pred_res["main_lineage"],
+        sublin=pred_res["sub_lineage"],
         lineages=pred_res["lineage"],
     )
     return MethodIndex(type=method, software=Software.TBPROFILER, result=result_obj)

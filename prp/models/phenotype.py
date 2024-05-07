@@ -109,6 +109,7 @@ class PhenotypeInfo(RWModel):
     # what information substansiate the annotation
     reference: List[str] = Field([], description="References supporting trait")
     note: str | None = Field(None, description="Note, can be used for confidence score")
+    source: str | None = Field(None, description="Source of variant")
 
 
 class DatabaseReference(RWModel):

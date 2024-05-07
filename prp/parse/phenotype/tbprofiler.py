@@ -51,9 +51,9 @@ def _get_tbprofiler_amr_sr_profie(tbprofiler_result):
 def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]:
     """Get resistance genes from tbprofiler result."""
     variant_caller = None
-    for prog in predictions["pipeline"]:
-        if prog["Analysis"].lower() == "variant calling":
-            variant_caller = prog["Program"]
+    for prog in predictions["pipeline"]["software"]:
+        if prog["process"].lower() == "variant_calling":
+            variant_caller = prog["software"]
     results = []
 
     # tbprofiler report three categories of variants
@@ -81,15 +81,15 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
             else:
                 var_sub_type = VariantSubType.INSERTION
 
-            start_pos = int(hit["genome_pos"])
+            start_pos = int(hit["pos"])
             variant = TbProfilerVariant(
                 # classificatoin
                 id=var_id,
                 variant_type=var_type,
                 variant_subtype=var_sub_type,
-                phenotypes=parse_drug_resistance_info(hit.get("drugs", [])),
+                phenotypes=parse_drug_resistance_info(hit.get("annotation", [])),
                 # location
-                reference_sequence=hit["gene"],
+                reference_sequence=hit["gene_name"],
                 accession=hit["feature_id"],
                 start=start_pos,
                 end=start_pos + len(alt_nt),
@@ -125,17 +125,17 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
     phenotypes = []
     for drug in drugs:
         # assign element type
-        if drug["type"] == "drug" and drug["confers"] == "resistance":
+        if drug["type"] == "drug_resistance" or drug["type"] == "who_confidence":
             drug_type = ElementType.AMR
         else:
             drug_type = ElementType.AMR
             LOG.warning(
-                "Unknown TbProfiler drug; drug: %s, confers: %s; default to %s",
+                "Unknown TbProfiler drug; drug: %s, confers resistance with confidence: %s; default to %s",
                 drug["type"],
-                drug["confers"],
+                drug["confidence"],
                 drug_type,
             )
-        reference = drug.get("literature")
+        reference = drug.get("comment")
         phenotypes.append(
             PhenotypeInfo(
                 name=drug["drug"],
@@ -143,7 +143,8 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
                 reference=[] if reference is None else [reference],
                 annotation_type=AnnotationType.TOOL,
                 annotation_author=Software.TBPROFILER.value,
-                note=drug.get("who confidence"),
+                note=drug.get("confidence"),
+                source=drug.get("source"),
             )
         )
     return phenotypes

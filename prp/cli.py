@@ -281,8 +281,8 @@ def create_bonsai_input(
             db_info: List[SoupVersion] = []
             db_info = [
                 SoupVersion(
-                    name=pred_res["db_version"]["name"],
-                    version=get_db_version(pred_res["db_version"]),
+                    name=pred_res["pipeline"]["db_version"]["name"],
+                    version=get_db_version(pred_res["pipeline"]["db_version"]),
                     type=SoupType.DB,
                 )
             ]
