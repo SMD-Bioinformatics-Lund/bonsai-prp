@@ -9,6 +9,7 @@ from typing import List
 
 import click
 import pandas as pd
+import numpy as np
 import pysam
 from cyvcf2 import VCF, Writer
 from pydantic import TypeAdapter, ValidationError
@@ -244,6 +245,7 @@ def create_bonsai_input(
         pred_res = pd.read_csv(mykrobe, quotechar='"')
         pred_res.columns.values[3] = "variants"
         pred_res.columns.values[4] = "genes"
+        pred_res.replace(['NA', np.nan], None, inplace=True)
         pred_res = pred_res.to_dict(orient="records")
 
         # verify that sample id is in prediction result

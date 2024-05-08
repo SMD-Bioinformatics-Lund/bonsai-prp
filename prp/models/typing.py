@@ -91,7 +91,11 @@ class TypingResultCgMlst(ResultMlstBase):
 
 class TypingResultLineage(ResultLineageBase):
     """Lineage results"""
-
+    phylo_group_depth: float | None = None
+    species_depth: float | None = None
+    lineage_depth: float | None = None
+    phylo_group: str | None = None
+    species: str | None = None
     main_lin: str
     sublin: str
 
