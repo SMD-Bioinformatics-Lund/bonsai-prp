@@ -1,4 +1,6 @@
 """Shared utility functions."""
+import os
+import io
 from datetime import datetime
 from typing import Tuple
 
@@ -99,3 +101,109 @@ def get_db_version(db_version: dict) -> str:
     """Get database version"""
     backup_version = db_version["name"] + "_" + reformat_date_str(db_version["Date"])
     return db_version["commit"] if "commit" in db_version else backup_version
+
+
+def _get_path(symlink_dir: str, subdir: str, filepath: str) -> str:
+    """Get absolute/symlink path"""
+    return os.path.join(symlink_dir, subdir, filepath) if symlink_dir else os.path.realpath(filepath)
+
+
+def parse_input_dir(input_dir: str, jasen_dir: str, symlink_dir: str, output_dir: str):
+    input_arrays = []
+    input_dir = input_dir.rstrip("/")
+    species = input_dir.split("/")[-1]
+    output_dir = os.path.join(input_dir, "analysis_result") if not output_dir else output_dir
+    if os.path.exists(input_dir):
+        analysis_results_dir = os.path.join(input_dir, "analysis_result")
+        for filename in os.listdir(analysis_results_dir):
+            if filename.endswith(".json"):
+                sample_id = filename.rstrip("_result.json")
+                sample_array = create_sample_array(species, input_dir, jasen_dir, sample_id, symlink_dir, output_dir)
+                input_arrays.append(sample_array)
+    return input_arrays
+
+
+def create_sample_array(species, input_dir, jasen_dir, sample_id, symlink_dir, output_dir):
+    output = os.path.abspath(os.path.join(output_dir, f"{sample_id}_result.json"))
+    bam = os.path.abspath(os.path.join(input_dir, f"bam/{sample_id}.bam"))
+    kraken = os.path.abspath(os.path.join(input_dir, f"kraken/{sample_id}_bracken.out"))
+    quality = os.path.abspath(os.path.join(input_dir, f"postalignqc/{sample_id}_bwa.qc"))
+    quast = os.path.abspath(os.path.join(input_dir, f"quast/{sample_id}_quast.tsv"))
+    run_metadata = os.path.abspath(os.path.join(input_dir, f"analysis_metadata/{sample_id}_analysis_meta.json"))
+    if species == "mtuberculosis":
+        reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/mycobacterium_tuberculosis/GCF_000195955.2.fasta"))
+        reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/mycobacterium_tuberculosis/GCF_000195955.2.gff"))
+        sv_vcf = os.path.abspath(os.path.join(input_dir, f"annotate_delly/{sample_id}_annotated_delly.vcf"))
+        mykrobe = os.path.abspath(os.path.join(input_dir, f"mykrobe/{sample_id}_mykrobe.csv"))
+        tbprofiler = os.path.abspath(os.path.join(input_dir, f"tbprofiler_mergedb/{sample_id}_tbprofiler.json"))
+        return {
+            "output": output,
+            "bam": bam,
+            "genome_annotation": [],
+            "kraken": kraken,
+            "quality": quality,
+            "quast": quast,
+            "reference_genome_fasta": reference_genome_fasta,
+            "reference_genome_gff": reference_genome_gff,
+            "run_metadata": run_metadata,
+            "sample_id": sample_id,
+            "snv_vcf": None,
+            "sv_vcf": sv_vcf,
+            "mykrobe": mykrobe,
+            "tbprofiler": tbprofiler,
+            "symlink_dir": symlink_dir,
+            "amrfinder": None,
+            "cgmlst": None,
+            "mlst": None,
+            "resfinder": None,
+            "serotypefinder": None,
+            "virulencefinder": None,
+            "process_metadata": [],
+        }
+    elif species == "saureus" or species == "ecoli" or species == "kpneumoniae":
+        process_metadata = []
+        amrfinder = os.path.abspath(os.path.join(input_dir, f"amrfinderplus/{sample_id}_amrfinder.out"))
+        cgmlst = os.path.abspath(os.path.join(input_dir, f"chewbbaca/{sample_id}_chewbbaca.out"))
+        mlst = os.path.abspath(os.path.join(input_dir, f"mlst/{sample_id}_mlst.json"))
+        resfinder = os.path.abspath(os.path.join(input_dir, f"resfinder/{sample_id}_resfinder.json"))
+        resfinder_meta = os.path.abspath(os.path.join(input_dir, f"resfinder/{sample_id}_resfinder_meta.json"))
+        serotypefinder = os.path.abspath(os.path.join(input_dir, f"serotypefinder/{sample_id}_serotypefinder.json"))
+        serotypefinder_meta = os.path.abspath(os.path.join(input_dir, f"serotypefinder/{sample_id}_serotypefinder_meta.json"))
+        virulencefinder = os.path.abspath(os.path.join(input_dir, f"virulencefinder/{sample_id}_virulencefinder.json"))
+        virulencefinder_meta = os.path.abspath(os.path.join(input_dir, f"virulencefinder/{sample_id}_virulencefinder_meta.json"))
+        process_metadata.append(resfinder_meta)
+        process_metadata.append(serotypefinder_meta)
+        process_metadata.append(virulencefinder_meta)
+        if species == "saureus":
+            reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/staphylococcus_aureus/GCF_000012045.1.fasta"))
+            reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/staphylococcus_aureus/GCF_000012045.1.gff"))
+        if species == "ecoli":
+            reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/escherichia_coli/GCF_000005845.2.fasta"))
+            reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/escherichia_coli/GCF_000005845.2.gff"))
+        if species == "kpneumoniae":
+            reference_genome_fasta = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/klebsiella_pneumoniae/GCF_000240185.1.fasta"))
+            reference_genome_gff = os.path.abspath(os.path.join(jasen_dir, "assets/genomes/klebsiella_pneumoniae/GCF_000240185.1.gff"))
+        return {
+            "output": output,
+            "bam": bam,
+            "genome_annotation": [],
+            "kraken": kraken,
+            "quality": quality,
+            "quast": quast,
+            "reference_genome_fasta": reference_genome_fasta,
+            "reference_genome_gff": reference_genome_gff,
+            "run_metadata": run_metadata,
+            "sample_id": sample_id,
+            "snv_vcf": None,
+            "sv_vcf": None,
+            "mykrobe": None,
+            "tbprofiler": None,
+            "symlink_dir": symlink_dir,
+            "amrfinder": amrfinder,
+            "cgmlst": cgmlst,
+            "mlst": mlst,
+            "resfinder": resfinder,
+            "serotypefinder": serotypefinder,
+            "virulencefinder": virulencefinder,
+            "process_metadata": process_metadata,
+        }

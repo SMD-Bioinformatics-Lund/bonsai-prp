@@ -92,8 +92,18 @@ class TypingResultCgMlst(ResultMlstBase):
 class TypingResultLineage(ResultLineageBase):
     """Lineage results"""
 
+    lineage_depth: float | None = None
     main_lin: str
     sublin: str
+
+
+class TypingResultPhylogenetics(TypingResultLineage):
+    """Phylogenetics results"""
+
+    phylo_group_depth: float | None = None
+    phylo_group: str | None = None
+    species_depth: float | None = None
+    species: str | None = None
 
 
 class TypingResultGeneAllele(VirulenceGene, SerotypeGene):

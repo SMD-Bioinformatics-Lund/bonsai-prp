@@ -2,9 +2,20 @@
 
 ### Added
 
+ - Added `rerun_bonsai_input` to rerun bonsai-prp outputs when output format changes
+ - Added `symlink_dir` as possible filepaths prefix for IGV inputs
+ - Added kraken cutoff whereby species prediction needs to have >= 0.01% of read hits
+ - Added phylogenetic statistics to result for tb
+ - Added source of variant to output
+
 ### Fixed
 
+ - Handling of tbprofiler v6.2.0 results
+
 ### Changed
+
+ - Changed all click types to click.Path()
+ - Removed `ref_accession != bam_ref_genome` check
 
 ## [0.7.1]
 

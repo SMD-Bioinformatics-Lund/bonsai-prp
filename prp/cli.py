@@ -1,6 +1,7 @@
 """Definition of the PRP command-line interface."""
 from prp import VERSION as __version__
 
+import os
 import json
 import logging
 from pathlib import Path
@@ -8,6 +9,7 @@ from typing import List
 
 import click
 import pandas as pd
+import numpy as np
 import pysam
 from cyvcf2 import VCF, Writer
 from pydantic import TypeAdapter, ValidationError
@@ -38,8 +40,9 @@ from .parse import (
 )
 from .parse.mapping import get_reference_seq_accnr
 from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
-from .parse.utils import get_db_version
+from .parse.utils import get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
+from .parse.utils import _get_path
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
@@ -60,20 +63,20 @@ def cli():
 @click.option(
     "-u",
     "--run-metadata",
-    type=click.File(),
+    type=click.Path(),
     required=True,
     help="Analysis metadata from the pipeline in json format",
 )
-@click.option("-q", "--quast", type=click.File(), help="Quast quality control metrics")
+@click.option("-q", "--quast", type=click.Path(), help="Quast quality control metrics")
 @click.option(
     "-d",
     "--process-metadata",
-    type=click.File(),
+    type=click.Path(),
     multiple=True,
     help="Nextflow processes metadata from the pipeline in json format",
 )
 @click.option(
-    "-k", "--kraken", type=click.File(), help="Kraken species annotation results"
+    "-k", "--kraken", type=click.Path(), help="Kraken species annotation results"
 )
 @click.option(
     "-a",
@@ -81,8 +84,8 @@ def cli():
     type=click.Path(),
     help="amrfinderplus anti-microbial resistance results",
 )
-@click.option("-m", "--mlst", type=click.File(), help="MLST prediction results")
-@click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
+@click.option("-m", "--mlst", type=click.Path(), help="MLST prediction results")
+@click.option("-c", "--cgmlst", type=click.Path(), help="cgMLST prediction results")
 @click.option(
     "-v",
     "--virulencefinder",
@@ -92,7 +95,7 @@ def cli():
 @click.option(
     "-r",
     "--resfinder",
-    type=click.File(),
+    type=click.Path(),
     help="Resfinder resistance prediction results",
 )
 @click.option(
@@ -101,9 +104,10 @@ def cli():
     type=click.Path(),
     help="Serotypefinder serotype prediction results",
 )
-@click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
-@click.option("-k", "--mykrobe", type=click.File(), help="mykrobe results")
-@click.option("-t", "--tbprofiler", type=click.File(), help="tbprofiler results")
+@click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
+@click.option("-k", "--mykrobe", type=click.Path(), help="mykrobe results")
+@click.option("-t", "--tbprofiler", type=click.Path(), help="tbprofiler results")
+@click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option(
     "--reference-genome-fasta", type=click.Path(), help="reference genome fasta file"
 )
@@ -114,14 +118,14 @@ def cli():
     "--genome-annotation",
     type=click.Path(),
     multiple=True,
-    help="Genome annotaitons bed format",
+    help="Genome annotations bed format",
 )
-@click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
 @click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
+@click.option("--symlink_dir", type=click.Path(), help="Dir for symlink")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
-    "-o", "--output", required=True, type=click.File("w"), help="output filepath"
+    "-o", "--output", required=True, type=click.Path(), help="output filepath"
 )
 def create_bonsai_input(
     sample_id,
@@ -129,10 +133,10 @@ def create_bonsai_input(
     quast,
     process_metadata,
     kraken,
+    amrfinder,
     mlst,
     cgmlst,
     virulencefinder,
-    amrfinder,
     resfinder,
     serotypefinder,
     quality,
@@ -144,6 +148,7 @@ def create_bonsai_input(
     genome_annotation,
     snv_vcf,
     sv_vcf,
+    symlink_dir,
     correct_alleles,
     output,
 ):  # pylint: disable=too-many-arguments
@@ -181,16 +186,17 @@ def create_bonsai_input(
     # resfinder of different types
     if resfinder:
         LOG.info("Parse resistance results")
-        pred_res = json.load(resfinder)
-        methods = [
-            ElementType.AMR,
-            ElementType.STRESS,
-        ]
-        for method in methods:
-            res: MethodIndex = parse_resfinder_amr_pred(pred_res, method)
-            # exclude empty results from output
-            if len(res.result.genes) > 0 and len(res.result.variants) > 0:
-                results["element_type_result"].append(res)
+        with open(resfinder, "r", encoding="utf-8") as resfinder_json:
+            pred_res = json.load(resfinder_json)
+            methods = [
+                ElementType.AMR,
+                ElementType.STRESS,
+            ]
+            for method in methods:
+                res: MethodIndex = parse_resfinder_amr_pred(pred_res, method)
+                # exclude empty results from output
+                if len(res.result.genes) > 0 and len(res.result.variants) > 0:
+                    results["element_type_result"].append(res)
 
     # amrfinder
     if amrfinder:
@@ -239,6 +245,7 @@ def create_bonsai_input(
         pred_res = pd.read_csv(mykrobe, quotechar='"')
         pred_res.columns.values[3] = "variants"
         pred_res.columns.values[4] = "genes"
+        pred_res.replace(['NA', np.nan], None, inplace=True)
         pred_res = pred_res.to_dict(orient="records")
 
         # verify that sample id is in prediction result
@@ -271,22 +278,23 @@ def create_bonsai_input(
     # tbprofiler
     if tbprofiler:
         LOG.info("Parse tbprofiler results")
-        pred_res = json.load(tbprofiler)
-        db_info: List[SoupVersion] = []
-        db_info = [
-            SoupVersion(
-                name=pred_res["db_version"]["name"],
-                version=get_db_version(pred_res["db_version"]),
-                type=SoupType.DB,
+        with open(tbprofiler, "r", encoding="utf-8") as tbprofiler_json:
+            pred_res = json.load(tbprofiler_json)
+            db_info: List[SoupVersion] = []
+            db_info = [
+                SoupVersion(
+                    name=pred_res["pipeline"]["db_version"]["name"],
+                    version=get_db_version(pred_res["pipeline"]["db_version"]),
+                    type=SoupType.DB,
+                )
+            ]
+            results["run_metadata"]["databases"].extend(db_info)
+            lin_res: MethodIndex = parse_tbprofiler_lineage_results(
+                pred_res, TypingMethod.LINEAGE
             )
-        ]
-        results["run_metadata"]["databases"].extend(db_info)
-        lin_res: MethodIndex = parse_tbprofiler_lineage_results(
-            pred_res, TypingMethod.LINEAGE
-        )
-        results["typing_result"].append(lin_res)
-        amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res, ElementType.AMR)
-        results["element_type_result"].append(amr_res)
+            results["typing_result"].append(lin_res)
+            amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res, ElementType.AMR)
+            results["element_type_result"].append(amr_res)
 
     # parse SNV and SV variants.
     if snv_vcf:
@@ -298,23 +306,17 @@ def create_bonsai_input(
     # entries for reference genome and read mapping
     if all([bam, reference_genome_fasta, reference_genome_gff]):
         # verify that everything pertains to the same reference genome
-        bam_ref_genome = get_reference_seq_accnr(bam)
-        ref_accession, ref_name = get_gb_genome_version(reference_genome_gff)
-        if ref_accession != bam_ref_genome:
-            raise click.UsageError(
-                f"Read mapping used as different reference genome; bam accnr: {bam_ref_genome}; gbff accnr: {ref_accession}"
-            )
-
+        ref_accession, ref_name = get_gb_genome_version(reference_genome_fasta)
         # store file names
-        fasta_idx_path = Path(f"{reference_genome_fasta}.fai")
+        fasta_idx_path = fasta_idx_path = Path(f"{reference_genome_fasta}.fai")
         results["reference_genome"] = ReferenceGenome(
             name=ref_name,
             accession=ref_accession,
             fasta=Path(reference_genome_fasta).name,
             fasta_index=fasta_idx_path.name if fasta_idx_path.is_file() else None,
-            genes=reference_genome_gff,
+            genes=Path(reference_genome_gff).name,
         )
-        results["read_mapping"] = bam
+        results["read_mapping"] = _get_path(symlink_dir, "bam", bam)
         # add annotations
         annotations = [
             {"name": f"annotation_{i}", "file": Path(annot).name}
@@ -322,10 +324,11 @@ def create_bonsai_input(
         ]
         for vcf in [sv_vcf, snv_vcf]:
             if vcf:
+                vcf = _get_path(symlink_dir, "vcf", vcf)
                 name = "SNV" if vcf == sv_vcf else "SV"
-                annotations.append({"name": name, "file": Path(vcf).name})
+                annotations.append({"name": name, "file": vcf})
         # store annotation results
-        results["genome_annotation"] = annotations if len(annotations) > 0 else None
+        results["genome_annotation"] = annotations if annotations else None
 
     try:
         output_data = PipelineResult(
@@ -335,9 +338,25 @@ def create_bonsai_input(
         click.secho("Input failed Validation", fg="red")
         click.secho(err)
         raise click.Abort
-    LOG.info("Storing results to: %s", output.name)
-    output.write(output_data.model_dump_json(indent=2))
+    LOG.info("Storing results to: %s", output)
+    with open(output, "w", encoding="utf-8") as fout:
+        fout.write(output_data.model_dump_json(indent=2))
     click.secho("Finished generating pipeline output", fg="green")
+
+
+@cli.command()
+@click.option("-i", "--input-dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Input directory to JASEN's outdir incl. speciesDir")
+@click.option("-j", "--jasen-dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Path to JASEN directory")
+@click.option("-s", "--symlink_dir",  required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Path to symlink directory")
+@click.option("-o", "--output-dir", type=click.Path(file_okay=False, dir_okay=True), help="Output directory to incl. speciesDir [default: input_dir]")
+@click.pass_context
+def rerun_bonsai_input(ctx, input_dir, jasen_dir, symlink_dir, output_dir) -> None:
+    """Rerun bonsai input creation for all samples in input directory."""
+    if input_dir:
+        LOG.info("Parse input directory")
+        input_arrays = parse_input_dir(input_dir, jasen_dir, symlink_dir, output_dir)
+        for input_array in input_arrays:
+            ctx.invoke(create_bonsai_input, **input_array)
 
 
 @cli.command()
@@ -361,9 +380,9 @@ def validate(output):
 
 
 @cli.command()
-@click.option("-q", "--quast", type=click.File(), help="Quast quality control metrics")
-@click.option("-p", "--quality", type=click.File(), help="postalignqc qc results")
-@click.option("-c", "--cgmlst", type=click.File(), help="cgMLST prediction results")
+@click.option("-q", "--quast", type=click.Path(), help="Quast quality control metrics")
+@click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
+@click.option("-c", "--cgmlst", type=click.Path(), help="cgMLST prediction results")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"

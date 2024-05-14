@@ -237,7 +237,7 @@ class QC:
         return self.results
 
 
-def parse_quast_results(file: File) -> QcMethodIndex:
+def parse_quast_results(tsv_fpath: str) -> QcMethodIndex:
     """Parse quast file and extract relevant metrics.
 
     Args:
@@ -246,24 +246,25 @@ def parse_quast_results(file: File) -> QcMethodIndex:
     Returns:
         QuastQcResult: list of key-value pairs
     """
-    LOG.info("Parsing tsv file: %s", file.name)
-    creader = csv.reader(file, delimiter="\t")
-    header = next(creader)
-    raw = [dict(zip(header, row)) for row in creader]
-    qc_res = QuastQcResult(
-        total_length=int(raw[0]["Total length"]),
-        reference_length=raw[0]["Reference length"],
-        largest_contig=raw[0]["Largest contig"],
-        n_contigs=raw[0]["# contigs"],
-        n50=raw[0]["N50"],
-        assembly_gc=raw[0]["GC (%)"],
-        reference_gc=raw[0]["Reference GC (%)"],
-        duplication_ratio=raw[0]["Duplication ratio"],
-    )
+    LOG.info("Parsing tsv file: %s", tsv_fpath)
+    with open(tsv_fpath, "r", encoding="utf-8") as tsvfile:
+        creader = csv.reader(tsvfile, delimiter="\t")
+        header = next(creader)
+        raw = [dict(zip(header, row)) for row in creader]
+        qc_res = QuastQcResult(
+            total_length=int(raw[0]["Total length"]),
+            reference_length=raw[0]["Reference length"],
+            largest_contig=raw[0]["Largest contig"],
+            n_contigs=raw[0]["# contigs"],
+            n50=raw[0]["N50"],
+            assembly_gc=raw[0]["GC (%)"],
+            reference_gc=raw[0]["Reference GC (%)"],
+            duplication_ratio=raw[0]["Duplication ratio"],
+        )
     return QcMethodIndex(software=QcSoftware.QUAST, result=qc_res)
 
 
-def parse_postalignqc_results(input_file: File) -> QcMethodIndex:
+def parse_postalignqc_results(postalignqc_fpath: str) -> QcMethodIndex:
     """Parse postalignqc json file and extract relevant metrics.
 
     Args:
@@ -272,21 +273,22 @@ def parse_postalignqc_results(input_file: File) -> QcMethodIndex:
     Returns:
         PostAlignQc: list of key-value pairs
     """
-    LOG.info("Parsing json file: %s", input_file.name)
-    qc_dict = json.load(input_file)
-    qc_res = PostAlignQcResult(
-        ins_size=None if "ins_size" not in qc_dict else int(float(qc_dict["ins_size"])),
-        ins_size_dev=None if "ins_size_dev" not in qc_dict else int(float(qc_dict["ins_size_dev"])),
-        mean_cov=int(qc_dict["mean_cov"]),
-        pct_above_x=qc_dict["pct_above_x"],
-        n_reads=int(qc_dict["n_reads"]),
-        n_mapped_reads=int(qc_dict["n_mapped_reads"]),
-        n_read_pairs=int(qc_dict["n_read_pairs"]),
-        coverage_uniformity=float(qc_dict["coverage_uniformity"]) if qc_dict.get("coverage_uniformity") is not None else None,
-        quartile1=float(qc_dict["quartile1"]),
-        median_cov=float(qc_dict["median_cov"]),
-        quartile3=float(qc_dict["quartile3"]),
-    )
+    LOG.info("Parsing json file: %s", postalignqc_fpath)
+    with open(postalignqc_fpath, "r", encoding="utf-8") as jsonfile:
+        qc_dict = json.load(jsonfile)
+        qc_res = PostAlignQcResult(
+            ins_size=None if "ins_size" not in qc_dict else int(float(qc_dict["ins_size"])),
+            ins_size_dev=None if "ins_size_dev" not in qc_dict else int(float(qc_dict["ins_size_dev"])),
+            mean_cov=int(qc_dict["mean_cov"]),
+            pct_above_x=qc_dict["pct_above_x"],
+            n_reads=int(qc_dict["n_reads"]),
+            n_mapped_reads=int(qc_dict["n_mapped_reads"]),
+            n_read_pairs=int(qc_dict["n_read_pairs"]),
+            coverage_uniformity=float(qc_dict["coverage_uniformity"]) if qc_dict.get("coverage_uniformity") is not None else None,
+            quartile1=float(qc_dict["quartile1"]),
+            median_cov=float(qc_dict["median_cov"]),
+            quartile3=float(qc_dict["quartile3"]),
+        )
     return QcMethodIndex(software=QcSoftware.POSTALIGNQC, result=qc_res)
 
 

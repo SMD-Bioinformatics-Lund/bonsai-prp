@@ -11,7 +11,7 @@ from ..models.typing import (
     TypingMethod,
     TypingResultCgMlst,
     TypingResultGeneAllele,
-    TypingResultLineage,
+    TypingResultPhylogenetics,
     TypingResultMlst,
 )
 from ..models.typing import TypingSoftware as Software
@@ -37,20 +37,21 @@ def _process_allele_call(allele: str) -> str | List[str] | None:
     return result
 
 
-def parse_mlst_results(path: str) -> TypingResultMlst:
+def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
     """Parse mlst results from mlst to json object."""
     LOG.info("Parsing mlst results")
-    result = json.load(path)[0]
-    result_obj = TypingResultMlst(
-        scheme=result["scheme"],
-        sequence_type=None
-        if result["sequence_type"] == "-"
-        else result["sequence_type"],
-        alleles={
-            gene: _process_allele_call(allele)
-            for gene, allele in result["alleles"].items()
-        },
-    )
+    with open(mlst_fpath, "r", encoding="utf-8") as jsonfile:
+        result = json.load(jsonfile)[0]
+        result_obj = TypingResultMlst(
+            scheme=result["scheme"],
+            sequence_type=None
+            if result["sequence_type"] == "-"
+            else result["sequence_type"],
+            alleles={
+                gene: _process_allele_call(allele)
+                for gene, allele in result["alleles"].items()
+            },
+        )
     return MethodIndex(
         type=TypingMethod.MLST, software=Software.MLST, result=result_obj
     )
@@ -118,22 +119,30 @@ def parse_cgmlst_results(
     )
 
 
-def parse_tbprofiler_lineage_results(pred_res: dict, method) -> TypingResultLineage:
+def parse_tbprofiler_lineage_results(pred_res: dict, method) -> TypingResultPhylogenetics:
     """Parse tbprofiler results for lineage object."""
     LOG.info("Parsing lineage results")
-    result_obj = TypingResultLineage(
-        main_lin=pred_res["main_lin"],
-        sublin=pred_res["sublin"],
+    result_obj = TypingResultPhylogenetics(
+        phylo_group_depth=None,
+        species_depth=None,
+        lineage_depth=None,
+        phylo_group=None,
+        species=None,
+        main_lin=pred_res["main_lineage"],
+        sublin=pred_res["sub_lineage"],
         lineages=pred_res["lineage"],
     )
     return MethodIndex(type=method, software=Software.TBPROFILER, result=result_obj)
 
 
-def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage | None:
+def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultPhylogenetics | None:
     """Parse mykrobe results for lineage object."""
     LOG.info("Parsing lineage results")
-    if len(pred_res) > 0:
+    if pred_res:
         lineage = pred_res[0]
+        phylo_group_depth=lineage["phylo_group_depth"]
+        species_depth=lineage["species_depth"]
+        lineage_depth=lineage["lineage_depth"]
         split_lin = lineage["lineage"].split(".")
         main_lin = split_lin[0]
         sublin = lineage["lineage"]
@@ -143,7 +152,12 @@ def parse_mykrobe_lineage_results(pred_res: dict, method) -> TypingResultLineage
             for idx in range(len(lin_idxs))
         ]
         # cast to lineage object
-        result_obj = TypingResultLineage(
+        result_obj = TypingResultPhylogenetics(
+            phylo_group_depth=float(phylo_group_depth) if phylo_group_depth else phylo_group_depth,
+            species_depth=float(species_depth) if species_depth else species_depth,
+            lineage_depth=float(lineage_depth) if lineage_depth else lineage_depth,
+            phylo_group=lineage["phylo_group"],
+            species=lineage["species"],
             main_lin=main_lin,
             sublin=sublin,
             lineages=lineages,
