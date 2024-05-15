@@ -19,7 +19,7 @@ def _get_variant_type(variant) -> VariantType:
             var_type = VariantType.SNV
         case "mnp":
             var_type = VariantType.MNV
-        case other:
+        case _:
             var_type = VariantType(variant.var_type.upper())
     return var_type
 
@@ -57,6 +57,7 @@ def _get_variant_caller(vcf_obj: VCF) -> str | None:
     match = re.search(SOURCE_PATTERN, vcf_obj.raw_header)
     if match:
         return match.group(1)
+    return None
 
 
 def load_variants(variant_file: str) -> List[VariantBase]:
@@ -81,6 +82,7 @@ def load_variants(variant_file: str) -> List[VariantBase]:
 
 
 def annotate_delly_variants(writer, vcf, annotation, annot_chrom=False):
+    """Annotate a variant called by Delly."""
     locus_tag = 3
     gene_symbol = 4
     # annotate variant

@@ -51,7 +51,7 @@ def _parse_virulencefinder_vir_results(pred: str) -> ElementTypeResult:
         match virulence_group:
             case "toxin":
                 subtype = ElementVirulenceSubtype.TOXIN
-            case other:
+            case _:
                 subtype = ElementVirulenceSubtype.VIR
         # parse genes
         if not genes == "No hit found":

@@ -295,8 +295,7 @@ def _parse_resfinder_amr_variants(
     for var_id, info in enumerate(resfinder_result["seq_variations"].values(), start=1):
         # Get only variants from desired phenotypes
         if limit_to_phenotypes is not None:
-            intersect = set(info["phenotypes"]) & set(limit_to_phenotypes)
-            if len(intersect) == 0:
+            if len(set(info["phenotypes"]) & set(limit_to_phenotypes)) == 0:
                 continue
         # get gene depth
         if "seq_regions" in resfinder_result:
@@ -306,7 +305,6 @@ def _parse_resfinder_amr_variants(
         else:
             info["depth"] = 0
         # translate variation type bools into classifier
-        var_type = VariantType.SNV
         if info["substitution"]:
             var_sub_type = VariantSubType.SUBSTITUTION
         elif info["insertion"]:
@@ -331,7 +329,7 @@ def _parse_resfinder_amr_variants(
         ]
         variant = ResfinderVariant(
             id=var_id,
-            variant_type=var_type,
+            variant_type=VariantType.SNV,
             variant_subtype=var_sub_type,
             phenotypes=phenotype,
             # position

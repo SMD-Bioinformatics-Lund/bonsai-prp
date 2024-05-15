@@ -96,7 +96,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
 
         variants = element_type["variants"].split(";")
         # Mykrobe CSV variant format
-        # <gene>_<amino acid change>-<dna change>:<ref depth>:<alt depth>:<genotype confidence>
+        # <gene>_<aa change>-<nt change>:<ref depth>:<alt depth>:<gt confidence>
         # ref: https://github.com/Mykrobe-tools/mykrobe/wiki/AMR-prediction-output
         pattern = re.compile(r"(.+)_(.+)-(.+):(\d+):(\d+):(\d+)", re.I)
         for var_id, variant in enumerate(variants, start=1):

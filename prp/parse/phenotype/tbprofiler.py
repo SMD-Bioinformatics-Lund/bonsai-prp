@@ -59,7 +59,7 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
     # tbprofiler report three categories of variants
     # - dr_variants: known resistance variants
     # - qc_fail_variants: known resistance variants failing qc
-    # - other_variants: variants not in the database but in genes 
+    # - other_variants: variants not in the database but in genes
     #                   associated with resistance
     var_id = 1
     for result_type in ["dr_variants", "other_variants", "qc_fail_variants"]:
@@ -129,8 +129,11 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
             drug_type = ElementType.AMR
         else:
             drug_type = ElementType.AMR
-            LOG.warning(
-                "Unknown TbProfiler drug; drug: %s, confers resistance with confidence: %s; default to %s",
+            LOG.warning((
+                "Unknown TbProfiler drug; drug: %s"
+                ", confers resistance with confidence"
+                ": %s; default to %s"
+            ),
                 drug["type"],
                 drug["confidence"],
                 drug_type,

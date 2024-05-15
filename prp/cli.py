@@ -1,18 +1,17 @@
 """Definition of the PRP command-line interface."""
-from prp import VERSION as __version__
-
-import os
 import json
 import logging
 from pathlib import Path
 from typing import List
 
 import click
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pysam
 from cyvcf2 import VCF, Writer
 from pydantic import TypeAdapter, ValidationError
+
+from prp import VERSION as __version__
 
 from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
@@ -38,11 +37,9 @@ from .parse import (
     parse_virulencefinder_stx_typing,
     parse_virulencefinder_vir_pred,
 )
-from .parse.mapping import get_reference_seq_accnr
 from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
-from .parse.utils import get_db_version, parse_input_dir
+from .parse.utils import _get_path, get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
-from .parse.utils import _get_path
 
 logging.basicConfig(
     level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
@@ -245,7 +242,7 @@ def create_bonsai_input(
         pred_res = pd.read_csv(mykrobe, quotechar='"')
         pred_res.columns.values[3] = "variants"
         pred_res.columns.values[4] = "genes"
-        pred_res.replace(['NA', np.nan], None, inplace=True)
+        pred_res.replace(["NA", np.nan], None, inplace=True)
         pred_res = pred_res.to_dict(orient="records")
 
         # verify that sample id is in prediction result
@@ -345,10 +342,33 @@ def create_bonsai_input(
 
 
 @cli.command()
-@click.option("-i", "--input-dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Input directory to JASEN's outdir incl. speciesDir")
-@click.option("-j", "--jasen-dir",  required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Path to JASEN directory")
-@click.option("-s", "--symlink_dir",  required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True), help="Path to symlink directory")
-@click.option("-o", "--output-dir", type=click.Path(file_okay=False, dir_okay=True), help="Output directory to incl. speciesDir [default: input_dir]")
+@click.option(
+    "-i",
+    "--input-dir",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help="Input directory to JASEN's outdir incl. speciesDir",
+)
+@click.option(
+    "-j",
+    "--jasen-dir",
+    required=True,
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help="Path to JASEN directory",
+)
+@click.option(
+    "-s",
+    "--symlink_dir",
+    required=False,
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    help="Path to symlink directory",
+)
+@click.option(
+    "-o",
+    "--output-dir",
+    type=click.Path(file_okay=False, dir_okay=True),
+    help="Output directory to incl. speciesDir [default: input_dir]",
+)
 @click.pass_context
 def rerun_bonsai_input(ctx, input_dir, jasen_dir, symlink_dir, output_dir) -> None:
     """Rerun bonsai input creation for all samples in input directory."""
@@ -439,7 +459,11 @@ def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> Non
 @click.option("-v", "--vcf", type=click.Path(exists=True), help="VCF file")
 @click.option("-b", "--bed", type=click.Path(exists=True), help="BED file")
 @click.option(
-    "-o", "--output", required=True, type=click.Path(writable=True), help="output filepath"
+    "-o",
+    "--output",
+    required=True,
+    type=click.Path(writable=True),
+    help="output filepath",
 )
 def annotate_delly(vcf, bed, output):
     """Annotate Delly SV varinats with genes in BED file."""
@@ -456,7 +480,11 @@ def annotate_delly(vcf, bed, output):
     if not variant.CHROM in annotation.contigs:
         if len(annotation.contigs) > 1:
             raise click.UsageError(
-                f'"{variant.CHROM}" not in BED file and the file contains {len(annotation.contigs)} chromosomes'
+                (
+                    f'"{variant.CHROM}" not in BED file'
+                    " and the file contains "
+                    f"{len(annotation.contigs)} chromosomes"
+                )
             )
         # if there is only one "chromosome" in the bed file
         annot_chrom = True
