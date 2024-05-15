@@ -58,7 +58,7 @@ def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
 
 
 def parse_cgmlst_results(
-    file: str, include_novel_alleles: bool = True, correct_alleles: bool = False
+    chewbacca_res_path: str, include_novel_alleles: bool = True, correct_alleles: bool = False
 ) -> TypingResultCgMlst:
     """Parse chewbbaca cgmlst prediction results to json results.
 
@@ -104,10 +104,11 @@ def parse_cgmlst_results(
         "not" if not include_novel_alleles else "",
     )
 
-    creader = csv.reader(file, delimiter="\t")
-    _, *allele_names = (colname.rstrip(".fasta") for colname in next(creader))
-    # parse alleles
-    _, *alleles = next(creader)
+    with open(chewbacca_res_path, encoding='utf-8') as fileh:
+        creader = csv.reader(fileh, delimiter="\t")
+        _, *allele_names = (colname.rstrip(".fasta") for colname in next(creader))
+        # parse alleles
+        _, *alleles = next(creader)
     corrected_alleles = (replace_errors(a) for a in alleles)
     results = TypingResultCgMlst(
         n_novel=sum(1 for a in alleles if a.startswith("INF")),
