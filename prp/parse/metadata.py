@@ -39,7 +39,7 @@ def parse_run_info(run_metadata: str) -> RunInformation:
     :rtype: RunMetadata
     """
     LOG.info("Parse run metadata.")
-    with open(run_metadata, "r") as jsonfile:
+    with open(run_metadata, encoding="utf-8") as jsonfile:
         run_info = RunInformation(**json.load(jsonfile))
     return run_info
 

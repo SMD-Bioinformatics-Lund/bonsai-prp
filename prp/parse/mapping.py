@@ -1,7 +1,6 @@
 """Parse mapping and alignment files."""
 
 import pysam
-from Bio import SeqIO
 
 
 def get_reference_seq_accnr(bam_path: str) -> str:

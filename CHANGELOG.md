@@ -2,6 +2,14 @@
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [0.8.0]
+
+### Added
+
  - Added `rerun_bonsai_input` to rerun bonsai-prp outputs when output format changes
  - Added `symlink_dir` as possible filepaths prefix for IGV inputs
  - Added kraken cutoff whereby species prediction needs to have >= 0.01% of read hits

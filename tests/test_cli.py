@@ -137,9 +137,7 @@ def test_cdm_input_cmd(
     runner = CliRunner()
     with runner.isolated_filesystem():
         output_fname = "test_ouptut"
-        result = runner.invoke(
-            create_cdm_input,
-            [
+        args = [
                 "--quast",
                 ecoli_quast_path,
                 "--quality",
@@ -148,16 +146,16 @@ def test_cdm_input_cmd(
                 ecoli_chewbbaca_path,
                 "--output",
                 output_fname,
-            ],
-        )
+            ]
+        result = runner.invoke(create_cdm_input, args)
 
         # test successful execution of command
         assert result.exit_code == 0
 
         # test correct output format
         with open(output_fname, "rb") as inpt:
-            cmd_output = json.load(inpt)
-            assert cmd_output == ecoli_cdm_input
+            cdm_output = json.load(inpt)
+            assert cdm_output == ecoli_cdm_input
 
 
 def test_annotate_delly(

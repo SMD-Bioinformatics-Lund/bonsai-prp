@@ -114,7 +114,9 @@ class QC:
                 return True
             if i >= 1000:
                 break
-        # If no paired reads are found in the first 1000 reads or read is None, return False
+        # If no paired reads are found in the
+        # first 1000 reads or read is None
+        # return False
         return False
 
     def system_p(self, cmd: list) -> None:
@@ -277,14 +279,20 @@ def parse_postalignqc_results(postalignqc_fpath: str) -> QcMethodIndex:
     with open(postalignqc_fpath, "r", encoding="utf-8") as jsonfile:
         qc_dict = json.load(jsonfile)
         qc_res = PostAlignQcResult(
-            ins_size=None if "ins_size" not in qc_dict else int(float(qc_dict["ins_size"])),
-            ins_size_dev=None if "ins_size_dev" not in qc_dict else int(float(qc_dict["ins_size_dev"])),
+            ins_size=None
+            if "ins_size" not in qc_dict
+            else int(float(qc_dict["ins_size"])),
+            ins_size_dev=None
+            if "ins_size_dev" not in qc_dict
+            else int(float(qc_dict["ins_size_dev"])),
             mean_cov=int(qc_dict["mean_cov"]),
             pct_above_x=qc_dict["pct_above_x"],
             n_reads=int(qc_dict["n_reads"]),
             n_mapped_reads=int(qc_dict["n_mapped_reads"]),
             n_read_pairs=int(qc_dict["n_read_pairs"]),
-            coverage_uniformity=float(qc_dict["coverage_uniformity"]) if qc_dict.get("coverage_uniformity") is not None else None,
+            coverage_uniformity=float(qc_dict["coverage_uniformity"])
+            if qc_dict.get("coverage_uniformity") is not None
+            else None,
             quartile1=float(qc_dict["quartile1"]),
             median_cov=float(qc_dict["median_cov"]),
             quartile3=float(qc_dict["quartile3"]),

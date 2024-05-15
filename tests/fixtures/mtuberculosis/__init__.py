@@ -2,8 +2,6 @@
 
 import pytest
 
-from ..fixtures import data_path
-
 
 @pytest.fixture()
 def mtuberculosis_analysis_meta_path(data_path):
