@@ -2,9 +2,13 @@
 
 ### Added
 
+ - Added species prediction and phylo group from Mykrobe.
+
 ### Fixed
 
 ### Changed
+
+ - Changed `species_prediction` field to be a key-value indexed array to support multiple SPP predictions.
 
 ## [0.8.0]
 
