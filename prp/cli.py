@@ -37,6 +37,7 @@ from .parse import (
     parse_virulencefinder_stx_typing,
     parse_virulencefinder_vir_pred,
 )
+from .parse.species import get_mykrobe_spp_prediction
 from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
 from .parse.utils import _get_path, get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
@@ -229,11 +230,10 @@ def create_bonsai_input(
             results["typing_result"].extend(res)
 
     # species id
+    results["species_prediction"] = []
     if kraken:
         LOG.info("Parse kraken results")
-        results["species_prediction"] = parse_kraken_result(kraken)
-    else:
-        results["species_prediction"] = []
+        results["species_prediction"].append(parse_kraken_result(kraken))
 
     # mycobacterium tuberculosis
     # mykrobe
@@ -271,6 +271,9 @@ def create_bonsai_input(
         )
         if lin_res is not None:
             results["typing_result"].append(lin_res)
+
+        # parse mykrobe species prediction result
+        results["species_prediction"].append(get_mykrobe_spp_prediction(pred_res))
 
     # tbprofiler
     if tbprofiler:

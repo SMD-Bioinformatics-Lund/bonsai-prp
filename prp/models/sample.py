@@ -7,7 +7,7 @@ from .base import RWModel
 from .metadata import RunMetadata
 from .phenotype import ElementType, ElementTypeResult, PredictionSoftware, VariantBase
 from .qc import QcMethodIndex
-from .species import SpeciesPredictionResult
+from .species import SppMethodIndex
 from .typing import (
     TypingMethod,
     TypingResultCgMlst,
@@ -37,7 +37,7 @@ class SampleBase(RWModel):
 
     run_metadata: RunMetadata = Field(..., alias="runMetadata")
     qc: List[QcMethodIndex] = Field(...)
-    species_prediction: SpeciesPredictionResult = Field(..., alias="speciesPrediction")
+    species_prediction: List[SppMethodIndex] = Field(..., alias="speciesPrediction")
 
 
 class ReferenceGenome(RWModel):
