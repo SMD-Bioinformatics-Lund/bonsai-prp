@@ -2,6 +2,14 @@
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [0.8.1]
+
+### Added
+
  - Added species prediction and phylo group from Mykrobe.
 
 ### Fixed
