@@ -4,7 +4,11 @@
 
 ### Fixed
 
+- Updated lineage parser to work with TbProfiler v6.2
+
 ### Changed
+
+- Changes lineage datamodel to reflect changes in TbProfiler output
 
 ## [0.8.1]
 

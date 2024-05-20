@@ -4,9 +4,9 @@ from enum import Enum
 from typing import List
 
 from pydantic import Field
-from .phenotype import ElementTypeResult, PredictionSoftware
 
 from .base import RWModel
+from .phenotype import ElementTypeResult, PredictionSoftware
 
 
 class TaxLevel(Enum):

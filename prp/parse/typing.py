@@ -8,11 +8,12 @@ from typing import List
 from ..models.sample import MethodIndex
 from ..models.typing import (
     LineageInformation,
+    ResultLineageBase,
+    TbProfilerLineage,
     TypingMethod,
     TypingResultCgMlst,
     TypingResultGeneAllele,
     TypingResultMlst,
-    TypingResultPhylogenetics,
 )
 from ..models.typing import TypingSoftware as Software
 from .phenotype.serotypefinder import parse_serotype_gene
@@ -44,9 +45,9 @@ def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
         result = json.load(jsonfile)[0]
         result_obj = TypingResultMlst(
             scheme=result["scheme"],
-            sequence_type=None
-            if result["sequence_type"] == "-"
-            else result["sequence_type"],
+            sequence_type=(
+                None if result["sequence_type"] == "-" else result["sequence_type"]
+            ),
             alleles={
                 gene: _process_allele_call(allele)
                 for gene, allele in result["alleles"].items()
@@ -58,7 +59,9 @@ def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
 
 
 def parse_cgmlst_results(
-    chewbacca_res_path: str, include_novel_alleles: bool = True, correct_alleles: bool = False
+    chewbacca_res_path: str,
+    include_novel_alleles: bool = True,
+    correct_alleles: bool = False,
 ) -> TypingResultCgMlst:
     """Parse chewbbaca cgmlst prediction results to json results.
 
@@ -104,7 +107,7 @@ def parse_cgmlst_results(
         "not" if not include_novel_alleles else "",
     )
 
-    with open(chewbacca_res_path, encoding='utf-8') as fileh:
+    with open(chewbacca_res_path, encoding="utf-8") as fileh:
         creader = csv.reader(fileh, delimiter="\t")
         _, *allele_names = (colname.rstrip(".fasta") for colname in next(creader))
         # parse alleles
@@ -120,56 +123,47 @@ def parse_cgmlst_results(
     )
 
 
-def parse_tbprofiler_lineage_results(
-    pred_res: dict, method
-) -> TypingResultPhylogenetics:
+def parse_tbprofiler_lineage_results(pred_res: dict) -> MethodIndex:
     """Parse tbprofiler results for lineage object."""
     LOG.info("Parsing lineage results")
-    result_obj = TypingResultPhylogenetics(
-        phylo_group_depth=None,
-        species_depth=None,
-        lineage_depth=None,
-        phylo_group=None,
-        species=None,
-        main_lin=pred_res["main_lineage"],
-        sublin=pred_res["sub_lineage"],
-        lineages=pred_res["lineage"],
+    # lineages
+    lineages = [
+        LineageInformation(
+            lineage=lin["lineage"],
+            family=lin["family"],
+            rd=lin["rd"],
+            fraction=lin["fraction"],
+            support=lin["support"],
+        )
+        for lin in pred_res["lineage"]
+    ]
+    # combine into result
+    result_obj = TbProfilerLineage(
+        main_lineage=pred_res["main_lineage"],
+        sublineage=pred_res["sub_lineage"],
+        lineages=lineages,
     )
-    return MethodIndex(type=method, software=Software.TBPROFILER, result=result_obj)
+    # store result as a method index
+    return MethodIndex(
+        type=TypingMethod.LINEAGE,
+        software=Software.TBPROFILER,
+        result=result_obj,
+    )
 
 
-def parse_mykrobe_lineage_results(
-    pred_res: dict, method
-) -> TypingResultPhylogenetics | None:
+def parse_mykrobe_lineage_results(pred_res: dict) -> MethodIndex | None:
     """Parse mykrobe results for lineage object."""
     LOG.info("Parsing lineage results")
     if pred_res:
-        lineage = pred_res[0]
-        phylo_group_depth = lineage["phylo_group_depth"]
-        species_depth = lineage["species_depth"]
-        lineage_depth = lineage["lineage_depth"]
-        split_lin = lineage["lineage"].split(".")
-        main_lin = split_lin[0]
-        sublin = lineage["lineage"]
-        lin_idxs = lineage["lineage"].lstrip("lineage").split(".")
-        lineages = [
-            LineageInformation(lineage="lineage" + ".".join(lin_idxs[: idx + 1]))
-            for idx in range(len(lin_idxs))
-        ]
+        lineage = pred_res[0]["lineage"]
         # cast to lineage object
-        result_obj = TypingResultPhylogenetics(
-            phylo_group_depth=float(phylo_group_depth)
-            if phylo_group_depth
-            else phylo_group_depth,
-            species_depth=float(species_depth) if species_depth else species_depth,
-            lineage_depth=float(lineage_depth) if lineage_depth else lineage_depth,
-            phylo_group=lineage["phylo_group"],
-            species=lineage["species"],
-            main_lin=main_lin,
-            sublin=sublin,
-            lineages=lineages,
+        result_obj = ResultLineageBase(
+            main_lineage=lineage.split(".")[0],
+            sublineage=lineage,
         )
-        return MethodIndex(type=method, software=Software.MYKROBE, result=result_obj)
+        return MethodIndex(
+            type=TypingMethod.LINEAGE, software=Software.MYKROBE, result=result_obj
+        )
     return None
 
 
