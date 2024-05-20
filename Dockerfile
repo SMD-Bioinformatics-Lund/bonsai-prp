@@ -58,8 +58,7 @@ RUN /bin/bash -c "source ~/.bashrc"
 # Metadata as described above
 LABEL authors="Markus Johansson <markus.h.johansson@skane.se>, Ryan Kennedy <ryan.kennedy@skane.se>" \
       maintainers="Markus Johansson <markus.h.johansson@skane.se>, Ryan Kennedy <ryan.kennedy@skane.se>" \
-      description="Docker image for bonsai-prp" \
-      version="0.7.1"
+      description="Docker image for bonsai-prp"
 
 # Default command to run when the container starts
 CMD ["python"]

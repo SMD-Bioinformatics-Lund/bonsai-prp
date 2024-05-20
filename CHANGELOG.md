@@ -4,6 +4,14 @@
 
 ### Fixed
 
+### Changed
+
+## [0.8.2]
+
+### Added
+
+### Fixed
+
 - Updated lineage parser to work with TbProfiler v6.2
 
 ### Changed
