@@ -1,0 +1,44 @@
+name: Publish to dockerhub on push to master
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout prp
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3.0.0
+        with:
+          registry: 'docker.io'
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Export tags to env
+        run: |
+          VERSION=$(head -2 prp/__version__.py | tail -1 | cut -d'"' -f2);
+          echo "PRP_TAG=${VERSION}" >> $GITHUB_ENV
+          echo "PRP_TAG_LATEST=latest" >> $GITHUB_ENV
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5.5.0
+        with:
+          images: clinicalgenomicslund/bonsai-prp
+          tags: |
+            type=raw,value=${{ env.PRP_TAG_LATEST }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5.1.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }},
+          labels: ${{ steps.meta.outputs.labels }}
