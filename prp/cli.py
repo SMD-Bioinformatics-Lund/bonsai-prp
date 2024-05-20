@@ -37,8 +37,8 @@ from .parse import (
     parse_virulencefinder_stx_typing,
     parse_virulencefinder_vir_pred,
 )
-from .parse.species import get_mykrobe_spp_prediction
 from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
+from .parse.species import get_mykrobe_spp_prediction
 from .parse.utils import _get_path, get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
 
@@ -262,13 +262,11 @@ def create_bonsai_input(
             )
         )
         # parse mykrobe result
-        amr_res = parse_mykrobe_amr_pred(pred_res, ElementType.AMR)
+        amr_res = parse_mykrobe_amr_pred(pred_res)
         if amr_res is not None:
             results["element_type_result"].append(amr_res)
 
-        lin_res: MethodIndex | None = parse_mykrobe_lineage_results(
-            pred_res, TypingMethod.LINEAGE
-        )
+        lin_res: MethodIndex | None = parse_mykrobe_lineage_results(pred_res)
         if lin_res is not None:
             results["typing_result"].append(lin_res)
 
@@ -289,11 +287,9 @@ def create_bonsai_input(
                 )
             ]
             results["run_metadata"]["databases"].extend(db_info)
-            lin_res: MethodIndex = parse_tbprofiler_lineage_results(
-                pred_res, TypingMethod.LINEAGE
-            )
+            lin_res: MethodIndex = parse_tbprofiler_lineage_results(pred_res)
             results["typing_result"].append(lin_res)
-            amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res, ElementType.AMR)
+            amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res)
             results["element_type_result"].append(amr_res)
 
     # parse SNV and SV variants.

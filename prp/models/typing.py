@@ -51,28 +51,10 @@ class MlstErrors(str, Enum):
     PARTIAL = "partial"
 
 
-class LineageInformation(RWModel):
-    """Base class for storing lineage information typing results"""
-
-    lin: str | None = None
-    family: str | None = None
-    spoligotype: str | None = None
-    rd: str | None = None
-    fraction: float | None = None
-    variant: str | None = None
-    coverage: Dict[str, Any] | None = None
-
-
 class ResultMlstBase(RWModel):
     """Base class for storing MLST-like typing results"""
 
     alleles: Dict[str, Union[int, str, List, None]]
-
-
-class ResultLineageBase(RWModel):
-    """Base class for storing MLST-like typing results"""
-
-    lineages: List[LineageInformation]
 
 
 class TypingResultMlst(ResultMlstBase):
@@ -89,21 +71,28 @@ class TypingResultCgMlst(ResultMlstBase):
     n_missing: int = Field(0, alias="nNovel")
 
 
-class TypingResultLineage(ResultLineageBase):
+class ResultLineageBase(RWModel):
     """Lineage results"""
 
     lineage_depth: float | None = None
-    main_lin: str
-    sublin: str
+    main_lineage: str
+    sublineage: str
 
 
-class TypingResultPhylogenetics(TypingResultLineage):
-    """Phylogenetics results"""
+class LineageInformation(RWModel):
+    """Base class for storing lineage information typing results"""
 
-    phylo_group_depth: float | None = None
-    phylo_group: str | None = None
-    species_depth: float | None = None
-    species: str | None = None
+    lineage: str | None
+    family: str | None
+    rd: str | None
+    fraction: float | None
+    support: List[Dict[str, Any]] | None = None
+
+
+class TbProfilerLineage(ResultLineageBase):
+    """Base class for storing MLST-like typing results"""
+
+    lineages: List[LineageInformation]
 
 
 class TypingResultGeneAllele(VirulenceGene, SerotypeGene):

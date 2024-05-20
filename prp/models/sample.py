@@ -9,10 +9,11 @@ from .phenotype import ElementType, ElementTypeResult, PredictionSoftware, Varia
 from .qc import QcMethodIndex
 from .species import SppMethodIndex
 from .typing import (
+    ResultLineageBase,
+    TbProfilerLineage,
     TypingMethod,
     TypingResultCgMlst,
     TypingResultGeneAllele,
-    TypingResultLineage,
     TypingResultMlst,
     TypingSoftware,
 )
@@ -27,8 +28,9 @@ class MethodIndex(RWModel):
         ElementTypeResult,
         TypingResultMlst,
         TypingResultCgMlst,
-        TypingResultLineage,
         TypingResultGeneAllele,
+        TbProfilerLineage,
+        ResultLineageBase,
     ]
 
 

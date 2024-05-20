@@ -1,10 +1,15 @@
 """Parsers for species prediction tools."""
 
 import logging
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 import pandas as pd
-from prp.models.species import SppMethodIndex, SppPredictionSoftware, MykrobeSpeciesPrediction
+
+from prp.models.species import (
+    MykrobeSpeciesPrediction,
+    SppMethodIndex,
+    SppPredictionSoftware,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -33,6 +38,7 @@ def parse_kraken_result(file: str, cutoff: float = 0.0001) -> SppMethodIndex:
         result=species_pred.to_dict(orient="records"),
     )
 
+
 def get_mykrobe_spp_prediction(prediction: List[Dict[str, Any]]) -> SppMethodIndex:
     """Get species prediction result from Mykrobe."""
     LOG.info("Parsing Mykrobe spp result.")
@@ -43,7 +49,4 @@ def get_mykrobe_spp_prediction(prediction: List[Dict[str, Any]]) -> SppMethodInd
         phylogenetic_group_coverage=prediction[0]["phylo_group_per_covg"],
         species_coverage=prediction[0]["species_per_covg"],
     )
-    return SppMethodIndex(
-        software=SppPredictionSoftware.MYKROBE,
-        result=[spp_pred]
-    )
+    return SppMethodIndex(software=SppPredictionSoftware.MYKROBE, result=[spp_pred])

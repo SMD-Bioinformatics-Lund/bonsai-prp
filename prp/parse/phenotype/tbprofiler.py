@@ -129,11 +129,12 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
             drug_type = ElementType.AMR
         else:
             drug_type = ElementType.AMR
-            LOG.warning((
-                "Unknown TbProfiler drug; drug: %s"
-                ", confers resistance with confidence"
-                ": %s; default to %s"
-            ),
+            LOG.warning(
+                (
+                    "Unknown TbProfiler drug; drug: %s"
+                    ", confers resistance with confidence"
+                    ": %s; default to %s"
+                ),
                 drug["type"],
                 drug["confidence"],
                 drug_type,
@@ -154,7 +155,7 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
 
 
 def parse_tbprofiler_amr_pred(
-    prediction: Dict[str, Any], resistance_category
+    prediction: Dict[str, Any]
 ) -> Tuple[SoupVersions, ElementTypeResult]:
     """Parse tbprofiler resistance prediction results."""
     LOG.info("Parsing tbprofiler prediction")
@@ -164,5 +165,5 @@ def parse_tbprofiler_amr_pred(
         variants=_parse_tbprofiler_amr_variants(prediction),
     )
     return MethodIndex(
-        type=resistance_category, software=Software.TBPROFILER, result=resistance
+        type=ElementType.AMR, software=Software.TBPROFILER, result=resistance
     )

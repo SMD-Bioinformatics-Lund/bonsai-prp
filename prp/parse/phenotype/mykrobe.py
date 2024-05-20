@@ -142,9 +142,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
     return variants
 
 
-def parse_mykrobe_amr_pred(
-    prediction: Dict[str, Any], resistance_category
-) -> ElementTypeResult | None:
+def parse_mykrobe_amr_pred(prediction: Dict[str, Any]) -> ElementTypeResult | None:
     """Parse mykrobe resistance prediction results."""
     LOG.info("Parsing mykrobe prediction")
     resistance = ElementTypeResult(
@@ -158,6 +156,6 @@ def parse_mykrobe_amr_pred(
         result = None
     else:
         result = MethodIndex(
-            type=resistance_category, software=Software.MYKROBE, result=resistance
+            type=ElementType.AMR, software=Software.MYKROBE, result=resistance
         )
     return result
