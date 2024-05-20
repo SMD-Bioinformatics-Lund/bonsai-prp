@@ -29,8 +29,8 @@ class MethodIndex(RWModel):
         TypingResultMlst,
         TypingResultCgMlst,
         TypingResultGeneAllele,
-        TbProfilerLineage,
         ResultLineageBase,
+        TbProfilerLineage,
     ]
 
 
