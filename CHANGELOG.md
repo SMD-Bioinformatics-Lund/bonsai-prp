@@ -6,6 +6,16 @@
 
 ### Changed
 
+## [0.8.3]
+
+### Added
+
+### Fixed
+
+- Reordered lineage data models in the method index.
+
+### Changed
+
 ## [0.8.2]
 
 ### Added
