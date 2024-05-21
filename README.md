@@ -1,4 +1,8 @@
-# Pipeline result processor (prp): A collection of parsers and data models for creation and validation of a standardized output for the [jasen](https://github.com/genomic-medicine-sweden/jasen) pipeline which is used as an input for [bonsai](https://github.com/Clinical-Genomics-Lund/bonsai)
+# Pipeline result processor (prp)
+*A collection of parsers and data models for creation and validation of a standardized output for the [jasen](https://github.com/genomic-medicine-sweden/jasen) pipeline which is used as an input for [bonsai](https://github.com/Clinical-Genomics-Lund/bonsai).*
+
+> [!WARNING]
+> Bonsai-PRP is under development in an alpha stage. Expect uneven documentation, breaking changes, and bugs until the official 1.0 release.
 
 ## Dependencies (latest)
 * biopython
