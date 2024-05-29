@@ -32,6 +32,7 @@ from .parse import (
     parse_quast_results,
     parse_resfinder_amr_pred,
     parse_serotypefinder_oh_typing,
+    parse_shigapass_pred,
     parse_tbprofiler_amr_pred,
     parse_tbprofiler_lineage_results,
     parse_virulencefinder_stx_typing,
@@ -104,6 +105,7 @@ def cli():
 )
 @click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
 @click.option("-k", "--mykrobe", type=click.Path(), help="mykrobe results")
+@click.option("-g", "--shigapass", type=click.Path(), help="shigapass results")
 @click.option("-t", "--tbprofiler", type=click.Path(), help="tbprofiler results")
 @click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
 @click.option(
@@ -139,6 +141,7 @@ def create_bonsai_input(
     serotypefinder,
     quality,
     mykrobe,
+    shigapass,
     tbprofiler,
     bam,
     reference_genome_fasta,
@@ -226,6 +229,13 @@ def create_bonsai_input(
         LOG.info("Parse serotypefinder results")
         # OH typing
         res: MethodIndex | None = parse_serotypefinder_oh_typing(serotypefinder)
+        if res is not None:
+            results["typing_result"].extend(res)
+
+    if shigapass:
+        LOG.info("Parse shigapass results")
+        # Shigatyping
+        res: MethodIndex | None = parse_shigapass_pred(shigapass, TypingMethod.SHIGATYPE)
         if res is not None:
             results["typing_result"].extend(res)
 
