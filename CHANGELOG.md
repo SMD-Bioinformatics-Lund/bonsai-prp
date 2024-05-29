@@ -2,6 +2,8 @@
 
 ### Added
 
+- Added Shigapass output
+
 ### Fixed
 
 ### Changed
