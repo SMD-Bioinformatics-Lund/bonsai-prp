@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import Field
 
 from .base import RWModel
-from .phenotype import SerotypeGene, VirulenceGene
+from .phenotype import SerotypeGene, VirulenceGene, Shigatype
 
 
 class TypingSoftware(Enum):
@@ -18,6 +18,7 @@ class TypingSoftware(Enum):
     MYKROBE = "mykrobe"
     VIRULENCEFINDER = "virulencefinder"
     SEROTYPEFINDER = "serotypefinder"
+    SHIGAPASS = "shigapass"
 
 
 class TypingMethod(Enum):
@@ -29,6 +30,7 @@ class TypingMethod(Enum):
     STX = "stx"
     OTYPE = "O_type"
     HTYPE = "H_type"
+    SHIGATYPE = "shigatype"
 
 
 class ChewbbacaErrors(str, Enum):
@@ -69,6 +71,10 @@ class TypingResultCgMlst(ResultMlstBase):
 
     n_novel: int = Field(0, alias="nNovel")
     n_missing: int = Field(0, alias="nNovel")
+
+
+class TypingResultShiga(Shigatype):
+    """Shigatype results"""
 
 
 class ResultLineageBase(RWModel):

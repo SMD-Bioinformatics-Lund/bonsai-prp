@@ -15,6 +15,7 @@ from .typing import (
     TypingResultCgMlst,
     TypingResultGeneAllele,
     TypingResultMlst,
+    TypingResultShiga,
     TypingSoftware,
 )
 
@@ -29,6 +30,7 @@ class MethodIndex(RWModel):
         TypingResultMlst,
         TypingResultCgMlst,
         TypingResultGeneAllele,
+        TypingResultShiga,
         TbProfilerLineage,
         ResultLineageBase,
     ]

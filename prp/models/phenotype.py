@@ -113,7 +113,7 @@ class PhenotypeInfo(RWModel):
 
 
 class DatabaseReference(RWModel):
-    """Refernece to a database."""
+    """Reference to a database."""
 
     ref_database: Optional[str] = None
     ref_id: Optional[str] = None
@@ -183,6 +183,20 @@ class ResistanceGene(GeneBase):
 
 class SerotypeGene(GeneBase):
     """Container for serotype gene information"""
+
+
+class Shigatype(BaseModel):
+    """Container for shigatype gene information"""
+
+    rfb: Optional[str] = None
+    rfb_hits: Optional[float] = None
+    mlst: Optional[str] = None
+    flic: Optional[str] = None
+    crispr: Optional[str] = None
+    ipah: Optional[str] = None
+    predicted_serotype: Optional[str] = None
+    predicted_flex_serotype: Optional[str] = None
+    comments: Optional[str] = None
 
 
 class VirulenceGene(GeneBase, DatabaseReference):
