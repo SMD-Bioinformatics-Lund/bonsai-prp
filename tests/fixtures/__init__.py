@@ -1,6 +1,6 @@
 """Fixtures"""
 
 from .ecoli import *
-from .shigella import *
-from .saureus import *
 from .mtuberculosis import *
+from .saureus import *
+from .shigella import *

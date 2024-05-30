@@ -1,7 +1,8 @@
 """Test functions for parsing Shigapass results."""
 
 import pytest
-from prp.parse.phenotype.shigapass import parse_shigapass_pred, _extract_percentage
+
+from prp.parse.phenotype.shigapass import _extract_percentage, parse_shigapass_pred
 
 
 @pytest.mark.parametrize(

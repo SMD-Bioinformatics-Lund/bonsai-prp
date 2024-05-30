@@ -4,7 +4,7 @@ import json
 
 from click.testing import CliRunner
 
-from prp.cli import create_bonsai_input, create_cdm_input, annotate_delly
+from prp.cli import annotate_delly, create_bonsai_input, create_cdm_input
 
 
 def test_create_output_saureus(
@@ -60,9 +60,9 @@ def test_create_output_saureus(
         with open(output_file) as inpt:
             prp_output = json.load(inpt)
         # get prediction softwares in ouptut
-        prediction_sw = {res['software'] for res in prp_output['element_type_result']}
+        prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
         # test that resfinder, amrfinder and virulence finder result is in output
-        assert len({'resfinder', 'amrfinder', 'virulencefinder'} & prediction_sw) == 3
+        assert len({"resfinder", "amrfinder", "virulencefinder"} & prediction_sw) == 3
 
 
 def test_create_output_ecoli(
@@ -128,9 +128,9 @@ def test_create_output_ecoli(
         with open(output_file) as inpt:
             prp_output = json.load(inpt)
         # get prediction softwares in ouptut
-        prediction_sw = {res['software'] for res in prp_output['element_type_result']}
+        prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
         # test that resfinder, amrfinder and virulence finder result is in output
-        assert len({'resfinder', 'amrfinder', 'virulencefinder'} & prediction_sw) == 3
+        assert len({"resfinder", "amrfinder", "virulencefinder"} & prediction_sw) == 3
 
 
 def test_cdm_input_cmd(
@@ -141,15 +141,15 @@ def test_cdm_input_cmd(
     with runner.isolated_filesystem():
         output_fname = "test_ouptut"
         args = [
-                "--quast",
-                ecoli_quast_path,
-                "--quality",
-                ecoli_bwa_path,
-                "--cgmlst",
-                ecoli_chewbbaca_path,
-                "--output",
-                output_fname,
-            ]
+            "--quast",
+            ecoli_quast_path,
+            "--quality",
+            ecoli_bwa_path,
+            "--cgmlst",
+            ecoli_chewbbaca_path,
+            "--output",
+            output_fname,
+        ]
         result = runner.invoke(create_cdm_input, args)
 
         # test successful execution of command
@@ -185,8 +185,11 @@ def test_annotate_delly(
         assert result.exit_code == 0
 
         # test correct output format
-        with open(output_fname, "r", encoding="utf-8") as test_annotated_delly_output, \
-            open(annotated_delly_path, "r", encoding="utf-8") as annotated_delly_output:
+        with open(
+            output_fname, "r", encoding="utf-8"
+        ) as test_annotated_delly_output, open(
+            annotated_delly_path, "r", encoding="utf-8"
+        ) as annotated_delly_output:
             test_contents = test_annotated_delly_output.read()
             expected_contents = annotated_delly_output.read()
             assert test_contents == expected_contents
@@ -211,27 +214,27 @@ def test_create_output_mtuberculosis(
     runner = CliRunner()
     with runner.isolated_filesystem():
         args = [
-                "-i",
-                sample_id,
-                "--run-metadata",
-                mtuberculosis_analysis_meta_path,
-                "--kraken",
-                mtuberculosis_bracken_path,
-                "--quality",
-                mtuberculosis_bwa_path,
-                "--mykrobe",
-                mtuberculosis_mykrobe_path,
-                "--snv-vcf",
-                mtuberculosis_snv_vcf_path,
-                "--sv-vcf",
-                mtuberculosis_sv_vcf_path,
-                "--quast",
-                mtuberculosis_quast_path,
-                "--tbprofiler",
-                mtuberculosis_tbprofiler_path,
-                "--output",
-                output_file,
-            ]
+            "-i",
+            sample_id,
+            "--run-metadata",
+            mtuberculosis_analysis_meta_path,
+            "--kraken",
+            mtuberculosis_bracken_path,
+            "--quality",
+            mtuberculosis_bwa_path,
+            "--mykrobe",
+            mtuberculosis_mykrobe_path,
+            "--snv-vcf",
+            mtuberculosis_snv_vcf_path,
+            "--sv-vcf",
+            mtuberculosis_sv_vcf_path,
+            "--quast",
+            mtuberculosis_quast_path,
+            "--tbprofiler",
+            mtuberculosis_tbprofiler_path,
+            "--output",
+            output_file,
+        ]
         result = runner.invoke(create_bonsai_input, args)
         assert result.exit_code == 0
 
@@ -239,6 +242,6 @@ def test_create_output_mtuberculosis(
         with open(output_file) as inpt:
             prp_output = json.load(inpt)
         # get prediction softwares in ouptut
-        prediction_sw = {res['software'] for res in prp_output['element_type_result']}
+        prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
         # test that resfinder, amrfinder and virulence finder result is in output
-        assert len({'mykrobe', 'tbprofiler'} & prediction_sw) == 2
+        assert len({"mykrobe", "tbprofiler"} & prediction_sw) == 2

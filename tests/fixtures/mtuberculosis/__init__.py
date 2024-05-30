@@ -50,15 +50,18 @@ def mtuberculosis_sv_vcf_path(data_path):
     """Get path for mtuberculosis meta file"""
     return str(data_path.joinpath("mtuberculosis", "sv.vcf"))
 
+
 @pytest.fixture()
 def mtuberculosis_delly_bcf_path(data_path):
     """Get path for mtuberculosis meta file"""
     return str(data_path.joinpath("mtuberculosis", "delly.bcf"))
 
+
 @pytest.fixture()
 def converged_bed_path(data_path):
     """Get path for mtuberculosis converged who fohm tbdb bgzipped bed file"""
     return str(data_path.joinpath("mtuberculosis", "converged_who_fohm_tbdb.bed.gz"))
+
 
 @pytest.fixture()
 def annotated_delly_path(data_path):

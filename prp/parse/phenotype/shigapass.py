@@ -1,15 +1,16 @@
 """Functions for parsing shigapass result."""
 
-import re
 import logging
-import pandas as pd
-import numpy as np
+import re
 from typing import List
 
+import numpy as np
+import pandas as pd
+
 from ...models.phenotype import ElementTypeResult
-from ...models.typing import TypingSoftware as Software
-from ...models.typing import TypingResultShiga, TypingMethod
 from ...models.sample import MethodIndex
+from ...models.typing import TypingMethod, TypingResultShiga
+from ...models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 
