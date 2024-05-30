@@ -17,7 +17,6 @@ from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex, QcSoftware
 from .models.sample import MethodIndex, PipelineResult, ReferenceGenome
-from .models.typing import TypingMethod
 from .parse import (
     load_variants,
     parse_alignment_results,
@@ -235,7 +234,7 @@ def create_bonsai_input(
     if shigapass:
         LOG.info("Parse shigapass results")
         # Shigatyping
-        res: MethodIndex | None = parse_shigapass_pred(shigapass, TypingMethod.SHIGATYPE)
+        res: MethodIndex | None = parse_shigapass_pred(shigapass)
         if res is not None:
             results["typing_result"].extend(res)
 
