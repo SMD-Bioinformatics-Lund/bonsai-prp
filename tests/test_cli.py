@@ -78,6 +78,7 @@ def test_create_output_ecoli(
     ecoli_serotypefinder_meta_path,
     ecoli_mlst_path,
     ecoli_chewbbaca_path,
+    ecoli_shigapass_path,
 ):
     """Test creating a analysis summary using E.coli data.
 
@@ -114,6 +115,8 @@ def test_create_output_ecoli(
             ecoli_mlst_path,
             "--cgmlst",
             ecoli_chewbbaca_path,
+            "--shigapass",
+            ecoli_shigapass_path,
             "--output",
             output_file,
         ]
