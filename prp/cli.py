@@ -236,7 +236,7 @@ def create_bonsai_input(
         # Shigatyping
         res: MethodIndex | None = parse_shigapass_pred(shigapass)
         if res is not None:
-            results["typing_result"].extend(res)
+            results["typing_result"].append(res)
 
     # species id
     results["species_prediction"] = []

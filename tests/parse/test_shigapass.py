@@ -45,7 +45,7 @@ def test_parse_shigapass_results(ecoli_shigapass_path, shigella_shigapass_path):
         },
     }
     # check if data matches
-    assert expected_ecoli == result[0].model_dump()
+    assert expected_ecoli == result.model_dump()
 
     # test parsing the output with a shigella.
     result = parse_shigapass_pred(shigella_shigapass_path)
@@ -66,4 +66,4 @@ def test_parse_shigapass_results(ecoli_shigapass_path, shigella_shigapass_path):
     }
 
     # check if data matches
-    assert expected_shigella == result[0].model_dump()
+    assert expected_shigella == result.model_dump()

@@ -14,7 +14,7 @@ from ...models.sample import MethodIndex
 LOG = logging.getLogger(__name__)
 
 
-def parse_shigapass_pred(path: str) -> List[ElementTypeResult]:
+def parse_shigapass_pred(path: str) -> ElementTypeResult:
     """Parse shigapass prediction results."""
     LOG.info("Parsing shigapass prediction")
     cols = {
@@ -34,17 +34,12 @@ def parse_shigapass_pred(path: str) -> List[ElementTypeResult]:
         .rename(columns=cols)
         .replace(np.nan, None)
     )
-    pred_result = []
-    for row_idx in range(len(hits)):
-        shigatype_results = _parse_shigapass_results(hits, row_idx)
-        pred_result.append(
-            MethodIndex(
-                type=TypingMethod.SHIGATYPE,
-                result=shigatype_results,
-                software=Software.SHIGAPASS,
-            )
-        )
-    return pred_result
+    shigatype_results = _parse_shigapass_results(hits, 0)
+    return MethodIndex(
+        type=TypingMethod.SHIGATYPE,
+        result=shigatype_results,
+        software=Software.SHIGAPASS,
+    )
 
 
 def _extract_percentage(rfb_hits: str) -> float:
