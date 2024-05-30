@@ -1,12 +1,13 @@
 """Virulencefinder parser test suite."""
-#import pytest
+# import pytest
 
 from prp.models.sample import MethodIndex
 from prp.models.typing import TypingResultGeneAllele
 from prp.parse.phenotype.virulencefinder import parse_virulencefinder_vir_pred
 from prp.parse.typing import parse_virulencefinder_stx_typing
 
-#@pytest.mark.parametrize("input", indirect=["ecoli_virulencefinder_wo_sxt_path"])
+
+# @pytest.mark.parametrize("input", indirect=["ecoli_virulencefinder_wo_sxt_path"])
 def test_parse_virulencefinder_output(ecoli_virulencefinder_stx_pred_stx_path):
     """Test parsing virulencefinder output json file."""
     result = parse_virulencefinder_vir_pred(ecoli_virulencefinder_stx_pred_stx_path)

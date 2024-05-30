@@ -2,9 +2,12 @@
 
 ### Added
 
-- Added Shigapass output
+- Added Shigapass output.
+- Added tests for the Shigapass parser.
 
 ### Fixed
+
+- Fixed minor issues with the ShigaPass parser.
 
 ### Changed
 

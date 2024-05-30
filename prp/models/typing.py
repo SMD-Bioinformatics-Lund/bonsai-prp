@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import Field
 
 from .base import RWModel
-from .phenotype import SerotypeGene, VirulenceGene, Shigatype
+from .phenotype import SerotypeGene, VirulenceGene
 
 
 class TypingSoftware(Enum):
@@ -73,8 +73,18 @@ class TypingResultCgMlst(ResultMlstBase):
     n_missing: int = Field(0, alias="nNovel")
 
 
-class TypingResultShiga(Shigatype):
-    """Shigatype results"""
+class TypingResultShiga(RWModel):
+    """Container for shigatype gene information"""
+
+    rfb: Optional[str] = None
+    rfb_hits: Optional[float] = None
+    mlst: Optional[str] = None
+    flic: Optional[str] = None
+    crispr: Optional[str] = None
+    ipah: Optional[str] = None
+    predicted_serotype: Optional[str] = None
+    predicted_flex_serotype: Optional[str] = None
+    comments: Optional[str] = None
 
 
 class ResultLineageBase(RWModel):

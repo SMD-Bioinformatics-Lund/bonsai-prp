@@ -1,6 +1,7 @@
 """Test parse variants."""
 from prp.parse.variant import load_variants
 
+
 def test_parse_sv_variants(mtuberculosis_sv_vcf_path):
     """Test loading of varians."""
 
