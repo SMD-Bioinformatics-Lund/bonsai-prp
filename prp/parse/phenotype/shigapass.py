@@ -42,11 +42,11 @@ def parse_shigapass_pred(file: str, element_type: ElementType) -> ElementTypeRes
             pred_result.append(MethodIndex(type=element_type, result=result, software=Software.SHIGAPASS))
     return pred_result
 
-def _extract_percentage(rfb_hits):
-    pattern = r'\((\d+\.\d+)%\)'
+def _extract_percentage(rfb_hits: str) -> float:
+    pattern = r'([0-9\.]+)%'
     match = re.search(pattern, rfb_hits)
     if match:
-        percentile_value = match.group(1)
+        percentile_value = float(match.group(1))
     else:
         percentile_value = 0.0
     return percentile_value
