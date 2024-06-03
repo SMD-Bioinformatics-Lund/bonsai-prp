@@ -61,8 +61,16 @@ def test_create_output_saureus(
             prp_output = json.load(inpt)
         # get prediction softwares in ouptut
         prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
-        # test that resfinder, amrfinder and virulence finder result is in output
+
+        # Test
+        # ====
+
+        # 1. that resfinder, amrfinder and virulence finder result is in output
         assert len({"resfinder", "amrfinder", "virulencefinder"} & prediction_sw) == 3
+
+        # 2. that the output datamodel can be used to format input data as well
+        output_data_model = PipelineResult(**prp_output)
+        assert prp_output == json.loads(output_data_model.model_dump_json())
 
 
 def test_create_output_ecoli(
@@ -127,10 +135,19 @@ def test_create_output_ecoli(
         # test that the correct output was generated
         with open(output_file) as inpt:
             prp_output = json.load(inpt)
+        
         # get prediction softwares in ouptut
         prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
-        # test that resfinder, amrfinder and virulence finder result is in output
+
+        # Test
+        # ====
+
+        # 1. that resfinder, amrfinder and virulence finder result is in output
         assert len({"resfinder", "amrfinder", "virulencefinder"} & prediction_sw) == 3
+
+        # 2. that the output datamodel can be used to format input data as well
+        output_data_model = PipelineResult(**prp_output)
+        assert prp_output == json.loads(output_data_model.model_dump_json())
 
 
 def test_cdm_input_cmd(
@@ -243,5 +260,13 @@ def test_create_output_mtuberculosis(
             prp_output = json.load(inpt)
         # get prediction softwares in ouptut
         prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
-        # test that resfinder, amrfinder and virulence finder result is in output
+
+        # Test
+        # ====
+
+        # 1. that resfinder, amrfinder and virulence finder result is in output
         assert len({"mykrobe", "tbprofiler"} & prediction_sw) == 2
+
+        # 2. that the output datamodel can be used to format input data as well
+        output_data_model = PipelineResult(**prp_output)
+        assert prp_output == json.loads(output_data_model.model_dump_json())
