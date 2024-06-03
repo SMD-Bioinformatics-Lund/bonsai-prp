@@ -1,20 +1,20 @@
 """Datamodels used for prediction results."""
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Literal
 
 from pydantic import BaseModel, Field
 
 from .base import RWModel
 
 
-class SequenceStand(Enum):
+class SequenceStand(str, Enum):
     """Definition of DNA strand."""
 
     FORWARD = "+"
     REVERSE = "-"
 
 
-class PredictionSoftware(Enum):
+class PredictionSoftware(str, Enum):
     """Container for prediciton software names."""
 
     AMRFINDER = "amrfinder"
@@ -25,7 +25,7 @@ class PredictionSoftware(Enum):
     TBPROFILER = "tbprofiler"
 
 
-class VariantType(Enum):
+class VariantType(str, Enum):
     """Types of variants."""
 
     SNV = "SNV"
@@ -34,7 +34,7 @@ class VariantType(Enum):
     STR = "STR"
 
 
-class VariantSubType(Enum):
+class VariantSubType(str, Enum):
     """Variant subtypes."""
 
     INSERTION = "INS"
@@ -47,7 +47,7 @@ class VariantSubType(Enum):
     TRANSLOCATION = "BND"
 
 
-class ElementType(Enum):
+class ElementType(str, Enum):
     """Categories of resistance and virulence genes."""
 
     AMR = "AMR"
@@ -56,7 +56,7 @@ class ElementType(Enum):
     ANTIGEN = "ANTIGEN"
 
 
-class ElementStressSubtype(Enum):
+class ElementStressSubtype(str, Enum):
     """Categories of resistance and virulence genes."""
 
     ACID = "ACID"
@@ -65,14 +65,14 @@ class ElementStressSubtype(Enum):
     HEAT = "HEAT"
 
 
-class ElementAmrSubtype(Enum):
+class ElementAmrSubtype(str, Enum):
     """Categories of resistance genes."""
 
     AMR = "AMR"
     POINT = "POINT"
 
 
-class ElementVirulenceSubtype(Enum):
+class ElementVirulenceSubtype(str, Enum):
     """Categories of resistance and virulence genes."""
 
     VIR = "VIRULENCE"
@@ -80,14 +80,14 @@ class ElementVirulenceSubtype(Enum):
     TOXIN = "TOXIN"
 
 
-class AnnotationType(Enum):
+class AnnotationType(str, Enum):
     """Valid annotation types."""
 
     TOOL = "tool"
     USER = "user"
 
 
-class ElementSerotypeSubtype(Enum):
+class ElementSerotypeSubtype(str, Enum):
     """Categories of serotype genes."""
 
     ANTIGEN = "ANTIGEN"
@@ -167,6 +167,10 @@ class AmrFinderGene(GeneBase):
     )
     query_end_pos: int = Field(default=None, description="End position on the assembly")
     strand: SequenceStand
+
+
+class AmrFinderVirulenceGene(AmrFinderGene):
+    """Container for a virulence gene for AMRfinder."""
 
 
 class AmrFinderResistanceGene(AmrFinderGene):
@@ -254,6 +258,18 @@ class TbProfilerVariant(VariantBase):
     )
 
 
+class VirulenceElementTypeResult(BaseModel):
+    """Phenotype result data model.
+
+    A phenotype result is a generic data structure that stores predicted genes,
+    mutations and phenotyp changes.
+    """
+
+    phenotypes: Dict[str, List[str]]
+    genes: List[AmrFinderVirulenceGene | VirulenceGene]
+    variants: List
+
+
 class ElementTypeResult(BaseModel):
     """Phenotype result data model.
 
@@ -263,6 +279,38 @@ class ElementTypeResult(BaseModel):
 
     phenotypes: Dict[str, List[str]]
     genes: List[
-        Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene, VirulenceGene]
+        Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene]
     ]
     variants: List[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]
+
+
+class AMRMethodIndex(RWModel):
+    """Container for key-value lookup of analytical results."""
+
+    type: Literal[ElementType.AMR]
+    software: PredictionSoftware
+    result: ElementTypeResult
+
+
+class AntigenMethodIndex(RWModel):
+    """Container for key-value lookup of analytical results."""
+
+    type: Literal[ElementType.ANTIGEN]
+    software: PredictionSoftware
+    result: ElementTypeResult
+
+
+class StressMethodIndex(RWModel):
+    """Container for key-value lookup of analytical results."""
+
+    type: Literal[ElementType.STRESS]
+    software: PredictionSoftware
+    result: ElementTypeResult
+
+
+class VirulenceMethodIndex(RWModel):
+    """Container for key-value lookup of analytical results."""
+
+    type: Literal[ElementType.VIR]
+    software: PredictionSoftware
+    result: VirulenceElementTypeResult

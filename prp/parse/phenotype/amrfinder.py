@@ -3,17 +3,21 @@ import logging
 from typing import Tuple
 
 import pandas as pd
+import numpy as np
 
 from ...models.phenotype import (
-    AmrFinderGene,
+    AmrFinderVirulenceGene,
     AmrFinderResistanceGene,
     AnnotationType,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
+    VirulenceElementTypeResult,
+    AMRMethodIndex,
+    StressMethodIndex,
+    VirulenceMethodIndex,
 )
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
 
@@ -86,12 +90,12 @@ def _parse_amrfinder_amr_results(
     return ElementTypeResult(phenotypes=sr_profile, genes=genes, variants=[])
 
 
-def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> ElementTypeResult:
+def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> AMRMethodIndex:
     """Parse amrfinder resistance prediction results."""
     LOG.info("Parsing amrfinder amr prediction")
-    with open(file, "rb") as tsvfile:
-        hits = pd.read_csv(tsvfile, delimiter="\t")
-        hits = hits.rename(
+    hits = (
+        pd.read_csv(file, delimiter="\t")
+        .rename(
             columns={
                 "Contig id": "contig_id",
                 "Gene symbol": "gene_symbol",
@@ -107,21 +111,26 @@ def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> ElementTyp
                 "Name of closest sequence": "close_seq_name",
             }
         )
-        hits = hits.drop(columns=["Protein identifier", "HMM id", "HMM description"])
-        hits = hits.where(pd.notnull(hits), None)
-        # group predictions based on their element type
-        predictions = hits.loc[
-            lambda row: row.element_type == element_type.value
+        .drop(columns=["Protein identifier", "HMM id", "HMM description"])
+        .replace(np.nan, None)
+    )
+    # group predictions based on their element type
+    predictions = hits.loc[
+        lambda row: row.element_type == element_type.value
         ].to_dict(orient="records")
-        results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
-    return MethodIndex(type=element_type, result=results, software=Software.AMRFINDER)
+    results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
+    if element_type == ElementType.AMR:
+        result = AMRMethodIndex(type=element_type, result=results, software=Software.AMRFINDER)
+    else:
+        result = StressMethodIndex(type=element_type, result=results, software=Software.AMRFINDER)
+    return result
 
 
-def _parse_amrfinder_vir_results(predictions: dict) -> ElementTypeResult:
+def _parse_amrfinder_vir_results(predictions: dict) -> VirulenceElementTypeResult:
     """Parse amrfinder prediction results from amrfinderplus."""
     genes = []
     for prediction in predictions:
-        gene = AmrFinderGene(
+        gene = AmrFinderVirulenceGene(
             # info
             gene_symbol=prediction["gene_symbol"],
             accession=prediction["close_seq_accn"],
@@ -144,15 +153,15 @@ def _parse_amrfinder_vir_results(predictions: dict) -> ElementTypeResult:
         genes.append(gene)
     # sort genes
     genes = sorted(genes, key=lambda entry: (entry.gene_symbol, entry.coverage))
-    return ElementTypeResult(phenotypes={}, genes=genes, variants=[])
+    return VirulenceElementTypeResult(phenotypes={}, genes=genes, variants=[])
 
 
-def parse_amrfinder_vir_pred(file: str):
+def parse_amrfinder_vir_pred(file: str) -> VirulenceMethodIndex:
     """Parse amrfinder virulence prediction results."""
     LOG.info("Parsing amrfinder virulence prediction")
-    with open(file, "rb") as tsvfile:
-        hits = pd.read_csv(tsvfile, delimiter="\t")
-        hits = hits.rename(
+    hits = (
+        pd.read_csv(file, delimiter="\t")
+        .rename(
             columns={
                 "Contig id": "contig_id",
                 "Gene symbol": "gene_symbol",
@@ -168,12 +177,13 @@ def parse_amrfinder_vir_pred(file: str):
                 "Name of closest sequence": "close_seq_name",
             }
         )
-        hits = hits.drop(columns=["Protein identifier", "HMM id", "HMM description"])
-        hits = hits.where(pd.notnull(hits), None)
-        predictions = hits[hits["element_type"] == "VIRULENCE"].to_dict(
-            orient="records"
-        )
-        results: ElementTypeResult = _parse_amrfinder_vir_results(predictions)
-    return MethodIndex(
+        .drop(columns=["Protein identifier", "HMM id", "HMM description"])
+        .replace(np.nan, None)
+    )
+    predictions = hits[hits["element_type"] == "VIRULENCE"].to_dict(
+        orient="records"
+    )
+    results: VirulenceElementTypeResult = _parse_amrfinder_vir_results(predictions)
+    return VirulenceMethodIndex(
         type=ElementType.VIR, software=Software.AMRFINDER, result=results
     )

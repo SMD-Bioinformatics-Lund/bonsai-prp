@@ -8,10 +8,10 @@ from ...models.phenotype import (
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
+    AMRMethodIndex,
 )
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import TbProfilerVariant, VariantSubType, VariantType
-from ...models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
 
@@ -164,6 +164,6 @@ def parse_tbprofiler_amr_pred(
         genes=[],
         variants=_parse_tbprofiler_amr_variants(prediction),
     )
-    return MethodIndex(
+    return AMRMethodIndex(
         type=ElementType.AMR, software=Software.TBPROFILER, result=resistance
     )

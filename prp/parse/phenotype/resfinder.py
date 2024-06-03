@@ -11,6 +11,8 @@ from ...models.phenotype import (
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
+    AMRMethodIndex,
+    StressMethodIndex,
 )
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import (
@@ -19,7 +21,6 @@ from ...models.phenotype import (
     VariantSubType,
     VariantType,
 )
-from ...models.sample import MethodIndex
 from ..utils import get_nt_change
 
 LOG = logging.getLogger(__name__)
@@ -356,7 +357,7 @@ def _parse_resfinder_amr_variants(
 
 def parse_resfinder_amr_pred(
     prediction: Dict[str, Any], resistance_category: ElementType
-) -> Tuple[SoupVersions, ElementTypeResult]:
+) -> AMRMethodIndex:
     """Parse resfinder resistance prediction results."""
     # resfinder missclassifies resistance the param amr_category by setting all to amr
     LOG.info("Parsing resistance prediction")
@@ -375,6 +376,11 @@ def parse_resfinder_amr_pred(
     resistance = ElementTypeResult(
         phenotypes=sr_profile, genes=res_genes, variants=res_mut
     )
-    return MethodIndex(
-        type=resistance_category, software=Software.RESFINDER, result=resistance
-    )
+    if resistance_category == ElementType.AMR:
+        return AMRMethodIndex(
+            type=resistance_category, software=Software.RESFINDER, result=resistance
+        )
+    else:
+        return StressMethodIndex(
+            type=resistance_category, software=Software.RESFINDER, result=resistance
+        )

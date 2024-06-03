@@ -9,6 +9,7 @@ from ...models.phenotype import (
     ElementTypeResult,
     MykrobeVariant,
     PhenotypeInfo,
+    AMRMethodIndex,
 )
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import VariantSubType, VariantType
@@ -142,7 +143,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
     return variants
 
 
-def parse_mykrobe_amr_pred(prediction: Dict[str, Any]) -> ElementTypeResult | None:
+def parse_mykrobe_amr_pred(prediction: Dict[str, Any]) -> AMRMethodIndex | None:
     """Parse mykrobe resistance prediction results."""
     LOG.info("Parsing mykrobe prediction")
     resistance = ElementTypeResult(
@@ -155,7 +156,7 @@ def parse_mykrobe_amr_pred(prediction: Dict[str, Any]) -> ElementTypeResult | No
     if is_prediction_result_empty(resistance):
         result = None
     else:
-        result = MethodIndex(
+        result = AMRMethodIndex(
             type=ElementType.AMR, software=Software.MYKROBE, result=resistance
         )
     return result

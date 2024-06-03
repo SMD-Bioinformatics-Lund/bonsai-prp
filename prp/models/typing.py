@@ -1,7 +1,7 @@
 """Typing related data models"""
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Literal
 
 from pydantic import Field
 
@@ -9,7 +9,7 @@ from .base import RWModel
 from .phenotype import SerotypeGene, VirulenceGene
 
 
-class TypingSoftware(Enum):
+class TypingSoftware(str, Enum):
     """Container for software names."""
 
     CHEWBBACA = "chewbbaca"
@@ -21,7 +21,7 @@ class TypingSoftware(Enum):
     SHIGAPASS = "shigapass"
 
 
-class TypingMethod(Enum):
+class TypingMethod(str, Enum):
     """Valid typing methods."""
 
     MLST = "mlst"
@@ -85,6 +85,14 @@ class TypingResultShiga(RWModel):
     predicted_serotype: Optional[str] = None
     predicted_flex_serotype: Optional[str] = None
     comments: Optional[str] = None
+
+
+class ShigaTypingMethodIndex(RWModel):
+    """Method Index Shiga."""
+
+    type: Literal[TypingMethod.SHIGATYPE]
+    software: Literal[TypingSoftware.SHIGAPASS]
+    result: TypingResultShiga
 
 
 class ResultLineageBase(RWModel):

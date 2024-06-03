@@ -2,20 +2,17 @@
 
 import logging
 import re
-from typing import List
 
 import numpy as np
 import pandas as pd
 
-from ...models.phenotype import ElementTypeResult
-from ...models.sample import MethodIndex
-from ...models.typing import TypingMethod, TypingResultShiga
+from ...models.typing import TypingMethod, TypingResultShiga, ShigaTypingMethodIndex
 from ...models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 
 
-def parse_shigapass_pred(path: str) -> ElementTypeResult:
+def parse_shigapass_pred(path: str) -> ShigaTypingMethodIndex:
     """Parse shigapass prediction results."""
     LOG.info("Parsing shigapass prediction")
     cols = {
@@ -36,7 +33,7 @@ def parse_shigapass_pred(path: str) -> ElementTypeResult:
         .replace(np.nan, None)
     )
     shigatype_results = _parse_shigapass_results(hits, 0)
-    return MethodIndex(
+    return ShigaTypingMethodIndex(
         type=TypingMethod.SHIGATYPE,
         result=shigatype_results,
         software=Software.SHIGAPASS,

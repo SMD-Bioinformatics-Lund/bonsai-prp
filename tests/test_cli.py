@@ -5,6 +5,11 @@ import json
 from click.testing import CliRunner
 
 from prp.cli import annotate_delly, create_bonsai_input, create_cdm_input
+from prp.models import PipelineResult
+
+from typing import Literal
+from prp.models.base import RWModel
+from prp.models.phenotype import ElementType
 
 
 def test_create_output_saureus(

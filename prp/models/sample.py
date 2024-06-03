@@ -1,11 +1,20 @@
 """Data model definition of input/ output data"""
-from typing import Dict, List, Optional, Union
+
+from typing import Dict, List, Optional, Union, Literal
 
 from pydantic import Field
 
 from .base import RWModel
 from .metadata import RunMetadata
-from .phenotype import ElementType, ElementTypeResult, PredictionSoftware, VariantBase
+from .phenotype import (
+    ElementType,
+    ElementTypeResult,
+    PredictionSoftware,
+    VariantBase,
+    VirulenceMethodIndex,
+    AMRMethodIndex,
+    StressMethodIndex,
+)
 from .qc import QcMethodIndex
 from .species import SppMethodIndex
 from .typing import (
@@ -15,22 +24,20 @@ from .typing import (
     TypingResultCgMlst,
     TypingResultGeneAllele,
     TypingResultMlst,
-    TypingResultShiga,
     TypingSoftware,
+    ShigaTypingMethodIndex,
 )
 
 
 class MethodIndex(RWModel):
     """Container for key-value lookup of analytical results."""
 
-    type: Union[ElementType, TypingMethod]
-    software: PredictionSoftware | TypingSoftware | None
+    type: TypingMethod
+    software: TypingSoftware | None
     result: Union[
-        ElementTypeResult,
         TypingResultMlst,
         TypingResultCgMlst,
         TypingResultGeneAllele,
-        TypingResultShiga,
         TbProfilerLineage,
         ResultLineageBase,
     ]
@@ -57,11 +64,15 @@ class ReferenceGenome(RWModel):
 class PipelineResult(SampleBase):
     """Input format of sample object from pipeline."""
 
-    schema_version: int = Field(..., alias="schemaVersion", gt=0)
+    schema_version: Literal[1] = 1
     # optional typing
-    typing_result: List[MethodIndex] = Field(..., alias="typingResult")
+    typing_result: list[Union[ShigaTypingMethodIndex, MethodIndex]] = Field(
+        ..., alias="typingResult"
+    )
     # optional phenotype prediction
-    element_type_result: List[MethodIndex] = Field(..., alias="elementTypeResult")
+    element_type_result: list[
+        Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, MethodIndex]
+    ] = Field(..., alias="elementTypeResult")
     # optional variant info
     snv_variants: Optional[List[VariantBase]] = None
     sv_variants: Optional[List[VariantBase]] = None
