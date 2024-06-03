@@ -66,3 +66,6 @@ addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 95
 
 [tool.coverage.run]
 source = ["prp"]
+
+[tool.pylint.TYPECHECK]
+generated-members = "pysam.asTuple,pysam.TabixFile,pysam.AlignmentFile"
