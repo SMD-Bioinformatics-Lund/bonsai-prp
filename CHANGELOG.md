@@ -2,9 +2,14 @@
 
 ### Added
 
+- Added additional tests to ensure that Bonsai input data can be re-cast into a `PipelineResult` data format.
+
 ### Fixed
 
 ### Changed
+
+- Fixed some Pylint warnings.
+- Pylint ignores pysam functions since they are generated.
 
 ## [0.9.0]
 
