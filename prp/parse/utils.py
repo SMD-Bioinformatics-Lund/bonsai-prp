@@ -1,7 +1,6 @@
 """Shared utility functions."""
 import os
 from datetime import datetime
-from typing import Dict, List, Tuple
 
 from ..models.phenotype import (
     ElementType,
@@ -31,17 +30,17 @@ def is_prediction_result_empty(result: ElementTypeResult) -> bool:
     return n_entries == 0
 
 
-def get_nt_change(ref_codon: str, alt_codon: str) -> Tuple[str, str]:
+def get_nt_change(ref_codon: str, alt_codon: str) -> tuple[str, str]:
     """Get nucleotide change from codons
 
-    Ref: TCG, Alt: TTG => Tuple[C, T]
+    Ref: TCG, Alt: TTG => tuple[C, T]
 
     :param ref_codon: Reference codeon
     :type ref_codon: str
     :param str: Alternatve codon
     :type str: str
     :return: Returns nucleotide changed from the reference.
-    :rtype: Tuple[str, str]
+    :rtype: tuple[str, str]
     """
     ref_nt = ""
     alt_nt = ""
@@ -114,7 +113,7 @@ def _get_path(symlink_dir: str, subdir: str, filepath: str) -> str:
 
 def parse_input_dir(
     input_dir: str, jasen_dir: str, symlink_dir: str, output_dir: str
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Create a sample input array per sample in directory.
 
     :param input_dir: Input directory path
@@ -126,7 +125,7 @@ def parse_input_dir(
     :param output_dir: Output directory path
     :type output_dir: str
     :return: A list of sample arrays
-    :rtype: List[Dict[str, str]]
+    :rtype: list[dict[str, str]]
     """
     input_arrays = []
     input_dir = input_dir.rstrip("/")
@@ -153,7 +152,7 @@ def create_sample_array(
     sample_id: str,
     symlink_dir: str,
     output_dir: str,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Create an index wiht all sample files.
 
     :param species: species name
@@ -169,7 +168,7 @@ def create_sample_array(
     :param output_dir: Output directory
     :type output_dir: str
     :return: Collection of files used as input
-    :rtype: Dict[str, str]
+    :rtype: dict[str, str]
     """
     output = os.path.abspath(os.path.join(output_dir, f"{sample_id}_result.json"))
     bam = os.path.abspath(os.path.join(input_dir, f"bam/{sample_id}.bam"))

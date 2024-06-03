@@ -1,12 +1,10 @@
 """Species related data models."""
 
 from enum import Enum
-from typing import List
 
 from pydantic import Field
 
 from .base import RWModel
-from .phenotype import ElementTypeResult, PredictionSoftware
 
 
 class TaxLevel(Enum):
@@ -60,4 +58,4 @@ class SppMethodIndex(RWModel):
     """Container for key-value lookup of analytical results."""
 
     software: SppPredictionSoftware
-    result: List[BrackenSpeciesPrediction | MykrobeSpeciesPrediction]
+    result: list[BrackenSpeciesPrediction | MykrobeSpeciesPrediction]

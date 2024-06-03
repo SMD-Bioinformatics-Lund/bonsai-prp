@@ -2,7 +2,10 @@
 # import pytest
 
 from prp.models.typing import TypingResultGeneAllele
-from prp.parse.phenotype.virulencefinder import parse_virulencefinder_vir_pred, VirulenceMethodIndex
+from prp.parse.phenotype.virulencefinder import (
+    VirulenceMethodIndex,
+    parse_virulencefinder_vir_pred,
+)
 from prp.parse.typing import parse_virulencefinder_stx_typing
 
 

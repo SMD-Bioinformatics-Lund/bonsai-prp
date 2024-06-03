@@ -1,7 +1,7 @@
 """Typing related data models"""
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, Literal
+from typing import Any, Literal, Optional, Union
 
 from pydantic import Field
 
@@ -56,7 +56,7 @@ class MlstErrors(str, Enum):
 class ResultMlstBase(RWModel):
     """Base class for storing MLST-like typing results"""
 
-    alleles: Dict[str, Union[int, str, List, None]]
+    alleles: dict[str, Union[int, str, list, None]]
 
 
 class TypingResultMlst(ResultMlstBase):
@@ -110,17 +110,17 @@ class LineageInformation(RWModel):
     family: str | None
     rd: str | None
     fraction: float | None
-    support: List[Dict[str, Any]] | None = None
+    support: list[dict[str, Any]] | None = None
 
 
 class TbProfilerLineage(ResultLineageBase):
     """Base class for storing MLST-like typing results"""
 
-    lineages: List[LineageInformation]
+    lineages: list[LineageInformation]
 
 
 class TypingResultGeneAllele(VirulenceGene, SerotypeGene):
     """Identification of individual gene alleles."""
 
 
-CgmlstAlleles = Dict[str, int | None | ChewbbacaErrors | MlstErrors | List[int]]
+CgmlstAlleles = dict[str, int | None | ChewbbacaErrors | MlstErrors | list[int]]

@@ -1,13 +1,12 @@
 """Test PRP cli functions."""
 
 import json
+from typing import Literal
 
 from click.testing import CliRunner
 
 from prp.cli import annotate_delly, create_bonsai_input, create_cdm_input
 from prp.models import PipelineResult
-
-from typing import Literal
 from prp.models.base import RWModel
 from prp.models.phenotype import ElementType
 
@@ -140,7 +139,7 @@ def test_create_output_ecoli(
         # test that the correct output was generated
         with open(output_file) as inpt:
             prp_output = json.load(inpt)
-        
+
         # get prediction softwares in ouptut
         prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
 

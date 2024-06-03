@@ -1,7 +1,7 @@
 """Parsers for species prediction tools."""
 
 import logging
-from typing import Any, Dict, List
+from typing import Any
 
 import pandas as pd
 
@@ -39,7 +39,7 @@ def parse_kraken_result(file: str, cutoff: float = 0.0001) -> SppMethodIndex:
     )
 
 
-def get_mykrobe_spp_prediction(prediction: List[Dict[str, Any]]) -> SppMethodIndex:
+def get_mykrobe_spp_prediction(prediction: list[dict[str, Any]]) -> SppMethodIndex:
     """Get species prediction result from Mykrobe."""
     LOG.info("Parsing Mykrobe spp result.")
     spp_pred = MykrobeSpeciesPrediction(

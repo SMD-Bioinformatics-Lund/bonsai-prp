@@ -1,8 +1,8 @@
 """Definition of the PRP command-line interface."""
+
 import json
 import logging
 from pathlib import Path
-from typing import List
 
 import click
 import numpy as np
@@ -287,7 +287,7 @@ def create_bonsai_input(
         LOG.info("Parse tbprofiler results")
         with open(tbprofiler, "r", encoding="utf-8") as tbprofiler_json:
             pred_res = json.load(tbprofiler_json)
-            db_info: List[SoupVersion] = []
+            db_info: list[SoupVersion] = []
             db_info = [
                 SoupVersion(
                     name=pred_res["pipeline"]["db_version"]["name"],
@@ -436,7 +436,7 @@ def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
         )
         results.append(n_missing_loci)
     # cast output as pydantic type for easy serialization
-    qc_data = TypeAdapter(List[QcMethodIndex])
+    qc_data = TypeAdapter(list[QcMethodIndex])
 
     LOG.info("Storing results to: %s", output.name)
     output.write(qc_data.dump_json(results, indent=3).decode("utf-8"))

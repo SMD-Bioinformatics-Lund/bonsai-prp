@@ -1,17 +1,21 @@
 """Functions for parsing virulencefinder result."""
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
-from ...models.phenotype import ElementType, VirulenceElementTypeResult, ElementVirulenceSubtype
+from ...models.phenotype import ElementType, ElementVirulenceSubtype
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import VirulenceGene, VirulenceMethodIndex
+from ...models.phenotype import (
+    VirulenceElementTypeResult,
+    VirulenceGene,
+    VirulenceMethodIndex,
+)
 
 LOG = logging.getLogger(__name__)
 
 
 def parse_vir_gene(
-    info: Dict[str, Any], subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR
+    info: dict[str, Any], subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR
 ) -> VirulenceGene:
     """Parse virulence gene prediction results."""
     start_pos, end_pos = map(int, info["position_in_ref"].split(".."))
@@ -73,7 +77,9 @@ def parse_virulencefinder_vir_pred(path: str) -> VirulenceElementTypeResult | No
     with open(path, "rb") as inpt:
         pred = json.load(inpt)
         if "virulencefinder" in pred:
-            results: VirulenceElementTypeResult = _parse_virulencefinder_vir_results(pred)
+            results: VirulenceElementTypeResult = _parse_virulencefinder_vir_results(
+                pred
+            )
             result = VirulenceMethodIndex(
                 type=ElementType.VIR, software=Software.VIRFINDER, result=results
             )

@@ -1,31 +1,28 @@
 """Data model definition of input/ output data"""
 
-from typing import Dict, List, Optional, Union, Literal
+from typing import Literal, Optional, Union
 
 from pydantic import Field
 
 from .base import RWModel
 from .metadata import RunMetadata
 from .phenotype import (
-    ElementType,
-    ElementTypeResult,
-    PredictionSoftware,
-    VariantBase,
-    VirulenceMethodIndex,
     AMRMethodIndex,
     StressMethodIndex,
+    VariantBase,
+    VirulenceMethodIndex,
 )
 from .qc import QcMethodIndex
 from .species import SppMethodIndex
 from .typing import (
     ResultLineageBase,
+    ShigaTypingMethodIndex,
     TbProfilerLineage,
     TypingMethod,
     TypingResultCgMlst,
     TypingResultGeneAllele,
     TypingResultMlst,
     TypingSoftware,
-    ShigaTypingMethodIndex,
 )
 
 
@@ -47,8 +44,8 @@ class SampleBase(RWModel):
     """Base datamodel for sample data structure"""
 
     run_metadata: RunMetadata = Field(..., alias="runMetadata")
-    qc: List[QcMethodIndex] = Field(...)
-    species_prediction: List[SppMethodIndex] = Field(..., alias="speciesPrediction")
+    qc: list[QcMethodIndex] = Field(...)
+    species_prediction: list[SppMethodIndex] = Field(..., alias="speciesPrediction")
 
 
 class ReferenceGenome(RWModel):
@@ -74,9 +71,9 @@ class PipelineResult(SampleBase):
         Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, MethodIndex]
     ] = Field(..., alias="elementTypeResult")
     # optional variant info
-    snv_variants: Optional[List[VariantBase]] = None
-    sv_variants: Optional[List[VariantBase]] = None
+    snv_variants: Optional[list[VariantBase]] = None
+    sv_variants: Optional[list[VariantBase]] = None
     # optional alignment info
     reference_genome: Optional[ReferenceGenome] = None
     read_mapping: Optional[str] = None
-    genome_annotation: Optional[List[Dict[str, str]]] = None
+    genome_annotation: Optional[list[dict[str, str]]] = None

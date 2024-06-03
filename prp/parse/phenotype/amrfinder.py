@@ -1,30 +1,31 @@
 """Parse AMRfinder plus result."""
 import logging
-from typing import Tuple
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from ...models.phenotype import (
-    AmrFinderVirulenceGene,
     AmrFinderResistanceGene,
+    AmrFinderVirulenceGene,
+    AMRMethodIndex,
     AnnotationType,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
-    VirulenceElementTypeResult,
-    AMRMethodIndex,
-    StressMethodIndex,
-    VirulenceMethodIndex,
 )
 from ...models.phenotype import PredictionSoftware as Software
+from ...models.phenotype import (
+    StressMethodIndex,
+    VirulenceElementTypeResult,
+    VirulenceMethodIndex,
+)
 
 LOG = logging.getLogger(__name__)
 
 
 def _parse_amrfinder_amr_results(
     predictions: dict,
-) -> Tuple[AmrFinderResistanceGene, ...]:
+) -> tuple[AmrFinderResistanceGene, ...]:
     """Parse amrfinder prediction results from amrfinderplus."""
     genes = []
     for prediction in predictions:
@@ -115,14 +116,18 @@ def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> AMRMethodI
         .replace(np.nan, None)
     )
     # group predictions based on their element type
-    predictions = hits.loc[
-        lambda row: row.element_type == element_type.value
-        ].to_dict(orient="records")
+    predictions = hits.loc[lambda row: row.element_type == element_type.value].to_dict(
+        orient="records"
+    )
     results: ElementTypeResult = _parse_amrfinder_amr_results(predictions)
     if element_type == ElementType.AMR:
-        result = AMRMethodIndex(type=element_type, result=results, software=Software.AMRFINDER)
+        result = AMRMethodIndex(
+            type=element_type, result=results, software=Software.AMRFINDER
+        )
     else:
-        result = StressMethodIndex(type=element_type, result=results, software=Software.AMRFINDER)
+        result = StressMethodIndex(
+            type=element_type, result=results, software=Software.AMRFINDER
+        )
     return result
 
 
@@ -180,9 +185,7 @@ def parse_amrfinder_vir_pred(file: str) -> VirulenceMethodIndex:
         .drop(columns=["Protein identifier", "HMM id", "HMM description"])
         .replace(np.nan, None)
     )
-    predictions = hits[hits["element_type"] == "VIRULENCE"].to_dict(
-        orient="records"
-    )
+    predictions = hits[hits["element_type"] == "VIRULENCE"].to_dict(orient="records")
     results: VirulenceElementTypeResult = _parse_amrfinder_vir_results(predictions)
     return VirulenceMethodIndex(
         type=ElementType.VIR, software=Software.AMRFINDER, result=results

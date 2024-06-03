@@ -1,14 +1,14 @@
 """Parse TBprofiler result."""
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from ...models.metadata import SoupVersions
 from ...models.phenotype import (
+    AMRMethodIndex,
     AnnotationType,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
-    AMRMethodIndex,
 )
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import TbProfilerVariant, VariantSubType, VariantType
@@ -48,7 +48,7 @@ def _get_tbprofiler_amr_sr_profie(tbprofiler_result):
     return {"susceptible": list(susceptible), "resistant": list(resistant)}
 
 
-def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]:
+def _parse_tbprofiler_amr_variants(predictions) -> tuple[TbProfilerVariant, ...]:
     """Get resistance genes from tbprofiler result."""
     variant_caller = None
     for prog in predictions["pipeline"]["software"]:
@@ -114,13 +114,13 @@ def _parse_tbprofiler_amr_variants(predictions) -> Tuple[TbProfilerVariant, ...]
     return variants
 
 
-def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInfo]:
+def parse_drug_resistance_info(drugs: list[dict[str, str]]) -> list[PhenotypeInfo]:
     """Parse drug info into the standard format.
 
     :param drugs: TbProfiler drug info
-    :type drugs: List[Dict[str, str]]
+    :type drugs: list[dict[str, str]]
     :return: Formatted phenotype info
-    :rtype: List[PhenotypeInfo]
+    :rtype: list[PhenotypeInfo]
     """
     phenotypes = []
     for drug in drugs:
@@ -155,8 +155,8 @@ def parse_drug_resistance_info(drugs: List[Dict[str, str]]) -> List[PhenotypeInf
 
 
 def parse_tbprofiler_amr_pred(
-    prediction: Dict[str, Any]
-) -> Tuple[SoupVersions, ElementTypeResult]:
+    prediction: dict[str, Any]
+) -> tuple[SoupVersions, ElementTypeResult]:
     """Parse tbprofiler resistance prediction results."""
     LOG.info("Parsing tbprofiler prediction")
     resistance = ElementTypeResult(

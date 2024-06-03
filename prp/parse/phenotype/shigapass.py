@@ -6,7 +6,7 @@ import re
 import numpy as np
 import pandas as pd
 
-from ...models.typing import TypingMethod, TypingResultShiga, ShigaTypingMethodIndex
+from ...models.typing import ShigaTypingMethodIndex, TypingMethod, TypingResultShiga
 from ...models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)

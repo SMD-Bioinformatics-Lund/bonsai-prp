@@ -1,6 +1,6 @@
 """Datamodels used for prediction results."""
 from enum import Enum
-from typing import Dict, List, Optional, Union, Literal
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -107,7 +107,7 @@ class PhenotypeInfo(RWModel):
     annotation_type: AnnotationType = Field(..., description="Annotation type")
     annotation_author: str | None = Field(None, description="Annotation author")
     # what information substansiate the annotation
-    reference: List[str] = Field([], description="References supporting trait")
+    reference: list[str] = Field([], description="References supporting trait")
     note: str | None = Field(None, description="Note, can be used for confidence score")
     source: str | None = Field(None, description="Source of variant")
 
@@ -176,13 +176,13 @@ class AmrFinderVirulenceGene(AmrFinderGene):
 class AmrFinderResistanceGene(AmrFinderGene):
     """AMRfinder resistance gene information."""
 
-    phenotypes: List[PhenotypeInfo] = []
+    phenotypes: list[PhenotypeInfo] = []
 
 
 class ResistanceGene(GeneBase):
     """Container for resistance gene information"""
 
-    phenotypes: List[PhenotypeInfo] = []
+    phenotypes: list[PhenotypeInfo] = []
 
 
 class SerotypeGene(GeneBase):
@@ -212,7 +212,7 @@ class VariantBase(RWModel):
     id: int
     variant_type: VariantType
     variant_subtype: VariantSubType
-    phenotypes: List[PhenotypeInfo] = []
+    phenotypes: list[PhenotypeInfo] = []
 
     # variant location
     reference_sequence: str = Field(
@@ -265,9 +265,9 @@ class VirulenceElementTypeResult(BaseModel):
     mutations and phenotyp changes.
     """
 
-    phenotypes: Dict[str, List[str]]
-    genes: List[AmrFinderVirulenceGene | VirulenceGene]
-    variants: List
+    phenotypes: dict[str, list[str]]
+    genes: list[AmrFinderVirulenceGene | VirulenceGene]
+    variants: list
 
 
 class ElementTypeResult(BaseModel):
@@ -277,11 +277,9 @@ class ElementTypeResult(BaseModel):
     mutations and phenotyp changes.
     """
 
-    phenotypes: Dict[str, List[str]]
-    genes: List[
-        Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene]
-    ]
-    variants: List[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]
+    phenotypes: dict[str, list[str]]
+    genes: list[Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene]]
+    variants: list[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]
 
 
 class AMRMethodIndex(RWModel):
