@@ -2,6 +2,14 @@
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [0.9.1]
+
+### Added
+
 - Added additional tests to ensure that Bonsai input data can be re-cast into a `PipelineResult` data format.
 
 ### Fixed
