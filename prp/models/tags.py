@@ -1,7 +1,6 @@
 """Definition of tags."""
 
 from enum import Enum
-from typing import List
 
 from .base import RWModel
 
@@ -50,4 +49,4 @@ class Tag(RWModel):
     severity: TagSeverity
 
 
-TagList = List[Tag]
+TagList = list[Tag]

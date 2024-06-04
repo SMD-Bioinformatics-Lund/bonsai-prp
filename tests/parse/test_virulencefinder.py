@@ -1,9 +1,11 @@
 """Virulencefinder parser test suite."""
 # import pytest
 
-from prp.models.sample import MethodIndex
 from prp.models.typing import TypingResultGeneAllele
-from prp.parse.phenotype.virulencefinder import parse_virulencefinder_vir_pred
+from prp.parse.phenotype.virulencefinder import (
+    VirulenceMethodIndex,
+    parse_virulencefinder_vir_pred,
+)
 from prp.parse.typing import parse_virulencefinder_stx_typing
 
 
@@ -13,7 +15,7 @@ def test_parse_virulencefinder_output(ecoli_virulencefinder_stx_pred_stx_path):
     result = parse_virulencefinder_vir_pred(ecoli_virulencefinder_stx_pred_stx_path)
 
     # test that result is method index
-    assert isinstance(result, MethodIndex)
+    assert isinstance(result, VirulenceMethodIndex)
     # test that all genes are identified
     assert len(result.result.genes) == 26
 

@@ -1,9 +1,11 @@
 """Parse Mykrobe results."""
+
 import logging
 import re
-from typing import Any, Dict, Tuple
+from typing import Any, Union
 
 from ...models.phenotype import (
+    AMRMethodIndex,
     AnnotationType,
     ElementType,
     ElementTypeResult,
@@ -12,7 +14,6 @@ from ...models.phenotype import (
 )
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import VariantSubType, VariantType
-from ...models.sample import MethodIndex
 from ..utils import get_nt_change, is_prediction_result_empty
 
 LOG = logging.getLogger(__name__)
@@ -37,7 +38,7 @@ def _get_mykrobe_amr_sr_profie(mykrobe_result):
     return {"susceptible": list(susceptible), "resistant": list(resistant)}
 
 
-def get_mutation_type(var_nom: str) -> Tuple[VariantSubType, str, str, int]:
+def get_mutation_type(var_nom: str) -> tuple[str, Union[VariantSubType, str, int]]:
     """Extract mutation type from Mykrobe mutation description.
 
     GCG7569GTG -> mutation type, ref_nt, alt_nt, pos
@@ -45,7 +46,7 @@ def get_mutation_type(var_nom: str) -> Tuple[VariantSubType, str, str, int]:
     :param var_nom: Mykrobe mutation description
     :type var_nom: str
     :return: Return variant type, ref_codon, alt_codont and position
-    :rtype: Tuple[VariantSubType, str, str, int]
+    :rtype: dict[str, Union[VariantSubType, str, int]]
     """
     mut_type = None
     ref_codon = None
@@ -69,10 +70,16 @@ def get_mutation_type(var_nom: str) -> Tuple[VariantSubType, str, str, int]:
     else:
         var_type = VariantType.SNV
         var_sub_type = VariantSubType.SUBSTITUTION
-    return var_type, var_sub_type, ref_codon, alt_codon, position
+    return {
+        "type": var_type,
+        "subtype": var_sub_type,
+        "ref": ref_codon,
+        "alt": alt_codon,
+        "pos": position,
+    }
 
 
-def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
+def _parse_mykrobe_amr_variants(mykrobe_result) -> tuple[MykrobeVariant, ...]:
     """Get resistance genes from mykrobe result."""
     results = []
 
@@ -98,40 +105,47 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
         # Mykrobe CSV variant format
         # <gene>_<aa change>-<nt change>:<ref depth>:<alt depth>:<gt confidence>
         # ref: https://github.com/Mykrobe-tools/mykrobe/wiki/AMR-prediction-output
-        pattern = re.compile(r"(.+)_(.+)-(.+):(\d+):(\d+):(\d+)", re.I)
+        pattern = re.compile(
+            r"(?P<gene>.+)_(?P<aa_change>.+)-(?P<dna_change>.+)"
+            r":(?P<ref_depth>\d+):(?P<alt_depth>\d+):(?P<conf>\d+)",
+            re.I,
+        )
         for var_id, variant in enumerate(variants, start=1):
             # extract variant info using regex
-            match = re.search(pattern, variant)
-            gene, aa_change, dna_change, ref_depth, alt_depth, conf = match.groups()
+            match_obj = re.search(pattern, variant).groupdict()
 
             # get type of variant
-            var_type, var_sub_type, ref_aa, alt_aa, _ = get_mutation_type(aa_change)
+            var_aa = get_mutation_type(match_obj["aa_change"])
+            # var_type, var_sub_type, ref_aa, alt_aa, _ = get_mutation_type(aa_change)
 
             # reduce codon to nt change for substitutions
-            _, _, ref_nt, alt_nt, position = get_mutation_type(dna_change)
-            if var_sub_type == VariantSubType.SUBSTITUTION:
+            var_dna = get_mutation_type(match_obj["dna_change"])
+            ref_nt, alt_nt = (var_dna["ref"], var_dna["alt"])
+            if var_aa["subtype"] == VariantSubType.SUBSTITUTION:
                 ref_nt, alt_nt = get_nt_change(ref_nt, alt_nt)
 
             # cast to variant object
+            has_aa_change = all([len(var_aa["ref"]) == 1, len(var_aa["alt"]) == 1])
             variant = MykrobeVariant(
                 # classification
                 id=var_id,
-                variant_type=var_type,
-                variant_subtype=var_sub_type,
+                variant_type=var_aa["type"],
+                variant_subtype=var_aa["subtype"],
                 phenotypes=phenotype,
                 # location
-                reference_sequence=gene,
-                start=position,
-                end=position + len(alt_nt),
+                reference_sequence=match_obj["gene"],
+                start=var_dna["pos"],
+                end=var_dna["pos"] + len(alt_nt),
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
-                ref_aa=ref_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
-                alt_aa=alt_aa if len(ref_aa) == 1 and len(alt_aa) == 1 else None,
+                ref_aa=var_aa["ref"] if has_aa_change else None,
+                alt_aa=var_aa["alt"] if has_aa_change else None,
                 # variant info
                 method=element_type["genotype_model"],
-                depth=int(ref_depth) + int(alt_depth),
-                frequency=int(alt_depth) / (int(ref_depth) + int(alt_depth)),
-                confidence=int(conf),
+                depth=int(match_obj["ref_depth"]) + int(match_obj["alt_depth"]),
+                frequency=int(match_obj["alt_depth"])
+                / (int(match_obj["ref_depth"]) + int(match_obj["alt_depth"])),
+                confidence=int(match_obj["conf"]),
                 passed_qc=True,
             )
             results.append(variant)
@@ -142,7 +156,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> Tuple[MykrobeVariant, ...]:
     return variants
 
 
-def parse_mykrobe_amr_pred(prediction: Dict[str, Any]) -> ElementTypeResult | None:
+def parse_mykrobe_amr_pred(prediction: dict[str, Any]) -> AMRMethodIndex | None:
     """Parse mykrobe resistance prediction results."""
     LOG.info("Parsing mykrobe prediction")
     resistance = ElementTypeResult(
@@ -155,7 +169,7 @@ def parse_mykrobe_amr_pred(prediction: Dict[str, Any]) -> ElementTypeResult | No
     if is_prediction_result_empty(resistance):
         result = None
     else:
-        result = MethodIndex(
+        result = AMRMethodIndex(
             type=ElementType.AMR, software=Software.MYKROBE, result=resistance
         )
     return result

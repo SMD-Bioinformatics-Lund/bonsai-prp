@@ -3,7 +3,6 @@
 import csv
 import json
 import logging
-from typing import List
 
 from ..models.sample import MethodIndex
 from ..models.typing import (
@@ -22,7 +21,7 @@ from .phenotype.virulencefinder import parse_vir_gene
 LOG = logging.getLogger(__name__)
 
 
-def _process_allele_call(allele: str) -> str | List[str] | None:
+def _process_allele_call(allele: str) -> str | list[str] | None:
     if allele.isdigit():
         result = int(allele)
     elif "," in allele:

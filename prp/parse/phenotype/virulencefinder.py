@@ -1,18 +1,21 @@
 """Functions for parsing virulencefinder result."""
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
-from ...models.phenotype import ElementType, ElementTypeResult, ElementVirulenceSubtype
+from ...models.phenotype import ElementType, ElementVirulenceSubtype
 from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import VirulenceGene
-from ...models.sample import MethodIndex
+from ...models.phenotype import (
+    VirulenceElementTypeResult,
+    VirulenceGene,
+    VirulenceMethodIndex,
+)
 
 LOG = logging.getLogger(__name__)
 
 
 def parse_vir_gene(
-    info: Dict[str, Any], subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR
+    info: dict[str, Any], subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR
 ) -> VirulenceGene:
     """Parse virulence gene prediction results."""
     start_pos, end_pos = map(int, info["position_in_ref"].split(".."))
@@ -37,7 +40,7 @@ def parse_vir_gene(
     )
 
 
-def _parse_virulencefinder_vir_results(pred: str) -> ElementTypeResult:
+def _parse_virulencefinder_vir_results(pred: str) -> VirulenceElementTypeResult:
     """Parse virulence prediction results from virulencefinder."""
     # parse virulence finder results
     species = list(k for k in pred["virulencefinder"]["results"])
@@ -59,10 +62,10 @@ def _parse_virulencefinder_vir_results(pred: str) -> ElementTypeResult:
                 vir_genes.append(parse_vir_gene(gene, subtype))
     # sort genes
     genes = sorted(vir_genes, key=lambda entry: (entry.gene_symbol, entry.coverage))
-    return ElementTypeResult(genes=genes, phenotypes={}, variants=[])
+    return VirulenceElementTypeResult(genes=genes, phenotypes={}, variants=[])
 
 
-def parse_virulencefinder_vir_pred(path: str) -> ElementTypeResult | None:
+def parse_virulencefinder_vir_pred(path: str) -> VirulenceElementTypeResult | None:
     """Parse virulencefinder virulence prediction results.
 
     :param file: File name
@@ -74,8 +77,10 @@ def parse_virulencefinder_vir_pred(path: str) -> ElementTypeResult | None:
     with open(path, "rb") as inpt:
         pred = json.load(inpt)
         if "virulencefinder" in pred:
-            results: ElementTypeResult = _parse_virulencefinder_vir_results(pred)
-            result = MethodIndex(
+            results: VirulenceElementTypeResult = _parse_virulencefinder_vir_results(
+                pred
+            )
+            result = VirulenceMethodIndex(
                 type=ElementType.VIR, software=Software.VIRFINDER, result=results
             )
         else:

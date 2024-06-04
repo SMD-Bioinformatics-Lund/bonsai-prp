@@ -1,7 +1,7 @@
 """Typing related data models"""
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from pydantic import Field
 
@@ -9,7 +9,7 @@ from .base import RWModel
 from .phenotype import SerotypeGene, VirulenceGene
 
 
-class TypingSoftware(Enum):
+class TypingSoftware(str, Enum):
     """Container for software names."""
 
     CHEWBBACA = "chewbbaca"
@@ -21,7 +21,7 @@ class TypingSoftware(Enum):
     SHIGAPASS = "shigapass"
 
 
-class TypingMethod(Enum):
+class TypingMethod(str, Enum):
     """Valid typing methods."""
 
     MLST = "mlst"
@@ -56,7 +56,7 @@ class MlstErrors(str, Enum):
 class ResultMlstBase(RWModel):
     """Base class for storing MLST-like typing results"""
 
-    alleles: Dict[str, Union[int, str, List, None]]
+    alleles: dict[str, Union[int, str, list, None]]
 
 
 class TypingResultMlst(ResultMlstBase):
@@ -87,6 +87,14 @@ class TypingResultShiga(RWModel):
     comments: Optional[str] = None
 
 
+class ShigaTypingMethodIndex(RWModel):
+    """Method Index Shiga."""
+
+    type: Literal[TypingMethod.SHIGATYPE]
+    software: Literal[TypingSoftware.SHIGAPASS]
+    result: TypingResultShiga
+
+
 class ResultLineageBase(RWModel):
     """Lineage results"""
 
@@ -102,17 +110,17 @@ class LineageInformation(RWModel):
     family: str | None
     rd: str | None
     fraction: float | None
-    support: List[Dict[str, Any]] | None = None
+    support: list[dict[str, Any]] | None = None
 
 
 class TbProfilerLineage(ResultLineageBase):
     """Base class for storing MLST-like typing results"""
 
-    lineages: List[LineageInformation]
+    lineages: list[LineageInformation]
 
 
 class TypingResultGeneAllele(VirulenceGene, SerotypeGene):
     """Identification of individual gene alleles."""
 
 
-CgmlstAlleles = Dict[str, int | None | ChewbbacaErrors | MlstErrors | List[int]]
+CgmlstAlleles = dict[str, int | None | ChewbbacaErrors | MlstErrors | list[int]]

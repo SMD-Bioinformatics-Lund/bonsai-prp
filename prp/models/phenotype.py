@@ -1,20 +1,20 @@
 """Datamodels used for prediction results."""
 from enum import Enum
-from typing import Dict, List, Optional, Union
+from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Field
 
 from .base import RWModel
 
 
-class SequenceStand(Enum):
+class SequenceStand(str, Enum):
     """Definition of DNA strand."""
 
     FORWARD = "+"
     REVERSE = "-"
 
 
-class PredictionSoftware(Enum):
+class PredictionSoftware(str, Enum):
     """Container for prediciton software names."""
 
     AMRFINDER = "amrfinder"
@@ -25,7 +25,7 @@ class PredictionSoftware(Enum):
     TBPROFILER = "tbprofiler"
 
 
-class VariantType(Enum):
+class VariantType(str, Enum):
     """Types of variants."""
 
     SNV = "SNV"
@@ -34,7 +34,7 @@ class VariantType(Enum):
     STR = "STR"
 
 
-class VariantSubType(Enum):
+class VariantSubType(str, Enum):
     """Variant subtypes."""
 
     INSERTION = "INS"
@@ -47,7 +47,7 @@ class VariantSubType(Enum):
     TRANSLOCATION = "BND"
 
 
-class ElementType(Enum):
+class ElementType(str, Enum):
     """Categories of resistance and virulence genes."""
 
     AMR = "AMR"
@@ -56,7 +56,7 @@ class ElementType(Enum):
     ANTIGEN = "ANTIGEN"
 
 
-class ElementStressSubtype(Enum):
+class ElementStressSubtype(str, Enum):
     """Categories of resistance and virulence genes."""
 
     ACID = "ACID"
@@ -65,14 +65,14 @@ class ElementStressSubtype(Enum):
     HEAT = "HEAT"
 
 
-class ElementAmrSubtype(Enum):
+class ElementAmrSubtype(str, Enum):
     """Categories of resistance genes."""
 
     AMR = "AMR"
     POINT = "POINT"
 
 
-class ElementVirulenceSubtype(Enum):
+class ElementVirulenceSubtype(str, Enum):
     """Categories of resistance and virulence genes."""
 
     VIR = "VIRULENCE"
@@ -80,14 +80,14 @@ class ElementVirulenceSubtype(Enum):
     TOXIN = "TOXIN"
 
 
-class AnnotationType(Enum):
+class AnnotationType(str, Enum):
     """Valid annotation types."""
 
     TOOL = "tool"
     USER = "user"
 
 
-class ElementSerotypeSubtype(Enum):
+class ElementSerotypeSubtype(str, Enum):
     """Categories of serotype genes."""
 
     ANTIGEN = "ANTIGEN"
@@ -107,7 +107,7 @@ class PhenotypeInfo(RWModel):
     annotation_type: AnnotationType = Field(..., description="Annotation type")
     annotation_author: str | None = Field(None, description="Annotation author")
     # what information substansiate the annotation
-    reference: List[str] = Field([], description="References supporting trait")
+    reference: list[str] = Field([], description="References supporting trait")
     note: str | None = Field(None, description="Note, can be used for confidence score")
     source: str | None = Field(None, description="Source of variant")
 
@@ -169,16 +169,20 @@ class AmrFinderGene(GeneBase):
     strand: SequenceStand
 
 
+class AmrFinderVirulenceGene(AmrFinderGene):
+    """Container for a virulence gene for AMRfinder."""
+
+
 class AmrFinderResistanceGene(AmrFinderGene):
     """AMRfinder resistance gene information."""
 
-    phenotypes: List[PhenotypeInfo] = []
+    phenotypes: list[PhenotypeInfo] = []
 
 
 class ResistanceGene(GeneBase):
     """Container for resistance gene information"""
 
-    phenotypes: List[PhenotypeInfo] = []
+    phenotypes: list[PhenotypeInfo] = []
 
 
 class SerotypeGene(GeneBase):
@@ -208,7 +212,7 @@ class VariantBase(RWModel):
     id: int
     variant_type: VariantType
     variant_subtype: VariantSubType
-    phenotypes: List[PhenotypeInfo] = []
+    phenotypes: list[PhenotypeInfo] = []
 
     # variant location
     reference_sequence: str = Field(
@@ -254,6 +258,18 @@ class TbProfilerVariant(VariantBase):
     )
 
 
+class VirulenceElementTypeResult(BaseModel):
+    """Phenotype result data model.
+
+    A phenotype result is a generic data structure that stores predicted genes,
+    mutations and phenotyp changes.
+    """
+
+    phenotypes: dict[str, list[str]]
+    genes: list[AmrFinderVirulenceGene | VirulenceGene]
+    variants: list
+
+
 class ElementTypeResult(BaseModel):
     """Phenotype result data model.
 
@@ -261,8 +277,38 @@ class ElementTypeResult(BaseModel):
     mutations and phenotyp changes.
     """
 
-    phenotypes: Dict[str, List[str]]
-    genes: List[
-        Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene, VirulenceGene]
-    ]
-    variants: List[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]
+    phenotypes: dict[str, list[str]]
+    genes: list[Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene]]
+    variants: list[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]
+
+
+class AMRMethodIndex(RWModel):
+    """Container for key-value lookup of analytical results."""
+
+    type: Literal[ElementType.AMR]
+    software: PredictionSoftware
+    result: ElementTypeResult
+
+
+class AntigenMethodIndex(RWModel):
+    """Container for key-value lookup of analytical results."""
+
+    type: Literal[ElementType.ANTIGEN]
+    software: PredictionSoftware
+    result: ElementTypeResult
+
+
+class StressMethodIndex(RWModel):
+    """Container for key-value lookup of analytical results."""
+
+    type: Literal[ElementType.STRESS]
+    software: PredictionSoftware
+    result: ElementTypeResult
+
+
+class VirulenceMethodIndex(RWModel):
+    """Container for key-value lookup of analytical results."""
+
+    type: Literal[ElementType.VIR]
+    software: PredictionSoftware
+    result: VirulenceElementTypeResult

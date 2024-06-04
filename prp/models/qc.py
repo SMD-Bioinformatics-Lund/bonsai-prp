@@ -1,6 +1,5 @@
 """QC data models."""
 from enum import Enum
-from typing import Dict
 
 from pydantic import BaseModel, Field
 
@@ -36,7 +35,7 @@ class PostAlignQcResult(BaseModel):
     ins_size: int | None = None
     ins_size_dev: int | None = None
     mean_cov: int
-    pct_above_x: Dict[str, float]
+    pct_above_x: dict[str, float]
     n_reads: int
     n_mapped_reads: int
     n_read_pairs: int

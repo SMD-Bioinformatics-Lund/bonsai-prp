@@ -1,7 +1,6 @@
 """Parse metadata passed to pipeline."""
 import json
 import logging
-from typing import List
 
 from Bio import SeqIO
 
@@ -10,13 +9,13 @@ from ..models.metadata import RunInformation, SoupVersion
 LOG = logging.getLogger(__name__)
 
 
-def get_database_info(process_metadata: List[str]) -> List[SoupVersion]:
+def get_database_info(process_metadata: list[str]) -> list[SoupVersion]:
     """Get database or software information.
 
-    :param process_metadata: List of file objects for db records.
-    :type process_metadata: List[str]
+    :param process_metadata: list of file objects for db records.
+    :type process_metadata: list[str]
     :return: Description of software or database version.
-    :rtype: List[SoupVersion]
+    :rtype: list[SoupVersion]
     """
     db_info = []
     for soup_filepath in process_metadata:

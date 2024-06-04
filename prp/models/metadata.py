@@ -1,7 +1,6 @@
 """Metadata models."""
 from datetime import datetime
 from enum import Enum
-from typing import List
 
 from pydantic import BaseModel, Field
 
@@ -34,7 +33,7 @@ class RunInformation(RWModel):
         alias="analysisProfile",
         description="The analysis profile used when starting the pipeline",
     )
-    configuration_files: List[str] = Field(
+    configuration_files: list[str] = Field(
         ..., alias="configurationFiles", description="Nextflow configuration used"
     )
     workflow_name: str
@@ -47,7 +46,7 @@ class RunInformation(RWModel):
     date: datetime
 
 
-SoupVersions = List[SoupVersion]
+SoupVersions = list[SoupVersion]
 
 
 class RunMetadata(BaseModel):

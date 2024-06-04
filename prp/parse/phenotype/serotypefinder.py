@@ -1,6 +1,6 @@
 """Functions for parsing serotypefinder result."""
 import logging
-from typing import Any, Dict
+from typing import Any
 
 from ...models.phenotype import ElementSerotypeSubtype, ElementType, SerotypeGene
 
@@ -8,7 +8,7 @@ LOG = logging.getLogger(__name__)
 
 
 def parse_serotype_gene(
-    info: Dict[str, Any],
+    info: dict[str, Any],
     subtype: ElementSerotypeSubtype = ElementSerotypeSubtype.ANTIGEN,
 ) -> SerotypeGene:
     """Parse serotype gene prediction results."""

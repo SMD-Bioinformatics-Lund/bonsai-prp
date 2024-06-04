@@ -2,7 +2,6 @@
 
 import logging
 import re
-from typing import List
 
 from cyvcf2 import VCF, Variant
 
@@ -60,7 +59,7 @@ def _get_variant_caller(vcf_obj: VCF) -> str | None:
     return None
 
 
-def load_variants(variant_file: str) -> List[VariantBase]:
+def load_variants(variant_file: str) -> list[VariantBase]:
     """Load variants."""
     vcf_obj = VCF(variant_file)
     try:

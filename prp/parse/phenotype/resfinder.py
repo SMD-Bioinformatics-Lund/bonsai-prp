@@ -1,10 +1,10 @@
 """Parse resfinder results."""
 import logging
 from itertools import chain
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
-from ...models.metadata import SoupVersions
 from ...models.phenotype import (
+    AMRMethodIndex,
     AnnotationType,
     ElementAmrSubtype,
     ElementStressSubtype,
@@ -16,10 +16,10 @@ from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import (
     ResfinderGene,
     ResfinderVariant,
+    StressMethodIndex,
     VariantSubType,
     VariantType,
 )
-from ...models.sample import MethodIndex
 from ..utils import get_nt_change
 
 LOG = logging.getLogger(__name__)
@@ -164,7 +164,9 @@ def lookup_antibiotic_class(antibiotic: str) -> str:
         "quinupristin": "streptogramin b",
         "pristinamycin ia": "streptogramin b",
         "virginiamycin s": "streptogramin b",
-        "unknown synthetic derivative of nicotinamide": "synthetic derivative of nicotinamide",
+        "unknown synthetic"
+        "derivative of nicotinamide": "synthetic derivative"
+        " of nicotinamide",
         "pyrazinamide": "synthetic derivative of nicotinamide",
         "unknown tetracycline": "tetracycline",
         "tetracycline": "tetracycline",
@@ -184,7 +186,7 @@ def lookup_antibiotic_class(antibiotic: str) -> str:
 
 
 def _assign_res_subtype(
-    prediction: Dict[str, Any], element_type: ElementType
+    prediction: dict[str, Any], element_type: ElementType
 ) -> ElementStressSubtype | None:
     """Assign element subtype from resfindere prediction."""
     assigned_subtype = None
@@ -223,7 +225,7 @@ def _get_resfinder_amr_sr_profie(resfinder_result, limit_to_phenotypes=None):
 
 def _parse_resfinder_amr_genes(
     resfinder_result, limit_to_phenotypes=None
-) -> List[ResfinderGene]:
+) -> list[ResfinderGene]:
     """Get resistance genes from resfinder result."""
     results = []
     for info in resfinder_result["seq_regions"].values():
@@ -283,7 +285,7 @@ def _parse_resfinder_amr_genes(
 
 def _parse_resfinder_amr_variants(
     resfinder_result, limit_to_phenotypes=None
-) -> Tuple[ResfinderVariant, ...]:
+) -> tuple[ResfinderVariant, ...]:
     """Get resistance genes from resfinder result."""
     # get prediction method
     prediction_method = None
@@ -355,8 +357,8 @@ def _parse_resfinder_amr_variants(
 
 
 def parse_resfinder_amr_pred(
-    prediction: Dict[str, Any], resistance_category: ElementType
-) -> Tuple[SoupVersions, ElementTypeResult]:
+    prediction: dict[str, Any], resistance_category: ElementType
+) -> AMRMethodIndex:
     """Parse resfinder resistance prediction results."""
     # resfinder missclassifies resistance the param amr_category by setting all to amr
     LOG.info("Parsing resistance prediction")
@@ -375,6 +377,11 @@ def parse_resfinder_amr_pred(
     resistance = ElementTypeResult(
         phenotypes=sr_profile, genes=res_genes, variants=res_mut
     )
-    return MethodIndex(
+    if resistance_category == ElementType.AMR:
+        return AMRMethodIndex(
+            type=resistance_category, software=Software.RESFINDER, result=resistance
+        )
+
+    return StressMethodIndex(
         type=resistance_category, software=Software.RESFINDER, result=resistance
     )
