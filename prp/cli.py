@@ -121,7 +121,7 @@ def cli():
 )
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
 @click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
-@click.option("--symlink_dir", type=click.Path(), help="Dir for symlink")
+@click.option("--symlink-dir", type=click.Path(), help="Dir for symlink")
 @click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
     "-o", "--output", required=True, type=click.Path(), help="output filepath"
@@ -366,7 +366,7 @@ def create_bonsai_input(
 )
 @click.option(
     "-s",
-    "--symlink_dir",
+    "--symlink-dir",
     required=False,
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
     help="Path to symlink directory",
