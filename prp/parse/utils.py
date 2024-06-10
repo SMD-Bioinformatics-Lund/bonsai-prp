@@ -105,7 +105,7 @@ def get_db_version(db_version: dict) -> str:
 def _get_path(symlink_dir: str, subdir: str, filepath: str) -> str:
     """Get absolute/symlink path"""
     return (
-        os.path.join(symlink_dir, subdir, filepath)
+        os.path.join(symlink_dir, subdir, os.path.basename(filepath))
         if symlink_dir
         else os.path.realpath(filepath)
     )

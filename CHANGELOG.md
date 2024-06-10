@@ -4,31 +4,35 @@
 
 ### Fixed
 
+ - Changed `--symlink_dir` to `--symlink-dir` for consistency
+
 ### Changed
+
+ - Use `basename` when `symlink_dir` provided
 
 ## [0.9.1]
 
 ### Added
 
-- Added additional tests to ensure that Bonsai input data can be re-cast into a `PipelineResult` data format.
+ - Added additional tests to ensure that Bonsai input data can be re-cast into a `PipelineResult` data format.
 
 ### Fixed
 
 ### Changed
 
-- Fixed some Pylint warnings.
-- Pylint ignores pysam functions since they are generated.
+ - Fixed some Pylint warnings.
+ - Pylint ignores pysam functions since they are generated.
 
 ## [0.9.0]
 
 ### Added
 
-- Added Shigapass output
-- Added tests for the Shigapass parser.
+ - Added Shigapass output
+ - Added tests for the Shigapass parser.
 
 ### Fixed
 
-- Fixed minor issues with the ShigaPass parser.
+ - Fixed minor issues with the ShigaPass parser.
 
 ### Changed
 
@@ -38,7 +42,7 @@
 
 ### Fixed
 
-- Reordered lineage data models in the method index.
+ - Reordered lineage data models in the method index.
 
 ### Changed
 
@@ -48,11 +52,11 @@
 
 ### Fixed
 
-- Updated lineage parser to work with TbProfiler v6.2
+ - Updated lineage parser to work with TbProfiler v6.2
 
 ### Changed
 
-- Changes lineage datamodel to reflect changes in TbProfiler output
+ - Changes lineage datamodel to reflect changes in TbProfiler output
 
 ## [0.8.1]
 
