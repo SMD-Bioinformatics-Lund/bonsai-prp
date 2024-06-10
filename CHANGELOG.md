@@ -4,6 +4,14 @@
 
 ### Fixed
 
+### Changed
+
+## [0.9.2]
+
+### Added
+
+### Fixed
+
  - Changed `--symlink_dir` to `--symlink-dir` for consistency
 
 ### Changed
