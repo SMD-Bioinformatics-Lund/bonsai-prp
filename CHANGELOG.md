@@ -2,6 +2,8 @@
 
 ### Added
 
+ - Add `sample_id` to prp output
+
 ### Fixed
 
 ### Changed
