@@ -52,13 +52,16 @@ OUTPUT_SCHEMA_VERSION = 1
 
 @click.group()
 @click.version_option(__version__)
-@click.option("-v", "--verbose", is_flag=True)
-def cli(verbose):
+@click.option("-s", "--silent", is_flag=True)
+@click.option("-d", "--debug", is_flag=True)
+def cli(silent, debug):
     """Jasen pipeline result processing tool."""
-    if verbose:
-        log_level = logging.INFO
-    else:
+    if silent:
         log_level = logging.WARNING
+    elif debug:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
     # configure logging
     logging.basicConfig(
         level=log_level, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
