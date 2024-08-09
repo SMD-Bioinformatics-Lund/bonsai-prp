@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Added
+ - Added flag to set verbosity level.
 
 ### Fixed
 
