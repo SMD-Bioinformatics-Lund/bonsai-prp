@@ -14,6 +14,7 @@ from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import TbProfilerVariant, VariantSubType, VariantType
 
 LOG = logging.getLogger(__name__)
+EXPECTED_SCHEMA_VERSION = "1.0.0"
 
 
 def _get_tbprofiler_amr_sr_profie(tbprofiler_result):

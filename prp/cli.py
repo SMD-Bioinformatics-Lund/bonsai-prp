@@ -37,14 +37,14 @@ from .parse import (
     parse_virulencefinder_stx_typing,
     parse_virulencefinder_vir_pred,
 )
+from .parse.phenotype.tbprofiler import (
+    EXPECTED_SCHEMA_VERSION as EXPECTED_TBPROFILER_SCHEMA_VERSION,
+)
 from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
 from .parse.species import get_mykrobe_spp_prediction
 from .parse.utils import _get_path, get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
 
-logging.basicConfig(
-    level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
-)
 LOG = logging.getLogger(__name__)
 
 OUTPUT_SCHEMA_VERSION = 1
@@ -296,6 +296,15 @@ def create_bonsai_input(
         LOG.info("Parse tbprofiler results")
         with open(tbprofiler, "r", encoding="utf-8") as tbprofiler_json:
             pred_res = json.load(tbprofiler_json)
+            # check schema version
+            schema_version = pred_res.get("schema_version")
+            if not EXPECTED_TBPROFILER_SCHEMA_VERSION == schema_version:
+                LOG.warning(
+                    "Unsupported TbProfiler schema version - output might be inaccurate; result schema: %s; expected: %s",
+                    schema_version,
+                    EXPECTED_TBPROFILER_SCHEMA_VERSION,
+                )
+            # store pipeline version
             db_info: list[SoupVersion] = []
             db_info = [
                 SoupVersion(

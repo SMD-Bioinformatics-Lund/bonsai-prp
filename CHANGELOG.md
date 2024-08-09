@@ -1,7 +1,9 @@
 ## [Unreleased]
 
 ### Added
+
  - Added flag to set verbosity level.
+ - Validate TbProfiler schema version.
 
 ### Fixed
 
