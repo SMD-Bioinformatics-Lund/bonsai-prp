@@ -5,7 +5,12 @@ from typing import Literal
 
 from click.testing import CliRunner
 
-from prp.cli import annotate_delly, create_bonsai_input, create_cdm_input
+from prp.cli import (
+    annotate_delly,
+    create_bonsai_input,
+    create_cdm_input,
+    add_igv_annotation_track,
+)
 from prp.models import PipelineResult
 from prp.models.base import RWModel
 from prp.models.phenotype import ElementType
@@ -214,6 +219,41 @@ def test_annotate_delly(
             test_contents = test_annotated_delly_output.read()
             expected_contents = annotated_delly_output.read()
             assert test_contents == expected_contents
+
+
+def test_add_igv_annotation_track(mtuberculosis_snv_vcf_path, simple_pipeline_result):
+    """Test command for adding IGV annotation track to a result file."""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result_fname = "before_update.json"
+        # write fixture to file
+        with open(result_fname, "w") as outp:
+            outp.write(simple_pipeline_result.model_dump_json())
+
+        output_fname = "after_update.json"
+        args = [
+            "--name",
+            "snv",
+            "--annotation-file",
+            mtuberculosis_snv_vcf_path,
+            "--result",
+            result_fname,
+            output_fname,
+        ]
+        result = runner.invoke(add_igv_annotation_track, args)
+
+        # test successful execution of command
+        assert result.exit_code == 0
+
+        # test correct output format
+        with open(output_fname, "r", encoding="utf-8") as file_after:
+            test_file_after = json.load(file_after)
+            n_tracks_before = (
+                0
+                if simple_pipeline_result.genome_annotation is None
+                else len(simple_pipeline_result.genome_annotation)
+            )
+            assert len(test_file_after["genome_annotation"]) == n_tracks_before + 1
 
 
 def test_create_output_mtuberculosis(
