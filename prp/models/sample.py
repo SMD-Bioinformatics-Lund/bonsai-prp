@@ -59,6 +59,13 @@ class ReferenceGenome(RWModel):
     genes: str
 
 
+class IgvAnnotationTrack(RWModel):
+    """IGV annotation track data."""
+
+    name: str  # track name to display
+    file: str  # path to the annotation file
+
+
 class PipelineResult(SampleBase):
     """Input format of sample object from pipeline."""
 
@@ -77,4 +84,4 @@ class PipelineResult(SampleBase):
     # optional alignment info
     reference_genome: Optional[ReferenceGenome] = None
     read_mapping: Optional[str] = None
-    genome_annotation: Optional[list[dict[str, str]]] = None
+    genome_annotation: Optional[list[IgvAnnotationTrack]] = None
