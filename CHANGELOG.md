@@ -4,6 +4,7 @@
 
  - Added flag to set verbosity level.
  - Validate TbProfiler schema version.
+ - Added CLI command for adding IGV annotation tracks
 
 ### Fixed
 
