@@ -542,3 +542,41 @@ def annotate_delly(vcf, bed, output):
     annotate_delly_variants(writer, vcf_obj, annotation, annot_chrom=annot_chrom)
 
     click.secho(f"Wrote annotated delly variants to {output}", fg="green")
+
+
+@cli.command()
+@click.option("-n", "--name", type=str, help="Track name.")
+@click.option(
+    "-a", "--annotation-file", type=click.Path(exists=True), help="Path to file."
+)
+@click.option(
+    "-r",
+    "--result",
+    required=True,
+    type=click.Path(writable=True),
+    help="PRP result.",
+)
+@click.argument("output", type=click.File("w"))
+def add_igv_annotation_track(name, annotation_file, result, output):
+    """Add IGV annotation track to result."""
+    with open(result, "r", encoding="utf-8") as jfile:
+        result_obj = PipelineResult(**json.load(jfile))
+
+    # Get genome annotation
+    if result_obj.genome_annotation is None or isinstance(
+        result_obj.genome_annotation, list
+    ):
+        track_info = []
+    else:
+        track_info = result.genome_annotation
+
+    # add new tracks
+    track_info.append({"name": name, "file": annotation_file})
+
+    # update data model
+    upd_result = result_obj.model_copy(update={"genome_annotation": track_info})
+
+    # overwrite result
+    output.write(upd_result.model_dump_json(indent=3))
+
+    click.secho(f"Wrote updated result to {output}", fg="green")
