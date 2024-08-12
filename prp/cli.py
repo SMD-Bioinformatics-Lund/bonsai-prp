@@ -37,14 +37,14 @@ from .parse import (
     parse_virulencefinder_stx_typing,
     parse_virulencefinder_vir_pred,
 )
+from .parse.phenotype.tbprofiler import (
+    EXPECTED_SCHEMA_VERSION as EXPECTED_TBPROFILER_SCHEMA_VERSION,
+)
 from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
 from .parse.species import get_mykrobe_spp_prediction
 from .parse.utils import _get_path, get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
 
-logging.basicConfig(
-    level=logging.INFO, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
-)
 LOG = logging.getLogger(__name__)
 
 OUTPUT_SCHEMA_VERSION = 1
@@ -52,8 +52,20 @@ OUTPUT_SCHEMA_VERSION = 1
 
 @click.group()
 @click.version_option(__version__)
-def cli():
+@click.option("-s", "--silent", is_flag=True)
+@click.option("-d", "--debug", is_flag=True)
+def cli(silent, debug):
     """Jasen pipeline result processing tool."""
+    if silent:
+        log_level = logging.WARNING
+    elif debug:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+    # configure logging
+    logging.basicConfig(
+        level=log_level, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+    )
 
 
 @cli.command()
@@ -287,6 +299,15 @@ def create_bonsai_input(
         LOG.info("Parse tbprofiler results")
         with open(tbprofiler, "r", encoding="utf-8") as tbprofiler_json:
             pred_res = json.load(tbprofiler_json)
+            # check schema version
+            schema_version = pred_res.get("schema_version")
+            if not EXPECTED_TBPROFILER_SCHEMA_VERSION == schema_version:
+                LOG.warning(
+                    "Unsupported TbProfiler schema version - output might be inaccurate; result schema: %s; expected: %s",
+                    schema_version,
+                    EXPECTED_TBPROFILER_SCHEMA_VERSION,
+                )
+            # store pipeline version
             db_info: list[SoupVersion] = []
             db_info = [
                 SoupVersion(
@@ -521,3 +542,41 @@ def annotate_delly(vcf, bed, output):
     annotate_delly_variants(writer, vcf_obj, annotation, annot_chrom=annot_chrom)
 
     click.secho(f"Wrote annotated delly variants to {output}", fg="green")
+
+
+@cli.command()
+@click.option("-n", "--name", type=str, help="Track name.")
+@click.option(
+    "-a", "--annotation-file", type=click.Path(exists=True), help="Path to file."
+)
+@click.option(
+    "-r",
+    "--result",
+    required=True,
+    type=click.Path(writable=True),
+    help="PRP result.",
+)
+@click.argument("output", type=click.File("w"))
+def add_igv_annotation_track(name, annotation_file, result, output):
+    """Add IGV annotation track to result."""
+    with open(result, "r", encoding="utf-8") as jfile:
+        result_obj = PipelineResult(**json.load(jfile))
+
+    # Get genome annotation
+    if result_obj.genome_annotation is None or isinstance(
+        result_obj.genome_annotation, list
+    ):
+        track_info = []
+    else:
+        track_info = result.genome_annotation
+
+    # add new tracks
+    track_info.append({"name": name, "file": annotation_file})
+
+    # update data model
+    upd_result = result_obj.model_copy(update={"genome_annotation": track_info})
+
+    # overwrite result
+    output.write(upd_result.model_dump_json(indent=3))
+
+    click.secho(f"Wrote updated result to {output}", fg="green")
