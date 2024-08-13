@@ -10,6 +10,8 @@
 
 ### Changed
 
+ - Updated sample metadata in the output format. RunMetadata was split into two fields, one for sequencing and one for pipeline information. Lims id and sample name are now included in the SampleBase object.
+
 ## [0.9.3]
 
 ### Added
