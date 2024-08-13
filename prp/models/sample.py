@@ -5,7 +5,7 @@ from typing import Literal, Optional, Union
 from pydantic import Field
 
 from .base import RWModel
-from .metadata import RunMetadata
+from .metadata import SequencingInfo, PipelineInfo
 from .phenotype import (
     AMRMethodIndex,
     StressMethodIndex,
@@ -44,8 +44,17 @@ class SampleBase(RWModel):
     """Base datamodel for sample data structure"""
 
     sample_id: str = Field(..., alias="sampleId", min_length=3, max_length=100)
-    run_metadata: RunMetadata = Field(..., alias="runMetadata")
+    sample_name: str
+    lims_id: str
+
+    # metadata
+    sequencing: SequencingInfo
+    pipeline: PipelineInfo
+
+    # quality
     qc: list[QcMethodIndex] = Field(...)
+
+    # species identification
     species_prediction: list[SppMethodIndex] = Field(..., alias="speciesPrediction")
 
 

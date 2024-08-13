@@ -2,7 +2,7 @@
 import logging
 from typing import Any
 
-from ...models.metadata import SoupVersions
+from ...models.metadata import SoupVersion
 from ...models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
@@ -157,7 +157,7 @@ def parse_drug_resistance_info(drugs: list[dict[str, str]]) -> list[PhenotypeInf
 
 def parse_tbprofiler_amr_pred(
     prediction: dict[str, Any]
-) -> tuple[SoupVersions, ElementTypeResult]:
+) -> tuple[tuple[SoupVersion, ...], ElementTypeResult]:
     """Parse tbprofiler resistance prediction results."""
     LOG.info("Parsing tbprofiler prediction")
     resistance = ElementTypeResult(

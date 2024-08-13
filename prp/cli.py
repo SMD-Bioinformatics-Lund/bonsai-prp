@@ -166,14 +166,15 @@ def create_bonsai_input(
 ):  # pylint: disable=too-many-arguments
     """Combine pipeline results into a standardized json output file."""
     LOG.info("Start generating pipeline result json")
+    # Get basic sample object
+    sample_info, seq_info, pipeline_info = parse_run_info(run_metadata, process_metadata)
     results = {
-        "run_metadata": {
-            "run": parse_run_info(run_metadata),
-            "databases": get_database_info(process_metadata),
-        },
+        "sequencing": seq_info,
+        "pipeline": pipeline_info,
         "qc": [],
         "typing_result": [],
         "element_type_result": [],
+        **sample_info  # add sample_name & lims_id
     }
     # qc
     if quast:
@@ -274,8 +275,8 @@ def create_bonsai_input(
             )
             raise click.Abort()
 
-        # add mykrobe db version
-        results["run_metadata"]["databases"].append(
+        # add mykrobe db version to the list of softwares
+        results['pipeline'].softwares.append(
             SoupVersion(
                 name="mykrobe-predictor",
                 version=pred_res[0]["mykrobe_version"],
@@ -316,7 +317,7 @@ def create_bonsai_input(
                     type=SoupType.DB,
                 )
             ]
-            results["run_metadata"]["databases"].extend(db_info)
+            sw_list = results["pipeline"].softwares.extend(db_info)
             lin_res: MethodIndex = parse_tbprofiler_lineage_results(pred_res)
             results["typing_result"].append(lin_res)
             amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res)
@@ -361,7 +362,7 @@ def create_bonsai_input(
             sample_id=sample_id, schema_version=OUTPUT_SCHEMA_VERSION, **results
         )
     except ValidationError as err:
-        click.secho("Input failed Validation", fg="red")
+        click.secho("Generated result failed validation", fg="red")
         click.secho(err)
         raise click.Abort
     LOG.info("Storing results to: %s", output)
