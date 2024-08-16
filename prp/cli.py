@@ -562,17 +562,18 @@ def annotate_delly(vcf, bed, output):
 )
 @click.argument("output", type=click.File("w"))
 def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, output):
-    """Add IGV annotation track to result."""
+    """Add IGV annotation track to result (bonsai input file)."""
     with open(bonsai_input_file, "r", encoding="utf-8") as jfile:
         result_obj = PipelineResult(**json.load(jfile))
+    print(result_obj.genome_annotation)
 
     # Get genome annotation
-    if result_obj.genome_annotation is None or isinstance(
+    if not isinstance(
         result_obj.genome_annotation, list
     ):
         track_info = []
     else:
-        track_info = bonsai_input_file.genome_annotation
+        track_info = result_obj.genome_annotation
 
     # add new tracks
     track_info.append({"name": track_name, "file": annotation_file})
