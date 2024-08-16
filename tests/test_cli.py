@@ -232,11 +232,11 @@ def test_add_igv_annotation_track(mtuberculosis_snv_vcf_path, simple_pipeline_re
 
         output_fname = "after_update.json"
         args = [
-            "--name",
+            "--track-name",
             "snv",
             "--annotation-file",
             mtuberculosis_snv_vcf_path,
-            "--result",
+            "--bonsai-input-file",
             result_fname,
             output_fname,
         ]
