@@ -131,6 +131,7 @@ def cli(silent, debug):
     multiple=True,
     help="Genome annotations bed format",
 )
+@click.option("--vcf", type=click.Path(), help="VCF filepath")
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
 @click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
 @click.option("--symlink-dir", type=click.Path(), help="Dir for symlink")
@@ -158,6 +159,7 @@ def create_bonsai_input(
     reference_genome_fasta,
     reference_genome_gff,
     genome_annotation,
+    vcf,
     snv_vcf,
     sv_vcf,
     symlink_dir,
@@ -349,11 +351,12 @@ def create_bonsai_input(
             {"name": f"annotation_{i}", "file": Path(annot).name}
             for i, annot in enumerate(genome_annotation, start=1)
         ]
-        for vcf in [sv_vcf, snv_vcf]:
-            if vcf:
-                vcf = _get_path(symlink_dir, "vcf", vcf)
-                name = "SNV" if vcf == sv_vcf else "SV"
-                annotations.append({"name": name, "file": vcf})
+        vcf_dict = {"SV": sv_vcf, "SNV": snv_vcf, "VCF": vcf}
+        for name in vcf_dict:
+            vcf_filepath = vcf_dict[name]
+            if vcf_filepath:
+                vcf_filepath = _get_path(symlink_dir, "vcf", vcf_filepath)
+                annotations.append({"name": name, "file": vcf_filepath})
         # store annotation results
         results["genome_annotation"] = annotations if annotations else None
 
@@ -546,21 +549,21 @@ def annotate_delly(vcf, bed, output):
 
 
 @cli.command()
-@click.option("-n", "--name", type=str, help="Track name.")
+@click.option("-n", "--track-name", type=str, help="Track name.")
 @click.option(
     "-a", "--annotation-file", type=click.Path(exists=True), help="Path to file."
 )
 @click.option(
-    "-r",
-    "--result",
+    "-b",
+    "--bonsai-input-file",
     required=True,
     type=click.Path(writable=True),
-    help="PRP result.",
+    help="PRP result file (used as bonsai input).",
 )
 @click.argument("output", type=click.File("w"))
-def add_igv_annotation_track(name, annotation_file, result, output):
+def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, output):
     """Add IGV annotation track to result."""
-    with open(result, "r", encoding="utf-8") as jfile:
+    with open(bonsai_input_file, "r", encoding="utf-8") as jfile:
         result_obj = PipelineResult(**json.load(jfile))
 
     # Get genome annotation
@@ -569,10 +572,10 @@ def add_igv_annotation_track(name, annotation_file, result, output):
     ):
         track_info = []
     else:
-        track_info = result.genome_annotation
+        track_info = bonsai_input_file.genome_annotation
 
     # add new tracks
-    track_info.append({"name": name, "file": annotation_file})
+    track_info.append({"name": track_name, "file": annotation_file})
 
     # update data model
     upd_result = result_obj.model_copy(update={"genome_annotation": track_info})
