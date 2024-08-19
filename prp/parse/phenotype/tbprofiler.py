@@ -74,7 +74,7 @@ def _parse_tbprofiler_amr_variants(predictions) -> tuple[TbProfilerVariant, ...]
         for hit in predictions.get(result_type, []):
             ref_nt = hit["ref"]
             alt_nt = hit["alt"]
-            var_type = VariantType.SNV
+            var_type = VariantType.SNV if not bool(hit["sv"]) else VariantType.SV
             if len(ref_nt) == len(alt_nt):
                 var_sub_type = VariantSubType.SUBSTITUTION
             elif len(ref_nt) > len(alt_nt):
