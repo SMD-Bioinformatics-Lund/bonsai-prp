@@ -565,7 +565,6 @@ def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, out
     """Add IGV annotation track to result (bonsai input file)."""
     with open(bonsai_input_file, "r", encoding="utf-8") as jfile:
         result_obj = PipelineResult(**json.load(jfile))
-    print(result_obj.genome_annotation)
 
     # Get genome annotation
     if not isinstance(
