@@ -492,13 +492,20 @@ def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> Non
 @click.option("-v", "--vcf", type=click.Path(exists=True), help="VCF file")
 @click.option("-b", "--bed", type=click.Path(exists=True), help="BED file")
 @click.option(
+    "-b",
+    "--bonsai-input-file",
+    required=True,
+    type=click.Path(writable=True),
+    help="PRP result file (used as bonsai input).",
+)
+@click.option(
     "-o",
     "--output",
     required=True,
     type=click.Path(writable=True),
     help="output filepath",
 )
-def annotate_delly(vcf, bed, output):
+def annotate_delly(vcf, bed, bonsai_input_file, output):
     """Annotate Delly SV varinats with genes in BED file."""
     output = Path(output)
     # load annotation
@@ -542,9 +549,21 @@ def annotate_delly(vcf, bed, output):
     )
 
     # open vcf writer
-    writer = Writer(output.absolute(), vcf_obj)
-    annotate_delly_variants(writer, vcf_obj, annotation, annot_chrom=annot_chrom)
+    with open(bonsai_input_file, "r", encoding="utf-8") as jfile:
+        result_obj = PipelineResult(**json.load(jfile))
 
+    # Get genome annotation
+    if not isinstance(
+        result_obj.sv_variants, list
+    ):
+        sv_variants_info = []
+    else:
+        sv_variants_info = result_obj.sv_variants
+
+    sv_variants = annotate_delly_variants(vcf_obj, annotation, annot_chrom=annot_chrom)
+    sv_variants_info.extend(sv_variants)
+    upd_result = result_obj.model_copy(update={"sv_variants": sv_variants_info})
+    output.write(upd_result.model_dump_json(indent=3))
     click.secho(f"Wrote annotated delly variants to {output}", fg="green")
 
 
@@ -560,7 +579,13 @@ def annotate_delly(vcf, bed, output):
     type=click.Path(writable=True),
     help="PRP result file (used as bonsai input).",
 )
-@click.argument("output", type=click.File("w"))
+@click.option(
+    "-o",
+    "--output",
+    required=True,
+    type=click.Path(writable=True),
+    help="output filepath",
+)
 def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, output):
     """Add IGV annotation track to result (bonsai input file)."""
     with open(bonsai_input_file, "r", encoding="utf-8") as jfile:

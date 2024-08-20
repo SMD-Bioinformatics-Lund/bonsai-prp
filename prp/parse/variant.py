@@ -6,6 +6,7 @@ import re
 from cyvcf2 import VCF, Variant
 
 from prp.models.phenotype import VariantBase, VariantType
+from prp.models.phenotype import TbProfilerVariant, VariantBase, VariantType
 
 LOG = logging.getLogger(__name__)
 SOURCE_PATTERN = r"##source=(.+)\n"
@@ -80,27 +81,63 @@ def load_variants(variant_file: str) -> list[VariantBase]:
     return variants
 
 
-def annotate_delly_variants(writer, vcf, annotation, annot_chrom=False):
+def annotate_delly_variants(vcf, annotation, annot_chrom=False):
     """Annotate a variant called by Delly."""
+    results = []
+    var_id = 1
     locus_tag = 3
     gene_symbol = 4
     # annotate variant
     n_annotated = 0
     for variant in vcf:
-        # update chromosome
-        if annot_chrom:
-            variant.CHROM = annotation.contigs[0]
-        # get genes intersecting with SV
-        genes = [
-            {"gene_symbol": gene[gene_symbol], "locus_tag": gene[locus_tag]}
-            for gene in annotation.fetch(variant.CHROM, variant.start, variant.end)
-        ]
-        # add overlapping genes to INFO
-        if len(genes) > 0:
-            variant.INFO["gene"] = ",".join([gene["gene_symbol"] for gene in genes])
-            variant.INFO["locus_tag"] = ",".join([gene["locus_tag"] for gene in genes])
-            n_annotated += 1
+        var_sub_type = variant.INFO.get('TYPE').upper() if variant.INFO.get('TYPE') else variant.INFO.get('SVTYPE')
+        if var_sub_type == "DEL" or var_sub_type == "INS":
+            # update chromosome
+            if annot_chrom:
+                variant.CHROM = annotation.contigs[0]
+            # get genes intersecting with SV
+            genes = [
+                {"gene_symbol": gene[gene_symbol], "locus_tag": gene[locus_tag]}
+                for gene in annotation.fetch(variant.CHROM, variant.start, variant.end)
+            ]
+            # add overlapping genes to INFO
+            if len(genes) > 0:
+                variant.INFO["gene"] = ",".join([gene["gene_symbol"] for gene in genes])
+                variant.INFO["locus_tag"] = ",".join([gene["locus_tag"] for gene in genes])
+                n_annotated += 1
 
-        # write variant
-        writer.write_record(variant)
+            if len(variant.FILTERS) == 0:
+                passed_qc = None
+            elif "PASS" in variant.FILTERS:
+                passed_qc = True
+            else:
+                passed_qc = False
+            print(variant.CHROM, type(variant.start), type(variant.end))
+            print(genes)
+            var = TbProfilerVariant(
+                    id=var_id,
+                    variant_type=VariantType.SV,
+                    variant_subtype=var_sub_type,
+                    phenotypes=[],
+                    reference_sequence=variant.INFO.get("gene"),
+                    accession=variant.INFO.get("locus_tag"),
+                    start=variant.start,
+                    end=variant.end + len(variant.ALT),
+                    ref_nt=variant.REF,
+                    alt_nt=variant.ALT[0],
+                    variant_effect=None,
+                    hgvs_nt_change=None,
+                    hgvs_aa_change=None,
+                    depth=variant.INFO.get("DP"),
+                    frequency=variant.INFO.get("AF"),
+                    method="delly",
+                    passed_qc=passed_qc,
+                )
+            var_id += 1  # increment variant id
+            results.append(var)
+
+    variants = sorted(
+        results, key=lambda entry: (entry.reference_sequence, entry.start)
+    )
     LOG.info("Annotated %d SV variants", n_annotated)
+    return variants
