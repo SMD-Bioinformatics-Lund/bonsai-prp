@@ -502,13 +502,11 @@ def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> Non
     "-o",
     "--output",
     required=True,
-    type=click.Path(writable=True),
+    type=click.File("w"),
     help="output filepath",
 )
 def annotate_delly(vcf, bed, bonsai_input_file, output):
     """Annotate Delly SV varinats with genes in BED file."""
-    output = Path(output)
-    # load annotation
     if bed is not None:
         annotation = pysam.TabixFile(bed, parser=pysam.asTuple())
     else:
@@ -564,7 +562,7 @@ def annotate_delly(vcf, bed, bonsai_input_file, output):
     sv_variants_info.extend(sv_variants)
     upd_result = result_obj.model_copy(update={"sv_variants": sv_variants_info})
     output.write(upd_result.model_dump_json(indent=3))
-    click.secho(f"Wrote annotated delly variants to {output}", fg="green")
+    click.secho(f"Wrote annotated delly variants to {output.name}", fg="green")
 
 
 @cli.command()
@@ -583,7 +581,7 @@ def annotate_delly(vcf, bed, bonsai_input_file, output):
     "-o",
     "--output",
     required=True,
-    type=click.Path(writable=True),
+    type=click.File("w"),
     help="output filepath",
 )
 def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, output):
@@ -608,4 +606,4 @@ def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, out
     # overwrite result
     output.write(upd_result.model_dump_json(indent=3))
 
-    click.secho(f"Wrote updated result to {output}", fg="green")
+    click.secho(f"Wrote updated result to {output.name}", fg="green")

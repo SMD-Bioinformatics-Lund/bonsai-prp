@@ -112,8 +112,6 @@ def annotate_delly_variants(vcf, annotation, annot_chrom=False):
                 passed_qc = True
             else:
                 passed_qc = False
-            print(variant.CHROM, type(variant.start), type(variant.end))
-            print(genes)
             var = TbProfilerVariant(
                     id=var_id,
                     variant_type=VariantType.SV,
@@ -137,7 +135,7 @@ def annotate_delly_variants(vcf, annotation, annot_chrom=False):
             results.append(var)
 
     variants = sorted(
-        results, key=lambda entry: (entry.reference_sequence, entry.start)
+        results, key=lambda entry: entry.start
     )
     LOG.info("Annotated %d SV variants", n_annotated)
     return variants
