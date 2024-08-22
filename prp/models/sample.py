@@ -90,6 +90,7 @@ class PipelineResult(SampleBase):
     # optional variant info
     snv_variants: Optional[list[VariantBase]] = None
     sv_variants: Optional[list[VariantBase]] = None
+    indel_variants: Optional[list[VariantBase]] = None
     # optional alignment info
     reference_genome: Optional[ReferenceGenome] = None
     read_mapping: Optional[str] = None

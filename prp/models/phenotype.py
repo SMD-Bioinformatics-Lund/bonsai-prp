@@ -31,6 +31,7 @@ class VariantType(str, Enum):
     SNV = "SNV"
     MNV = "MNV"
     SV = "SV"
+    INDEL = "INDEL"
     STR = "STR"
 
 

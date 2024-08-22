@@ -16,7 +16,7 @@ def _filter_variants(variant_list):
     # Initialize the results dictionary
     filetered_variants = {
         'sv_variants': [],
-        'mnv_variants': [],
+        'indel_variants': [],
         'snv_variants': []
     }
 
@@ -26,8 +26,8 @@ def _filter_variants(variant_list):
         # Append the variant to the appropriate key in the results dictionary
         if variant_type == "SV":
             filetered_variants['sv_variants'].append(variant)
-        elif variant_type == "MNV":
-            filetered_variants['mnv_variants'].append(variant)
+        elif variant_type == "INDEL":
+            filetered_variants['indel_variants'].append(variant)
         elif variant_type == "SNV":
             filetered_variants['snv_variants'].append(variant)
     return filetered_variants
@@ -41,7 +41,7 @@ def _get_variant_type(variant) -> VariantType:
         case "mnp":
             var_type = VariantType.MNV
         case "indel":
-            var_type = VariantType.SV
+            var_type = VariantType.INDEL
         case _:
             var_type = VariantType(variant.var_type.upper())
     return var_type
