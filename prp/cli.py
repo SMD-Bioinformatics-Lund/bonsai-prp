@@ -492,7 +492,7 @@ def create_qc_result(sample_id, bam, bed, baits, reference, cpus, output) -> Non
 @click.option("-v", "--vcf", type=click.Path(exists=True), help="VCF file")
 @click.option("-b", "--bed", type=click.Path(exists=True), help="BED file")
 @click.option(
-    "-b",
+    "-i",
     "--bonsai-input-file",
     required=True,
     type=click.Path(writable=True),
