@@ -327,10 +327,13 @@ def create_bonsai_input(
 
     # parse SNV and SV variants.
     if snv_vcf:
-        results["snv_variants"] = load_variants(snv_vcf)
+        results["snv_variants"] = load_variants(snv_vcf)["snv_variants"]
 
     if sv_vcf:
-        results["sv_variants"] = load_variants(sv_vcf)
+        results["sv_variants"] = load_variants(sv_vcf)["sv_variants"]
+
+    if vcf:
+        results.update(load_variants(vcf))
 
     # entries for reference genome and read mapping
     if all([bam, reference_genome_fasta, reference_genome_gff]):
