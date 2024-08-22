@@ -45,36 +45,40 @@ def get_mutation_type(var_nom: str) -> tuple[str, Union[VariantSubType, str, int
 
     :param var_nom: Mykrobe mutation description
     :type var_nom: str
-    :return: Return variant type, ref_codon, alt_codont and position
+    :return: Return variant type, ref_nt, alt_ntt and position
     :rtype: dict[str, Union[VariantSubType, str, int]]
     """
     mut_type = None
-    ref_codon = None
-    alt_codon = None
+    ref_nt = None
+    alt_nt = None
     position = None
     try:
         ref_idx = re.search(r"\d", var_nom, 1).start()
         alt_idx = re.search(r"\d(?=[^\d]*$)", var_nom).start() + 1
     except AttributeError:
-        return mut_type, ref_codon, alt_codon, position
+        return mut_type, ref_nt, alt_nt, position
 
-    ref_codon = var_nom[:ref_idx]
-    alt_codon = var_nom[alt_idx:]
+    ref_nt = var_nom[:ref_idx]
+    alt_nt = var_nom[alt_idx:]
     position = int(var_nom[ref_idx:alt_idx])
-    if len(ref_codon) > len(alt_codon):
+    var_len = abs(len(ref_nt) - len(alt_nt))
+    if var_len >= 50:
         var_type = VariantType.SV
-        var_sub_type = VariantSubType.DELETION
-    elif len(ref_codon) < len(alt_codon):
-        var_type = VariantType.SV
-        var_sub_type = VariantSubType.INSERTION
+    elif 1 < var_len < 50:
+        var_type = VariantType.INDEL
     else:
         var_type = VariantType.SNV
+    if len(ref_nt) > len(alt_nt):
+        var_sub_type = VariantSubType.DELETION
+    elif len(ref_nt) < len(alt_nt):
+        var_sub_type = VariantSubType.INSERTION
+    else:
         var_sub_type = VariantSubType.SUBSTITUTION
     return {
         "type": var_type,
         "subtype": var_sub_type,
-        "ref": ref_codon,
-        "alt": alt_codon,
+        "ref": ref_nt,
+        "alt": alt_nt,
         "pos": position,
     }
 
