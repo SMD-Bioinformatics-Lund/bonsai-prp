@@ -238,6 +238,7 @@ def test_add_igv_annotation_track(mtuberculosis_snv_vcf_path, simple_pipeline_re
             mtuberculosis_snv_vcf_path,
             "--bonsai-input-file",
             result_fname,
+            "--output",
             output_fname,
         ]
         result = runner.invoke(add_igv_annotation_track, args)
