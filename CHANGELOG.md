@@ -5,12 +5,18 @@
  - Added flag to set verbosity level.
  - Validate TbProfiler schema version.
  - Added CLI command for adding IGV annotation tracks
+ - Added `indel_variants` to json result and ability to filter vcf into various categories
 
 ### Fixed
+
+ - Fixed genome_annotation appending bug
+ - Fixed variant sorting as `reference_sequence` can be None
 
 ### Changed
 
  - Updated sample metadata in the output format. RunMetadata was split into two fields, one for sequencing and one for pipeline information. Lims id and sample name are now included in the SampleBase object.
+ - Split SV and SNV from tbprofiler output
+ - Update annotate_delly to extract SVs from vcf
 
 ## [0.9.3]
 
