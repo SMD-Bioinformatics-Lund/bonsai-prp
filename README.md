@@ -15,7 +15,7 @@
 prp --help
 ```
 
-### Use the method help argument for information regarding the input for each of prp's methods (`create-bonsai-input`, `create-cdm-input`, `create-qc-result`, `print-schema`, `validate`)
+### Use the method help argument for information regarding the input for each of prp's methods (`add-igv-annotation-track`, `annotate-delly`, `create-bonsai-input`, `create-cdm-input`, `create-qc-result`, `print-schema`, `rerun-bonsai-input`, `validate`)
 ```
 prp <method> --help
 ```
@@ -33,4 +33,19 @@ prp create-cdm-input -q QUAST_FILENAME -c CGMLST_FILE -p POSTALIGNQC_FILE [--cor
 ### Create QC result from bam file
 ```
 prp create-qc-result -i SAMPLE_ID --b BAM_FILE [-e BED_FILE] [-a BAITS_FILE] -r REFERENCE_FILE [-c CPUS] -o OUTPUT_FILE [-h]
+```
+
+### Rerun bonsai input creation for all samples
+```
+prp rerun-bonsai-input -i INPUT_DIR  -j JASEN_DIR -s SYMLINK_DIR -o OUTPUT_DIR
+```
+
+### Add IGV annotation track to result
+```
+prp add-igv-annotation-track -n, TRACK_NAME -a, ANNOTATION_FILE -b, BONSAI_INPUT_FILE
+```
+
+### Validate output format of result json file
+```
+prp validate -o OUTPUT
 ```
