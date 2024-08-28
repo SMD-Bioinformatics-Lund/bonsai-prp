@@ -22,7 +22,7 @@ prp <method> --help
 
 ### Create bonsai input from pipeline data
 ```
-prp create-bonsai-input -i SAMPLE_ID -u RUN_METADATA_FILE -q QUAST_FILENAME -d PROCESS_METADATA_FILE -k KRAKEN_FILE -a AMRFINDER_FILE -m MLST_FILE -c CGMLST_FILE -v VIRULENCEFINDER_FILE -r RESFINDER_FILE -p POSTALIGNQC_FILE -k MYKROBE_FILE -t TBPROFILER_FILE [--correct_alleles] -o OUTPUT_FILE [-h]
+prp create-bonsai-input -i SAMPLE_ID -u RUN_METADATA_FILE -q QUAST_FILENAME -d PROCESS_METADATA_FILE -k KRAKEN_FILE -a AMRFINDER_FILE -m MLST_FILE -c CGMLST_FILE -v VIRULENCEFINDER_FILE -r RESFINDER_FILE -p POSTALIGNQC_FILE -k MYKROBE_FILE -t TBPROFILER_FILE --vcf VCF_FILE [--snv-vcf SNV_VCF_FILE] [--sv-vcf SV_VCF_FILE] [--symlink-dir SYMLINK_DIR] [--correct_alleles] -o OUTPUT_FILE [-h]
 ```
 
 ### Create CDM input from pipeline data
@@ -37,15 +37,15 @@ prp create-qc-result -i SAMPLE_ID --b BAM_FILE [-e BED_FILE] [-a BAITS_FILE] -r 
 
 ### Rerun bonsai input creation for all samples
 ```
-prp rerun-bonsai-input -i INPUT_DIR  -j JASEN_DIR -s SYMLINK_DIR -o OUTPUT_DIR
+prp rerun-bonsai-input -i INPUT_DIR  -j JASEN_DIR -s SYMLINK_DIR -o OUTPUT_DIR -o OUTPUT_FILE [-h]
 ```
 
 ### Add IGV annotation track to result
 ```
-prp add-igv-annotation-track -n, TRACK_NAME -a, ANNOTATION_FILE -b, BONSAI_INPUT_FILE
+prp add-igv-annotation-track -n TRACK_NAME -a ANNOTATION_FILE -b BONSAI_INPUT_FILE -o OUTPUT_FILE [-h]
 ```
 
 ### Validate output format of result json file
 ```
-prp validate -o OUTPUT
+prp validate -o OUTPUT_FILE [-h]
 ```
