@@ -131,6 +131,7 @@ def cli(silent, debug):
     multiple=True,
     help="Genome annotations bed format",
 )
+@click.option("--vcf", type=click.Path(), help="VCF filepath")
 @click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
 @click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
 @click.option("--symlink-dir", type=click.Path(), help="Dir for symlink")
@@ -158,6 +159,7 @@ def create_bonsai_input(
     reference_genome_fasta,
     reference_genome_gff,
     genome_annotation,
+    vcf,
     snv_vcf,
     sv_vcf,
     symlink_dir,
@@ -166,14 +168,15 @@ def create_bonsai_input(
 ):  # pylint: disable=too-many-arguments
     """Combine pipeline results into a standardized json output file."""
     LOG.info("Start generating pipeline result json")
+    # Get basic sample object
+    sample_info, seq_info, pipeline_info = parse_run_info(run_metadata, process_metadata)
     results = {
-        "run_metadata": {
-            "run": parse_run_info(run_metadata),
-            "databases": get_database_info(process_metadata),
-        },
+        "sequencing": seq_info,
+        "pipeline": pipeline_info,
         "qc": [],
         "typing_result": [],
         "element_type_result": [],
+        **sample_info  # add sample_name & lims_id
     }
     # qc
     if quast:
@@ -274,8 +277,8 @@ def create_bonsai_input(
             )
             raise click.Abort()
 
-        # add mykrobe db version
-        results["run_metadata"]["databases"].append(
+        # add mykrobe db version to the list of softwares
+        results['pipeline'].softwares.append(
             SoupVersion(
                 name="mykrobe-predictor",
                 version=pred_res[0]["mykrobe_version"],
@@ -316,7 +319,7 @@ def create_bonsai_input(
                     type=SoupType.DB,
                 )
             ]
-            results["run_metadata"]["databases"].extend(db_info)
+            sw_list = results["pipeline"].softwares.extend(db_info)
             lin_res: MethodIndex = parse_tbprofiler_lineage_results(pred_res)
             results["typing_result"].append(lin_res)
             amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res)
@@ -324,10 +327,13 @@ def create_bonsai_input(
 
     # parse SNV and SV variants.
     if snv_vcf:
-        results["snv_variants"] = load_variants(snv_vcf)
+        results["snv_variants"] = load_variants(snv_vcf)["snv_variants"]
 
     if sv_vcf:
-        results["sv_variants"] = load_variants(sv_vcf)
+        results["sv_variants"] = load_variants(sv_vcf)["sv_variants"]
+
+    if vcf:
+        results.update(load_variants(vcf))
 
     # entries for reference genome and read mapping
     if all([bam, reference_genome_fasta, reference_genome_gff]):
@@ -348,11 +354,12 @@ def create_bonsai_input(
             {"name": f"annotation_{i}", "file": Path(annot).name}
             for i, annot in enumerate(genome_annotation, start=1)
         ]
-        for vcf in [sv_vcf, snv_vcf]:
-            if vcf:
-                vcf = _get_path(symlink_dir, "vcf", vcf)
-                name = "SNV" if vcf == sv_vcf else "SV"
-                annotations.append({"name": name, "file": vcf})
+        vcf_dict = {"SV": sv_vcf, "SNV": snv_vcf, "VCF": vcf}
+        for name in vcf_dict:
+            vcf_filepath = vcf_dict[name]
+            if vcf_filepath:
+                vcf_filepath = _get_path(symlink_dir, "vcf", vcf_filepath)
+                annotations.append({"name": name, "file": vcf_filepath})
         # store annotation results
         results["genome_annotation"] = annotations if annotations else None
 
@@ -361,7 +368,7 @@ def create_bonsai_input(
             sample_id=sample_id, schema_version=OUTPUT_SCHEMA_VERSION, **results
         )
     except ValidationError as err:
-        click.secho("Input failed Validation", fg="red")
+        click.secho("Generated result failed validation", fg="red")
         click.secho(err)
         raise click.Abort
     LOG.info("Storing results to: %s", output)
@@ -541,37 +548,43 @@ def annotate_delly(vcf, bed, output):
     writer = Writer(output.absolute(), vcf_obj)
     annotate_delly_variants(writer, vcf_obj, annotation, annot_chrom=annot_chrom)
 
-    click.secho(f"Wrote annotated delly variants to {output}", fg="green")
+    click.secho(f"Wrote annotated delly variants to {output.name}", fg="green")
 
 
 @cli.command()
-@click.option("-n", "--name", type=str, help="Track name.")
+@click.option("-n", "--track-name", type=str, help="Track name.")
 @click.option(
     "-a", "--annotation-file", type=click.Path(exists=True), help="Path to file."
 )
 @click.option(
-    "-r",
-    "--result",
+    "-b",
+    "--bonsai-input-file",
     required=True,
     type=click.Path(writable=True),
-    help="PRP result.",
+    help="PRP result file (used as bonsai input).",
 )
-@click.argument("output", type=click.File("w"))
-def add_igv_annotation_track(name, annotation_file, result, output):
-    """Add IGV annotation track to result."""
-    with open(result, "r", encoding="utf-8") as jfile:
+@click.option(
+    "-o",
+    "--output",
+    required=True,
+    type=click.File("w"),
+    help="output filepath",
+)
+def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, output):
+    """Add IGV annotation track to result (bonsai input file)."""
+    with open(bonsai_input_file, "r", encoding="utf-8") as jfile:
         result_obj = PipelineResult(**json.load(jfile))
 
     # Get genome annotation
-    if result_obj.genome_annotation is None or isinstance(
+    if not isinstance(
         result_obj.genome_annotation, list
     ):
         track_info = []
     else:
-        track_info = result.genome_annotation
+        track_info = result_obj.genome_annotation
 
     # add new tracks
-    track_info.append({"name": name, "file": annotation_file})
+    track_info.append({"name": track_name, "file": annotation_file})
 
     # update data model
     upd_result = result_obj.model_copy(update={"genome_annotation": track_info})
@@ -579,4 +592,4 @@ def add_igv_annotation_track(name, annotation_file, result, output):
     # overwrite result
     output.write(upd_result.model_dump_json(indent=3))
 
-    click.secho(f"Wrote updated result to {output}", fg="green")
+    click.secho(f"Wrote updated result to {output.name}", fg="green")

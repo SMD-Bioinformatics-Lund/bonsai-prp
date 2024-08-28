@@ -31,6 +31,7 @@ class VariantType(str, Enum):
     SNV = "SNV"
     MNV = "MNV"
     SV = "SV"
+    INDEL = "INDEL"
     STR = "STR"
 
 
@@ -215,7 +216,7 @@ class VariantBase(RWModel):
     phenotypes: list[PhenotypeInfo] = []
 
     # variant location
-    reference_sequence: str = Field(
+    reference_sequence: str | None = Field(
         ...,
         description="Reference sequence such as chromosome, gene or contig id.",
         alias="gene_symbol",
@@ -251,7 +252,7 @@ class MykrobeVariant(VariantBase):
 class TbProfilerVariant(VariantBase):
     """Container for TbProfiler variant information"""
 
-    variant_effect: str
+    variant_effect: str | None = None
     hgvs_nt_change: Optional[str] = Field(..., description="DNA change in HGVS format")
     hgvs_aa_change: Optional[str] = Field(
         ..., description="Protein change in HGVS format"

@@ -1,6 +1,7 @@
 """Metadata models."""
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -22,35 +23,25 @@ class SoupVersion(BaseModel):
     type: SoupType
 
 
-class RunInformation(RWModel):
-    """Store information on a run how the run was conducted."""
+class SequencingInfo(RWModel):
+    """Information on the sample was sequenced."""
+
+    run_id: str
+    platform: str
+    instrument: Optional[str]
+    method: dict[str, str] = {}
+    date: datetime | None
+
+
+class PipelineInfo(RWModel):
+    """Information on the sample was analysed."""
 
     pipeline: str
     version: str
     commit: str
-    analysis_profile: str = Field(
-        ...,
-        alias="analysisProfile",
-        description="The analysis profile used when starting the pipeline",
-    )
-    configuration_files: list[str] = Field(
-        ..., alias="configurationFiles", description="Nextflow configuration used"
-    )
+    analysis_profile: str
+    configuration_files: list[str]
     workflow_name: str
-    sample_name: str
-    lims_id: str
-    sequencing_run: str
-    sequencing_platform: str
-    sequencing_type: str
     command: str
+    softwares: list[SoupVersion]
     date: datetime
-
-
-SoupVersions = list[SoupVersion]
-
-
-class RunMetadata(BaseModel):
-    """Run metadata"""
-
-    run: RunInformation
-    databases: SoupVersions

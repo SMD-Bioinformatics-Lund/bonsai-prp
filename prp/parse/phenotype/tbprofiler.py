@@ -2,7 +2,7 @@
 import logging
 from typing import Any
 
-from ...models.metadata import SoupVersions
+from ...models.metadata import SoupVersion
 from ...models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
@@ -74,7 +74,14 @@ def _parse_tbprofiler_amr_variants(predictions) -> tuple[TbProfilerVariant, ...]
         for hit in predictions.get(result_type, []):
             ref_nt = hit["ref"]
             alt_nt = hit["alt"]
-            var_type = VariantType.SNV
+            var_type = VariantType.SNV if not bool(hit["sv"]) else VariantType.SV
+            var_len = abs(len(ref_nt) - len(alt_nt))
+            if var_len >= 50 or bool(hit["sv"]):
+                var_type = VariantType.SV
+            elif 1 < var_len < 50:
+                var_type = VariantType.INDEL
+            else:
+                var_type = VariantType.SNV
             if len(ref_nt) == len(alt_nt):
                 var_sub_type = VariantSubType.SUBSTITUTION
             elif len(ref_nt) > len(alt_nt):
@@ -157,7 +164,7 @@ def parse_drug_resistance_info(drugs: list[dict[str, str]]) -> list[PhenotypeInf
 
 def parse_tbprofiler_amr_pred(
     prediction: dict[str, Any]
-) -> tuple[SoupVersions, ElementTypeResult]:
+) -> tuple[tuple[SoupVersion, ...], ElementTypeResult]:
     """Parse tbprofiler resistance prediction results."""
     LOG.info("Parsing tbprofiler prediction")
     resistance = ElementTypeResult(
