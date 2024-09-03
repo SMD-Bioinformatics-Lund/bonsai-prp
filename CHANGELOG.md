@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Updated parsing of ChewBBACA errors and novel alleles so that errors introduced in v3 is recognised.
+
 ### Changed
 
 ## [0.10.0]
