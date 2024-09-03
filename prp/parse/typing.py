@@ -103,7 +103,7 @@ def parse_cgmlst_results(
     ASM, alleles smaller than locus length
     """
 
-    errors = [err.values for err in ChewbbacaErrors]
+    errors = [err.value for err in ChewbbacaErrors]
     LOG.info(
         "Parsing cgmslt results, %s including novel alleles",
         "not" if not include_novel_alleles else "",
