@@ -58,29 +58,34 @@ def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
     )
 
 
-def replace_cgmlst_errors(allele: str, include_novel_alleles: bool = True, correct_alleles: bool = False) -> int | str | None:
+def replace_cgmlst_errors(
+    allele: str, include_novel_alleles: bool = True, correct_alleles: bool = False
+) -> int | str | None:
     """Replace errors and novel allele calls with null values."""
     errors = [err.value for err in ChewbbacaErrors]
     if any(
         [
             correct_alleles and allele in errors,
-            correct_alleles
-            and allele.startswith("INF")
-            and not include_novel_alleles,
+            correct_alleles and allele.startswith("INF") and not include_novel_alleles,
         ]
     ):
         return None
 
-    if allele.startswith("INF") and include_novel_alleles:
-        try:
-            allele = int(allele.split("-")[1])
-        except ValueError:
-            allele = str(allele.split("-")[1])
+    if include_novel_alleles:
+        if allele.startswith("INF"):
+            allele = allele.split("-")[1]
+        else:
+            allele = allele.replace("*", "")
+
     # try convert to an int
     try:
         allele = int(allele)
     except ValueError:
         allele = str(allele)
+        LOG.warning(
+            "Possible cgMLST parser error, allele could not be cast as an integer: %s",
+            allele,
+        )
     return allele
 
 
