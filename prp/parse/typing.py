@@ -106,6 +106,9 @@ def parse_cgmlst_results(
     NIPHEM,
     ALM, alleles larger than locus length
     ASM, alleles smaller than locus length
+    EXC, Total number of CDSs classified as EXC
+    LOTSC, Total number of CDSs classified as LOTSC
+    PAMA, Total number of PAMA classifications
     """
 
     errors = [err.value for err in ChewbbacaErrors]
