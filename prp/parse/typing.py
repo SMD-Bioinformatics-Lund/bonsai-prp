@@ -13,6 +13,7 @@ from ..models.typing import (
     TypingResultCgMlst,
     TypingResultGeneAllele,
     TypingResultMlst,
+    ChewbbacaErrors,
 )
 from ..models.typing import TypingSoftware as Software
 from .phenotype.serotypefinder import parse_serotype_gene
@@ -57,6 +58,32 @@ def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
     )
 
 
+def replace_cgmlst_errors(allele: str, include_novel_alleles: bool = True, correct_alleles: bool = False) -> int | str | None:
+    """Replace errors and novel allele calls with null values."""
+    errors = [err.value for err in ChewbbacaErrors]
+    if any(
+        [
+            correct_alleles and allele in errors,
+            correct_alleles
+            and allele.startswith("INF")
+            and not include_novel_alleles,
+        ]
+    ):
+        return None
+
+    if allele.startswith("INF") and include_novel_alleles:
+        try:
+            allele = int(allele.split("-")[1])
+        except ValueError:
+            allele = str(allele.split("-")[1])
+    # try convert to an int
+    try:
+        allele = int(allele)
+    except ValueError:
+        allele = str(allele)
+    return allele
+
+
 def parse_cgmlst_results(
     chewbacca_res_path: str,
     include_novel_alleles: bool = True,
@@ -75,32 +102,8 @@ def parse_cgmlst_results(
     ALM, alleles larger than locus length
     ASM, alleles smaller than locus length
     """
-    errors = ("LNF", "PLOT3", "PLOT5", "NIPH", "NIPHEM", "ALM", "ASM")
 
-    def replace_errors(allele):
-        """Replace errors and novel alleles with null values."""
-        if any(
-            [
-                correct_alleles and allele in errors,
-                correct_alleles
-                and allele.startswith("INF")
-                and not include_novel_alleles,
-            ]
-        ):
-            return None
-
-        if allele.startswith("INF") and include_novel_alleles:
-            try:
-                allele = int(allele.split("-")[1])
-            except ValueError:
-                allele = str(allele.split("-")[1])
-        # try convert to an int
-        try:
-            allele = int(allele)
-        except ValueError:
-            allele = str(allele)
-        return allele
-
+    errors = [err.values for err in ChewbbacaErrors]
     LOG.info(
         "Parsing cgmslt results, %s including novel alleles",
         "not" if not include_novel_alleles else "",
@@ -111,7 +114,7 @@ def parse_cgmlst_results(
         _, *allele_names = (colname.rstrip(".fasta") for colname in next(creader))
         # parse alleles
         _, *alleles = next(creader)
-    corrected_alleles = (replace_errors(a) for a in alleles)
+    corrected_alleles = (replace_cgmlst_errors(a) for a in alleles)
     results = TypingResultCgMlst(
         n_novel=sum(1 for a in alleles if a.startswith("INF")),
         n_missing=sum(1 for a in alleles if a in errors),
