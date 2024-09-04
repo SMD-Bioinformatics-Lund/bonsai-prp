@@ -122,10 +122,21 @@ def parse_cgmlst_results(
         _, *allele_names = (colname.rstrip(".fasta") for colname in next(creader))
         # parse alleles
         _, *alleles = next(creader)
-    corrected_alleles = (replace_cgmlst_errors(a) for a in alleles)
+
+    # setup counters for counting novel and missing alleles before correction
+    n_novel = 0
+    n_missing = 0
+    corrected_alleles = []
+    for allele in alleles:
+        if allele.startswith("INF") or allele.startswith("*"):
+            n_novel += 1
+        if allele in errors:
+            n_missing += 1
+        corrected_alleles.append(replace_cgmlst_errors(allele))
+
     results = TypingResultCgMlst(
-        n_novel=sum(1 for a in alleles if a.startswith("INF")),
-        n_missing=sum(1 for a in alleles if a in errors),
+        n_novel=n_novel,
+        n_missing=n_missing,
         alleles=dict(zip(allele_names, corrected_alleles)),
     )
     return MethodIndex(
