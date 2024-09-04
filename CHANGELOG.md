@@ -4,6 +4,14 @@
 
 ### Fixed
 
+### Changed
+
+## [0.10.1]
+
+### Added
+
+### Fixed
+
 - Updated parsing of ChewBBACA allele calling annotations and novel alleles. This adds support for annotations introduced in v3.
 
 ### Changed
