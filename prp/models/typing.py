@@ -44,6 +44,8 @@ class ChewbbacaErrors(str, Enum):
     ALM = "ALM"
     ASM = "ASM"
     LNF = "LNF"
+    EXC = "EXC"
+    PAMA = "PAMA"
 
 
 class MlstErrors(str, Enum):

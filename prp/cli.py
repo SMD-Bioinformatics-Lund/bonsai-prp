@@ -16,7 +16,7 @@ from prp import VERSION as __version__
 from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex, QcSoftware
-from .models.sample import MethodIndex, PipelineResult, ReferenceGenome
+from .models.sample import MethodIndex, PipelineResult, ReferenceGenome, IgvAnnotationTrack
 from .parse import (
     load_variants,
     parse_alignment_results,
@@ -584,7 +584,7 @@ def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, out
         track_info = result_obj.genome_annotation
 
     # add new tracks
-    track_info.append({"name": track_name, "file": annotation_file})
+    track_info.append(IgvAnnotationTrack(name=track_name, file=annotation_file))
 
     # update data model
     upd_result = result_obj.model_copy(update={"genome_annotation": track_info})
