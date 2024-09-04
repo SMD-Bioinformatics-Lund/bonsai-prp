@@ -63,6 +63,16 @@ def replace_cgmlst_errors(
 ) -> int | str | None:
     """Replace errors and novel allele calls with null values."""
     errors = [err.value for err in ChewbbacaErrors]
+    # check input
+    match allele:
+        case str():
+            pass
+        case int():
+            allele = str(allele)
+        case bool():
+            allele = str(int(allele))
+        case _:
+            raise ValueError(f"Unknown file type: {allele}")
     if any(
         [
             correct_alleles and allele in errors,
@@ -125,6 +135,7 @@ def parse_cgmlst_results(
 
     # setup counters for counting novel and missing alleles before correction
     n_novel = 0
+    
     n_missing = 0
     corrected_alleles = []
     for allele in alleles:
