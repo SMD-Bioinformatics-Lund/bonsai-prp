@@ -20,13 +20,13 @@ class QuastQcResult(BaseModel):
     """Assembly QC metrics."""
 
     total_length: int
-    reference_length: int
+    reference_length: int | None = None
     largest_contig: int
     n_contigs: int
     n50: int
     assembly_gc: float
-    reference_gc: float
-    duplication_ratio: float
+    reference_gc: float | None = None
+    duplication_ratio: float | None = None
 
 
 class PostAlignQcResult(BaseModel):

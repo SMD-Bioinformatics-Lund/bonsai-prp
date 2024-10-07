@@ -255,13 +255,13 @@ def parse_quast_results(tsv_fpath: str) -> QcMethodIndex:
         raw = [dict(zip(header, row)) for row in creader]
         qc_res = QuastQcResult(
             total_length=int(raw[0]["Total length"]),
-            reference_length=raw[0]["Reference length"],
+            reference_length=raw[0].get("Reference length", None),
             largest_contig=raw[0]["Largest contig"],
             n_contigs=raw[0]["# contigs"],
             n50=raw[0]["N50"],
             assembly_gc=raw[0]["GC (%)"],
-            reference_gc=raw[0]["Reference GC (%)"],
-            duplication_ratio=raw[0]["Duplication ratio"],
+            reference_gc=raw[0].get("Reference GC (%)", None),
+            duplication_ratio=raw[0].get("Duplication ratio", None),
         )
     return QcMethodIndex(software=QcSoftware.QUAST, result=qc_res)
 
