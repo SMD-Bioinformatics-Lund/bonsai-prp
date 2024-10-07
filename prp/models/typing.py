@@ -6,7 +6,7 @@ from typing import Any, Literal, Optional, Union
 from pydantic import Field
 
 from .base import RWModel
-from .phenotype import SerotypeGene, VirulenceGene
+from .phenotype import SerotypeGene, VirulenceGene, ShigatypeGene, EmmtypeGene
 
 
 class TypingSoftware(str, Enum):
@@ -19,6 +19,7 @@ class TypingSoftware(str, Enum):
     VIRULENCEFINDER = "virulencefinder"
     SEROTYPEFINDER = "serotypefinder"
     SHIGAPASS = "shigapass"
+    EMMTYPER = "emmtyper"
 
 
 class TypingMethod(str, Enum):
@@ -31,6 +32,7 @@ class TypingMethod(str, Enum):
     OTYPE = "O_type"
     HTYPE = "H_type"
     SHIGATYPE = "shigatype"
+    EMMTYPE = "emmtype"
 
 
 class ChewbbacaErrors(str, Enum):
@@ -75,28 +77,6 @@ class TypingResultCgMlst(ResultMlstBase):
     n_missing: int = Field(0, alias="nNovel")
 
 
-class TypingResultShiga(RWModel):
-    """Container for shigatype gene information"""
-
-    rfb: Optional[str] = None
-    rfb_hits: Optional[float] = None
-    mlst: Optional[str] = None
-    flic: Optional[str] = None
-    crispr: Optional[str] = None
-    ipah: Optional[str] = None
-    predicted_serotype: Optional[str] = None
-    predicted_flex_serotype: Optional[str] = None
-    comments: Optional[str] = None
-
-
-class ShigaTypingMethodIndex(RWModel):
-    """Method Index Shiga."""
-
-    type: Literal[TypingMethod.SHIGATYPE]
-    software: Literal[TypingSoftware.SHIGAPASS]
-    result: TypingResultShiga
-
-
 class ResultLineageBase(RWModel):
     """Lineage results"""
 
@@ -121,7 +101,7 @@ class TbProfilerLineage(ResultLineageBase):
     lineages: list[LineageInformation]
 
 
-class TypingResultGeneAllele(VirulenceGene, SerotypeGene):
+class TypingResultGeneAllele(VirulenceGene, SerotypeGene, ShigatypeGene, EmmtypeGene):
     """Identification of individual gene alleles."""
 
 

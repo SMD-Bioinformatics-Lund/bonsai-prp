@@ -3,41 +3,11 @@
 import logging
 import re
 
-import numpy as np
 import pandas as pd
 
-from ...models.typing import ShigaTypingMethodIndex, TypingMethod, TypingResultShiga
-from ...models.typing import TypingSoftware as Software
+from ...models.phenotype import (ShigatypeGene)
 
 LOG = logging.getLogger(__name__)
-
-
-def parse_shigapass_pred(path: str) -> ShigaTypingMethodIndex:
-    """Parse shigapass prediction results."""
-    LOG.info("Parsing shigapass prediction")
-    cols = {
-        "Name": "sample_name",
-        "rfb_hits,(%)": "rfb_hits",
-        "MLST": "mlst",
-        "fliC": "flic",
-        "CRISPR": "crispr",
-        "ipaH": "ipah",
-        "Predicted_Serotype": "predicted_serotype",
-        "Predicted_FlexSerotype": "predicted_flex_serotype",
-        "Comments": "comments",
-    }
-    # read as dataframe and process data structure
-    hits = (
-        pd.read_csv(path, delimiter=";", na_values=["ND", "none"])
-        .rename(columns=cols)
-        .replace(np.nan, None)
-    )
-    shigatype_results = _parse_shigapass_results(hits, 0)
-    return ShigaTypingMethodIndex(
-        type=TypingMethod.SHIGATYPE,
-        result=shigatype_results,
-        software=Software.SHIGAPASS,
-    )
 
 
 def _extract_percentage(rfb_hits: str) -> float:
@@ -50,8 +20,8 @@ def _extract_percentage(rfb_hits: str) -> float:
     return percentile_value
 
 
-def _parse_shigapass_results(predictions: pd.DataFrame, row: int) -> TypingResultShiga:
-    return TypingResultShiga(
+def parse_shiga_gene(predictions: pd.DataFrame, row: int) -> ShigatypeGene:
+    return ShigatypeGene(
         rfb=predictions.loc[row, "rfb"],
         rfb_hits=_extract_percentage(str(predictions.loc[row, "rfb_hits"])),
         mlst=predictions.loc[row, "mlst"],

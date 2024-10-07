@@ -129,15 +129,15 @@ class GeneBase(BaseModel):
     sequence_name: Optional[str] = Field(
         default=None, description="Reference sequence name"
     )
-    element_type: ElementType = Field(
-        description="The predominant function fo the gene."
+    element_type: Optional[ElementType] = Field(
+        default=None, description="The predominant function of the gene."
     )
-    element_subtype: Union[
+    element_subtype: Optional[Union[
         ElementStressSubtype,
         ElementAmrSubtype,
         ElementVirulenceSubtype,
         ElementSerotypeSubtype,
-    ] = Field(description="Further functional categorization of the genes.")
+    ]] = Field(default=None, description="Further functional categorization of the genes.")
     # position
     ref_start_pos: Optional[int] = Field(
         None, description="Alignment start in reference"
@@ -188,6 +188,29 @@ class ResistanceGene(GeneBase):
 
 class SerotypeGene(GeneBase):
     """Container for serotype gene information"""
+
+
+class EmmtypeGene(GeneBase):
+    """Container for emmtype gene information"""
+
+    cluster_count: Optional[int] = None
+    emmtype: Optional[str] = None
+    emm_like_alleles: list[str] = None
+    emm_cluster: Optional[str] = None
+
+
+class ShigatypeGene(GeneBase):
+    """Container for shigatype gene information"""
+
+    rfb: Optional[str] = None
+    rfb_hits: Optional[float] = None
+    mlst: Optional[str] = None
+    flic: Optional[str] = None
+    crispr: Optional[str] = None
+    ipah: Optional[str] = None
+    predicted_serotype: Optional[str] = None
+    predicted_flex_serotype: Optional[str] = None
+    comments: Optional[str] = None
 
 
 class VirulenceGene(GeneBase, DatabaseReference):

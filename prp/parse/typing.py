@@ -3,6 +3,8 @@
 import csv
 import json
 import logging
+import pandas as pd
+import numpy as np
 
 from ..models.sample import MethodIndex
 from ..models.typing import (
@@ -18,6 +20,8 @@ from ..models.typing import (
 from ..models.typing import TypingSoftware as Software
 from .phenotype.serotypefinder import parse_serotype_gene
 from .phenotype.virulencefinder import parse_vir_gene
+from .phenotype.emmtyper import parse_emm_gene
+from .phenotype.shigapass import parse_shiga_gene
 
 LOG = logging.getLogger(__name__)
 
@@ -201,6 +205,7 @@ def parse_mykrobe_lineage_results(pred_res: dict) -> MethodIndex | None:
 
 def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
     """Parse virulencefinder's output re stx typing"""
+    LOG.info("Parsing virulencefinder stx results")
     with open(path, "rb") as inpt:
         pred_obj = json.load(inpt)
         # if has valid results
@@ -230,7 +235,8 @@ def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
 
 
 def parse_serotypefinder_oh_typing(path: str) -> MethodIndex | None:
-    """Parse serotypefinder's output re OH typing"""
+    """Parse 's output re OH typing"""
+    LOG.info("Parsing serotypefinder oh type results")
     with open(path, "rb") as inpt:
         pred_obj = json.load(inpt)
         # if has valid results
@@ -254,3 +260,52 @@ def parse_serotypefinder_oh_typing(path: str) -> MethodIndex | None:
                     )
                 )
     return pred_result
+
+
+def parse_emmtyper_pred(path: str) -> MethodIndex | None:
+    """Parse emmtyper's output re emm-typing"""
+    LOG.info("Parsing emmtyper results")
+    pred_result = []
+    df = pd.read_csv(path, sep='\t', header=None)
+    df.columns = ["sample_name", "cluster_count", "emmtype", "emm_like_alleles", "emm_cluster"]
+    df_loa = df.to_dict(orient="records")
+    for emmtype_array in df_loa:
+        emm_gene = parse_emm_gene(emmtype_array)
+        gene = TypingResultGeneAllele(**emm_gene.model_dump())
+        pred_result.append(
+            MethodIndex(
+                type=TypingMethod.EMMTYPE,
+                software=Software.EMMTYPER,
+                result=gene,
+            )
+        )
+    return pred_result
+
+
+def parse_shigapass_pred(path: str) -> MethodIndex:
+    """Parse shigapass prediction results."""
+    LOG.info("Parsing shigapass prediction")
+    cols = {
+        "Name": "sample_name",
+        "rfb_hits,(%)": "rfb_hits",
+        "MLST": "mlst",
+        "fliC": "flic",
+        "CRISPR": "crispr",
+        "ipaH": "ipah",
+        "Predicted_Serotype": "predicted_serotype",
+        "Predicted_FlexSerotype": "predicted_flex_serotype",
+        "Comments": "comments",
+    }
+    # read as dataframe and process data structure
+    hits = (
+        pd.read_csv(path, delimiter=";", na_values=["ND", "none"])
+        .rename(columns=cols)
+        .replace(np.nan, None)
+    )
+    shigatype_gene = parse_shiga_gene(hits, 0)
+    gene = TypingResultGeneAllele(**shigatype_gene.model_dump())
+    return MethodIndex(
+        type=TypingMethod.SHIGATYPE,
+        result=gene,
+        software=Software.SHIGAPASS,
+    )
