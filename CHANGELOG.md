@@ -2,9 +2,15 @@
 
 ### Added
 
+ - Added emmtyper and parser
+
 ### Fixed
 
 ### Changed
+
+ - Changed Shigapass models to be consistent with other typing models
+ - Changed Shigapass parsers to be consistent with other typing parsers
+ - Changed ref genome related variables to be optional in quast
 
 ## [0.10.1]
 
@@ -12,7 +18,7 @@
 
 ### Fixed
 
-- Updated parsing of ChewBBACA allele calling annotations and novel alleles. This adds support for annotations introduced in v3.
+ - Updated parsing of ChewBBACA allele calling annotations and novel alleles. This adds support for annotations introduced in v3.
 
 ### Changed
 
