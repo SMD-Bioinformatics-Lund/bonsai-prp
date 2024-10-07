@@ -23,6 +23,7 @@ from .parse import (
     parse_amrfinder_amr_pred,
     parse_amrfinder_vir_pred,
     parse_cgmlst_results,
+    parse_emmtyper_pred,
     parse_kraken_result,
     parse_mlst_results,
     parse_mykrobe_amr_pred,
@@ -116,6 +117,7 @@ def cli(silent, debug):
 )
 @click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
 @click.option("-k", "--mykrobe", type=click.Path(), help="mykrobe results")
+@click.option("-e", "--emmtyper", type=click.Path(), help="Emmtyper m-type prediction results")
 @click.option("-g", "--shigapass", type=click.Path(), help="shigapass results")
 @click.option("-t", "--tbprofiler", type=click.Path(), help="tbprofiler results")
 @click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
@@ -153,6 +155,7 @@ def create_bonsai_input(
     serotypefinder,
     quality,
     mykrobe,
+    emmtyper,
     shigapass,
     tbprofiler,
     bam,
@@ -243,6 +246,13 @@ def create_bonsai_input(
         LOG.info("Parse serotypefinder results")
         # OH typing
         res: MethodIndex | None = parse_serotypefinder_oh_typing(serotypefinder)
+        if res is not None:
+            results["typing_result"].extend(res)
+
+    if emmtyper:
+        LOG.info("Parse emmtyper results")
+        # Emmtyping
+        res: MethodIndex | None = parse_emmtyper_pred(emmtyper)
         if res is not None:
             results["typing_result"].extend(res)
 
