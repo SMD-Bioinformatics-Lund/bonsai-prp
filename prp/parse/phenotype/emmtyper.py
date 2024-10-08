@@ -1,28 +1,41 @@
 """Functions for parsing emmtyper result."""
 
 import logging
+import pandas as pd
 
 from typing import Any
 
-from ...models.phenotype import ElementType, ElementVirulenceSubtype
-from ...models.phenotype import (EmmtypeGene)
+from ...models.typing import EmmTypingMethodIndex, TypingMethod, TypingResultEmm
+from ...models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 
+def parse_emmtyper_pred(path: str) -> EmmTypingMethodIndex | None:
+    """Parse emmtyper's output re emm-typing"""
+    LOG.info("Parsing emmtyper results")
+    pred_result = []
+    df = pd.read_csv(path, sep='\t', header=None)
+    df.columns = ["sample_name", "cluster_count", "emmtype", "emm_like_alleles", "emm_cluster"]
+    df_loa = df.to_dict(orient="records")
+    for emmtype_array in df_loa:
+        emmtype_results = _parse_emmtyper_results(emmtype_array)
+        pred_result.append(
+            EmmTypingMethodIndex(
+                type=TypingMethod.EMMTYPE,
+                result=emmtype_results,
+                software=Software.EMMTYPER,
+            )
+        )
+    return pred_result
 
-def parse_emm_gene(
-    info: dict[str, Any], subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR
-) -> EmmtypeGene:
-    
-    emm_like_alleles = info["emm_like_alleles"].split(";")
+
+def _parse_emmtyper_results(info: dict[str, Any]) -> TypingResultEmm:
     """Parse emm gene prediction results."""
-    return EmmtypeGene(
+    emm_like_alleles = info["emm_like_alleles"].split(";")
+    return TypingResultEmm(
         # info
         cluster_count=info["cluster_count"],
         emmtype=info["emmtype"],
         emm_like_alleles=emm_like_alleles,
         emm_cluster=info["emm_cluster"],
-        # gene classification
-        element_type=ElementType.VIR,
-        element_subtype=subtype,
     )
