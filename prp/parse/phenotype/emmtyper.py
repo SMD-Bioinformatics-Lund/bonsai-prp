@@ -10,7 +10,7 @@ from ...models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 
-def parse_emmtyper_pred(path: str) -> EmmTypingMethodIndex | None:
+def parse_emmtyper_pred(path: str) -> EmmTypingMethodIndex:
     """Parse emmtyper's output re emm-typing"""
     LOG.info("Parsing emmtyper results")
     pred_result = []

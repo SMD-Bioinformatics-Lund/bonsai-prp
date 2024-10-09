@@ -102,10 +102,10 @@ class ShigaTypingMethodIndex(RWModel):
 class TypingResultEmm(RWModel):
     """Container for emmtype gene information"""
 
-    cluster_count: Optional[int] = None
-    emmtype: Optional[str] = None
-    emm_like_alleles: list[str] = None
-    emm_cluster: Optional[str] = None
+    cluster_count: int
+    emmtype: str
+    emm_like_alleles: list[str]
+    emm_cluster: str
 
 
 class EmmTypingMethodIndex(RWModel):
