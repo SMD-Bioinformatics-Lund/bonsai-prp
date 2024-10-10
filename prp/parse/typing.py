@@ -3,8 +3,6 @@
 import csv
 import json
 import logging
-import pandas as pd
-import numpy as np
 
 from ..models.sample import MethodIndex
 from ..models.typing import (

@@ -109,7 +109,7 @@ class TypingResultEmm(RWModel):
 
 
 class EmmTypingMethodIndex(RWModel):
-    """Method Index Shiga."""
+    """Method Index Emm."""
 
     type: Literal[TypingMethod.EMMTYPE]
     software: Literal[TypingSoftware.EMMTYPER]
