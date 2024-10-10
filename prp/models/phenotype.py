@@ -130,7 +130,7 @@ class GeneBase(BaseModel):
         default=None, description="Reference sequence name"
     )
     element_type: ElementType = Field(
-        description="The predominant function fo the gene."
+        description="The predominant function of the gene."
     )
     element_subtype: Union[
         ElementStressSubtype,

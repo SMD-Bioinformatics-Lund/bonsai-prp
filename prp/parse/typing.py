@@ -201,6 +201,7 @@ def parse_mykrobe_lineage_results(pred_res: dict) -> MethodIndex | None:
 
 def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
     """Parse virulencefinder's output re stx typing"""
+    LOG.info("Parsing virulencefinder stx results")
     with open(path, "rb") as inpt:
         pred_obj = json.load(inpt)
         # if has valid results
@@ -230,7 +231,8 @@ def parse_virulencefinder_stx_typing(path: str) -> MethodIndex | None:
 
 
 def parse_serotypefinder_oh_typing(path: str) -> MethodIndex | None:
-    """Parse serotypefinder's output re OH typing"""
+    """Parse 's output re OH typing"""
+    LOG.info("Parsing serotypefinder oh type results")
     with open(path, "rb") as inpt:
         pred_obj = json.load(inpt)
         # if has valid results

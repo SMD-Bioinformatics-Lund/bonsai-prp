@@ -19,6 +19,7 @@ class TypingSoftware(str, Enum):
     VIRULENCEFINDER = "virulencefinder"
     SEROTYPEFINDER = "serotypefinder"
     SHIGAPASS = "shigapass"
+    EMMTYPER = "emmtyper"
 
 
 class TypingMethod(str, Enum):
@@ -31,6 +32,7 @@ class TypingMethod(str, Enum):
     OTYPE = "O_type"
     HTYPE = "H_type"
     SHIGATYPE = "shigatype"
+    EMMTYPE = "emmtype"
 
 
 class ChewbbacaErrors(str, Enum):
@@ -95,6 +97,23 @@ class ShigaTypingMethodIndex(RWModel):
     type: Literal[TypingMethod.SHIGATYPE]
     software: Literal[TypingSoftware.SHIGAPASS]
     result: TypingResultShiga
+
+
+class TypingResultEmm(RWModel):
+    """Container for emmtype gene information"""
+
+    cluster_count: int
+    emmtype: str
+    emm_like_alleles: list[str]
+    emm_cluster: str
+
+
+class EmmTypingMethodIndex(RWModel):
+    """Method Index Emm."""
+
+    type: Literal[TypingMethod.EMMTYPE]
+    software: Literal[TypingSoftware.EMMTYPER]
+    result: TypingResultEmm
 
 
 class ResultLineageBase(RWModel):

@@ -3,6 +3,7 @@
 from .phenotype import (
     parse_amrfinder_amr_pred,
     parse_amrfinder_vir_pred,
+    parse_emmtyper_pred,
     parse_mykrobe_amr_pred,
     parse_resfinder_amr_pred,
     parse_shigapass_pred,
