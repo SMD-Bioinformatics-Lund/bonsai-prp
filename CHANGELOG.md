@@ -3,6 +3,7 @@
 ### Added
 
  - Added emmtyper and parser
+ - Added pytests for emmtyper
 
 ### Fixed
 
