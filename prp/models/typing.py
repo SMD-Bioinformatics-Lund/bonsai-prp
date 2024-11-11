@@ -103,9 +103,9 @@ class TypingResultEmm(RWModel):
     """Container for emmtype gene information"""
 
     cluster_count: int
-    emmtype: str
-    emm_like_alleles: list[str]
-    emm_cluster: str
+    emmtype: str | None = None
+    emm_like_alleles: list[str] | None = None
+    emm_cluster: str | None = None
 
 
 class EmmTypingMethodIndex(RWModel):
