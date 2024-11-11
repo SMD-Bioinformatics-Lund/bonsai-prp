@@ -3,6 +3,7 @@
 ### Added
 
 ### Fixed
+ - Handle alt types for emmtyper
 
 ### Changed
 
