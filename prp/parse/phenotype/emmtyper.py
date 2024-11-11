@@ -2,6 +2,7 @@
 
 import logging
 import pandas as pd
+import numpy as np
 
 from typing import Any
 
@@ -16,6 +17,7 @@ def parse_emmtyper_pred(path: str) -> EmmTypingMethodIndex:
     pred_result = []
     df = pd.read_csv(path, sep='\t', header=None)
     df.columns = ["sample_name", "cluster_count", "emmtype", "emm_like_alleles", "emm_cluster"]
+    df.replace(["-", ""], None, inplace=True)
     df_loa = df.to_dict(orient="records")
     for emmtype_array in df_loa:
         emmtype_results = _parse_emmtyper_results(emmtype_array)
@@ -31,10 +33,9 @@ def parse_emmtyper_pred(path: str) -> EmmTypingMethodIndex:
 
 def _parse_emmtyper_results(info: dict[str, Any]) -> TypingResultEmm:
     """Parse emm gene prediction results."""
-    emm_like_alleles = info["emm_like_alleles"].split(";")
+    emm_like_alleles = info["emm_like_alleles"].split(";") if not pd.isna(info["emm_like_alleles"]) else None
     return TypingResultEmm(
-        # info
-        cluster_count=info["cluster_count"],
+        cluster_count=int(info["cluster_count"]),
         emmtype=info["emmtype"],
         emm_like_alleles=emm_like_alleles,
         emm_cluster=info["emm_cluster"],
