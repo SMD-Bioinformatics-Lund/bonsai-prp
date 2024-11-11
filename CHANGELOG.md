@@ -3,6 +3,15 @@
 ### Added
 
 ### Fixed
+
+### Changed
+
+## [0.11.1]
+
+### Added
+
+### Fixed
+
  - Handle alt types for emmtyper
 
 ### Changed
