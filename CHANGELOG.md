@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Added mypy as test dependency
+
 ## [0.11.1]
 
 ### Added
