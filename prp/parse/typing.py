@@ -43,6 +43,9 @@ def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
     LOG.info("Parsing mlst results")
     with open(mlst_fpath, "r", encoding="utf-8") as jsonfile:
         result = json.load(jsonfile)[0]
+        # get raw allele info
+        alleles = {} if result.get("alleles") is None else result["alleles"]
+        # create typing result object
         result_obj = TypingResultMlst(
             scheme=result["scheme"],
             sequence_type=(
@@ -50,7 +53,7 @@ def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
             ),
             alleles={
                 gene: _process_allele_call(allele)
-                for gene, allele in result["alleles"].items()
+                for gene, allele in alleles.items()
             },
         )
     return MethodIndex(

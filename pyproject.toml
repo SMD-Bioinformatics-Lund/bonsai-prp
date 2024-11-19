@@ -46,6 +46,7 @@ dev = [
 ]
 test = [
     "pytest-cov ~=4.1.0",
+    "mypy == 1.13.0"
 ]
 
 [build-system]

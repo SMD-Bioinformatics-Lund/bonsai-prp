@@ -2,7 +2,7 @@
 
 import pytest
 import logging
-from prp.parse.typing import replace_cgmlst_errors
+from prp.parse.typing import replace_cgmlst_errors, parse_mlst_results
 from prp.models.typing import ChewbbacaErrors
 
 # build test cases for handeling chewbacca allele caller errors and annotations
@@ -85,3 +85,27 @@ def test_replace_cgmlst_errors_warnings(caplog):
     allele = "A_STRANGE_STRING"
     replace_cgmlst_errors(allele, include_novel_alleles=True, correct_alleles=True)
     assert allele in caplog.text
+
+
+def test_parse_mlst_result(ecoli_mlst_path):
+    """Test parsing of MLST result file."""
+    # FIRST run result parser
+    res_obj = parse_mlst_results(ecoli_mlst_path)
+
+    # THEN verify result type
+    assert res_obj.type == 'mlst'
+    # THEN verify software
+    assert res_obj.software == 'mlst'
+    # THEN verify sequence type and allele assignment
+    assert res_obj.result.sequence_type == 58
+    assert len(res_obj.result.alleles) == 8
+
+
+def test_parse_mlst_result_w_no_call(mlst_result_path_no_call):
+    """Test parsing of MLST results file where the alleles was not called."""
+    # FIRST run result parser
+    res_obj = parse_mlst_results(mlst_result_path_no_call)
+
+    # THEN verify that sequence type is None
+    assert res_obj.result.sequence_type is None
+    assert len(res_obj.result.alleles) == 0
