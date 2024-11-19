@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Fixed issue where mlst results with no calls crashed PRP.
+
 ### Changed
 
 - Added mypy as test dependency
