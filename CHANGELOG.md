@@ -4,6 +4,16 @@
 
 ### Fixed
 
+### Changed
+
+### Changed
+
+## [0.11.2]
+
+### Added
+
+### Fixed
+
 - Fixed issue where mlst results with no calls crashed PRP.
 
 ### Changed
