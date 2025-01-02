@@ -2,6 +2,8 @@
 
 ### Added
 
+ - Added NG50 to bonsai input
+
 ### Fixed
 
 ### Changed
@@ -14,11 +16,11 @@
 
 ### Fixed
 
-- Fixed issue where mlst results with no calls crashed PRP.
+ - Fixed issue where mlst results with no calls crashed PRP.
 
 ### Changed
 
-- Added mypy as test dependency
+ - Added mypy as test dependency
 
 ### Changed
 
