@@ -24,6 +24,7 @@ class QuastQcResult(BaseModel):
     largest_contig: int
     n_contigs: int
     n50: int
+    ng50: int | None = None
     assembly_gc: float
     reference_gc: float | None = None
     duplication_ratio: float | None = None
