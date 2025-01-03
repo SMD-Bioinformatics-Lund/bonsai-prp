@@ -259,6 +259,7 @@ def parse_quast_results(tsv_fpath: str) -> QcMethodIndex:
             largest_contig=raw[0]["Largest contig"],
             n_contigs=raw[0]["# contigs"],
             n50=raw[0]["N50"],
+            ng50=raw[0].get("NG50", None),
             assembly_gc=raw[0]["GC (%)"],
             reference_gc=raw[0].get("Reference GC (%)", None),
             duplication_ratio=raw[0].get("Duplication ratio", None),
