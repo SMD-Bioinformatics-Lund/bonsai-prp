@@ -65,7 +65,7 @@ def _parse_virulencefinder_vir_results(pred: str) -> VirulenceElementTypeResult:
     return VirulenceElementTypeResult(genes=genes, phenotypes={}, variants=[])
 
 
-def parse_virulencefinder_vir_pred(path: str) -> VirulenceElementTypeResult | None:
+def parse_virulencefinder_vir_pred(path: str) -> VirulenceMethodIndex | None:
     """Parse virulencefinder virulence prediction results.
 
     :param file: File name
