@@ -10,6 +10,7 @@ import pandas as pd
 import pysam
 from cyvcf2 import VCF, Writer
 from pydantic import TypeAdapter, ValidationError
+import yaml
 
 from prp import VERSION as __version__
 
@@ -17,6 +18,7 @@ from .models.metadata import SoupType, SoupVersion
 from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex, QcSoftware
 from .models.sample import MethodIndex, PipelineResult, ReferenceGenome, IgvAnnotationTrack
+from .models.config import SampleConfig
 from .parse import (
     load_variants,
     parse_alignment_results,
@@ -37,6 +39,7 @@ from .parse import (
     parse_tbprofiler_lineage_results,
     parse_virulencefinder_stx_typing,
     parse_virulencefinder_vir_pred,
+    parse_sample
 )
 from .parse.phenotype.tbprofiler import (
     EXPECTED_SCHEMA_VERSION as EXPECTED_TBPROFILER_SCHEMA_VERSION,
@@ -49,6 +52,23 @@ from .parse.variant import annotate_delly_variants
 LOG = logging.getLogger(__name__)
 
 OUTPUT_SCHEMA_VERSION = 1
+
+class SampleConfigFile(click.ParamType):
+    name = "config"
+
+    def convert(self, value, param, ctx):
+        """Convert string path to yaml object."""
+        # verify input is path to existing file
+        try:
+            cnf_path = Path(value)
+            if not cnf_path.is_file():
+                raise FileNotFoundError(f"file not found, please check the path.")
+        except TypeError as error:
+            raise TypeError(f"value should be a str not '{type(value)}'") from error
+        # load yaml and cast to pydantic model
+        with cnf_path.open() as cfile:
+            data = yaml.safe_load(cfile)
+            return SampleConfig(**data)
 
 
 @click.group()
@@ -67,6 +87,33 @@ def cli(silent, debug):
     logging.basicConfig(
         level=log_level, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
     )
+
+
+@cli.command()
+@click.option("-s", "--sample", 'sample_cnf', type=SampleConfigFile(), required=True, help="Sample configuration with results.")
+@click.option("-o", "--output", type=click.Path(), help="Path to result.")
+def parse(sample_cnf, output):
+    """Parse JASEN resulst and write as concatinated file in json format."""
+    LOG.info("Start generating pipeline result json")
+    try:
+        sample_obj = parse_sample(sample_cnf)
+    except ValidationError as err:
+        click.secho("Generated result failed validation", fg="red")
+        click.secho(err)
+        raise click.Abort
+
+    # Either wrtie to stdout or to file
+    dump = sample_obj.model_dump_json(indent=2)
+    if output is None:
+        print(dump)
+    else:
+        LOG.info("Storing results to: %s", output)
+        try:
+            with open(output, "w", encoding="utf-8") as fout:
+                fout.write(dump)
+        except Exception as error:
+            raise click.Abort('Error writing results file')
+    click.secho("Finished generating pipeline output", fg="green")
 
 
 @cli.command()
@@ -296,7 +343,7 @@ def create_bonsai_input(
             )
         )
         # parse mykrobe result
-        amr_res = parse_mykrobe_amr_pred(pred_res)
+        amr_res = parse_mykrobe_amr_pred(mykrobe)
         if amr_res is not None:
             results["element_type_result"].append(amr_res)
 

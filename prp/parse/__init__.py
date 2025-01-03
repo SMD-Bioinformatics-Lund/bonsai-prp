@@ -21,3 +21,5 @@ from .typing import (
     parse_virulencefinder_stx_typing,
 )
 from .variant import load_variants
+
+from .sample import parse_sample
