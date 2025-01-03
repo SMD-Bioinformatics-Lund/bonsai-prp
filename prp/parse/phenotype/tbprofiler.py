@@ -1,8 +1,11 @@
 """Parse TBprofiler result."""
 import logging
-from typing import Any
+import json
+from typing import Any, Dict
+from pathlib import Path
 
-from ...models.metadata import SoupVersion
+from ..utils import get_db_version
+from ...models.metadata import SoupVersion, SoupType
 from ...models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
@@ -15,6 +18,22 @@ from ...models.phenotype import TbProfilerVariant, VariantSubType, VariantType
 
 LOG = logging.getLogger(__name__)
 EXPECTED_SCHEMA_VERSION = "1.0.0"
+
+def _read_result(path: Path, strict: bool = False) -> Dict[str, Any]:
+    """Read TbProfiler output."""
+    with path.open("r", encoding="utf-8") as tbprofiler_json:
+        pred_res = json.load(tbprofiler_json)
+        # check schema version
+        schema_version = pred_res.get("schema_version")
+        if not EXPECTED_SCHEMA_VERSION == schema_version:
+            LOG.warning(
+                "Unsupported TbProfiler schema version - output might be inaccurate; result schema: %s; expected: %s",
+                schema_version,
+                EXPECTED_SCHEMA_VERSION,
+            )
+            if strict:
+                raise ValueError("Unsupported version of TbProfiler output.")
+    return pred_res
 
 
 def _get_tbprofiler_amr_sr_profie(tbprofiler_result):
@@ -162,11 +181,24 @@ def parse_drug_resistance_info(drugs: list[dict[str, str]]) -> list[PhenotypeInf
     return phenotypes
 
 
+def get_version(result_path) -> SoupVersion:
+    """Get version of Mykrobe from result."""
+    LOG.debug("Get Mykrobe version")
+    pred_res = _read_result(result_path)
+    version = SoupVersion(
+        name=pred_res["pipeline"]["db_version"]["name"],
+        version=get_db_version(pred_res["pipeline"]["db_version"]),
+        type=SoupType.DB,
+    )
+    return version
+
+
 def parse_tbprofiler_amr_pred(
-    prediction: dict[str, Any]
-) -> tuple[tuple[SoupVersion, ...], ElementTypeResult]:
+    path: Path
+) -> AMRMethodIndex:
     """Parse tbprofiler resistance prediction results."""
     LOG.info("Parsing tbprofiler prediction")
+    prediction = _read_result(path)
     resistance = ElementTypeResult(
         phenotypes=_get_tbprofiler_amr_sr_profie(prediction),
         genes=[],
