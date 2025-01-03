@@ -38,7 +38,7 @@ def _process_allele_call(allele: str) -> str | list[str] | None:
     return result
 
 
-def parse_mlst_results(mlst_fpath: str) -> TypingResultMlst:
+def parse_mlst_results(mlst_fpath: str) -> MethodIndex:
     """Parse mlst results from mlst to json object."""
     LOG.info("Parsing mlst results")
     with open(mlst_fpath, "r", encoding="utf-8") as jsonfile:
@@ -106,7 +106,7 @@ def parse_cgmlst_results(
     chewbacca_res_path: str,
     include_novel_alleles: bool = True,
     correct_alleles: bool = False,
-) -> TypingResultCgMlst:
+) -> MethodIndex:
     """Parse chewbbaca cgmlst prediction results to json results.
 
     Chewbbaca reports errors in allele profile.

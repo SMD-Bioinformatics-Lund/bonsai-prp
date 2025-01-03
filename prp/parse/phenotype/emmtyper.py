@@ -3,14 +3,14 @@
 import logging
 import pandas as pd
 
-from typing import Any
+from typing import Any, Iterable
 
 from ...models.typing import EmmTypingMethodIndex, TypingMethod, TypingResultEmm
 from ...models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 
-def parse_emmtyper_pred(path: str) -> EmmTypingMethodIndex:
+def parse_emmtyper_pred(path: str) -> Iterable[EmmTypingMethodIndex]:
     """Parse emmtyper's output re emm-typing"""
     LOG.info("Parsing emmtyper results")
     pred_result = []
