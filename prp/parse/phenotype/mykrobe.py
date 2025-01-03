@@ -2,7 +2,10 @@
 
 import logging
 import re
-from typing import Any, Union
+from typing import Any, Union, Dict
+import pandas as pd
+import numpy as np
+from pathlib import Path
 
 from ...models.phenotype import (
     AMRMethodIndex,
@@ -14,7 +17,10 @@ from ...models.phenotype import (
 )
 from ...models.phenotype import PredictionSoftware as Software
 from ...models.phenotype import VariantSubType, VariantType
+from ...models.sample import MethodIndex
+from ...models.metadata import SoupType, SoupVersion
 from ..utils import get_nt_change, is_prediction_result_empty
+
 
 LOG = logging.getLogger(__name__)
 
@@ -160,13 +166,45 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> tuple[MykrobeVariant, ...]:
     return variants
 
 
-def parse_mykrobe_amr_pred(prediction: dict[str, Any]) -> AMRMethodIndex | None:
+def _read_result(result_path: str) -> Dict[str, Any]:
+    """Read Mykrobe result file."""
+    pred_res = pd.read_csv(result_path, quotechar='"')
+    pred_res = (pred_res
+                .rename(columns={pred_res.columns[3]: "variants", pred_res.columns[4]: "genes"})
+                .replace(["NA", np.nan], None)
+                .to_dict(orient="records")
+    )
+    return pred_res
+
+
+def get_version(result_path) -> SoupVersion:
+    """Get version of Mykrobe from result."""
+    LOG.debug("Get Mykrobe version")
+    pred_res = _read_result(result_path)
+    version = SoupVersion(
+        name="mykrobe-predictor",
+        version=pred_res[0]["mykrobe_version"],
+        type=SoupType.DB,
+    )
+
+
+def parse_mykrobe_amr_pred(result_path: str | Path, sample_id: str | None = None) -> AMRMethodIndex | None:
     """Parse mykrobe resistance prediction results."""
     LOG.info("Parsing mykrobe prediction")
+    pred_res = _read_result(result_path)
+    # verify that sample id is in prediction result
+    if sample_id is not None:
+        if not sample_id in pred_res[0]["sample"]:
+            LOG.warning(
+                "Sample id %s is not in Mykrobe result, possible sample mixup",
+                sample_id,
+            )
+            raise ValueError("Sample id is not in Mykrobe result.")
+
     resistance = ElementTypeResult(
-        phenotypes=_get_mykrobe_amr_sr_profie(prediction),
+        phenotypes=_get_mykrobe_amr_sr_profie(pred_res),
         genes=[],
-        variants=_parse_mykrobe_amr_variants(prediction),
+        variants=_parse_mykrobe_amr_variants(pred_res),
     )
 
     # verify prediction result

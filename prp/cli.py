@@ -329,10 +329,10 @@ def create_bonsai_input(
                     type=SoupType.DB,
                 )
             ]
-            sw_list = results["pipeline"].softwares.extend(db_info)
+            results["pipeline"].softwares.extend(db_info)
             lin_res: MethodIndex = parse_tbprofiler_lineage_results(pred_res)
             results["typing_result"].append(lin_res)
-            amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res)
+            amr_res: MethodIndex = parse_tbprofiler_amr_pred(Path(tbprofiler))
             results["element_type_result"].append(amr_res)
 
     # parse SNV and SV variants.
