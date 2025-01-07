@@ -6,8 +6,6 @@
 
 ### Changed
 
-### Changed
-
 ## [0.11.3]
 
 ### Added
@@ -15,8 +13,6 @@
  - Added NG50 to bonsai input
 
 ### Fixed
-
-### Changed
 
 ### Changed
 
@@ -31,8 +27,6 @@
 ### Changed
 
  - Added mypy as test dependency
-
-### Changed
 
 ## [0.11.1]
 
