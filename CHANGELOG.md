@@ -4,6 +4,8 @@
 
 ### Fixed
 
+ - Fixed NG50 bug that couldn't process "-"
+
 ### Changed
 
 ## [0.11.3]
