@@ -48,10 +48,13 @@ from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_
 from .parse.species import get_mykrobe_spp_prediction
 from .parse.utils import _get_path, get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
+from . import bonsai
 
 LOG = logging.getLogger(__name__)
 
 OUTPUT_SCHEMA_VERSION = 1
+USER_ENV = "BONSAI_USER"
+PASSWD_ENV = "BONSAI_PASSWD"
 
 class SampleConfigFile(click.ParamType):
     name = "config"
@@ -71,6 +74,23 @@ class SampleConfigFile(click.ParamType):
             return SampleConfig(**data)
 
 
+class JsonFile(click.ParamType):
+    name = "config"
+
+    def convert(self, value, param, ctx):
+        """Convert string path to yaml object."""
+        # verify input is path to existing file
+        try:
+            file_path = Path(value)
+            if not file_path.is_file():
+                raise FileNotFoundError(f"file not found, please check the path.")
+        except TypeError as error:
+            raise TypeError(f"value should be a str not '{type(value)}'") from error
+        # load yaml and cast to pydantic model
+        with file_path.open() as cfile:
+            return json.load(cfile)
+
+
 @click.group()
 @click.version_option(__version__)
 @click.option("-s", "--silent", is_flag=True)
@@ -87,6 +107,48 @@ def cli(silent, debug):
     logging.basicConfig(
         level=log_level, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
     )
+
+
+@cli.command()
+@click.option("-s", "--sample", 'sample_cnf', type=SampleConfigFile(), help="Sample configuration with results.")
+@click.option("-a", "--api", "api_url", required=True, type=str, help="Upload configuration")
+@click.option("-u", "--username", required=True, envvar=USER_ENV, type=str, help="Username")
+@click.option("-p", "--password", required=True, envvar=PASSWD_ENV, type=str, help="Password")
+def upload(sample_cnf, username, password, api_url):
+    """Upload a sample to Bonsai using either a sample config or json dump."""
+    # Parse sample config
+    try:
+        sample_obj = parse_sample(sample_cnf)
+    except ValidationError as err:
+        click.secho("Generated result failed validation", fg="red")
+        click.secho(err)
+
+    # Authenticate to Bonsai API
+    try:
+        conn = bonsai.authenticate(api_url, username, password)
+    except ValueError as error:
+        raise click.UsageError(str(error)) from error
+
+    # Upload sample
+    bonsai.upload_sample(conn, sample_obj, sample_cnf)
+    # add sample to group if it was assigned one.
+    for group_id in sample_cnf.groups:
+        try:
+            bonsai.add_sample_to_group(  # pylint: disable=no-value-for-parameter
+                token_obj=conn.token, api_url=conn.api_url, group_id=group_id, sample_id=sample_cnf.sample_id
+            )
+        except bonsai.HTTPError as error:
+            match error.response.status_code:
+                case 404:
+                    msg = f"Group with id {group_id} is not in Bonsai"
+                case 500:
+                    msg = "An unexpected error occured in Bonsai, check bonsai api logs"
+                case _:
+                    msg = f"An unknown error occurred; {str(error)}"
+            # raise error and abort execution
+            raise click.UsageError(msg) from error
+    # exit script
+    click.secho("Sample uploaded", fg="green")
 
 
 @cli.command()

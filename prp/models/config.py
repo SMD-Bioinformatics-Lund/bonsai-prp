@@ -56,3 +56,11 @@ class SampleConfig(RWModel):
     virulencefinder: FilePath | None = None
     mykrobe: FilePath | None = None
     tbprofiler: FilePath | None = None
+
+    ## clustering
+    sourmash_signature: FilePath | None = None
+    ska_index: str | None = None
+
+    def assinged_to_group(self) -> bool:
+        """Return True if sample is assigned to a group."""
+        return len(self.groups) > 0
