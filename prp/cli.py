@@ -217,6 +217,7 @@ def create_bonsai_input(
     output,
 ):  # pylint: disable=too-many-arguments
     """Combine pipeline results into a standardized json output file."""
+    click.secho("Command is deprecated, please migrate to prp parse!", fg='yellow')
     LOG.info("Start generating pipeline result json")
     # Get basic sample object
     sample_info, seq_info, pipeline_info = parse_run_info(run_metadata, process_metadata)
