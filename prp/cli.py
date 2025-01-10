@@ -14,10 +14,8 @@ import yaml
 
 from prp import VERSION as __version__
 
-from .models.metadata import SoupType, SoupVersion
-from .models.phenotype import ElementType
 from .models.qc import QcMethodIndex, QcSoftware
-from .models.sample import MethodIndex, PipelineResult, ReferenceGenome, IgvAnnotationTrack
+from .models.sample import MethodIndex, PipelineResult, IgvAnnotationTrack
 from .models.config import SampleConfig
 from .parse import (
     parse_alignment_results,
@@ -25,9 +23,6 @@ from .parse import (
     parse_postalignqc_results,
     parse_quast_results,
     parse_sample
-)
-from .parse.phenotype.tbprofiler import (
-    EXPECTED_SCHEMA_VERSION as EXPECTED_TBPROFILER_SCHEMA_VERSION,
 )
 from .parse.utils import parse_input_dir
 from .parse.variant import annotate_delly_variants
@@ -48,7 +43,7 @@ class SampleConfigFile(click.ParamType):
         try:
             cnf_path = Path(value)
             if not cnf_path.is_file():
-                raise FileNotFoundError(f"file not found, please check the path.")
+                raise FileNotFoundError(f"file {cnf_path.name} not found, please check the path.")
         except TypeError as error:
             raise TypeError(f"value should be a str not '{type(value)}'") from error
         # load yaml and cast to pydantic model
@@ -196,7 +191,8 @@ def rerun_bonsai_input(ctx, input_dir, jasen_dir, symlink_dir, output_dir) -> No
         LOG.info("Parse input directory")
         input_arrays = parse_input_dir(input_dir, jasen_dir, symlink_dir, output_dir)
         for input_array in input_arrays:
-            ctx.invoke(create_bonsai_input, **input_array)
+            pass
+            #ctx.invoke(create_bonsai_input, **input_array)
 
 
 @cli.command()

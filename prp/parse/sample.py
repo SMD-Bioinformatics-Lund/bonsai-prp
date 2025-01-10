@@ -6,22 +6,16 @@ from typing import Sequence
 
 from .metadata import parse_run_info
 from .qc import parse_quast_results, parse_postalignqc_results
-from .species import parse_kraken_result, get_mykrobe_spp_prediction, SppMethodIndex
+from . import kraken
 from .typing import (
     parse_cgmlst_results,
     parse_mlst_results,
-    parse_virulencefinder_stx_typing,
-    parse_serotypefinder_oh_typing,
-    parse_mykrobe_lineage_results,
-    parse_tbprofiler_lineage_results,
 )
-from .phenotype.resfinder import parse_resfinder_amr_pred, AMRMethodIndex
-from .phenotype.amrfinder import parse_amrfinder_amr_pred, parse_amrfinder_vir_pred
-from .phenotype.virulencefinder import parse_virulencefinder_vir_pred, VirulenceMethodIndex
-from .phenotype.shigapass import parse_shigapass_pred, ShigaTypingMethodIndex
-from .phenotype.emmtyper import parse_emmtyper_pred, EmmTypingMethodIndex
-from .phenotype import mykrobe
-from .phenotype import tbprofiler
+from .virulencefinder import VirulenceMethodIndex
+from .shigapass import parse_shiga_pred, ShigaTypingMethodIndex
+from .emmtyper import parse_emm_pred, EmmTypingMethodIndex
+from . import mykrobe, resfinder, amrfinder, tbprofiler, virulencefinder, serotypefinder
+from ..models.phenotype import AMRMethodIndex
 
 from ..models.phenotype import ElementType
 from ..models.sample import MethodIndex, QcMethodIndex, PipelineResult
@@ -41,16 +35,15 @@ def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
     return qc_results
 
 
-def _read_spp_prediction(smp_cnf) -> Sequence[SppMethodIndex]:
+def _read_spp_prediction(smp_cnf) -> Sequence[mykrobe.SppMethodIndex]:
     """Read all species prediction results."""
     spp_results = []
     if smp_cnf.kraken:
-        spp_results.append(parse_kraken_result(smp_cnf.kraken))
+        spp_results.append(kraken.parse_result(smp_cnf.kraken))
 
     # TODO refactor lineage and species to use path instead of dict as input
     if smp_cnf.mykrobe:
-        raw_result = mykrobe._read_result(smp_cnf.mykrobe)
-        spp_results.append(get_mykrobe_spp_prediction(raw_result))
+        spp_results.append(mykrobe.parse_spp_pred(smp_cnf.mykrobe))
     return spp_results
 
 
@@ -65,34 +58,32 @@ def _read_typing(smp_cnf) -> Sequence[MethodIndex | EmmTypingMethodIndex | Shiga
         typing_result.append(parse_cgmlst_results(smp_cnf.chewbbaca))
 
     if smp_cnf.emmtyper:
-        typing_result.extend(parse_emmtyper_pred(smp_cnf.emmtyper))
+        typing_result.extend(parse_emm_pred(smp_cnf.emmtyper))
 
     if smp_cnf.shigapass:
-        typing_result.append(parse_shigapass_pred(smp_cnf.shigapass))
+        typing_result.append(parse_shiga_pred(smp_cnf.shigapass))
 
     # stx typing
     if smp_cnf.virulencefinder:
-        tmp_virfinder_res: MethodIndex | None = parse_virulencefinder_stx_typing(smp_cnf.virulencefinder)
+        tmp_virfinder_res: MethodIndex | None = virulencefinder.parse_stx_typing(smp_cnf.virulencefinder)
         if tmp_virfinder_res is not None:
             typing_result.append(tmp_virfinder_res)
 
     if smp_cnf.serotypefinder:
         LOG.info("Parse serotypefinder results")
         # OH typing
-        tmp_serotype_res: MethodIndex | None = parse_serotypefinder_oh_typing(smp_cnf.serotypefinder)
+        tmp_serotype_res: MethodIndex | None = serotypefinder.parse_oh_typing(smp_cnf.serotypefinder)
         if tmp_serotype_res is not None:
             typing_result.append(tmp_serotype_res)
 
     # TODO refactor lineage and species to use path instead of dict as input
     if smp_cnf.mykrobe:
-        raw_result = mykrobe._read_result(smp_cnf.mykrobe)
-        lin_res: MethodIndex | None = parse_mykrobe_lineage_results(raw_result)
+        lin_res: MethodIndex | None = mykrobe.parse_lineage(smp_cnf.mykrobe)
         if lin_res is not None:
             typing_result.append(lin_res)
 
     if smp_cnf.tbprofiler:
-        raw_result = tbprofiler._read_result(smp_cnf.tbprofiler)
-        typing_result.append(parse_tbprofiler_lineage_results(raw_result))
+        typing_result.append(tbprofiler.parse_lineage_pred(smp_cnf.tbprofiler))
 
     return typing_result
 
@@ -104,21 +95,21 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
         with smp_cnf.resfinder.open("r", encoding="utf-8") as resfinder_json:
             pred_res = json.load(resfinder_json)
             for method in [ElementType.AMR, ElementType.STRESS]:
-                resistance.append(parse_resfinder_amr_pred(pred_res, method))
+                resistance.append(resfinder.parse_amr_pred(pred_res, method))
 
     if smp_cnf.amrfinder:
         for method in [ElementType.AMR, ElementType.STRESS]:
-            resistance.append(parse_amrfinder_amr_pred(smp_cnf.amrfinder, method))
+            resistance.append(amrfinder.parse_amr_pred(smp_cnf.amrfinder, method))
 
     if smp_cnf.mykrobe:
-        tmp_res = mykrobe.parse_mykrobe_amr_pred(smp_cnf.mykrobe, smp_cnf.sample_id)
+        tmp_res = mykrobe.parse_amr_pred(smp_cnf.mykrobe, smp_cnf.sample_id)
         if tmp_res is not None:
             resistance.append(tmp_res)
 
     if smp_cnf.tbprofiler:
         # store pipeline version
         resistance.append(
-            tbprofiler.parse_tbprofiler_amr_pred(smp_cnf.tbprofiler)
+            tbprofiler.parse_amr_pred(smp_cnf.tbprofiler)
         )
     return resistance
 
@@ -127,11 +118,11 @@ def _read_virulence(smp_cnf) -> Sequence[VirulenceMethodIndex]:
     """Read virulence results."""
     virulence = []
     if smp_cnf.amrfinder:
-        virulence.append(parse_amrfinder_vir_pred(smp_cnf.amrfinder))
+        virulence.append(amrfinder.parse_vir_pred(smp_cnf.amrfinder))
 
     if smp_cnf.virulencefinder:
         # virulence genes
-        raw_res: VirulenceMethodIndex | None = parse_virulencefinder_vir_pred(
+        raw_res: VirulenceMethodIndex | None = virulencefinder.parse_virulence_pred(
             smp_cnf.virulencefinder
         )
         if raw_res is not None:

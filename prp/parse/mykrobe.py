@@ -7,7 +7,8 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-from ...models.phenotype import (
+from ..models.sample import MethodIndex
+from ..models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
     ElementType,
@@ -15,11 +16,19 @@ from ...models.phenotype import (
     MykrobeVariant,
     PhenotypeInfo,
 )
-from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import VariantSubType, VariantType
-from ...models.sample import MethodIndex
-from ...models.metadata import SoupType, SoupVersion
-from ..utils import get_nt_change, is_prediction_result_empty
+from ..models.phenotype import PredictionSoftware as Software
+from ..models.phenotype import VariantSubType, VariantType
+from ..models.metadata import SoupType, SoupVersion
+from prp.models.species import (
+    SppMethodIndex,
+    SppPredictionSoftware,
+    MykrobeSpeciesPrediction,
+)
+from ..models.typing import (
+    ResultLineageBase,
+    TypingMethod,
+)
+from .utils import get_nt_change, is_prediction_result_empty
 
 
 LOG = logging.getLogger(__name__)
@@ -188,7 +197,7 @@ def get_version(result_path) -> SoupVersion:
     )
 
 
-def parse_mykrobe_amr_pred(result_path: str | Path, sample_id: str | None = None) -> AMRMethodIndex | None:
+def parse_amr_pred(result_path: str | Path, sample_id: str | None = None) -> AMRMethodIndex | None:
     """Parse mykrobe resistance prediction results."""
     LOG.info("Parsing mykrobe prediction")
     pred_res = _read_result(result_path)
@@ -215,3 +224,33 @@ def parse_mykrobe_amr_pred(result_path: str | Path, sample_id: str | None = None
             type=ElementType.AMR, software=Software.MYKROBE, result=resistance
         )
     return result
+
+
+def parse_spp_pred(result_path: str | Path) -> SppMethodIndex:
+    """Get species prediction result from Mykrobe."""
+    LOG.info("Parsing Mykrobe spp result.")
+    pred_res = _read_result(result_path)
+    spp_pred = MykrobeSpeciesPrediction(
+        scientific_name=pred_res[0]["species"].replace("_", " "),
+        taxonomy_id=None,
+        phylogenetic_group=pred_res[0]["phylo_group"].replace("_", " "),
+        phylogenetic_group_coverage=pred_res[0]["phylo_group_per_covg"],
+        species_coverage=pred_res[0]["species_per_covg"],
+    )
+    return SppMethodIndex(software=SppPredictionSoftware.MYKROBE, result=[spp_pred])
+
+
+def parse_lineage_pred(pred_res: dict) -> MethodIndex | None:
+    """Parse mykrobe results for lineage object."""
+    LOG.info("Parsing lineage results")
+    if pred_res:
+        lineage = pred_res[0]["lineage"]
+        # cast to lineage object
+        result_obj = ResultLineageBase(
+            main_lineage=lineage.split(".")[0],
+            sublineage=lineage,
+        )
+        return MethodIndex(
+            type=TypingMethod.LINEAGE, software=Software.MYKROBE, result=result_obj
+        )
+    return None

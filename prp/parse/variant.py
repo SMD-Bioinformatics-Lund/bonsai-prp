@@ -6,7 +6,6 @@ import re
 from cyvcf2 import VCF, Variant
 
 from prp.models.phenotype import VariantBase, VariantType
-from prp.models.phenotype import TbProfilerVariant, VariantBase, VariantType
 
 LOG = logging.getLogger(__name__)
 SOURCE_PATTERN = r"##source=(.+)\n"

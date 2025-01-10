@@ -4,17 +4,19 @@ import json
 from typing import Any, Dict
 from pathlib import Path
 
-from ..utils import get_db_version
-from ...models.metadata import SoupVersion, SoupType
-from ...models.phenotype import (
+from .utils import get_db_version
+from ..models.metadata import SoupVersion, SoupType
+from ..models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
 )
-from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import TbProfilerVariant, VariantSubType, VariantType
+from ..models.phenotype import PredictionSoftware as Software
+from ..models.phenotype import TbProfilerVariant, VariantSubType, VariantType
+from ..models.typing import TbProfilerLineage, TypingMethod, LineageInformation
+from ..models.sample import MethodIndex
 
 LOG = logging.getLogger(__name__)
 EXPECTED_SCHEMA_VERSION = "1.0.0"
@@ -193,7 +195,7 @@ def get_version(result_path) -> SoupVersion:
     return version
 
 
-def parse_tbprofiler_amr_pred(
+def parse_amr_pred(
     path: Path
 ) -> AMRMethodIndex:
     """Parse tbprofiler resistance prediction results."""
@@ -206,4 +208,33 @@ def parse_tbprofiler_amr_pred(
     )
     return AMRMethodIndex(
         type=ElementType.AMR, software=Software.TBPROFILER, result=resistance
+    )
+
+
+def parse_lineage_pred(path: Path) -> MethodIndex:
+    """Parse tbprofiler results for lineage object."""
+    LOG.info("Parsing lineage results")
+    pred_res = _read_result(path)
+    # lineages
+    lineages = [
+        LineageInformation(
+            lineage=lin["lineage"],
+            family=lin["family"],
+            rd=lin["rd"],
+            fraction=lin["fraction"],
+            support=lin["support"],
+        )
+        for lin in pred_res["lineage"]
+    ]
+    # combine into result
+    result_obj = TbProfilerLineage(
+        main_lineage=pred_res["main_lineage"],
+        sublineage=pred_res["sub_lineage"],
+        lineages=lineages,
+    )
+    # store result as a method index
+    return MethodIndex(
+        type=TypingMethod.LINEAGE,
+        software=Software.TBPROFILER,
+        result=result_obj,
     )

@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from ...models.phenotype import (
+from ..models.phenotype import (
     AmrFinderResistanceGene,
     AmrFinderVirulenceGene,
     AMRMethodIndex,
@@ -13,8 +13,8 @@ from ...models.phenotype import (
     ElementTypeResult,
     PhenotypeInfo,
 )
-from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import (
+from ..models.phenotype import PredictionSoftware as Software
+from ..models.phenotype import (
     StressMethodIndex,
     VirulenceElementTypeResult,
     VirulenceMethodIndex,
@@ -161,7 +161,7 @@ def _parse_amrfinder_vir_results(predictions: dict) -> VirulenceElementTypeResul
     return VirulenceElementTypeResult(phenotypes={}, genes=genes, variants=[])
 
 
-def parse_amrfinder_vir_pred(file: str) -> VirulenceMethodIndex:
+def parse_vir_pred(file: str) -> VirulenceMethodIndex:
     """Parse amrfinder virulence prediction results."""
     LOG.info("Parsing amrfinder virulence prediction")
     hits = (
