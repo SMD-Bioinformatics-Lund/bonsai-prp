@@ -4,6 +4,10 @@ import pytest
 
 from ..fixtures import data_path
 
+@pytest.fixture()
+def saureus_sample_conf_path(data_path):
+    """Get path for saureus sample config file"""
+    return str(data_path.joinpath("saureus", "sample_1.cnf.yml"))
 
 @pytest.fixture()
 def saureus_analysis_meta_path(data_path):

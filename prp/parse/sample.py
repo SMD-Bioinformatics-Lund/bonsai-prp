@@ -152,7 +152,7 @@ def parse_sample(smp_cnf) -> PipelineResult:
     if smp_cnf.mykrobe:
         results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))
     if smp_cnf.tbprofiler:
-        results["pipeline"].softwares.extend(tbprofiler.get_version(smp_cnf.tbprofiler))
+        results["pipeline"].softwares.append(tbprofiler.get_version(smp_cnf.tbprofiler))
 
     # add amr and virulence
     results["element_type_result"].extend(

@@ -1,68 +1,34 @@
 """Test PRP cli functions."""
 
 import json
-from typing import Literal
+import pytest
 
 from click.testing import CliRunner
 
 from prp.cli import (
     annotate_delly,
-    create_bonsai_input,
+    parse,
     create_cdm_input,
     add_igv_annotation_track,
 )
 from prp.models import PipelineResult
-from prp.models.base import RWModel
-from prp.models.phenotype import ElementType
 
 
-def test_create_output_saureus(
-    saureus_analysis_meta_path,
-    saureus_quast_path,
-    saureus_bwa_path,
-    saureus_amrfinder_path,
-    saureus_resfinder_path,
-    saureus_resfinder_meta_path,
-    saureus_virulencefinder_path,
-    saureus_virulencefinder_meta_path,
-    saureus_mlst_path,
-    saureus_chewbbaca_path,
-):
-    """Test creating a analysis summary using S.aureus data.
+@pytest.mark.parametrize('fixture_name,expected_sw', [('saureus_sample_conf_path', ["resfinder", "amrfinder", "virulencefinder"]), ('ecoli_sample_conf_path', ["resfinder", "amrfinder", "virulencefinder"]), ('mtuberculosis_sample_conf_path', ["mykrobe", "tbprofiler"])])
+def test_parse(fixture_name, expected_sw, request):
+    """Test creating a analysis summary.
 
     The test is intended as an end-to-end test.
     """
-    sample_id = "test_saureus_1"
-    output_file = f"{sample_id}.json"
+    sample_conf = request.getfixturevalue(fixture_name)
+    output_file = "test_output.json"
     runner = CliRunner()
     with runner.isolated_filesystem():
         args = [
-            "-i",
-            sample_id,
-            "--run-metadata",
-            saureus_analysis_meta_path,
-            "--quality",
-            saureus_bwa_path,
-            "--quast",
-            saureus_quast_path,
-            "--amrfinder",
-            saureus_amrfinder_path,
-            "--resfinder",
-            saureus_resfinder_path,
-            "--virulencefinder",
-            saureus_virulencefinder_path,
-            "--process-metadata",
-            saureus_resfinder_meta_path,
-            "--process-metadata",
-            saureus_virulencefinder_meta_path,
-            "--mlst",
-            saureus_mlst_path,
-            "--cgmlst",
-            saureus_chewbbaca_path,
-            "--output",
-            output_file,
+            "--sample", sample_conf,
+            "--output", output_file,
         ]
-        result = runner.invoke(create_bonsai_input, args)
+        result = runner.invoke(parse, args)
         assert result.exit_code == 0
 
         # test that the correct output was generated
@@ -75,84 +41,7 @@ def test_create_output_saureus(
         # ====
 
         # 1. that resfinder, amrfinder and virulence finder result is in output
-        assert len({"resfinder", "amrfinder", "virulencefinder"} & prediction_sw) == 3
-
-        # 2. that the output datamodel can be used to format input data as well
-        output_data_model = PipelineResult(**prp_output)
-        assert prp_output == json.loads(output_data_model.model_dump_json())
-
-
-def test_create_output_ecoli(
-    ecoli_analysis_meta_path,
-    ecoli_quast_path,
-    ecoli_bwa_path,
-    ecoli_amrfinder_path,
-    ecoli_resfinder_path,
-    ecoli_resfinder_meta_path,
-    ecoli_virulencefinder_stx_pred_no_stx_path,
-    ecoli_virulencefinder_meta_path,
-    ecoli_serotypefinder_path,
-    ecoli_serotypefinder_meta_path,
-    ecoli_mlst_path,
-    ecoli_chewbbaca_path,
-    ecoli_shigapass_path,
-):
-    """Test creating a analysis summary using E.coli data.
-
-    The test is intended as an end-to-end test.
-    """
-    sample_id = "test_ecoli_1"
-    output_file = f"{sample_id}.json"
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        args = [
-            "-i",
-            sample_id,
-            "--run-metadata",
-            ecoli_analysis_meta_path,
-            "--quality",
-            ecoli_bwa_path,
-            "--quast",
-            ecoli_quast_path,
-            "--amrfinder",
-            ecoli_amrfinder_path,
-            "--resfinder",
-            ecoli_resfinder_path,
-            "--virulencefinder",
-            ecoli_virulencefinder_stx_pred_no_stx_path,
-            "--serotypefinder",
-            ecoli_serotypefinder_path,
-            "--process-metadata",
-            ecoli_resfinder_meta_path,
-            "--process-metadata",
-            ecoli_virulencefinder_meta_path,
-            "--process-metadata",
-            ecoli_serotypefinder_meta_path,
-            "--mlst",
-            ecoli_mlst_path,
-            "--cgmlst",
-            ecoli_chewbbaca_path,
-            "--shigapass",
-            ecoli_shigapass_path,
-            "--output",
-            output_file,
-        ]
-        result = runner.invoke(create_bonsai_input, args)
-        # test successful execution
-        assert result.exit_code == 0
-
-        # test that the correct output was generated
-        with open(output_file) as inpt:
-            prp_output = json.load(inpt)
-
-        # get prediction softwares in ouptut
-        prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
-
-        # Test
-        # ====
-
-        # 1. that resfinder, amrfinder and virulence finder result is in output
-        assert len({"resfinder", "amrfinder", "virulencefinder"} & prediction_sw) == 3
+        assert len(set(expected_sw) & prediction_sw) == len(expected_sw)
 
         # 2. that the output datamodel can be used to format input data as well
         output_data_model = PipelineResult(**prp_output)
@@ -255,63 +144,3 @@ def test_add_igv_annotation_track(mtuberculosis_snv_vcf_path, simple_pipeline_re
                 else len(simple_pipeline_result.genome_annotation)
             )
             assert len(test_file_after["genome_annotation"]) == n_tracks_before + 1
-
-
-def test_create_output_mtuberculosis(
-    mtuberculosis_analysis_meta_path,
-    mtuberculosis_bracken_path,
-    mtuberculosis_bwa_path,
-    mtuberculosis_mykrobe_path,
-    mtuberculosis_snv_vcf_path,
-    mtuberculosis_sv_vcf_path,
-    mtuberculosis_quast_path,
-    mtuberculosis_tbprofiler_path,
-):
-    """Test creating a analysis summary using M. tuberculosis data.
-
-    The test is intended as an end-to-end test.
-    """
-    sample_id = "test_mtuberculosis_1"
-    output_file = f"{sample_id}.json"
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        args = [
-            "-i",
-            sample_id,
-            "--run-metadata",
-            mtuberculosis_analysis_meta_path,
-            "--kraken",
-            mtuberculosis_bracken_path,
-            "--quality",
-            mtuberculosis_bwa_path,
-            "--mykrobe",
-            mtuberculosis_mykrobe_path,
-            "--snv-vcf",
-            mtuberculosis_snv_vcf_path,
-            "--sv-vcf",
-            mtuberculosis_sv_vcf_path,
-            "--quast",
-            mtuberculosis_quast_path,
-            "--tbprofiler",
-            mtuberculosis_tbprofiler_path,
-            "--output",
-            output_file,
-        ]
-        result = runner.invoke(create_bonsai_input, args)
-        assert result.exit_code == 0
-
-        # test that the correct output was generated
-        with open(output_file) as inpt:
-            prp_output = json.load(inpt)
-        # get prediction softwares in ouptut
-        prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
-
-        # Test
-        # ====
-
-        # 1. that resfinder, amrfinder and virulence finder result is in output
-        assert len({"mykrobe", "tbprofiler"} & prediction_sw) == 2
-
-        # 2. that the output datamodel can be used to format input data as well
-        output_data_model = PipelineResult(**prp_output)
-        assert prp_output == json.loads(output_data_model.model_dump_json())

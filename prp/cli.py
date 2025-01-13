@@ -53,7 +53,7 @@ class SampleConfigFile(click.ParamType):
         # load yaml and cast to pydantic model
         with cnf_path.open(encoding="utf-8") as cfile:
             data = yaml.safe_load(cfile)
-            return SampleConfig(**data)
+            return SampleConfig(**data, config_path=cnf_path)
 
 
 class JsonFile(click.ParamType):
@@ -249,11 +249,10 @@ def validate(output):
 @click.option("-q", "--quast", type=click.Path(), help="Quast quality control metrics")
 @click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
 @click.option("-c", "--cgmlst", type=click.Path(), help="cgMLST prediction results")
-@click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
 )
-def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
+def create_cdm_input(quast, quality, cgmlst, output) -> None:
     """Format QC metrics into CDM compatible input file."""
     results = []
     if quality:
@@ -268,7 +267,7 @@ def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
 
     if cgmlst:
         LOG.info("Parse cgmlst results")
-        res: MethodIndex = parse_cgmlst_results(cgmlst, correct_alleles=correct_alleles)
+        res: MethodIndex = parse_cgmlst_results(cgmlst)
         n_missing_loci = QcMethodIndex(
             software=QcSoftware.CHEWBBACA, result={"n_missing": res.result.n_missing}
         )

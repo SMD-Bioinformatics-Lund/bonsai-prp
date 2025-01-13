@@ -242,9 +242,10 @@ def parse_spp_pred(result_path: str | Path) -> SppMethodIndex:
     return SppMethodIndex(software=SppPredictionSoftware.MYKROBE, result=[spp_pred])
 
 
-def parse_lineage_pred(pred_res: dict) -> MethodIndex | None:
+def parse_lineage_pred(result_path: str | Path) -> MethodIndex | None:
     """Parse mykrobe results for lineage object."""
     LOG.info("Parsing lineage results")
+    pred_res = _read_result(result_path)
     if pred_res:
         lineage = pred_res[0]["lineage"]
         # cast to lineage object
