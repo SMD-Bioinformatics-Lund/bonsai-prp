@@ -1,10 +1,11 @@
 """Sample configuration with paths to output files."""
 
-from .base import RWModel
+from pathlib import Path
+from typing import List
 
 from pydantic import Field, FilePath
-from typing import List
-from pathlib import Path
+
+from .base import RWModel
 
 
 class IgvAnnotation(RWModel):

@@ -2,12 +2,19 @@
 
 import logging
 import re
-from typing import Any, Union, Dict
-import pandas as pd
-import numpy as np
 from pathlib import Path
+from typing import Any, Dict, Union
 
-from ..models.sample import MethodIndex
+import numpy as np
+import pandas as pd
+
+from prp.models.species import (
+    MykrobeSpeciesPrediction,
+    SppMethodIndex,
+    SppPredictionSoftware,
+)
+
+from ..models.metadata import SoupType, SoupVersion
 from ..models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
@@ -18,18 +25,9 @@ from ..models.phenotype import (
 )
 from ..models.phenotype import PredictionSoftware as Software
 from ..models.phenotype import VariantSubType, VariantType
-from ..models.metadata import SoupType, SoupVersion
-from prp.models.species import (
-    SppMethodIndex,
-    SppPredictionSoftware,
-    MykrobeSpeciesPrediction,
-)
-from ..models.typing import (
-    ResultLineageBase,
-    TypingMethod,
-)
+from ..models.sample import MethodIndex
+from ..models.typing import ResultLineageBase, TypingMethod
 from .utils import get_nt_change, is_prediction_result_empty
-
 
 LOG = logging.getLogger(__name__)
 
@@ -178,10 +176,12 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> tuple[MykrobeVariant, ...]:
 def _read_result(result_path: str) -> Dict[str, Any]:
     """Read Mykrobe result file."""
     pred_res = pd.read_csv(result_path, quotechar='"')
-    pred_res = (pred_res
-                .rename(columns={pred_res.columns[3]: "variants", pred_res.columns[4]: "genes"})
-                .replace(["NA", np.nan], None)
-                .to_dict(orient="records")
+    pred_res = (
+        pred_res.rename(
+            columns={pred_res.columns[3]: "variants", pred_res.columns[4]: "genes"}
+        )
+        .replace(["NA", np.nan], None)
+        .to_dict(orient="records")
     )
     return pred_res
 
@@ -197,7 +197,9 @@ def get_version(result_path) -> SoupVersion:
     )
 
 
-def parse_amr_pred(result_path: str | Path, sample_id: str | None = None) -> AMRMethodIndex | None:
+def parse_amr_pred(
+    result_path: str | Path, sample_id: str | None = None
+) -> AMRMethodIndex | None:
     """Parse mykrobe resistance prediction results."""
     LOG.info("Parsing mykrobe prediction")
     pred_res = _read_result(result_path)

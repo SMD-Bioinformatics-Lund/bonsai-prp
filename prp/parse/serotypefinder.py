@@ -1,10 +1,11 @@
 """Functions for parsing serotypefinder result."""
-import logging
+
 import json
+import logging
 from typing import Any
 
-from ..models.sample import MethodIndex
 from ..models.phenotype import ElementSerotypeSubtype, ElementType, SerotypeGene
+from ..models.sample import MethodIndex
 from ..models.typing import TypingResultGeneAllele
 from ..models.typing import TypingSoftware as Software
 

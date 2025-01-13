@@ -6,10 +6,10 @@ import logging
 
 from ..models.sample import MethodIndex
 from ..models.typing import (
+    ChewbbacaErrors,
     TypingMethod,
     TypingResultCgMlst,
     TypingResultMlst,
-    ChewbbacaErrors,
 )
 from ..models.typing import TypingSoftware as Software
 
@@ -46,8 +46,7 @@ def parse_mlst_results(mlst_fpath: str) -> MethodIndex:
                 None if result["sequence_type"] == "-" else result["sequence_type"]
             ),
             alleles={
-                gene: _process_allele_call(allele)
-                for gene, allele in alleles.items()
+                gene: _process_allele_call(allele) for gene, allele in alleles.items()
             },
         )
     return MethodIndex(
@@ -132,7 +131,7 @@ def parse_cgmlst_results(
 
     # setup counters for counting novel and missing alleles before correction
     n_novel = 0
-    
+
     n_missing = 0
     corrected_alleles = []
     for allele in alleles:

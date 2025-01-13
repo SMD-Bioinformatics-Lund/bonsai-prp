@@ -1,6 +1,5 @@
 """Upload sample to Bonasi module."""
 
-
 #! /usr/bin/env python
 """Upload sample to Bonsai."""
 from functools import wraps
@@ -9,10 +8,11 @@ from typing import Callable
 import click
 import requests
 from pydantic import BaseModel
-from requests.structures import CaseInsensitiveDict
 from requests import HTTPError
-from .models.sample import PipelineResult
+from requests.structures import CaseInsensitiveDict
+
 from .models.config import SampleConfig
+from .models.sample import PipelineResult
 
 USER_ENV = "BONSAI_USER"
 PASSWD_ENV = "BONSAI_PASSWD"
@@ -49,8 +49,8 @@ def authenticate(api_url: str, username: str, password: str) -> ConnectionInfo:
     resp.raise_for_status()
     json_res = resp.json()
     return ConnectionInfo(
-        api_url=api_url, 
-        token=TokenObject(token=json_res["access_token"], type=json_res["token_type"])
+        api_url=api_url,
+        token=TokenObject(token=json_res["access_token"], type=json_res["token_type"]),
     )
 
 
@@ -87,7 +87,10 @@ def upload_sample_result(
 ) -> str:
     """Create a new sample."""
     resp = requests.post(
-        f"{api_url}/samples/", headers=headers, json=sample_obj.model_dump(mode='json'), timeout=TIMEOUT
+        f"{api_url}/samples/",
+        headers=headers,
+        json=sample_obj.model_dump(mode="json"),
+        timeout=TIMEOUT,
     )
 
     resp.raise_for_status()
@@ -134,10 +137,7 @@ def add_ska_index(
 
 @api_authentication
 def add_sample_to_group(
-    headers: CaseInsensitiveDict,
-    api_url: str,
-    group_id: str,
-    sample_id: str
+    headers: CaseInsensitiveDict, api_url: str, group_id: str, sample_id: str
 ) -> str:
     """Add sample to a group."""
     resp = requests.put(
@@ -165,11 +165,14 @@ def _process_generic_status_codes(error, sample_id):
     return msg, is_major_error
 
 
-def upload_sample(conn: ConnectionInfo, results: PipelineResult, cnf: SampleConfig) -> str:
+def upload_sample(
+    conn: ConnectionInfo, results: PipelineResult, cnf: SampleConfig
+) -> str:
     """Upload a sample with files for clustring."""
     try:
         sample_id = upload_sample_result(  # pylint: disable=no-value-for-parameter
-            token_obj=conn.token, api_url=conn.api_url, sample_obj=results)
+            token_obj=conn.token, api_url=conn.api_url, sample_obj=results
+        )
     except requests.exceptions.HTTPError as error:
         if error.response.status_code == 409:
             click.secho("Sample have already been uploaded", fg="yellow")

@@ -8,31 +8,32 @@ import click
 import numpy as np
 import pandas as pd
 import pysam
+import yaml
 from cyvcf2 import VCF, Writer
 from pydantic import TypeAdapter, ValidationError
-import yaml
 
 from prp import VERSION as __version__
 
-from .models.qc import QcMethodIndex, QcSoftware
-from .models.sample import MethodIndex, PipelineResult, IgvAnnotationTrack
+from . import bonsai
 from .models.config import SampleConfig
+from .models.qc import QcMethodIndex, QcSoftware
+from .models.sample import IgvAnnotationTrack, MethodIndex, PipelineResult
 from .parse import (
     parse_alignment_results,
     parse_cgmlst_results,
     parse_postalignqc_results,
     parse_quast_results,
-    parse_sample
+    parse_sample,
 )
 from .parse.utils import parse_input_dir
 from .parse.variant import annotate_delly_variants
-from . import bonsai
 
 LOG = logging.getLogger(__name__)
 
 OUTPUT_SCHEMA_VERSION = 1
 USER_ENV = "BONSAI_USER"
 PASSWD_ENV = "BONSAI_PASSWD"
+
 
 class SampleConfigFile(click.ParamType):
     name = "config"
@@ -43,7 +44,9 @@ class SampleConfigFile(click.ParamType):
         try:
             cnf_path = Path(value)
             if not cnf_path.is_file():
-                raise FileNotFoundError(f"file {cnf_path.name} not found, please check the path.")
+                raise FileNotFoundError(
+                    f"file {cnf_path.name} not found, please check the path."
+                )
         except TypeError as error:
             raise TypeError(f"value should be a str not '{type(value)}'") from error
         # load yaml and cast to pydantic model
@@ -88,10 +91,22 @@ def cli(silent, debug):
 
 
 @cli.command()
-@click.option("-s", "--sample", 'sample_cnf', type=SampleConfigFile(), help="Sample configuration with results.")
-@click.option("-a", "--api", "api_url", required=True, type=str, help="Upload configuration")
-@click.option("-u", "--username", required=True, envvar=USER_ENV, type=str, help="Username")
-@click.option("-p", "--password", required=True, envvar=PASSWD_ENV, type=str, help="Password")
+@click.option(
+    "-s",
+    "--sample",
+    "sample_cnf",
+    type=SampleConfigFile(),
+    help="Sample configuration with results.",
+)
+@click.option(
+    "-a", "--api", "api_url", required=True, type=str, help="Upload configuration"
+)
+@click.option(
+    "-u", "--username", required=True, envvar=USER_ENV, type=str, help="Username"
+)
+@click.option(
+    "-p", "--password", required=True, envvar=PASSWD_ENV, type=str, help="Password"
+)
 def upload(sample_cnf, username, password, api_url):
     """Upload a sample to Bonsai using either a sample config or json dump."""
     # Parse sample config
@@ -113,7 +128,10 @@ def upload(sample_cnf, username, password, api_url):
     for group_id in sample_cnf.groups:
         try:
             bonsai.add_sample_to_group(  # pylint: disable=no-value-for-parameter
-                token_obj=conn.token, api_url=conn.api_url, group_id=group_id, sample_id=sample_cnf.sample_id
+                token_obj=conn.token,
+                api_url=conn.api_url,
+                group_id=group_id,
+                sample_id=sample_cnf.sample_id,
             )
         except bonsai.HTTPError as error:
             match error.response.status_code:
@@ -130,7 +148,14 @@ def upload(sample_cnf, username, password, api_url):
 
 
 @cli.command()
-@click.option("-s", "--sample", 'sample_cnf', type=SampleConfigFile(), required=True, help="Sample configuration with results.")
+@click.option(
+    "-s",
+    "--sample",
+    "sample_cnf",
+    type=SampleConfigFile(),
+    required=True,
+    help="Sample configuration with results.",
+)
 @click.option("-o", "--output", type=click.Path(), help="Path to result.")
 def parse(sample_cnf, output):
     """Parse JASEN resulst and write as concatinated file in json format."""
@@ -152,7 +177,7 @@ def parse(sample_cnf, output):
             with open(output, "w", encoding="utf-8") as fout:
                 fout.write(dump)
         except Exception as error:
-            raise click.Abort('Error writing results file')
+            raise click.Abort("Error writing results file")
     click.secho("Finished generating pipeline output", fg="green")
 
 
@@ -192,7 +217,7 @@ def rerun_bonsai_input(ctx, input_dir, jasen_dir, symlink_dir, output_dir) -> No
         input_arrays = parse_input_dir(input_dir, jasen_dir, symlink_dir, output_dir)
         for input_array in input_arrays:
             pass
-            #ctx.invoke(create_bonsai_input, **input_array)
+            # ctx.invoke(create_bonsai_input, **input_array)
 
 
 @cli.command()
@@ -356,9 +381,7 @@ def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, out
         result_obj = PipelineResult(**json.load(jfile))
 
     # Get genome annotation
-    if not isinstance(
-        result_obj.genome_annotation, list
-    ):
+    if not isinstance(result_obj.genome_annotation, list):
         track_info = []
     else:
         track_info = result_obj.genome_annotation

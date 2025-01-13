@@ -1,9 +1,9 @@
 """Parse kraken results."""
+
 import pandas as pd
-from prp.models.species import (
-    SppMethodIndex,
-    SppPredictionSoftware,
-)
+
+from prp.models.species import SppMethodIndex, SppPredictionSoftware
+
 
 def parse_result(file: str, cutoff: float = 0.0001) -> SppMethodIndex:
     """parse_species_pred""Parse species prediciton result"""

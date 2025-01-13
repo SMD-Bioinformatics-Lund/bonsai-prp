@@ -1,4 +1,5 @@
 """Functions for parsing virulencefinder result."""
+
 import json
 import logging
 from typing import Any
@@ -11,10 +12,7 @@ from ..models.phenotype import (
     VirulenceMethodIndex,
 )
 from ..models.sample import MethodIndex
-from ..models.typing import (
-    TypingMethod,
-    TypingResultGeneAllele,
-)
+from ..models.typing import TypingMethod, TypingResultGeneAllele
 
 LOG = logging.getLogger(__name__)
 
@@ -82,9 +80,7 @@ def parse_virulence_pred(path: str) -> VirulenceMethodIndex | None:
     with open(path, "rb") as inpt:
         pred = json.load(inpt)
         if "virulencefinder" in pred:
-            results: VirulenceElementTypeResult = _parse_vir_results(
-                pred
-            )
+            results: VirulenceElementTypeResult = _parse_vir_results(pred)
             result = VirulenceMethodIndex(
                 type=ElementType.VIR, software=Software.VIRFINDER, result=results
             )

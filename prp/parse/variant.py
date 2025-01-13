@@ -13,22 +13,18 @@ SOURCE_PATTERN = r"##source=(.+)\n"
 
 def _filter_variants(variant_list):
     # Initialize the results dictionary
-    filetered_variants = {
-        'sv_variants': [],
-        'indel_variants': [],
-        'snv_variants': []
-    }
+    filetered_variants = {"sv_variants": [], "indel_variants": [], "snv_variants": []}
 
     # Iterate through each variant in the list
     for variant in variant_list:
-        variant_type = dict(variant).get('variant_type')  # Extract the variant_type
+        variant_type = dict(variant).get("variant_type")  # Extract the variant_type
         # Append the variant to the appropriate key in the results dictionary
         if variant_type == "SV":
-            filetered_variants['sv_variants'].append(variant)
+            filetered_variants["sv_variants"].append(variant)
         elif variant_type == "INDEL":
-            filetered_variants['indel_variants'].append(variant)
+            filetered_variants["indel_variants"].append(variant)
         elif variant_type == "SNV":
-            filetered_variants['snv_variants'].append(variant)
+            filetered_variants["snv_variants"].append(variant)
     return filetered_variants
 
 
@@ -48,13 +44,15 @@ def _get_variant_type(variant) -> VariantType:
 
 def _get_variant_subtype(ref_base, alt_base):
     # Define purines and pyrimidines
-    purines = {'A', 'G'}
-    pyrimidines = {'C', 'T'}
-    
+    purines = {"A", "G"}
+    pyrimidines = {"C", "T"}
+
     # Check for transition substitution
-    if (ref_base in purines and alt_base in purines) or (ref_base in pyrimidines and alt_base in pyrimidines):
+    if (ref_base in purines and alt_base in purines) or (
+        ref_base in pyrimidines and alt_base in pyrimidines
+    ):
         return "TS"
-    
+
     # If it's not a transition, it must be a transversion
     return "TV"
 
@@ -88,8 +86,16 @@ def parse_variant(variant: Variant, var_id: int, caller: str | None = None):
             end=variant.end,
             ref_nt=variant.REF,
             alt_nt=alt_var,
-            frequency=variant.INFO.get("AF") if type(variant.INFO.get("AF")) != tuple else variant.INFO.get("AF")[alt_idx],
-            depth=variant.INFO.get("DP") if type(variant.INFO.get("DP")) != tuple else variant.INFO.get("DP")[alt_idx],
+            frequency=(
+                variant.INFO.get("AF")
+                if type(variant.INFO.get("AF")) != tuple
+                else variant.INFO.get("AF")[alt_idx]
+            ),
+            depth=(
+                variant.INFO.get("DP")
+                if type(variant.INFO.get("DP")) != tuple
+                else variant.INFO.get("DP")[alt_idx]
+            ),
             method=variant.INFO.get("SVMETHOD", caller),
             confidence=variant.QUAL,
             passed_qc=passed_qc,

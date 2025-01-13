@@ -1,4 +1,5 @@
 """Shared utility functions."""
+
 import os
 from datetime import datetime
 

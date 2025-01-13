@@ -1,11 +1,11 @@
 """Parse TBprofiler result."""
-import logging
-import json
-from typing import Any, Dict
-from pathlib import Path
 
-from .utils import get_db_version
-from ..models.metadata import SoupVersion, SoupType
+import json
+import logging
+from pathlib import Path
+from typing import Any, Dict
+
+from ..models.metadata import SoupType, SoupVersion
 from ..models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
@@ -15,11 +15,13 @@ from ..models.phenotype import (
 )
 from ..models.phenotype import PredictionSoftware as Software
 from ..models.phenotype import TbProfilerVariant, VariantSubType, VariantType
-from ..models.typing import TbProfilerLineage, TypingMethod, LineageInformation
 from ..models.sample import MethodIndex
+from ..models.typing import LineageInformation, TbProfilerLineage, TypingMethod
+from .utils import get_db_version
 
 LOG = logging.getLogger(__name__)
 EXPECTED_SCHEMA_VERSION = "1.0.0"
+
 
 def _read_result(path: Path, strict: bool = False) -> Dict[str, Any]:
     """Read TbProfiler output."""
@@ -195,9 +197,7 @@ def get_version(result_path) -> SoupVersion:
     return version
 
 
-def parse_amr_pred(
-    path: Path
-) -> AMRMethodIndex:
+def parse_amr_pred(path: Path) -> AMRMethodIndex:
     """Parse tbprofiler resistance prediction results."""
     LOG.info("Parsing tbprofiler prediction")
     prediction = _read_result(path)

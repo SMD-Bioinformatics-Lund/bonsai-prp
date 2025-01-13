@@ -1,4 +1,5 @@
 """Parse AMRfinder plus result."""
+
 import logging
 
 import numpy as np

@@ -1,28 +1,31 @@
 """Parse for input config using parsers from this module."""
 
-import logging
 import json
+import logging
 from typing import Sequence
 
-from .metadata import parse_run_info
-from .qc import parse_quast_results, parse_postalignqc_results
-from . import kraken
-from .typing import (
-    parse_cgmlst_results,
-    parse_mlst_results,
+from ..models.phenotype import AMRMethodIndex, ElementType
+from ..models.sample import MethodIndex, PipelineResult, QcMethodIndex
+from . import (
+    amrfinder,
+    kraken,
+    mykrobe,
+    resfinder,
+    serotypefinder,
+    tbprofiler,
+    virulencefinder,
 )
+from .emmtyper import EmmTypingMethodIndex, parse_emm_pred
+from .metadata import parse_run_info
+from .qc import parse_postalignqc_results, parse_quast_results
+from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
+from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
-from .shigapass import parse_shiga_pred, ShigaTypingMethodIndex
-from .emmtyper import parse_emm_pred, EmmTypingMethodIndex
-from . import mykrobe, resfinder, amrfinder, tbprofiler, virulencefinder, serotypefinder
-from ..models.phenotype import AMRMethodIndex
-
-from ..models.phenotype import ElementType
-from ..models.sample import MethodIndex, QcMethodIndex, PipelineResult
 
 OUTPUT_SCHEMA_VERSION = 1
 
 LOG = logging.getLogger(__name__)
+
 
 def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
     """Read all qc related info"""
@@ -47,7 +50,9 @@ def _read_spp_prediction(smp_cnf) -> Sequence[mykrobe.SppMethodIndex]:
     return spp_results
 
 
-def _read_typing(smp_cnf) -> Sequence[MethodIndex | EmmTypingMethodIndex | ShigaTypingMethodIndex]:
+def _read_typing(
+    smp_cnf,
+) -> Sequence[MethodIndex | EmmTypingMethodIndex | ShigaTypingMethodIndex]:
     """Read typing all information."""
     typing_result = []
     if smp_cnf.pymlst:
@@ -65,14 +70,18 @@ def _read_typing(smp_cnf) -> Sequence[MethodIndex | EmmTypingMethodIndex | Shiga
 
     # stx typing
     if smp_cnf.virulencefinder:
-        tmp_virfinder_res: MethodIndex | None = virulencefinder.parse_stx_typing(smp_cnf.virulencefinder)
+        tmp_virfinder_res: MethodIndex | None = virulencefinder.parse_stx_typing(
+            smp_cnf.virulencefinder
+        )
         if tmp_virfinder_res is not None:
             typing_result.append(tmp_virfinder_res)
 
     if smp_cnf.serotypefinder:
         LOG.info("Parse serotypefinder results")
         # OH typing
-        tmp_serotype_res: MethodIndex | None = serotypefinder.parse_oh_typing(smp_cnf.serotypefinder)
+        tmp_serotype_res: MethodIndex | None = serotypefinder.parse_oh_typing(
+            smp_cnf.serotypefinder
+        )
         if tmp_serotype_res is not None:
             typing_result.append(tmp_serotype_res)
 
@@ -108,9 +117,7 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
 
     if smp_cnf.tbprofiler:
         # store pipeline version
-        resistance.append(
-            tbprofiler.parse_amr_pred(smp_cnf.tbprofiler)
-        )
+        resistance.append(tbprofiler.parse_amr_pred(smp_cnf.tbprofiler))
     return resistance
 
 
