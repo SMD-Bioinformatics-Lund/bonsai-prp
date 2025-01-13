@@ -9,6 +9,8 @@ from .base import RWModel
 
 
 class IgvAnnotation(RWModel):
+    """Format of a IGV annotation track."""
+
     name: str
     type: str
     uri: str

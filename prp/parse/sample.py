@@ -44,7 +44,6 @@ def _read_spp_prediction(smp_cnf) -> Sequence[mykrobe.SppMethodIndex]:
     if smp_cnf.kraken:
         spp_results.append(kraken.parse_result(smp_cnf.kraken))
 
-    # TODO refactor lineage and species to use path instead of dict as input
     if smp_cnf.mykrobe:
         spp_results.append(mykrobe.parse_spp_pred(smp_cnf.mykrobe))
     return spp_results
@@ -59,7 +58,6 @@ def _read_typing(
         typing_result.append(parse_mlst_results(smp_cnf.pymlst))
 
     if smp_cnf.chewbbaca:
-        # TODO add corrected_alleles to input
         typing_result.append(parse_cgmlst_results(smp_cnf.chewbbaca))
 
     if smp_cnf.emmtyper:
@@ -85,9 +83,8 @@ def _read_typing(
         if tmp_serotype_res is not None:
             typing_result.append(tmp_serotype_res)
 
-    # TODO refactor lineage and species to use path instead of dict as input
     if smp_cnf.mykrobe:
-        lin_res: MethodIndex | None = mykrobe.parse_lineage(smp_cnf.mykrobe)
+        lin_res: MethodIndex | None = mykrobe.parse_lineage_pred(smp_cnf.mykrobe)
         if lin_res is not None:
             typing_result.append(lin_res)
 

@@ -72,11 +72,9 @@ def parse_variant(variant: Variant, var_id: int, caller: str | None = None):
     var_type: VariantType = _get_variant_type(variant)
 
     for alt_idx, alt_var in enumerate(variant.ALT):
-        possible_minority_var = False
         var_subtype = variant.var_subtype.upper()
         if var_subtype == "UNKNOWN":
             var_subtype = _get_variant_subtype(variant.REF, alt_var)
-            possible_minority_var = True
         var_obj = VariantBase(
             id=var_id,
             variant_type=var_type,
@@ -88,12 +86,12 @@ def parse_variant(variant: Variant, var_id: int, caller: str | None = None):
             alt_nt=alt_var,
             frequency=(
                 variant.INFO.get("AF")
-                if type(variant.INFO.get("AF")) != tuple
+                if not isinstance(variant.INFO.get("AF"), tuple)
                 else variant.INFO.get("AF")[alt_idx]
             ),
             depth=(
                 variant.INFO.get("DP")
-                if type(variant.INFO.get("DP")) != tuple
+                if not isinstance(variant.INFO.get("DP"), tuple)
                 else variant.INFO.get("DP")[alt_idx]
             ),
             method=variant.INFO.get("SVMETHOD", caller),

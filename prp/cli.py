@@ -5,12 +5,11 @@ import logging
 from pathlib import Path
 
 import click
-import numpy as np
-import pandas as pd
 import pysam
 import yaml
 from cyvcf2 import VCF, Writer
 from pydantic import TypeAdapter, ValidationError
+from requests import HTTPError
 
 from prp import VERSION as __version__
 
@@ -36,6 +35,8 @@ PASSWD_ENV = "BONSAI_PASSWD"
 
 
 class SampleConfigFile(click.ParamType):
+    """CLI option for sample files."""
+
     name = "config"
 
     def convert(self, value, param, ctx):
@@ -50,12 +51,14 @@ class SampleConfigFile(click.ParamType):
         except TypeError as error:
             raise TypeError(f"value should be a str not '{type(value)}'") from error
         # load yaml and cast to pydantic model
-        with cnf_path.open() as cfile:
+        with cnf_path.open(encoding="utf-8") as cfile:
             data = yaml.safe_load(cfile)
             return SampleConfig(**data)
 
 
 class JsonFile(click.ParamType):
+    """CLI option for json files."""
+
     name = "config"
 
     def convert(self, value, param, ctx):
@@ -64,11 +67,13 @@ class JsonFile(click.ParamType):
         try:
             file_path = Path(value)
             if not file_path.is_file():
-                raise FileNotFoundError(f"file not found, please check the path.")
+                raise FileNotFoundError(
+                    (f"file {file_path.name} not found, ", "please check the path")
+                )
         except TypeError as error:
             raise TypeError(f"value should be a str not '{type(value)}'") from error
         # load yaml and cast to pydantic model
-        with file_path.open() as cfile:
+        with file_path.open(encoding="utf-8") as cfile:
             return json.load(cfile)
 
 
@@ -133,7 +138,7 @@ def upload(sample_cnf, username, password, api_url):
                 group_id=group_id,
                 sample_id=sample_cnf.sample_id,
             )
-        except bonsai.HTTPError as error:
+        except HTTPError as error:
             match error.response.status_code:
                 case 404:
                     msg = f"Group with id {group_id} is not in Bonsai"
@@ -176,7 +181,7 @@ def parse(sample_cnf, output):
         try:
             with open(output, "w", encoding="utf-8") as fout:
                 fout.write(dump)
-        except Exception as error:
+        except Exception as _:
             raise click.Abort("Error writing results file")
     click.secho("Finished generating pipeline output", fg="green")
 

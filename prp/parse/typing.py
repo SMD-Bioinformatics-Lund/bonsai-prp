@@ -98,7 +98,6 @@ def replace_cgmlst_errors(
 def parse_cgmlst_results(
     chewbacca_res_path: str,
     include_novel_alleles: bool = True,
-    correct_alleles: bool = False,
 ) -> MethodIndex:
     """Parse chewbbaca cgmlst prediction results to json results.
 

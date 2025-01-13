@@ -92,7 +92,7 @@ def _parse_amrfinder_amr_results(
     return ElementTypeResult(phenotypes=sr_profile, genes=genes, variants=[])
 
 
-def parse_amrfinder_amr_pred(file: str, element_type: ElementType) -> AMRMethodIndex:
+def parse_amr_pred(file: str, element_type: ElementType) -> AMRMethodIndex:
     """Parse amrfinder resistance prediction results."""
     LOG.info("Parsing amrfinder amr prediction")
     hits = (

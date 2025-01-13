@@ -1,14 +1,11 @@
 """Upload sample to Bonasi module."""
 
-#! /usr/bin/env python
-"""Upload sample to Bonsai."""
 from functools import wraps
 from typing import Callable
 
 import click
 import requests
 from pydantic import BaseModel
-from requests import HTTPError
 from requests.structures import CaseInsensitiveDict
 
 from .models.config import SampleConfig
@@ -170,7 +167,7 @@ def upload_sample(
 ) -> str:
     """Upload a sample with files for clustring."""
     try:
-        sample_id = upload_sample_result(  # pylint: disable=no-value-for-parameter
+        upload_sample_result(  # pylint: disable=no-value-for-parameter
             token_obj=conn.token, api_url=conn.api_url, sample_obj=results
         )
     except requests.exceptions.HTTPError as error:
@@ -203,7 +200,10 @@ def upload_sample(
         except requests.exceptions.HTTPError as error:
             if error.response.status_code == 409:
                 click.secho(
-                    f"Sample {cnf.sample_id} is already associated with a ska index file, skipping",
+                    (
+                        f"Sample {cnf.sample_id} is already associated "
+                        "with a ska index file, skipping"
+                    ),
                     fg="yellow",
                 )
             else:

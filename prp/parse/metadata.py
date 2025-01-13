@@ -31,7 +31,12 @@ def get_database_info(process_metadata: list[str]) -> list[SoupVersion]:
     return db_info
 
 
-def parse_sequence_date_from_run_id(run_id: str) -> datetime | None:
+def parse_date_from_run_id(run_id: str) -> datetime | None:
+    """
+    Get the date of sequencing from run id as datetime object.
+
+    XXX_20240112 -> 2024-01-12
+    """
     err_msg = "Unrecognized format of run_id, sequence time cant be determined"
     if "_" not in run_id:
         LOG.warning(err_msg)
@@ -69,7 +74,7 @@ def parse_run_info(
         platform=run_info["sequencing_platform"],
         instrument=None,
         method={"method": run_info["sequencing_type"]},
-        date=parse_sequence_date_from_run_id(run_info["sequencing_run"]),
+        date=parse_date_from_run_id(run_info["sequencing_run"]),
     )
     # get pipeline info
     soup_versions = get_database_info(process_metadata)

@@ -3,12 +3,7 @@
 import os
 from datetime import datetime
 
-from ..models.phenotype import (
-    ElementType,
-    ElementTypeResult,
-    PhenotypeInfo,
-    VariantSubType,
-)
+from ..models.phenotype import ElementTypeResult, VariantSubType
 
 
 def is_prediction_result_empty(result: ElementTypeResult) -> bool:

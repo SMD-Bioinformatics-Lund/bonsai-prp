@@ -31,7 +31,11 @@ def _read_result(path: Path, strict: bool = False) -> Dict[str, Any]:
         schema_version = pred_res.get("schema_version")
         if not EXPECTED_SCHEMA_VERSION == schema_version:
             LOG.warning(
-                "Unsupported TbProfiler schema version - output might be inaccurate; result schema: %s; expected: %s",
+                (
+                    "Unsupported TbProfiler schema version - ",
+                    "output might be inaccurate; ",
+                    "result schema: %s; expected: %s",
+                ),
                 schema_version,
                 EXPECTED_SCHEMA_VERSION,
             )
@@ -112,7 +116,6 @@ def _parse_tbprofiler_amr_variants(predictions) -> tuple[TbProfilerVariant, ...]
             else:
                 var_sub_type = VariantSubType.INSERTION
 
-            start_pos = int(hit["pos"])
             variant = TbProfilerVariant(
                 # classificatoin
                 id=var_id,
@@ -122,8 +125,8 @@ def _parse_tbprofiler_amr_variants(predictions) -> tuple[TbProfilerVariant, ...]
                 # location
                 reference_sequence=hit["gene_name"],
                 accession=hit["feature_id"],
-                start=start_pos,
-                end=start_pos + len(alt_nt),
+                start=int(hit["pos"]),
+                end=int(hit["pos"]) + len(alt_nt),
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
                 # consequense
