@@ -4,6 +4,8 @@
 
 ### Fixed
 
+ - Fixed `bonsai-prp rerun-bonsai-input`
+
 ### Changed
 
 ## [0.11.4]
