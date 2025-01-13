@@ -190,7 +190,7 @@ def get_version(result_path) -> SoupVersion:
     """Get version of Mykrobe from result."""
     LOG.debug("Get Mykrobe version")
     pred_res = _read_result(result_path)
-    version = SoupVersion(
+    return SoupVersion(
         name="mykrobe-predictor",
         version=pred_res[0]["mykrobe_version"],
         type=SoupType.DB,
