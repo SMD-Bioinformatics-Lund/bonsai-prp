@@ -1,4 +1,5 @@
 """Datamodels used for prediction results."""
+
 from enum import Enum
 from typing import Literal, Optional, Union
 

@@ -6,13 +6,13 @@ import re
 import numpy as np
 import pandas as pd
 
-from ...models.typing import ShigaTypingMethodIndex, TypingMethod, TypingResultShiga
-from ...models.typing import TypingSoftware as Software
+from ..models.typing import ShigaTypingMethodIndex, TypingMethod, TypingResultShiga
+from ..models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 
 
-def parse_shigapass_pred(path: str) -> ShigaTypingMethodIndex:
+def parse_shiga_pred(path: str) -> ShigaTypingMethodIndex:
     """Parse shigapass prediction results."""
     LOG.info("Parsing shigapass prediction")
     cols = {

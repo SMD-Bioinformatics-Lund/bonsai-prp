@@ -1,6 +1,6 @@
 """Test functions for the resfinder parser."""
 
-from prp.parse.phenotype.resfinder import get_nt_change
+from prp.parse.resfinder import get_nt_change
 
 
 def test_get_nt_changes_from_condons():

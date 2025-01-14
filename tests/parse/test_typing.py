@@ -1,14 +1,21 @@
 """Test typing method parsing."""
 
-import pytest
 import logging
-from prp.parse.typing import replace_cgmlst_errors, parse_mlst_results
+
+import pytest
+
 from prp.models.typing import ChewbbacaErrors
+from prp.parse.typing import parse_mlst_results, replace_cgmlst_errors
 
 # build test cases for handeling chewbacca allele caller errors and annotations
 # reference, https://chewbbaca.readthedocs.io/en/latest/user/modules/AlleleCall.html
 cgmlst_test_base = [("1", 1), ("99", 99)]  # normal alllale calls
-cgmlst_test_include_novel = [("INF-1", 1), ("INF-99", 99), ("*1", 1), ("*99", 99)]  # inferred alleles
+cgmlst_test_include_novel = [
+    ("INF-1", 1),
+    ("INF-99", 99),
+    ("*1", 1),
+    ("*99", 99),
+]  # inferred alleles
 cgmlst_test_not_include_novel = [
     ("INF-1", "INF-1"),
     ("INF-99", "INF-99"),
@@ -93,9 +100,9 @@ def test_parse_mlst_result(ecoli_mlst_path):
     res_obj = parse_mlst_results(ecoli_mlst_path)
 
     # THEN verify result type
-    assert res_obj.type == 'mlst'
+    assert res_obj.type == "mlst"
     # THEN verify software
-    assert res_obj.software == 'mlst'
+    assert res_obj.software == "mlst"
     # THEN verify sequence type and allele assignment
     assert res_obj.result.sequence_type == 58
     assert len(res_obj.result.alleles) == 8

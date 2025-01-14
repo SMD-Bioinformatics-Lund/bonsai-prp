@@ -4,6 +4,12 @@ import pytest
 
 
 @pytest.fixture()
+def mtuberculosis_sample_conf_path(data_path):
+    """Get path for mtuberculosis sample config file"""
+    return str(data_path.joinpath("mtuberculosis", "sample_1.cnf.yml"))
+
+
+@pytest.fixture()
 def mtuberculosis_analysis_meta_path(data_path):
     """Get path for mtuberculosis meta file"""
     return str(data_path.joinpath("mtuberculosis", "analysis_meta.json"))

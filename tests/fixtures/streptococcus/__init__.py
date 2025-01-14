@@ -1,4 +1,5 @@
 """Fixtures for Streptococcus."""
+
 import pytest
 
 from ..fixtures import data_path

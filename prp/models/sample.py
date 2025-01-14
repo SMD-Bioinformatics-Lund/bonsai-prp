@@ -5,7 +5,7 @@ from typing import Literal, Optional, Union
 from pydantic import Field
 
 from .base import RWModel
-from .metadata import SequencingInfo, PipelineInfo
+from .metadata import PipelineInfo, SequencingInfo
 from .phenotype import (
     AMRMethodIndex,
     StressMethodIndex,
@@ -15,9 +15,9 @@ from .phenotype import (
 from .qc import QcMethodIndex
 from .species import SppMethodIndex
 from .typing import (
+    EmmTypingMethodIndex,
     ResultLineageBase,
     ShigaTypingMethodIndex,
-    EmmTypingMethodIndex,
     TbProfilerLineage,
     TypingMethod,
     TypingResultCgMlst,
@@ -81,9 +81,9 @@ class PipelineResult(SampleBase):
 
     schema_version: Literal[1] = 1
     # optional typing
-    typing_result: list[Union[ShigaTypingMethodIndex, EmmTypingMethodIndex, MethodIndex]] = Field(
-        ..., alias="typingResult"
-    )
+    typing_result: list[
+        Union[ShigaTypingMethodIndex, EmmTypingMethodIndex, MethodIndex]
+    ] = Field(..., alias="typingResult")
     # optional phenotype prediction
     element_type_result: list[
         Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, MethodIndex]

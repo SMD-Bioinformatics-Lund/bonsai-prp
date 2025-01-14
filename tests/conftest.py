@@ -1,9 +1,11 @@
 """Test fixtures."""
 
-from .fixtures import *
+from datetime import datetime
+
 from prp.models import PipelineResult
 from prp.models.metadata import PipelineInfo, SequencingInfo
-from datetime import datetime
+
+from .fixtures import *
 
 
 @pytest.fixture()
@@ -25,7 +27,7 @@ def simple_pipeline_result():
         run_id="run-id",
         platform="sequencing plattform",
         instrument="illumina",
-        date=datetime.now()
+        date=datetime.now(),
     )
     # add run into to metadata model
     return PipelineResult(

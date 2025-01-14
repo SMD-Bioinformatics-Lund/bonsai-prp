@@ -2,6 +2,8 @@
 
 ### Added
 
+- Added command to upload samples to Bonsai.
+
 ### Fixed
 
  - Fixed `bonsai-prp rerun-bonsai-input`
@@ -30,6 +32,8 @@
 ### Fixed
 
 ### Changed
+
+- Replaced `create-bonsai-input` command with `parse`
 
 ## [0.11.2]
 
