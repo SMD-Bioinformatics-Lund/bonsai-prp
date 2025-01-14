@@ -5,7 +5,7 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from prp.cli import add_igv_annotation_track, annotate_delly, create_cdm_input, parse
+from prp.cli import add_igv_annotation_track, annotate_delly, create_cdm_input, parse, cdm
 from prp.models import PipelineResult
 
 
@@ -17,7 +17,7 @@ from prp.models import PipelineResult
         ("mtuberculosis_sample_conf_path", ["mykrobe", "tbprofiler"]),
     ],
 )
-def test_parse(fixture_name, expected_sw, request):
+def test_parse_cmd(fixture_name, expected_sw, request):
     """Test creating a analysis summary.
 
     The test is intended as an end-to-end test.
@@ -52,30 +52,24 @@ def test_parse(fixture_name, expected_sw, request):
         assert prp_output == json.loads(output_data_model.model_dump_json())
 
 
-def test_cdm_input_cmd(
-    ecoli_quast_path, ecoli_bwa_path, ecoli_chewbbaca_path, ecoli_cdm_input
-):
+def test_cdm_cmd(ecoli_sample_conf_path, ecoli_cdm_input):
     """Test command for creating CDM input."""
+    output_file = "test_output.json"
     runner = CliRunner()
     with runner.isolated_filesystem():
-        output_fname = "test_ouptut"
         args = [
-            "--quast",
-            ecoli_quast_path,
-            "--quality",
-            ecoli_bwa_path,
-            "--cgmlst",
-            ecoli_chewbbaca_path,
+            "--sample",
+            ecoli_sample_conf_path,
             "--output",
-            output_fname,
+            output_file,
         ]
-        result = runner.invoke(create_cdm_input, args)
+        result = runner.invoke(cdm, args)
 
         # test successful execution of command
         assert result.exit_code == 0
 
         # test correct output format
-        with open(output_fname, "rb") as inpt:
+        with open(output_file, "rb") as inpt:
             cdm_output = json.load(inpt)
             assert cdm_output == ecoli_cdm_input
 

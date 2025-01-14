@@ -20,7 +20,9 @@ software_info:
   - ./virulencefinder_meta.json
 kraken: ./bracken.out
 quast: ./quast.tsv
+postalnqc: ./bwa.qc
 resfinder: ./resfinder.json
 virulencefinder: ./virulencefinder.json
 amrfinder: ./amrfinder.out
 shigapass: ./shigapass.csv
+chewbbaca: ./chewbbaca.out

@@ -205,28 +205,32 @@ def validate(output):
 
 
 @cli.command()
-@click.option("-q", "--quast", type=click.Path(), help="Quast quality control metrics")
-@click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
-@click.option("-c", "--cgmlst", type=click.Path(), help="cgMLST prediction results")
+@click.option(
+    "-s",
+    "--sample",
+    "sample_cnf",
+    type=SampleConfigFile(),
+    help="Sample configuration with results.",
+)
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
 )
-def create_cdm_input(quast, quality, cgmlst, output) -> None:
+def cdm(sample_cnf, output) -> None:
     """Format QC metrics into CDM compatible input file."""
     results = []
-    if quality:
+    if sample_cnf.postalnqc:
         LOG.info("Parse quality results")
-        res: QcMethodIndex = parse_postalignqc_results(quality)
+        res: QcMethodIndex = parse_postalignqc_results(sample_cnf.postalnqc)
         results.append(res)
 
-    if quast:
+    if sample_cnf.quast:
         LOG.info("Parse quast results")
-        res: QcMethodIndex = parse_quast_results(quast)
+        res: QcMethodIndex = parse_quast_results(sample_cnf.quast)
         results.append(res)
 
-    if cgmlst:
+    if sample_cnf.chewbbaca:
         LOG.info("Parse cgmlst results")
-        res: MethodIndex = parse_cgmlst_results(cgmlst)
+        res: MethodIndex = parse_cgmlst_results(sample_cnf.chewbbaca)
         n_missing_loci = QcMethodIndex(
             software=QcSoftware.CHEWBBACA, result={"n_missing": res.result.n_missing}
         )
