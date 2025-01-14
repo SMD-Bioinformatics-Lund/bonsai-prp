@@ -24,7 +24,6 @@ from .parse import (
     parse_quast_results,
     parse_sample,
 )
-from .parse.utils import parse_input_dir
 from .parse.variant import annotate_delly_variants
 
 LOG = logging.getLogger(__name__)
@@ -158,7 +157,6 @@ def upload(sample_cnf, username, password, api_url):
     "--sample",
     "sample_cnf",
     type=SampleConfigFile(),
-    required=True,
     help="Sample configuration with results.",
 )
 @click.option("-o", "--output", type=click.Path(), help="Path to result.")
@@ -172,7 +170,7 @@ def parse(sample_cnf, output):
         click.secho(err)
         raise click.Abort
 
-    # Either wrtie to stdout or to file
+    # Either write to stdout or to file
     dump = sample_obj.model_dump_json(indent=2)
     if output is None:
         print(dump)
@@ -184,45 +182,6 @@ def parse(sample_cnf, output):
         except Exception as _:
             raise click.Abort("Error writing results file")
     click.secho("Finished generating pipeline output", fg="green")
-
-
-@cli.command()
-@click.option(
-    "-i",
-    "--input-dir",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    help="Input directory to JASEN's outdir incl. speciesDir",
-)
-@click.option(
-    "-j",
-    "--jasen-dir",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    help="Path to JASEN directory",
-)
-@click.option(
-    "-s",
-    "--symlink-dir",
-    required=False,
-    type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    help="Path to symlink directory",
-)
-@click.option(
-    "-o",
-    "--output-dir",
-    type=click.Path(file_okay=False, dir_okay=True),
-    help="Output directory to incl. speciesDir [default: input_dir]",
-)
-@click.pass_context
-def rerun_bonsai_input(ctx, input_dir, jasen_dir, symlink_dir, output_dir) -> None:
-    """Rerun bonsai input creation for all samples in input directory."""
-    if input_dir:
-        LOG.info("Parse input directory")
-        input_arrays = parse_input_dir(input_dir, jasen_dir, symlink_dir, output_dir)
-        for input_array in input_arrays:
-            pass
-            # ctx.invoke(create_bonsai_input, **input_array)
 
 
 @cli.command()
