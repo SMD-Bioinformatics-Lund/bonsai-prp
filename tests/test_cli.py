@@ -5,7 +5,7 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from prp.cli import add_igv_annotation_track, annotate_delly, create_cdm_input, parse, cdm
+from prp.cli import add_igv_annotation_track, annotate_delly, parse, cdm
 from prp.models import PipelineResult
 
 
