@@ -1,6 +1,7 @@
 """Test functions for parsing metadata."""
 
 from datetime import datetime
+
 from prp.parse.metadata import parse_date_from_run_id
 
 

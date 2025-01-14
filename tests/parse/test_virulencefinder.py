@@ -1,11 +1,12 @@
 """Virulencefinder parser test suite."""
+
 # import pytest
 
 from prp.models.typing import TypingResultGeneAllele
 from prp.parse.virulencefinder import (
     VirulenceMethodIndex,
+    parse_stx_typing,
     parse_virulence_pred,
-    parse_stx_typing
 )
 
 

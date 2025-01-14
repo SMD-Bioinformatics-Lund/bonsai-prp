@@ -1,4 +1,5 @@
 """Fixtures for Shigella."""
+
 import pytest
 
 from ..fixtures import data_path

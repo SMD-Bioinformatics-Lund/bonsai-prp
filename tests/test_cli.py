@@ -1,20 +1,22 @@
 """Test PRP cli functions."""
 
 import json
-import pytest
 
+import pytest
 from click.testing import CliRunner
 
-from prp.cli import (
-    annotate_delly,
-    parse,
-    create_cdm_input,
-    add_igv_annotation_track,
-)
+from prp.cli import add_igv_annotation_track, annotate_delly, create_cdm_input, parse
 from prp.models import PipelineResult
 
 
-@pytest.mark.parametrize('fixture_name,expected_sw', [('saureus_sample_conf_path', ["resfinder", "amrfinder", "virulencefinder"]), ('ecoli_sample_conf_path', ["resfinder", "amrfinder", "virulencefinder"]), ('mtuberculosis_sample_conf_path', ["mykrobe", "tbprofiler"])])
+@pytest.mark.parametrize(
+    "fixture_name,expected_sw",
+    [
+        ("saureus_sample_conf_path", ["resfinder", "amrfinder", "virulencefinder"]),
+        ("ecoli_sample_conf_path", ["resfinder", "amrfinder", "virulencefinder"]),
+        ("mtuberculosis_sample_conf_path", ["mykrobe", "tbprofiler"]),
+    ],
+)
 def test_parse(fixture_name, expected_sw, request):
     """Test creating a analysis summary.
 
@@ -25,8 +27,10 @@ def test_parse(fixture_name, expected_sw, request):
     runner = CliRunner()
     with runner.isolated_filesystem():
         args = [
-            "--sample", sample_conf,
-            "--output", output_file,
+            "--sample",
+            sample_conf,
+            "--output",
+            output_file,
         ]
         result = runner.invoke(parse, args)
         assert result.exit_code == 0
@@ -100,11 +104,10 @@ def test_annotate_delly(
         assert result.exit_code == 0
 
         # test correct output format
-        with open(
-            output_fname, "r", encoding="utf-8"
-        ) as test_annotated_delly_output, open(
-            annotated_delly_path, "r", encoding="utf-8"
-        ) as annotated_delly_output:
+        with (
+            open(output_fname, "r", encoding="utf-8") as test_annotated_delly_output,
+            open(annotated_delly_path, "r", encoding="utf-8") as annotated_delly_output,
+        ):
             test_contents = test_annotated_delly_output.read()
             expected_contents = annotated_delly_output.read()
             assert test_contents == expected_contents
