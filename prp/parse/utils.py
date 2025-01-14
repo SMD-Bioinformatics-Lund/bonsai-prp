@@ -1,6 +1,5 @@
 """Shared utility functions."""
 
-import os
 from datetime import datetime
 
 from ..models.phenotype import ElementTypeResult, VariantSubType
