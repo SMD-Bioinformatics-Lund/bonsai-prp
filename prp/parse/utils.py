@@ -137,7 +137,7 @@ def parse_input_dir(
         analysis_results_dir = os.path.join(input_dir, "analysis_result")
         for filename in os.listdir(analysis_results_dir):
             if filename.endswith(".json"):
-                sample_id = filename.rstrip("_result.json")
+                sample_id = filename.removesuffix("_result.json")
                 sample_array = create_sample_array(
                     species, input_dir, jasen_dir, sample_id, symlink_dir, output_dir
                 )
@@ -174,7 +174,7 @@ def create_sample_array(
     bam = os.path.abspath(os.path.join(input_dir, f"bam/{sample_id}.bam"))
     kraken = os.path.abspath(os.path.join(input_dir, f"kraken/{sample_id}_bracken.out"))
     quality = os.path.abspath(
-        os.path.join(input_dir, f"postalignqc/{sample_id}_bwa.qc")
+        os.path.join(input_dir, f"postalignqc/{sample_id}_qc.json")
     )
     quast = os.path.abspath(os.path.join(input_dir, f"quast/{sample_id}_quast.tsv"))
     run_metadata = os.path.abspath(
@@ -241,14 +241,6 @@ def create_sample_array(
         resfinder_meta = os.path.abspath(
             os.path.join(input_dir, f"resfinder/{sample_id}_resfinder_meta.json")
         )
-        serotypefinder = os.path.abspath(
-            os.path.join(input_dir, f"serotypefinder/{sample_id}_serotypefinder.json")
-        )
-        serotypefinder_meta = os.path.abspath(
-            os.path.join(
-                input_dir, f"serotypefinder/{sample_id}_serotypefinder_meta.json"
-            )
-        )
         virulencefinder = os.path.abspath(
             os.path.join(input_dir, f"virulencefinder/{sample_id}_virulencefinder.json")
         )
@@ -258,8 +250,17 @@ def create_sample_array(
             )
         )
         process_metadata.append(resfinder_meta)
-        process_metadata.append(serotypefinder_meta)
         process_metadata.append(virulencefinder_meta)
+        if species in ("ecoli", "kpneumoniae"):
+            serotypefinder = os.path.abspath(
+                os.path.join(input_dir, f"serotypefinder/{sample_id}_serotypefinder.json")
+            )
+            serotypefinder_meta = os.path.abspath(
+                os.path.join(
+                    input_dir, f"serotypefinder/{sample_id}_serotypefinder_meta.json"
+                )
+            )
+            process_metadata.append(serotypefinder_meta)
         if species == "saureus":
             reference_genome_fasta = os.path.abspath(
                 os.path.join(
@@ -273,6 +274,7 @@ def create_sample_array(
                     "assets/genomes/staphylococcus_aureus/GCF_000012045.1.gff",
                 )
             )
+            serotypefinder = None
         if species == "ecoli":
             reference_genome_fasta = os.path.abspath(
                 os.path.join(
