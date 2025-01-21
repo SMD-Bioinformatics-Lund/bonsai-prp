@@ -200,7 +200,7 @@ def parse_stress_pred(path: str) -> StressMethodIndex:
     raw_genes, _ = _read_result(path)
     element_type = ElementType.STRESS
     results = ElementTypeResult(
-        genes=[gene for gene in raw_genes if gene.element_type == element_type]
+        genes=[gene for gene in raw_genes if gene.element_type == element_type],
     )
     return StressMethodIndex(
         type=element_type, software=Software.AMRFINDER, result=results

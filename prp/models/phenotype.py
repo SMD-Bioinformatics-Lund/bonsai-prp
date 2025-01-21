@@ -305,9 +305,9 @@ class ElementTypeResult(BaseModel):
     mutations and phenotyp changes.
     """
 
-    phenotypes: dict[str, list[str]]
-    genes: list[Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene]]
-    variants: list[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant, AmrFinderVariant]]
+    phenotypes: dict[str, list[str]] = {}
+    genes: list[Union[AmrFinderGene, AmrFinderResistanceGene, ResfinderGene]]
+    variants: list[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant, AmrFinderVariant]] = []
 
 
 class AMRMethodIndex(RWModel):
