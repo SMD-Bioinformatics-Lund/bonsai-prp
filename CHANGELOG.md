@@ -20,6 +20,7 @@
  - Fixed `.rstrip()` erroneous removal of "nln" suffix from end of sample id string (as it interprets it as a new line).
  - Fixed search for postalignqc files as suffix has changed from `_bwa.qc` to `_qc.json`.
  - Removed the inclusion Serotypefinder for saureus samples.
+ - AmrFinder parser now correctly reports variants.
 
 ### Changed
 
