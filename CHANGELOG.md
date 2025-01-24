@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Replaced `create-bonsai-input` command with `parse`
+
 ## [0.11.5]
 
 ### Added
@@ -40,8 +42,6 @@
 ### Fixed
 
 ### Changed
-
-- Replaced `create-bonsai-input` command with `parse`
 
 ## [0.11.2]
 
