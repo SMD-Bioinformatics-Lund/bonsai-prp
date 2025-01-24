@@ -1,11 +1,11 @@
 """Sample configuration with paths to output files."""
 
-from typing import List
 from pathlib import Path
-from typing_extensions import Annotated
+from typing import List
 
 from pydantic import Field, ValidationInfo
 from pydantic.functional_validators import BeforeValidator
+from typing_extensions import Annotated
 
 from .base import RWModel
 
