@@ -161,7 +161,7 @@ def upload(sample_cnf, username, password, api_url):
 )
 @click.option("-o", "--output", type=click.Path(), help="Path to result.")
 def parse(sample_cnf, output):
-    """Parse JASEN resulst and write as concatinated file in json format."""
+    """Parse JASEN results and write as concatenated file in json format."""
     LOG.info("Start generating pipeline result json")
     try:
         sample_obj = parse_sample(sample_cnf)
