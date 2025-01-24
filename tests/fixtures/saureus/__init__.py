@@ -30,6 +30,12 @@ def saureus_quast_path(data_path):
 
 
 @pytest.fixture()
+def saureus_amrfinder_no_amr_path(data_path):
+    """Get path for saureus amrfinder file"""
+    return str(data_path.joinpath("saureus", "amrfinder.no_amr.out"))
+
+
+@pytest.fixture()
 def saureus_amrfinder_path(data_path):
     """Get path for saureus amrfinder file"""
     return str(data_path.joinpath("saureus", "amrfinder.out"))

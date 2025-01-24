@@ -2,8 +2,9 @@
 
 from enum import Enum
 from typing import Literal, Optional, Union
+from typing_extensions import Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from .base import RWModel
 
@@ -225,8 +226,8 @@ class VariantBase(RWModel):
     accession: Optional[str] = None
     start: int
     end: int
-    ref_nt: str
-    alt_nt: str
+    ref_nt: Optional[str] = None
+    alt_nt: Optional[str] = None
     ref_aa: Optional[str] = None
     alt_aa: Optional[str] = None
 
@@ -241,6 +242,15 @@ class VariantBase(RWModel):
         ..., description="Describe if variant has passed the tool qc check"
     )
 
+    @model_validator(mode="after")
+    def check_assigned_ref_alt(self) -> Self:
+        """Check that either ref/alt nt or aa was assigned."""
+        unassigned_nt = self.ref_nt is None and self.alt_nt is None
+        unassigned_aa = self.ref_aa is None and self.alt_aa is None
+        if unassigned_nt and unassigned_aa:
+            raise ValueError("Either ref and alt NT or AA must be assigned.")
+        return self
+
 
 class ResfinderVariant(VariantBase):
     """Container for ResFinder variant information"""
@@ -248,6 +258,22 @@ class ResfinderVariant(VariantBase):
 
 class MykrobeVariant(VariantBase):
     """Container for Mykrobe variant information"""
+
+
+class AmrFinderVariant(VariantBase):
+    """Container for AmrFinder variant information."""
+
+    contig_id: str
+    query_start_pos: int = Field(..., description="Alignment start in contig")
+    query_end_pos: int = Field(..., description="Alignment start in contig")
+    ref_gene_length: Optional[int] = Field(
+        default=None,
+        alias="target_length",
+        description="The length of the reference protein or gene.",
+    )
+    strand: SequenceStand
+    coverage: float
+    identity: float
 
 
 class TbProfilerVariant(VariantBase):
@@ -279,9 +305,9 @@ class ElementTypeResult(BaseModel):
     mutations and phenotyp changes.
     """
 
-    phenotypes: dict[str, list[str]]
-    genes: list[Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene]]
-    variants: list[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant]]
+    phenotypes: dict[str, list[str]] = {}
+    genes: list[Union[AmrFinderGene, AmrFinderResistanceGene, ResfinderGene]]
+    variants: list[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant, AmrFinderVariant]] = []
 
 
 class AMRMethodIndex(RWModel):

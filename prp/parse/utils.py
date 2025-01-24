@@ -1,8 +1,30 @@
 """Shared utility functions."""
 
 from datetime import datetime
+from typing import Tuple
 
-from ..models.phenotype import ElementTypeResult, VariantSubType
+from ..models.phenotype import ElementTypeResult, VariantSubType, VariantType
+
+
+def classify_variant_type(
+    ref: str, alt: str, nucleotide: bool = True
+) -> Tuple[VariantType, VariantSubType]:
+    """Classify the type of variant based on the variant length."""
+    var_len = abs(len(ref) - len(alt))
+    threshold = 50 if nucleotide else 18
+    if var_len >= threshold:
+        var_type = VariantType.SV
+    elif 1 < var_len < threshold:
+        var_type = VariantType.INDEL
+    else:
+        var_type = VariantType.SNV
+    if len(ref) > len(alt):
+        var_sub_type = VariantSubType.DELETION
+    elif len(ref) < len(alt):
+        var_sub_type = VariantSubType.INSERTION
+    else:
+        var_sub_type = VariantSubType.SUBSTITUTION
+    return var_type, var_sub_type
 
 
 def is_prediction_result_empty(result: ElementTypeResult) -> bool:
