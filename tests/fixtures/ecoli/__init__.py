@@ -8,6 +8,12 @@ from ..fixtures import data_path
 
 
 @pytest.fixture()
+def ecoli_sample_conf_path(data_path):
+    """Get path for ecoli sample config file"""
+    return str(data_path.joinpath("ecoli", "sample_1.cnf.yml"))
+
+
+@pytest.fixture()
 def ecoli_analysis_meta_path(data_path):
     """Get path for ecoli meta file"""
     return str(data_path.joinpath("ecoli", "analysis_meta.json"))

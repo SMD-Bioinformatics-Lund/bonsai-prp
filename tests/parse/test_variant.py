@@ -1,4 +1,5 @@
 """Test parse variants."""
+
 from prp.parse.variant import load_variants
 
 

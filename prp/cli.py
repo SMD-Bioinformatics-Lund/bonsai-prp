@@ -5,50 +5,75 @@ import logging
 from pathlib import Path
 
 import click
-import numpy as np
-import pandas as pd
 import pysam
+import yaml
 from cyvcf2 import VCF, Writer
 from pydantic import TypeAdapter, ValidationError
+from requests import HTTPError
 
 from prp import VERSION as __version__
 
-from .models.metadata import SoupType, SoupVersion
-from .models.phenotype import ElementType
+from . import bonsai
+from .models.config import SampleConfig
 from .models.qc import QcMethodIndex, QcSoftware
-from .models.sample import MethodIndex, PipelineResult, ReferenceGenome, IgvAnnotationTrack
+from .models.sample import IgvAnnotationTrack, MethodIndex, PipelineResult
 from .parse import (
-    load_variants,
     parse_alignment_results,
-    parse_amrfinder_amr_pred,
-    parse_amrfinder_vir_pred,
     parse_cgmlst_results,
-    parse_emmtyper_pred,
-    parse_kraken_result,
-    parse_mlst_results,
-    parse_mykrobe_amr_pred,
-    parse_mykrobe_lineage_results,
     parse_postalignqc_results,
     parse_quast_results,
-    parse_resfinder_amr_pred,
-    parse_serotypefinder_oh_typing,
-    parse_shigapass_pred,
-    parse_tbprofiler_amr_pred,
-    parse_tbprofiler_lineage_results,
-    parse_virulencefinder_stx_typing,
-    parse_virulencefinder_vir_pred,
+    parse_sample,
 )
-from .parse.phenotype.tbprofiler import (
-    EXPECTED_SCHEMA_VERSION as EXPECTED_TBPROFILER_SCHEMA_VERSION,
-)
-from .parse.metadata import get_database_info, get_gb_genome_version, parse_run_info
-from .parse.species import get_mykrobe_spp_prediction
-from .parse.utils import _get_path, get_db_version, parse_input_dir
 from .parse.variant import annotate_delly_variants
 
 LOG = logging.getLogger(__name__)
 
 OUTPUT_SCHEMA_VERSION = 1
+USER_ENV = "BONSAI_USER"
+PASSWD_ENV = "BONSAI_PASSWD"
+
+
+class SampleConfigFile(click.ParamType):
+    """CLI option for sample files."""
+
+    name = "config"
+
+    def convert(self, value, param, ctx):
+        """Convert string path to yaml object."""
+        # verify input is path to existing file
+        try:
+            cnf_path = Path(value)
+            if not cnf_path.is_file():
+                raise FileNotFoundError(
+                    f"file {cnf_path.name} not found, please check the path."
+                )
+        except TypeError as error:
+            raise TypeError(f"value should be a str not '{type(value)}'") from error
+        # load yaml and cast to pydantic model
+        with cnf_path.open(encoding="utf-8") as cfile:
+            data = yaml.safe_load(cfile)
+            return SampleConfig(**data, config_path=cnf_path)
+
+
+class JsonFile(click.ParamType):
+    """CLI option for json files."""
+
+    name = "config"
+
+    def convert(self, value, param, ctx):
+        """Convert string path to yaml object."""
+        # verify input is path to existing file
+        try:
+            file_path = Path(value)
+            if not file_path.is_file():
+                raise FileNotFoundError(
+                    (f"file {file_path.name} not found, ", "please check the path")
+                )
+        except TypeError as error:
+            raise TypeError(f"value should be a str not '{type(value)}'") from error
+        # load yaml and cast to pydantic model
+        with file_path.open(encoding="utf-8") as cfile:
+            return json.load(cfile)
 
 
 @click.group()
@@ -70,359 +95,93 @@ def cli(silent, debug):
 
 
 @cli.command()
-@click.option("-i", "--sample-id", required=True, help="Sample identifier")
-@click.option(
-    "-u",
-    "--run-metadata",
-    type=click.Path(),
-    required=True,
-    help="Analysis metadata from the pipeline in json format",
-)
-@click.option("-q", "--quast", type=click.Path(), help="Quast quality control metrics")
-@click.option(
-    "-d",
-    "--process-metadata",
-    type=click.Path(),
-    multiple=True,
-    help="Nextflow processes metadata from the pipeline in json format",
-)
-@click.option(
-    "-k", "--kraken", type=click.Path(), help="Kraken species annotation results"
-)
-@click.option(
-    "-a",
-    "--amrfinder",
-    type=click.Path(),
-    help="amrfinderplus anti-microbial resistance results",
-)
-@click.option("-m", "--mlst", type=click.Path(), help="MLST prediction results")
-@click.option("-c", "--cgmlst", type=click.Path(), help="cgMLST prediction results")
-@click.option(
-    "-v",
-    "--virulencefinder",
-    type=click.Path(),
-    help="Virulence factor prediction results",
-)
-@click.option(
-    "-r",
-    "--resfinder",
-    type=click.Path(),
-    help="Resfinder resistance prediction results",
-)
 @click.option(
     "-s",
-    "--serotypefinder",
-    type=click.Path(),
-    help="Serotypefinder serotype prediction results",
-)
-@click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
-@click.option("-k", "--mykrobe", type=click.Path(), help="mykrobe results")
-@click.option("-e", "--emmtyper", type=click.Path(), help="Emmtyper m-type prediction results")
-@click.option("-g", "--shigapass", type=click.Path(), help="shigapass results")
-@click.option("-t", "--tbprofiler", type=click.Path(), help="tbprofiler results")
-@click.option("--bam", type=click.Path(), help="Read mapping to reference genome")
-@click.option(
-    "--reference-genome-fasta", type=click.Path(), help="reference genome fasta file"
+    "--sample",
+    "sample_cnf",
+    type=SampleConfigFile(),
+    help="Sample configuration with results.",
 )
 @click.option(
-    "--reference-genome-gff", type=click.Path(), help="reference-genome in gff format"
+    "-a", "--api", "api_url", required=True, type=str, help="Upload configuration"
 )
 @click.option(
-    "--genome-annotation",
-    type=click.Path(),
-    multiple=True,
-    help="Genome annotations bed format",
+    "-u", "--username", required=True, envvar=USER_ENV, type=str, help="Username"
 )
-@click.option("--vcf", type=click.Path(), help="VCF filepath")
-@click.option("--snv-vcf", type=click.Path(), help="VCF with SNV variants")
-@click.option("--sv-vcf", type=click.Path(), help="VCF with SV variants")
-@click.option("--symlink-dir", type=click.Path(), help="Dir for symlink")
-@click.option("--correct_alleles", is_flag=True, help="Correct alleles")
 @click.option(
-    "-o", "--output", required=True, type=click.Path(), help="output filepath"
+    "-p", "--password", required=True, envvar=PASSWD_ENV, type=str, help="Password"
 )
-def create_bonsai_input(
-    sample_id,
-    run_metadata,
-    quast,
-    process_metadata,
-    kraken,
-    amrfinder,
-    mlst,
-    cgmlst,
-    virulencefinder,
-    resfinder,
-    serotypefinder,
-    quality,
-    mykrobe,
-    emmtyper,
-    shigapass,
-    tbprofiler,
-    bam,
-    reference_genome_fasta,
-    reference_genome_gff,
-    genome_annotation,
-    vcf,
-    snv_vcf,
-    sv_vcf,
-    symlink_dir,
-    correct_alleles,
-    output,
-):  # pylint: disable=too-many-arguments
-    """Combine pipeline results into a standardized json output file."""
-    LOG.info("Start generating pipeline result json")
-    # Get basic sample object
-    sample_info, seq_info, pipeline_info = parse_run_info(run_metadata, process_metadata)
-    results = {
-        "sequencing": seq_info,
-        "pipeline": pipeline_info,
-        "qc": [],
-        "typing_result": [],
-        "element_type_result": [],
-        **sample_info  # add sample_name & lims_id
-    }
-    # qc
-    if quast:
-        LOG.info("Parse quast results")
-        res: QcMethodIndex = parse_quast_results(quast)
-        results["qc"].append(res)
-    if quality:
-        LOG.info("Parse quality results")
-        res: QcMethodIndex = parse_postalignqc_results(quality)
-        results["qc"].append(res)
-
-    # typing
-    if mlst:
-        LOG.info("Parse mlst results")
-        res: MethodIndex = parse_mlst_results(mlst)
-        results["typing_result"].append(res)
-    if cgmlst:
-        LOG.info("Parse cgmlst results")
-        res: MethodIndex = parse_cgmlst_results(cgmlst, correct_alleles=correct_alleles)
-        results["typing_result"].append(res)
-
-    # resfinder of different types
-    if resfinder:
-        LOG.info("Parse resistance results")
-        with open(resfinder, "r", encoding="utf-8") as resfinder_json:
-            pred_res = json.load(resfinder_json)
-            methods = [
-                ElementType.AMR,
-                ElementType.STRESS,
-            ]
-            for method in methods:
-                res: MethodIndex = parse_resfinder_amr_pred(pred_res, method)
-                # exclude empty results from output
-                if len(res.result.genes) > 0 and len(res.result.variants) > 0:
-                    results["element_type_result"].append(res)
-
-    # amrfinder
-    if amrfinder:
-        LOG.info("Parse amr results")
-        methods = [
-            ElementType.AMR,
-            ElementType.STRESS,
-        ]
-        for method in methods:
-            res: MethodIndex = parse_amrfinder_amr_pred(amrfinder, method)
-            results["element_type_result"].append(res)
-        vir: MethodIndex = parse_amrfinder_vir_pred(amrfinder)
-        results["element_type_result"].append(vir)
-
-    # get virulence factors in sample
-    if virulencefinder:
-        LOG.info("Parse virulencefinder results")
-        # virulence genes
-        vir: MethodIndex | None = parse_virulencefinder_vir_pred(virulencefinder)
-        if vir is not None:
-            results["element_type_result"].append(vir)
-
-        # stx typing
-        res: MethodIndex | None = parse_virulencefinder_stx_typing(virulencefinder)
-        if res is not None:
-            results["typing_result"].append(res)
-
-    if serotypefinder:
-        LOG.info("Parse serotypefinder results")
-        # OH typing
-        res: MethodIndex | None = parse_serotypefinder_oh_typing(serotypefinder)
-        if res is not None:
-            results["typing_result"].extend(res)
-
-    if emmtyper:
-        LOG.info("Parse emmtyper results")
-        # Emmtyping
-        res: MethodIndex | None = parse_emmtyper_pred(emmtyper)
-        if res is not None:
-            results["typing_result"].extend(res)
-
-    if shigapass:
-        LOG.info("Parse shigapass results")
-        # Shigatyping
-        res: MethodIndex | None = parse_shigapass_pred(shigapass)
-        if res is not None:
-            results["typing_result"].append(res)
-
-    # species id
-    results["species_prediction"] = []
-    if kraken:
-        LOG.info("Parse kraken results")
-        results["species_prediction"].append(parse_kraken_result(kraken))
-
-    # mycobacterium tuberculosis
-    # mykrobe
-    if mykrobe:
-        LOG.info("Parse mykrobe results")
-        pred_res = pd.read_csv(mykrobe, quotechar='"')
-        pred_res.columns.values[3] = "variants"
-        pred_res.columns.values[4] = "genes"
-        pred_res.replace(["NA", np.nan], None, inplace=True)
-        pred_res = pred_res.to_dict(orient="records")
-
-        # verify that sample id is in prediction result
-        if not sample_id in pred_res[0]["sample"]:
-            LOG.warning(
-                "Sample id %s is not in Mykrobe result, possible sample mixup",
-                sample_id,
-            )
-            raise click.Abort()
-
-        # add mykrobe db version to the list of softwares
-        results['pipeline'].softwares.append(
-            SoupVersion(
-                name="mykrobe-predictor",
-                version=pred_res[0]["mykrobe_version"],
-                type=SoupType.DB,
-            )
-        )
-        # parse mykrobe result
-        amr_res = parse_mykrobe_amr_pred(pred_res)
-        if amr_res is not None:
-            results["element_type_result"].append(amr_res)
-
-        lin_res: MethodIndex | None = parse_mykrobe_lineage_results(pred_res)
-        if lin_res is not None:
-            results["typing_result"].append(lin_res)
-
-        # parse mykrobe species prediction result
-        results["species_prediction"].append(get_mykrobe_spp_prediction(pred_res))
-
-    # tbprofiler
-    if tbprofiler:
-        LOG.info("Parse tbprofiler results")
-        with open(tbprofiler, "r", encoding="utf-8") as tbprofiler_json:
-            pred_res = json.load(tbprofiler_json)
-            # check schema version
-            schema_version = pred_res.get("schema_version")
-            if not EXPECTED_TBPROFILER_SCHEMA_VERSION == schema_version:
-                LOG.warning(
-                    "Unsupported TbProfiler schema version - output might be inaccurate; result schema: %s; expected: %s",
-                    schema_version,
-                    EXPECTED_TBPROFILER_SCHEMA_VERSION,
-                )
-            # store pipeline version
-            db_info: list[SoupVersion] = []
-            db_info = [
-                SoupVersion(
-                    name=pred_res["pipeline"]["db_version"]["name"],
-                    version=get_db_version(pred_res["pipeline"]["db_version"]),
-                    type=SoupType.DB,
-                )
-            ]
-            sw_list = results["pipeline"].softwares.extend(db_info)
-            lin_res: MethodIndex = parse_tbprofiler_lineage_results(pred_res)
-            results["typing_result"].append(lin_res)
-            amr_res: MethodIndex = parse_tbprofiler_amr_pred(pred_res)
-            results["element_type_result"].append(amr_res)
-
-    # parse SNV and SV variants.
-    if snv_vcf:
-        results["snv_variants"] = load_variants(snv_vcf)["snv_variants"]
-
-    if sv_vcf:
-        results["sv_variants"] = load_variants(sv_vcf)["sv_variants"]
-
-    if vcf:
-        results.update(load_variants(vcf))
-
-    # entries for reference genome and read mapping
-    if all([bam, reference_genome_fasta, reference_genome_gff]):
-        # verify that everything pertains to the same reference genome
-        ref_accession, ref_name = get_gb_genome_version(reference_genome_fasta)
-        # store file names
-        fasta_idx_path = fasta_idx_path = Path(f"{reference_genome_fasta}.fai")
-        results["reference_genome"] = ReferenceGenome(
-            name=ref_name,
-            accession=ref_accession,
-            fasta=Path(reference_genome_fasta).name,
-            fasta_index=fasta_idx_path.name if fasta_idx_path.is_file() else None,
-            genes=Path(reference_genome_gff).name,
-        )
-        results["read_mapping"] = _get_path(symlink_dir, "bam", bam)
-        # add annotations
-        annotations = [
-            {"name": f"annotation_{i}", "file": Path(annot).name}
-            for i, annot in enumerate(genome_annotation, start=1)
-        ]
-        vcf_dict = {"SV": sv_vcf, "SNV": snv_vcf, "VCF": vcf}
-        for name in vcf_dict:
-            vcf_filepath = vcf_dict[name]
-            if vcf_filepath:
-                vcf_filepath = _get_path(symlink_dir, "vcf", vcf_filepath)
-                annotations.append({"name": name, "file": vcf_filepath})
-        # store annotation results
-        results["genome_annotation"] = annotations if annotations else None
-
+def upload(sample_cnf, username, password, api_url):
+    """Upload a sample to Bonsai using either a sample config or json dump."""
+    # Parse sample config
     try:
-        output_data = PipelineResult(
-            sample_id=sample_id, schema_version=OUTPUT_SCHEMA_VERSION, **results
-        )
+        sample_obj = parse_sample(sample_cnf)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)
-        raise click.Abort
-    LOG.info("Storing results to: %s", output)
-    with open(output, "w", encoding="utf-8") as fout:
-        fout.write(output_data.model_dump_json(indent=2))
-    click.secho("Finished generating pipeline output", fg="green")
+
+    # Authenticate to Bonsai API
+    try:
+        conn = bonsai.authenticate(api_url, username, password)
+    except ValueError as error:
+        raise click.UsageError(str(error)) from error
+
+    # Upload sample
+    bonsai.upload_sample(conn, sample_obj, sample_cnf)
+    # add sample to group if it was assigned one.
+    for group_id in sample_cnf.groups:
+        try:
+            bonsai.add_sample_to_group(  # pylint: disable=no-value-for-parameter
+                token_obj=conn.token,
+                api_url=conn.api_url,
+                group_id=group_id,
+                sample_id=sample_cnf.sample_id,
+            )
+        except HTTPError as error:
+            match error.response.status_code:
+                case 404:
+                    msg = f"Group with id {group_id} is not in Bonsai"
+                case 500:
+                    msg = "An unexpected error occured in Bonsai, check bonsai api logs"
+                case _:
+                    msg = f"An unknown error occurred; {str(error)}"
+            # raise error and abort execution
+            raise click.UsageError(msg) from error
+    # exit script
+    click.secho("Sample uploaded", fg="green")
 
 
 @cli.command()
 @click.option(
-    "-i",
-    "--input-dir",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    help="Input directory to JASEN's outdir incl. speciesDir",
-)
-@click.option(
-    "-j",
-    "--jasen-dir",
-    required=True,
-    type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    help="Path to JASEN directory",
-)
-@click.option(
     "-s",
-    "--symlink-dir",
-    required=False,
-    type=click.Path(exists=True, file_okay=False, dir_okay=True),
-    help="Path to symlink directory",
+    "--sample",
+    "sample_cnf",
+    type=SampleConfigFile(),
+    help="Sample configuration with results.",
 )
-@click.option(
-    "-o",
-    "--output-dir",
-    type=click.Path(file_okay=False, dir_okay=True),
-    help="Output directory to incl. speciesDir [default: input_dir]",
-)
-@click.pass_context
-def rerun_bonsai_input(ctx, input_dir, jasen_dir, symlink_dir, output_dir) -> None:
-    """Rerun bonsai input creation for all samples in input directory."""
-    if input_dir:
-        LOG.info("Parse input directory")
-        input_arrays = parse_input_dir(input_dir, jasen_dir, symlink_dir, output_dir)
-        for input_array in input_arrays:
-            ctx.invoke(create_bonsai_input, **input_array)
+@click.option("-o", "--output", type=click.Path(), help="Path to result.")
+def parse(sample_cnf, output):
+    """Parse JASEN results and write as concatenated file in json format."""
+    LOG.info("Start generating pipeline result json")
+    try:
+        sample_obj = parse_sample(sample_cnf)
+    except ValidationError as err:
+        click.secho("Generated result failed validation", fg="red")
+        click.secho(err)
+        raise click.Abort
+
+    # Either write to stdout or to file
+    dump = sample_obj.model_dump_json(indent=2)
+    if output is None:
+        print(dump)
+    else:
+        LOG.info("Storing results to: %s", output)
+        try:
+            with open(output, "w", encoding="utf-8") as fout:
+                fout.write(dump)
+        except Exception as _:
+            raise click.Abort("Error writing results file")
+    click.secho("Finished generating pipeline output", fg="green")
 
 
 @cli.command()
@@ -446,29 +205,32 @@ def validate(output):
 
 
 @cli.command()
-@click.option("-q", "--quast", type=click.Path(), help="Quast quality control metrics")
-@click.option("-p", "--quality", type=click.Path(), help="postalignqc qc results")
-@click.option("-c", "--cgmlst", type=click.Path(), help="cgMLST prediction results")
-@click.option("--correct_alleles", is_flag=True, help="Correct alleles")
+@click.option(
+    "-s",
+    "--sample",
+    "sample_cnf",
+    type=SampleConfigFile(),
+    help="Sample configuration with results.",
+)
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
 )
-def create_cdm_input(quast, quality, cgmlst, correct_alleles, output) -> None:
+def cdm(sample_cnf, output) -> None:
     """Format QC metrics into CDM compatible input file."""
     results = []
-    if quality:
+    if sample_cnf.postalnqc:
         LOG.info("Parse quality results")
-        res: QcMethodIndex = parse_postalignqc_results(quality)
+        res: QcMethodIndex = parse_postalignqc_results(sample_cnf.postalnqc)
         results.append(res)
 
-    if quast:
+    if sample_cnf.quast:
         LOG.info("Parse quast results")
-        res: QcMethodIndex = parse_quast_results(quast)
+        res: QcMethodIndex = parse_quast_results(sample_cnf.quast)
         results.append(res)
 
-    if cgmlst:
+    if sample_cnf.chewbbaca:
         LOG.info("Parse cgmlst results")
-        res: MethodIndex = parse_cgmlst_results(cgmlst, correct_alleles=correct_alleles)
+        res: MethodIndex = parse_cgmlst_results(sample_cnf.chewbbaca)
         n_missing_loci = QcMethodIndex(
             software=QcSoftware.CHEWBBACA, result={"n_missing": res.result.n_missing}
         )
@@ -586,9 +348,7 @@ def add_igv_annotation_track(track_name, annotation_file, bonsai_input_file, out
         result_obj = PipelineResult(**json.load(jfile))
 
     # Get genome annotation
-    if not isinstance(
-        result_obj.genome_annotation, list
-    ):
+    if not isinstance(result_obj.genome_annotation, list):
         track_info = []
     else:
         track_info = result_obj.genome_annotation

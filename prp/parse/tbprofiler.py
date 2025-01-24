@@ -1,20 +1,47 @@
 """Parse TBprofiler result."""
-import logging
-from typing import Any
 
-from ...models.metadata import SoupVersion
-from ...models.phenotype import (
+import json
+import logging
+from pathlib import Path
+from typing import Any, Dict
+
+from ..models.metadata import SoupType, SoupVersion
+from ..models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
 )
-from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import TbProfilerVariant, VariantSubType, VariantType
+from ..models.phenotype import PredictionSoftware as Software
+from ..models.phenotype import TbProfilerVariant, VariantSubType, VariantType
+from ..models.sample import MethodIndex
+from ..models.typing import LineageInformation, TbProfilerLineage, TypingMethod
+from .utils import get_db_version
 
 LOG = logging.getLogger(__name__)
 EXPECTED_SCHEMA_VERSION = "1.0.0"
+
+
+def _read_result(path: Path, strict: bool = False) -> Dict[str, Any]:
+    """Read TbProfiler output."""
+    with path.open("r", encoding="utf-8") as tbprofiler_json:
+        pred_res = json.load(tbprofiler_json)
+        # check schema version
+        schema_version = pred_res.get("schema_version")
+        if not EXPECTED_SCHEMA_VERSION == schema_version:
+            LOG.warning(
+                (
+                    "Unsupported TbProfiler schema version - ",
+                    "output might be inaccurate; ",
+                    "result schema: %s; expected: %s",
+                ),
+                schema_version,
+                EXPECTED_SCHEMA_VERSION,
+            )
+            if strict:
+                raise ValueError("Unsupported version of TbProfiler output.")
+    return pred_res
 
 
 def _get_tbprofiler_amr_sr_profie(tbprofiler_result):
@@ -89,7 +116,6 @@ def _parse_tbprofiler_amr_variants(predictions) -> tuple[TbProfilerVariant, ...]
             else:
                 var_sub_type = VariantSubType.INSERTION
 
-            start_pos = int(hit["pos"])
             variant = TbProfilerVariant(
                 # classificatoin
                 id=var_id,
@@ -99,8 +125,8 @@ def _parse_tbprofiler_amr_variants(predictions) -> tuple[TbProfilerVariant, ...]
                 # location
                 reference_sequence=hit["gene_name"],
                 accession=hit["feature_id"],
-                start=start_pos,
-                end=start_pos + len(alt_nt),
+                start=int(hit["pos"]),
+                end=int(hit["pos"]) + len(alt_nt),
                 ref_nt=ref_nt,
                 alt_nt=alt_nt,
                 # consequense
@@ -162,11 +188,22 @@ def parse_drug_resistance_info(drugs: list[dict[str, str]]) -> list[PhenotypeInf
     return phenotypes
 
 
-def parse_tbprofiler_amr_pred(
-    prediction: dict[str, Any]
-) -> tuple[tuple[SoupVersion, ...], ElementTypeResult]:
+def get_version(result_path) -> SoupVersion:
+    """Get version of Mykrobe from result."""
+    LOG.debug("Get Mykrobe version")
+    pred_res = _read_result(result_path)
+    version = SoupVersion(
+        name=pred_res["pipeline"]["db_version"]["name"],
+        version=get_db_version(pred_res["pipeline"]["db_version"]),
+        type=SoupType.DB,
+    )
+    return version
+
+
+def parse_amr_pred(path: Path) -> AMRMethodIndex:
     """Parse tbprofiler resistance prediction results."""
     LOG.info("Parsing tbprofiler prediction")
+    prediction = _read_result(path)
     resistance = ElementTypeResult(
         phenotypes=_get_tbprofiler_amr_sr_profie(prediction),
         genes=[],
@@ -174,4 +211,33 @@ def parse_tbprofiler_amr_pred(
     )
     return AMRMethodIndex(
         type=ElementType.AMR, software=Software.TBPROFILER, result=resistance
+    )
+
+
+def parse_lineage_pred(path: Path) -> MethodIndex:
+    """Parse tbprofiler results for lineage object."""
+    LOG.info("Parsing lineage results")
+    pred_res = _read_result(path)
+    # lineages
+    lineages = [
+        LineageInformation(
+            lineage=lin["lineage"],
+            family=lin["family"],
+            rd=lin["rd"],
+            fraction=lin["fraction"],
+            support=lin["support"],
+        )
+        for lin in pred_res["lineage"]
+    ]
+    # combine into result
+    result_obj = TbProfilerLineage(
+        main_lineage=pred_res["main_lineage"],
+        sublineage=pred_res["sub_lineage"],
+        lineages=lineages,
+    )
+    # store result as a method index
+    return MethodIndex(
+        type=TypingMethod.LINEAGE,
+        software=Software.TBPROFILER,
+        result=result_obj,
     )

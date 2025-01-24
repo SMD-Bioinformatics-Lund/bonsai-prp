@@ -1,4 +1,5 @@
 """Generic database objects of which several other models are based on."""
+
 from pydantic import BaseModel, ConfigDict
 
 

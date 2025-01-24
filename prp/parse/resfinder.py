@@ -1,9 +1,10 @@
 """Parse resfinder results."""
+
 import logging
 from itertools import chain
 from typing import Any
 
-from ...models.phenotype import (
+from ..models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
     ElementAmrSubtype,
@@ -12,15 +13,15 @@ from ...models.phenotype import (
     ElementTypeResult,
     PhenotypeInfo,
 )
-from ...models.phenotype import PredictionSoftware as Software
-from ...models.phenotype import (
+from ..models.phenotype import PredictionSoftware as Software
+from ..models.phenotype import (
     ResfinderGene,
     ResfinderVariant,
     StressMethodIndex,
     VariantSubType,
     VariantType,
 )
-from ..utils import get_nt_change
+from .utils import get_nt_change
 
 LOG = logging.getLogger(__name__)
 
@@ -356,7 +357,7 @@ def _parse_resfinder_amr_variants(
     return variants
 
 
-def parse_resfinder_amr_pred(
+def parse_amr_pred(
     prediction: dict[str, Any], resistance_category: ElementType
 ) -> AMRMethodIndex:
     """Parse resfinder resistance prediction results."""

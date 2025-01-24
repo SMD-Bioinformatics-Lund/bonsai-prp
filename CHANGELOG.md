@@ -2,9 +2,13 @@
 
 ### Added
 
+- Added command to upload samples to Bonsai.
+
 ### Fixed
 
 ### Changed
+
+- Replaced `create-bonsai-input` command with `parse`
 
 ## [0.11.5]
 

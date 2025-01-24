@@ -2,7 +2,7 @@
 
 import pytest
 
-from prp.parse.phenotype.shigapass import _extract_percentage, parse_shigapass_pred
+from prp.parse.shigapass import _extract_percentage, parse_shiga_pred
 
 
 @pytest.mark.parametrize(
@@ -29,7 +29,7 @@ def test_parse_shigapass_results(ecoli_shigapass_path, shigella_shigapass_path):
     """Test parsing of shigapass result files."""
 
     # test parsing the output of an ecoli.
-    result = parse_shigapass_pred(ecoli_shigapass_path)
+    result = parse_shiga_pred(ecoli_shigapass_path)
     expected_ecoli = {
         "type": "shigatype",
         "software": "shigapass",
@@ -49,7 +49,7 @@ def test_parse_shigapass_results(ecoli_shigapass_path, shigella_shigapass_path):
     assert expected_ecoli == result.model_dump()
 
     # test parsing the output with a shigella.
-    result = parse_shigapass_pred(shigella_shigapass_path)
+    result = parse_shiga_pred(shigella_shigapass_path)
     expected_shigella = {
         "type": "shigatype",
         "software": "shigapass",
