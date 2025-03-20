@@ -1,23 +1,23 @@
 """Parse AMRfinder plus result."""
 
-import logging
-from typing import Dict, Tuple, Sequence, Any
-import re
 import itertools
+import logging
+import re
+from typing import Any, Dict, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
 
 from ..models.phenotype import (
-    AmrFinderResistanceGene,
     AmrFinderGene,
+    AmrFinderResistanceGene,
+    AmrFinderVariant,
     AmrFinderVirulenceGene,
     AMRMethodIndex,
     AnnotationType,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
-    AmrFinderVariant
 )
 from ..models.phenotype import PredictionSoftware as Software
 from ..models.phenotype import (
@@ -115,7 +115,9 @@ def _format_gene(
                 group=hit["Class"].lower(),
                 name=annot.lower(),
                 annotation_type=AnnotationType.TOOL,
-                ) for annot in hit["Subclass"].split("/") ]
+            )
+            for annot in hit["Subclass"].split("/")
+        ]
         gene = gene.model_copy(update={"phenotypes": phenotypes})
     return gene
 
@@ -135,7 +137,9 @@ def _format_variant(hit: Dict[str, Any], variant_no: int) -> AmrFinderVariant:
             group=hit["Class"].lower(),
             name=annot.lower(),
             annotation_type=AnnotationType.TOOL,
-            ) for annot in hit["Subclass"].split("/") ]
+        )
+        for annot in hit["Subclass"].split("/")
+    ]
 
     return AmrFinderVariant(
         id=variant_no,

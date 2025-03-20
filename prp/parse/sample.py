@@ -104,7 +104,6 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
                 resistance.append(resfinder.parse_amr_pred(pred_res, method))
 
     if smp_cnf.amrfinder:
-        #resistance.append(amrfinder.parse_amr_pred(smp_cnf.amrfinder))
         resistance.append(amrfinder.parse_stress_pred(smp_cnf.amrfinder))
 
     if smp_cnf.mykrobe:
