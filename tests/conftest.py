@@ -16,7 +16,7 @@ def simple_pipeline_result():
         pipeline="Jasen",
         version="0.0.1",
         commit="commit-hash",
-        analysis_profile="",
+        analysis_profile=["test_profile"],
         configuration_files=[],
         workflow_name="workflow-name",
         command="nextflow run ...",
