@@ -3,6 +3,7 @@
 import json
 import logging
 from datetime import datetime
+from typing import Any
 
 from Bio import SeqIO
 
@@ -52,7 +53,7 @@ def parse_date_from_run_id(run_id: str) -> datetime | None:
 
 def parse_run_info(
     run_metadata: str, process_metadata: list[str]
-) -> tuple[SequencingInfo, PipelineInfo]:
+) -> tuple[dict[str, Any], SequencingInfo, PipelineInfo]:
     """Parse nextflow analysis information.
 
     :param run_metadata: Nextflow analysis metadata in json format.
