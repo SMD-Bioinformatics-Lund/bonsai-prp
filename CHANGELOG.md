@@ -8,6 +8,7 @@
 
 ### Changed
 
+- Analysis profiles are now stored as a list to handle multiple profiles.
 - Replaced `create-bonsai-input` command with `parse`
 
 ## [0.11.5]
