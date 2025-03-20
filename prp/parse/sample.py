@@ -22,7 +22,7 @@ from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
 
-OUTPUT_SCHEMA_VERSION = 1
+OUTPUT_SCHEMA_VERSION = 2
 
 LOG = logging.getLogger(__name__)
 
