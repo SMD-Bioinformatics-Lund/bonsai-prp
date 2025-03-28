@@ -3,11 +3,13 @@
 ### Added
 
 - Added command to upload samples to Bonsai.
+- Added command for migrating old results to the new schema.
 
 ### Fixed
 
 ### Changed
 
+- Analysis profiles are now stored as a list to handle multiple profiles.
 - Replaced `create-bonsai-input` command with `parse`
 
 ## [0.11.5]

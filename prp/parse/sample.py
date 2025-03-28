@@ -22,7 +22,7 @@ from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
 
-OUTPUT_SCHEMA_VERSION = 1
+OUTPUT_SCHEMA_VERSION = 2
 
 LOG = logging.getLogger(__name__)
 
@@ -104,7 +104,6 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
                 resistance.append(resfinder.parse_amr_pred(pred_res, method))
 
     if smp_cnf.amrfinder:
-        #resistance.append(amrfinder.parse_amr_pred(smp_cnf.amrfinder))
         resistance.append(amrfinder.parse_stress_pred(smp_cnf.amrfinder))
 
     if smp_cnf.mykrobe:

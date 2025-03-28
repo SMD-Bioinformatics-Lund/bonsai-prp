@@ -79,7 +79,7 @@ class IgvAnnotationTrack(RWModel):
 class PipelineResult(SampleBase):
     """Input format of sample object from pipeline."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[2] = 2
     # optional typing
     typing_result: list[
         Union[ShigaTypingMethodIndex, EmmTypingMethodIndex, MethodIndex]

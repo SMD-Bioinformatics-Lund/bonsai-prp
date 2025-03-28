@@ -40,7 +40,7 @@ class PipelineInfo(RWModel):
     pipeline: str
     version: str
     commit: str
-    analysis_profile: str
+    analysis_profile: list[str]
     configuration_files: list[str]
     workflow_name: str
     command: str

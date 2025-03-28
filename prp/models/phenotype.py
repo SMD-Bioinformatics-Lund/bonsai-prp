@@ -2,9 +2,9 @@
 
 from enum import Enum
 from typing import Literal, Optional, Union
-from typing_extensions import Self
 
 from pydantic import BaseModel, Field, model_validator
+from typing_extensions import Self
 
 from .base import RWModel
 
@@ -307,7 +307,9 @@ class ElementTypeResult(BaseModel):
 
     phenotypes: dict[str, list[str]] = {}
     genes: list[Union[AmrFinderGene, AmrFinderResistanceGene, ResfinderGene]]
-    variants: list[Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant, AmrFinderVariant]] = []
+    variants: list[
+        Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant, AmrFinderVariant]
+    ] = []
 
 
 class AMRMethodIndex(RWModel):
