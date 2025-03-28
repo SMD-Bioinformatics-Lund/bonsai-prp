@@ -124,7 +124,7 @@ def _format_gene(
 
 def _format_variant(hit: Dict[str, Any], variant_no: int) -> AmrFinderVariant:
     gene_name, variant = hit["gene_symbol"].split("_")
-    match = re.match(r"([a-z]+)([0-9]+)([a-z]+)", variant, re.I)
+    match = re.match(r"([a-z]+)([0-9]+)([a-z]+)", variant, re.IGNORECASE)
     if not match:
         raise ValueError(f"Unrecognized variant format: {variant}")
     ref_aa, pos, alt_aa = match.groups()

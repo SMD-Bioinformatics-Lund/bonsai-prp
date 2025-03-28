@@ -125,7 +125,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> tuple[MykrobeVariant, ...]:
         pattern = re.compile(
             r"(?P<gene>.+)_(?P<aa_change>.+)-(?P<dna_change>.+)"
             r":(?P<ref_depth>\d+):(?P<alt_depth>\d+):(?P<conf>\d+)",
-            re.I,
+            re.IGNORECASE,
         )
         for var_id, variant in enumerate(variants, start=1):
             # extract variant info using regex
