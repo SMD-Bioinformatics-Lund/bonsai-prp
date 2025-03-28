@@ -8,9 +8,11 @@ import subprocess
 
 import pandas as pd
 import pysam
-from click.types import File
+from typing import TextIO, Any
 
 from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult
+
+type OptionalFile = TextIO | None
 
 LOG = logging.getLogger(__name__)
 
@@ -19,9 +21,9 @@ class QC:
     """Class for retrieving qc results"""
 
     def __init__(
-        self, sample_id, bam, reference, cpus, bed: str = None, baits: str = None
+        self, sample_id: str, bam: str, reference: str, cpus: int, bed: str | None = None, baits: str | None = None
     ):
-        self.results = {}
+        self.results: dict[str, Any] = {}
         self.bam = bam
         self.bed = bed
         self.sample_id = sample_id
@@ -76,7 +78,7 @@ class QC:
                     self.results["ins_size_dev"] = vals[6]
                     break
 
-    def parse_basecov_bed(self, basecov_fpath: str, thresholds: list) -> None:
+    def parse_basecov_bed(self, basecov_fpath: str, thresholds: list[str]) -> None:
         """Parse base coverage bed file using pandas"""
         df = pd.read_csv(basecov_fpath, sep="\t", comment="#", header=0)
 
@@ -120,7 +122,7 @@ class QC:
         # return False
         return False
 
-    def system_p(self, cmd: list) -> None:
+    def system_p(self, cmd: list[str]) -> None:
         """Execute subprocess"""
         LOG.info("RUNNING: %s", " ".join(cmd))
         result = subprocess.run(cmd, check=True, text=True)
@@ -144,7 +146,7 @@ class QC:
                 self.convert2intervals(self.baits, dict_file)
 
             # Run picard hsmetrics command
-            hsmet_cmd = [
+            hsmet_cmd: list[str] = [
                 "java",
                 "-jar",
                 "/usr/bin/picard.jar",
@@ -181,7 +183,7 @@ class QC:
         # Get insert size metrics
         if self.paired:
             LOG.info("Collect insert sizes...")
-            cmd = [
+            cmd: list[str] = [
                 "java",
                 "-jar",
                 "/usr/bin/picard.jar",
@@ -308,12 +310,12 @@ def parse_postalignqc_results(postalignqc_fpath: str) -> QcMethodIndex:
 
 def parse_alignment_results(
     sample_id: str,
-    bam: File,
-    reference: File,
+    bam: TextIO,
+    reference: TextIO,
     cpus: int,
-    output: File,
-    bed: File | None = None,
-    baits: File | None = None,
+    output: TextIO,
+    bed: OptionalFile = None,
+    baits: OptionalFile = None,
 ) -> None:
     """Parse bam file and extract relevant metrics"""
     LOG.info("Parsing bam file: %s", bam.name)

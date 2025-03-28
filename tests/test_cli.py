@@ -5,7 +5,8 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from prp.cli import add_igv_annotation_track, annotate_delly, cdm, parse
+from prp.cli.parse import format_jasen, format_cdm
+from prp.cli.annotate import add_igv_annotation_track, annotate_delly
 from prp.models import PipelineResult
 
 
@@ -32,7 +33,7 @@ def test_parse_cmd(fixture_name, expected_sw, request):
             "--output",
             output_file,
         ]
-        result = runner.invoke(parse, args)
+        result = runner.invoke(format_jasen, args)
         assert result.exit_code == 0
 
         # test that the correct output was generated
@@ -63,7 +64,7 @@ def test_cdm_cmd(ecoli_sample_conf_path, ecoli_cdm_input):
             "--output",
             output_file,
         ]
-        result = runner.invoke(cdm, args)
+        result = runner.invoke(format_cdm, args)
 
         # test successful execution of command
         assert result.exit_code == 0
