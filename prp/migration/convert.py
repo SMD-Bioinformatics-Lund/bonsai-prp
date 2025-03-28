@@ -9,7 +9,7 @@ from prp.models import PipelineResult
 
 LOG = logging.getLogger(__name__)
 
-type UnformattedResult = dict[str, Any]
+UnformattedResult = dict[str, Any]
 
 
 def migrate_result(old_result: UnformattedResult) -> PipelineResult:

@@ -12,7 +12,7 @@ from typing import TextIO, Any
 
 from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult
 
-type OptionalFile = TextIO | None
+OptionalFile = TextIO | None
 
 LOG = logging.getLogger(__name__)
 

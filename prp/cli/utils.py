@@ -12,7 +12,7 @@ from prp import VERSION as __version__
 from prp.models.config import SampleConfig
 
 
-type OptionalFile = TextIO | None
+OptionalFile = TextIO | None
 
 
 class SampleConfigFile(click.ParamType):
