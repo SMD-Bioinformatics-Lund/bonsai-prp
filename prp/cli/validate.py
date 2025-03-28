@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from prp import VERSION as __version__
 
 from prp.models.sample import PipelineResult
+from prp.migration import migrate_result
 
 LOG = logging.getLogger(__name__)
 
@@ -36,3 +37,22 @@ def validate_result(output: TextIO):
         click.secho(err)
     else:
         click.secho(f'The file "{output.name}" is valid', fg="green")
+
+
+@validate_gr.command()
+@click.argument("old_result", type=click.File("r"))
+@click.argument("new_result", type=click.File("w"))
+def migrate_result(old_result: TextIO, new_result: TextIO):
+    """Migrate a old JASEN result blob to the current version."""
+
+    js = json.load(old_result)
+    migrated_result = migrate_result(js)
+
+    # validate schema
+    sample_obj = PipelineResult.model_validate(migrated_result)
+    try:
+        LOG.info("writing migrated result to: %s", new_result.name)
+        new_result.write(sample_obj.model_dump_json(indent=2))
+    except Exception as _:
+        raise click.Abort("Error writing results file")
+    click.secho("Finished migrating result", fg="green")
