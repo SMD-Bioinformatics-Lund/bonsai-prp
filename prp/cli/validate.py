@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from prp import VERSION as __version__
 
 from prp.models.sample import PipelineResult
-from prp.migration import migrate_result
+from prp.migration import migrate_result as migrate_result_json
 
 LOG = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ def migrate_result(old_result: TextIO, new_result: TextIO):
     """Migrate a old JASEN result blob to the current version."""
 
     js = json.load(old_result)
-    migrated_result = migrate_result(js)
+    migrated_result = migrate_result_json(js)
 
     # validate schema
     sample_obj = PipelineResult.model_validate(migrated_result)
