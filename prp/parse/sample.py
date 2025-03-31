@@ -5,7 +5,7 @@ import logging
 from typing import Sequence
 
 from ..models.phenotype import AMRMethodIndex, ElementType
-from ..models.sample import MethodIndex, PipelineResult, QcMethodIndex
+from ..models.sample import MethodIndex, PipelineResult, QcMethodIndex, SCHEMA_VERSION
 from . import (
     amrfinder,
     kraken,
@@ -22,7 +22,6 @@ from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
 
-OUTPUT_SCHEMA_VERSION = 2
 
 LOG = logging.getLogger(__name__)
 
@@ -160,5 +159,5 @@ def parse_sample(smp_cnf) -> PipelineResult:
 
     # verify data consistancy
     return PipelineResult(
-        sample_id=smp_cnf.sample_id, schema_version=OUTPUT_SCHEMA_VERSION, **results
+        sample_id=smp_cnf.sample_id, schema_version=SCHEMA_VERSION, **results
     )

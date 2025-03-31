@@ -27,6 +27,9 @@ from .typing import (
 )
 
 
+SCHEMA_VERSION: int = 2
+
+
 class MethodIndex(RWModel):
     """Container for key-value lookup of analytical results."""
 
@@ -79,7 +82,7 @@ class IgvAnnotationTrack(RWModel):
 class PipelineResult(SampleBase):
     """Input format of sample object from pipeline."""
 
-    schema_version: Literal[2] = 2
+    schema_version: Literal[2] = SCHEMA_VERSION
     # optional typing
     typing_result: list[
         Union[ShigaTypingMethodIndex, EmmTypingMethodIndex, MethodIndex]
