@@ -2,15 +2,13 @@
 
 import json
 from pathlib import Path
-from typing import TextIO, Any
+from typing import Any, TextIO
 
 import click
 import yaml
 
 from prp import VERSION as __version__
-
 from prp.models.config import SampleConfig
-
 
 OptionalFile = TextIO | None
 

@@ -5,10 +5,10 @@ import json
 import logging
 import os
 import subprocess
+from typing import Any, TextIO
 
 import pandas as pd
 import pysam
-from typing import TextIO, Any
 
 from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult
 
@@ -21,7 +21,13 @@ class QC:
     """Class for retrieving qc results"""
 
     def __init__(
-        self, sample_id: str, bam: str, reference: str, cpus: int, bed: str | None = None, baits: str | None = None
+        self,
+        sample_id: str,
+        bam: str,
+        reference: str,
+        cpus: int,
+        bed: str | None = None,
+        baits: str | None = None,
     ):
         self.results: dict[str, Any] = {}
         self.bam = bam

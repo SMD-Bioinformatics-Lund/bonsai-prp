@@ -1,29 +1,29 @@
 """Functions for parsing JASEN results and generating output Bonsai and CDM output files."""
 
-import click
 import logging
-from pydantic import TypeAdapter, ValidationError
 from pathlib import Path
 
-from .utils import SampleConfigFile, OptionalFile
+import click
+from pydantic import TypeAdapter, ValidationError
+
+from prp.models.config import SampleConfig
 from prp.models.qc import QcMethodIndex, QcSoftware
 from prp.models.sample import MethodIndex
-from prp.models.config import SampleConfig
 from prp.parse import (
+    parse_alignment_results,
     parse_cgmlst_results,
     parse_postalignqc_results,
     parse_quast_results,
     parse_sample,
-    parse_alignment_results
 )
 
+from .utils import OptionalFile, SampleConfigFile
 
 LOG = logging.getLogger(__name__)
 
 
 @click.group("parse")
-def parse_gr():
-    ...
+def parse_gr(): ...
 
 
 @parse_gr.command()
@@ -108,7 +108,15 @@ def format_cdm(sample_cnf: SampleConfigFile, output: OptionalFile) -> None:
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
 )
-def create_qc_result(sample_id: str, bam: click.File, bed: OptionalFile, baits: OptionalFile, reference: OptionalFile, cpus: int, output: click.File) -> None:
+def create_qc_result(
+    sample_id: str,
+    bam: click.File,
+    bed: OptionalFile,
+    baits: OptionalFile,
+    reference: OptionalFile,
+    cpus: int,
+    output: click.File,
+) -> None:
     """Generate QC metrics regarding bam file"""
     if bam and reference:
         LOG.info("Parse alignment results")

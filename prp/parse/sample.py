@@ -5,7 +5,7 @@ import logging
 from typing import Sequence
 
 from ..models.phenotype import AMRMethodIndex, ElementType
-from ..models.sample import MethodIndex, PipelineResult, QcMethodIndex, SCHEMA_VERSION
+from ..models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
 from . import (
     amrfinder,
     kraken,
@@ -21,7 +21,6 @@ from .qc import parse_postalignqc_results, parse_quast_results
 from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
-
 
 LOG = logging.getLogger(__name__)
 

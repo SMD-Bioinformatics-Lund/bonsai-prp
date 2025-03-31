@@ -1,4 +1,5 @@
 """Commands to annotate existing results with new data."""
+
 import json
 import logging
 from pathlib import Path
@@ -13,9 +14,9 @@ from prp.parse.variant import annotate_delly_variants
 
 LOG = logging.getLogger(__name__)
 
+
 @click.group("annotate")
-def annotate_gr():
-    ...
+def annotate_gr(): ...
 
 
 @annotate_gr.command()

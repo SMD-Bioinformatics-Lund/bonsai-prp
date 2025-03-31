@@ -1,4 +1,5 @@
 """Functions for uploading results to Bonsai."""
+
 import logging
 
 import click
@@ -6,13 +7,11 @@ from pydantic import ValidationError
 from requests import HTTPError
 
 from prp import VERSION as __version__
-
 from prp import bonsai
 from prp.models.config import SampleConfig
 from prp.parse import parse_sample
 
 from .utils import SampleConfigFile
-
 
 LOG = logging.getLogger(__name__)
 
@@ -21,8 +20,8 @@ PASSWD_ENV = "BONSAI_PASSWD"
 
 
 @click.group()
-def upload():
-    ...
+def upload(): ...
+
 
 @upload.command()
 @click.option(

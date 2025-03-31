@@ -1,4 +1,5 @@
 """Commands for validating and migrating data."""
+
 import json
 import logging
 from typing import TextIO
@@ -7,16 +8,14 @@ import click
 from pydantic import ValidationError
 
 from prp import VERSION as __version__
-
-from prp.models.sample import PipelineResult
 from prp.migration import migrate_result as migrate_result_json
+from prp.models.sample import PipelineResult
 
 LOG = logging.getLogger(__name__)
 
 
 @click.group("validate")
-def validate_gr():
-    ...
+def validate_gr(): ...
 
 
 @validate_gr.command()

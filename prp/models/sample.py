@@ -26,7 +26,6 @@ from .typing import (
     TypingSoftware,
 )
 
-
 SCHEMA_VERSION: int = 2
 
 

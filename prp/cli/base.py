@@ -3,13 +3,10 @@
 import logging
 
 import click
+
 from prp import VERSION as __version__
 
-from . import parse
-from . import validate
-from . import annotate
-from . import upload
-
+from . import annotate, parse, upload, validate
 
 LOG = logging.getLogger(__name__)
 
@@ -30,6 +27,7 @@ def cli(silent: bool, debug: bool):
     logging.basicConfig(
         level=log_level, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
     )
+
 
 # add commands
 
