@@ -11,8 +11,11 @@ LOG = logging.getLogger(__name__)
 UnformattedResult = dict[str, Any]
 
 
-def migrate_result(old_result: UnformattedResult) -> PipelineResult:
-    """Migrate old JASEN result to the current schema."""
+def migrate_result(old_result: UnformattedResult, validate: bool = True) -> UnformattedResult | PipelineResult:
+    """Migrate old JASEN result to the current schema.
+    
+    The final model can optionally be validated.
+    """
     ALL_FUNCS: dict[int, Callable[..., UnformattedResult]] = {2: v1_to_v2}
 
     # verify input
@@ -28,8 +31,11 @@ def migrate_result(old_result: UnformattedResult) -> PipelineResult:
     temp_result = copy(old_result)
     for to_version, func in ALL_FUNCS.items():
         temp_result = func(temp_result)
-
-    return PipelineResult.model_validate(temp_result)
+    
+    # validate migrated model
+    if validate:
+        return PipelineResult.model_validate(temp_result)
+    return temp_result
 
 
 def v1_to_v2(result: UnformattedResult) -> UnformattedResult:
