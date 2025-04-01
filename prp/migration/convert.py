@@ -3,6 +3,7 @@
 import logging
 from copy import copy
 from typing import Any, Callable
+from itertools import chain
 
 from prp.models import PipelineResult
 
@@ -21,16 +22,18 @@ def migrate_result(old_result: UnformattedResult, validate: bool = True) -> Unfo
     # verify input
     input_schema_version = old_result["schema_version"]
     LOG.info("Migrating result from version %d", input_schema_version)
-    if input_schema_version not in ALL_FUNCS:
+    valid_versions = (ver for ver in chain([1], ALL_FUNCS.keys()))
+    if input_schema_version not in valid_versions:
         all_versions = ", ".join([str(ver) for ver in ALL_FUNCS])
         raise ValueError(
-            f"Unknown result version, found {input_schema_version} expected any of {all_versions}"
+            f"Unknown result version, found {input_schema_version} expected any of '{all_versions}'"
         )
 
     # migrate
     temp_result = copy(old_result)
     for to_version, func in ALL_FUNCS.items():
-        temp_result = func(temp_result)
+        if input_schema_version < to_version:
+            temp_result = func(temp_result)
     
     # validate migrated model
     if validate:
