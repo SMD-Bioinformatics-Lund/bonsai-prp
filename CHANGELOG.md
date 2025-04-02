@@ -2,6 +2,14 @@
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.0.0]
+
+### Added
+
 - Added command to upload samples to Bonsai.
 - Added command for migrating old results to the new schema.
 
