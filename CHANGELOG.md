@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Fixed `publish_docker_on_commit_to_master.yml` & `publish_docker_on_release.yml`
+
 ### Changed
 
 ## [1.0.0]
