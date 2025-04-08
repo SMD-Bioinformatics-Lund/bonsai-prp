@@ -28,7 +28,7 @@ jobs:
 
       - name: Export tags to env
         run: |
-          VERSION=$(head -2 prp/__version__.py | tail -1 | cut -d'"' -f2);
+          VERSION=$(head -3 prp/__version__.py | tail -1 | cut -d'"' -f2);
           echo "PRP_TAG=${VERSION}" >> $GITHUB_ENV
           echo "PRP_TAG_LATEST=latest" >> $GITHUB_ENV
 
