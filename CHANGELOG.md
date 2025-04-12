@@ -4,6 +4,14 @@
 
 ### Fixed
 
+### Changed
+
+## [1.0.1]
+
+### Added
+
+### Fixed
+
 - Fixed `publish_docker_on_commit_to_master.yml` & `publish_docker_on_release.yml`
 - Fixed prp expecting `kraken` to always be in config (JASEN CI doesn't call `kraken`)
 
