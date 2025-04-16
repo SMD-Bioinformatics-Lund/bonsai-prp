@@ -21,6 +21,7 @@ from .qc import parse_postalignqc_results, parse_quast_results
 from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
+from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
 
 LOG = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ def _read_spp_prediction(smp_cnf) -> Sequence[mykrobe.SppMethodIndex]:
 
 def _read_typing(
     smp_cnf,
-) -> Sequence[MethodIndex | EmmTypingMethodIndex | ShigaTypingMethodIndex]:
+) -> Sequence[MethodIndex | EmmTypingMethodIndex | ShigaTypingMethodIndex | SpatyperTypingMethodIndex]:
     """Read typing all information."""
     typing_result = []
     if smp_cnf.pymlst:
@@ -63,6 +64,9 @@ def _read_typing(
 
     if smp_cnf.shigapass:
         typing_result.append(parse_shiga_pred(smp_cnf.shigapass))
+
+    if smp_cnf.spatyper:
+        typing_result.append(parse_spatyper_results(smp_cnf.spatyper))
 
     # stx typing
     if smp_cnf.virulencefinder:
