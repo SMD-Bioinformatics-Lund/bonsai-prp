@@ -68,7 +68,7 @@ class SampleConfig(RWModel):
     software_info: List[FilePath] = []  # store sw and db version info
 
     ## Classification
-    kraken: FilePath
+    kraken: FilePath | None = None
 
     ## QC
     quast: FilePath

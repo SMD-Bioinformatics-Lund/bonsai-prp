@@ -1,3 +1,3 @@
 """PRP version"""
 
-VERSION = "0.11.5"
+VERSION = "1.0.1"
