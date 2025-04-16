@@ -20,7 +20,7 @@ class TypingSoftware(str, Enum):
     SEROTYPEFINDER = "serotypefinder"
     SHIGAPASS = "shigapass"
     EMMTYPER = "emmtyper"
-
+    SPATYPER = "spatyper"
 
 class TypingMethod(str, Enum):
     """Valid typing methods."""
@@ -33,6 +33,7 @@ class TypingMethod(str, Enum):
     HTYPE = "H_type"
     SHIGATYPE = "shigatype"
     EMMTYPE = "emmtype"
+    SPATYPE = "spatype"
 
 
 class ChewbbacaErrors(str, Enum):
@@ -145,3 +146,15 @@ class TypingResultGeneAllele(VirulenceGene, SerotypeGene):
 
 
 CgmlstAlleles = dict[str, int | None | ChewbbacaErrors | MlstErrors | list[int]]
+
+class TypingResultSpatyper(RWModel):
+    """Spatyper results"""
+    sequence_name: str | None
+    repeats: str | None
+    type: str | None
+
+class SpatyperTypingMethodIndex(RWModel):
+    """Method Index Spatyper."""
+    type: Literal[TypingMethod.SPATYPE]
+    software: Literal[TypingSoftware.SPATYPER]
+    result: TypingResultSpatyper

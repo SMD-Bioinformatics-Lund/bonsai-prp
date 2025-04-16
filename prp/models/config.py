@@ -80,6 +80,7 @@ class SampleConfig(RWModel):
     serotypefinder: FilePath | None = None
     shigapass: FilePath | None = None
     emmtyper: FilePath | None = None
+    spatyper: FilePath | None = None
 
     ## resistance, virulence etc
     amrfinder: FilePath | None = None
