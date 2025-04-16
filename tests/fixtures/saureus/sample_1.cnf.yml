@@ -4,16 +4,16 @@ lims_id: longLIMSid
 groups:
   - saureus
   - saureus-validation
-ref_genome_sequence: /path/to/genome.fasta
-ref_genome_annotation: /path/to/annotation.gff
-igv_annotations:
-  - name: Cool variants
-    type: variant
-    uri: file://rs-fe1/path/to/variants.vcf
-  - name: Read coverage
-    type: alignment
-    uri: file://rs-fe1/path/to/mapping.bam
-    index_uri: file://path/to/mapping.bam.bai
+ref_genome_sequence: /home/katjast/GMS_jasen/jasen_250414/assets/genomes/staphylococcus_aureus/GCF_000012045.1.fasta
+ref_genome_annotation: /home/katjast/GMS_jasen/jasen_250414/qassets/genomes/staphylococcus_aureus/GCF_000012045.1.gff
+# igv_annotations:
+#   - name: Cool variants
+#     type: variant
+#     uri: file://rs-fe1/path/to/variants.vcf
+#   - name: Read coverage
+#     type: alignment
+#     uri: file://rs-fe1/path/to/mapping.bam
+#     index_uri: file://path/to/mapping.bam.bai
 nextflow_run_info: ./analysis_meta.json
 software_info:
   - ./resfinder_meta.json
@@ -25,3 +25,4 @@ virulencefinder: ./virulencefinder.json
 amrfinder: ./amrfinder.out
 sourmash_signature: ./sourmash.sig
 ska_index: ./index.sig
+spatyper: ./spatyper.tsv
