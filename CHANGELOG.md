@@ -2,6 +2,14 @@
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.1.0]
+
+### Added
+
 - Added `spatyper` parsing, models and tests
 
 ### Fixed
