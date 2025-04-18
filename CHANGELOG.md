@@ -2,6 +2,8 @@
 
 ### Added
 
+- Added `spatyper` parsing, models and tests
+
 ### Fixed
 
 ### Changed
