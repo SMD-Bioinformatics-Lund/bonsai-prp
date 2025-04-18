@@ -6,6 +6,8 @@
 
 ### Changed
 
+- Changed processing of `sourmash` in config model
+
 ## [1.0.1]
 
 ### Added
