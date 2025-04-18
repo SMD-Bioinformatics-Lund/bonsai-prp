@@ -6,6 +6,8 @@
 
 ### Fixed
 
+- Fixed `spatyper` parser if no prediction
+
 ### Changed
 
 - Changed processing of `sourmash` in config model
