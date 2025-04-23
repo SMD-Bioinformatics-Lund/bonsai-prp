@@ -6,6 +6,7 @@ from typing import Any, Callable
 from itertools import chain
 
 from prp.models import PipelineResult
+from prp.migration import config
 
 LOG = logging.getLogger(__name__)
 
@@ -54,6 +55,15 @@ def v1_to_v2(result: UnformattedResult) -> UnformattedResult:
         prof.strip() for prof in result["pipeline"]["analysis_profile"].split(",")
     ]
     upd_result["pipeline"]["analysis_profile"] = upd_profile
+    # get assay from upd_profile
+    new_assay: str = next(
+        (config.profile_array_modifiers[prof] for prof in upd_profile if prof in config.profile_array_modifiers),
+        None
+    )
+    upd_result["pipeline"]["assay"] = new_assay
+    # add release_life_cycle
+    new_release_life_cycle: str = "development" if {"dev", "development"} & set(upd_profile) else "production"
+    upd_result["pipeline"]["release_life_cycle"] = new_release_life_cycle
     # update schema version
     upd_result["schema_version"] = 2
     return upd_result

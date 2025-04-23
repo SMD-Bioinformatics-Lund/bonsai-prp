@@ -2,9 +2,17 @@
 
 ### Added
 
+- Added `assay` and `release_life_cycle` to `PipelineInfo`
+- Added `config.py` for migration
+
 ### Fixed
 
+- Fixed `workflow_name` no longer calls incorrect key (`commitId`)
+- Changed `PipelineResult.model_validate_json` to `PipelineResult.model_validate` to fix validate bug
+
 ### Changed
+
+- Changed parsing of metadata whereby `analysis_profile` doesn't need list comprehension
 
 ## [1.1.0]
 

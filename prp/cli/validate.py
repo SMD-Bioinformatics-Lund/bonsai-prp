@@ -30,7 +30,7 @@ def validate_result(output: TextIO):
     """Validate a JASEN result file."""
     js = json.load(output)
     try:
-        PipelineResult.model_validate_json(js)
+        PipelineResult.model_validate(js)
     except ValidationError as err:
         click.secho("Invalid file format X", fg="red")
         click.secho(err)

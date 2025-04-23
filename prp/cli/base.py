@@ -34,6 +34,7 @@ def cli(silent: bool, debug: bool):
 ## for manipulating jasen results
 cli.add_command(parse.format_jasen)
 cli.add_command(validate.validate_result)
+cli.add_command(validate.migrate_result)
 cli.add_command(annotate.annotate_delly)
 cli.add_command(annotate.add_igv_annotation_track)
 ## qc related
