@@ -41,6 +41,8 @@ class PipelineInfo(RWModel):
     version: str
     commit: str
     analysis_profile: list[str]
+    assay: str
+    release_life_cycle: str
     configuration_files: list[str]
     workflow_name: str
     command: str

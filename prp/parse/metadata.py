@@ -83,11 +83,11 @@ def parse_run_info(
         pipeline=run_info["pipeline"],
         version=run_info["version"],
         commit=run_info["commit"],
-        analysis_profile=[
-            profile.strip() for profile in run_info["analysis_profile"].split(",")
-        ],
+        analysis_profile=run_info["analysis_profile"],
+        assay=run_info["assay"],
+        release_life_cycle=run_info["release_life_cycle"],
         configuration_files=run_info["configuration_files"],
-        workflow_name=run_info["commit"],
+        workflow_name=run_info["workflow_name"],
         command=run_info["command"],
         softwares=soup_versions,
         date=datetime.fromisoformat(run_info["date"]),
