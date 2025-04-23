@@ -13,6 +13,7 @@
 ### Changed
 
 - Changed parsing of metadata whereby `analysis_profile` doesn't need list comprehension
+- Updated pytests regarding addition of `assay` and `release_life_cycle`
 
 ## [1.1.0]
 

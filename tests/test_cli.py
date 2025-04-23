@@ -34,6 +34,7 @@ def test_parse_cmd(fixture_name, expected_sw, request):
             output_file,
         ]
         result = runner.invoke(format_jasen, args)
+        print(result)
         assert result.exit_code == 0
 
         # test that the correct output was generated
