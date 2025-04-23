@@ -17,6 +17,8 @@ def simple_pipeline_result():
         version="0.0.1",
         commit="commit-hash",
         analysis_profile=["test_profile"],
+        assay="test_assay",
+        release_life_cycle="test_release_life_cycle",
         configuration_files=[],
         workflow_name="workflow-name",
         command="nextflow run ...",

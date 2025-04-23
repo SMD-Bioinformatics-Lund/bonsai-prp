@@ -12,6 +12,8 @@
   "configuration_files": [
     "/fs1/pipelines/JASEN/nextflow.config"
   ],
-  "analysis_profile": "escherichia_coli",
+  "assay": "ecoli",
+  "release_life_cycle": "production",
+  "analysis_profile": ["escherichia_coli"],
   "command": "nextflow run /fs1/pipelines/JASEN/main.nf -profile escherichia_coli --csv /fs1/ryan/pipelines/jasen/test-csvs/prp_test_samples_ecoli.csv --queue high -with-singularity /fs1/pipelines/JASEN/container/jasen_2023_02-28.sif -with-report /fs1/nextflow//reports/ecoli_test_1.jasen-ecoli-dev.report.html -with-trace /fs1/nextflow//reports/ecoli_test_1.jasen-ecoli-dev.trace.txt -with-timeline /fs1/nextflow//reports/ecoli_test_1.jasen-ecoli-dev.timeline.html -work-dir /fs1/nextflow//ecoli_test_1.jasen-ecoli-dev"
 }

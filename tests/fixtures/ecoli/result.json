@@ -5,6 +5,8 @@
       "pipeline": "main.nf",
       "version": "0.5.0",
       "commit": "null",
+      "assay": "ecoli",
+      "release_life_cycle": "production",
       "analysis_profile": ["escherichia_coli"],
       "configuration_files": [
         "/fs1/pipelines/jasen/nextflow.config"
