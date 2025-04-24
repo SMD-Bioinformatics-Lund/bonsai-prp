@@ -1,6 +1,7 @@
 sample_id: saureus_test_1
 sample_name: saureus_test_1
 lims_id: longLIMSid
+gambitcore: ./gambitcore.tsv
 groups:
   - saureus
   - saureus-validation

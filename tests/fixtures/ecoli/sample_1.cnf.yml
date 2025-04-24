@@ -1,6 +1,7 @@
 sample_id: ecoli_test_1
 sample_name: ecoli_test_1
 lims_id: longLIMSid
+gambitcore: ./gambitcore.tsv
 groups:
   - ecoli
   - ecoli-validation

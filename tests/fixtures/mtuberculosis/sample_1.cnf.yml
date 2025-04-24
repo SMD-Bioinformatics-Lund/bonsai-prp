@@ -1,6 +1,7 @@
 sample_id: test_mtuberculosis_1
 sample_name: mtuberculosis_test_1
 lims_id: longLIMSid
+gambitcore: ./gambitcore.tsv
 groups:
   - mtuberculosis
   - mtuberculosis-validation
