@@ -21,6 +21,7 @@ class QcSoftware(Enum):
     FASTQC = "fastqc"
     POSTALIGNQC = "postalignqc"
     CHEWBBACA = TypingSoftware.CHEWBBACA.value
+    GAMBITCORE = "gambitcore"
 
 
 class QuastQcResult(BaseModel):
@@ -54,9 +55,23 @@ class PostAlignQcResult(BaseModel):
 
 
 class GenomeCompleteness(BaseModel):
-    """Alignment QC metrics."""
+    """cgMLST QC metric."""
 
     n_missing: int = Field(..., description="Number of missing cgMLST alleles")
+
+
+class GambitcoreQcResult(BaseModel):
+    """Gambitcore genome completeness QC metrics."""
+
+    scientific_name: str | None = None
+    completeness: float | None = None
+    assembly_core: str | None = None
+    closest_accession: str | None = None
+    closest_distance: float | None = None
+    assembly_kmers: int | None = None
+    species_kmers_mean: int | None = None
+    species_kmers_std_dev: int | None = None
+    assembly_qc: str
 
 
 class QcMethodIndex(RWModel):
@@ -68,4 +83,4 @@ class QcMethodIndex(RWModel):
 
     software: QcSoftware
     version: str | None = None
-    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness
+    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult

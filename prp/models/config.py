@@ -73,6 +73,7 @@ class SampleConfig(RWModel):
     ## QC
     quast: FilePath
     postalnqc: FilePath | None = None
+    gambitcore: FilePath
 
     ## typing
     pymlst: FilePath | None = None

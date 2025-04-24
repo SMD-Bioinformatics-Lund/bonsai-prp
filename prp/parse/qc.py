@@ -10,7 +10,7 @@ from typing import Any, TextIO
 import pandas as pd
 import pysam
 
-from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult
+from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult, GambitcoreQcResult
 
 OptionalFile = TextIO | None
 
@@ -336,3 +336,48 @@ def parse_alignment_results(
     qc_dict = qc.run()
     LOG.info("Storing results to: %s", output.name)
     qc.write_json_result(qc_dict, output.name)
+
+
+def parse_gambitcore_results(gambitcore_fpath: str) -> QcMethodIndex:
+    """Parse assembly completion prediction result.
+    
+    Args:
+        sep (str): seperator
+
+    Returns:
+        GambitcoreQcResult: list of key-value pairs
+    """
+    LOG.info("Parsing tsv file: %s", gambitcore_fpath)
+    columns = {
+        "Species": "scientific_name",
+        "Completeness (%)": "completeness",
+        "Assembly Core/species Core": "assembly_core",
+        "Closest accession": "closest_accession",
+        "Closest distance": "closest_distance",
+        "Assembly Kmers": "assembly_kmers",
+        "Species Kmers Mean": "species_kmers_mean",
+        "Species Kmers Std Dev": "species_kmers_std_dev",
+        "Assembly QC": "assembly_qc"
+    }
+
+    gambitcore_loa = pd.read_csv(gambitcore_fpath, sep="\t").rename(columns=columns).to_dict(orient="records")
+    gambitcore_hit = gambitcore_loa[0] if gambitcore_loa else {}
+
+    completeness = gambitcore_hit.get("completeness")
+
+    gambitcore_result = GambitcoreQcResult(
+        scientific_name=gambitcore_hit.get("scientific_name"),
+        completeness = float(completeness.rstrip('%')) if completeness else None,
+        assembly_core=gambitcore_hit.get("assembly_core"),
+        closest_accession=gambitcore_hit.get("closest_accession"),
+        closest_distance=gambitcore_hit.get("closest_distance"),
+        assembly_kmers=gambitcore_hit.get("assembly_kmers"),
+        species_kmers_mean=gambitcore_hit.get("species_kmers_mean"),
+        species_kmers_std_dev=gambitcore_hit.get("species_kmers_std_dev"),
+        assembly_qc=gambitcore_hit.get("assembly_qc", "red"),
+    )
+
+    return QcMethodIndex(
+        software=QcSoftware.GAMBITCORE,
+        result=gambitcore_result,
+    )
