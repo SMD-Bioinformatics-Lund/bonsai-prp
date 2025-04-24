@@ -40,6 +40,21 @@
       }
    },
    {
+     "software": "gambitcore",
+     "version": null,
+     "result": {
+       "scientific_name": "Escherichia coli",
+       "completeness": 99.58,
+       "assembly_core": "(2852/2864)",
+       "closest_accession": "GCF_000303815.2",
+       "closest_distance": 0.0128,
+       "assembly_kmers": 11153,
+       "species_kmers_mean": 10710,
+       "species_kmers_std_dev": 498,
+       "assembly_qc": "green"
+     }
+   },
+   {
       "software": "chewbbaca",
       "version": null,
       "result": {

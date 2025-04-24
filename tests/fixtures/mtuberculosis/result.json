@@ -73,6 +73,21 @@
         "median_cov": 198.0,
         "quartile3": 228.0
       }
+    },
+    {
+      "software": "gambitcore",
+      "version": null,
+      "result": {
+        "scientific_name": "Mycobacterium tuberculosis",
+        "completeness": 99.81,
+        "assembly_core": "(6907/6920)",
+        "closest_accession": "GCF_000661855.1",
+        "closest_distance": 0.0043,
+        "assembly_kmers": 7365,
+        "species_kmers_mean": 7396,
+        "species_kmers_std_dev": 28,
+        "assembly_qc": "green"
+      }
     }
   ],
   "species_prediction": [

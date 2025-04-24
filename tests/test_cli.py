@@ -73,6 +73,8 @@ def test_cdm_cmd(ecoli_sample_conf_path, ecoli_cdm_input):
         # test correct output format
         with open(output_file, "rb") as inpt:
             cdm_output = json.load(inpt)
+            print(cdm_output)
+            print(ecoli_cdm_input)
             assert cdm_output == ecoli_cdm_input
 
 

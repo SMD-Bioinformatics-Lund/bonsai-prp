@@ -4,6 +4,8 @@
 
 - Added `assay` and `release_life_cycle` to `PipelineInfo`
 - Added `config.py` for migration
+- Added parser for `gambitcore`
+- Added tests and test files for `gambitcore`
 
 ### Fixed
 
