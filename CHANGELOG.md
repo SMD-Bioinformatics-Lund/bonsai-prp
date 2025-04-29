@@ -11,6 +11,7 @@
 
 - Fixed `workflow_name` no longer calls incorrect key (`commitId`)
 - Changed `PipelineResult.model_validate_json` to `PipelineResult.model_validate` to fix validate bug
+- Fixed sourmash signature upload bug
 
 ### Changed
 

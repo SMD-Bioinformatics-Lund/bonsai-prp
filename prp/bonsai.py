@@ -5,6 +5,7 @@ from typing import Callable
 
 import click
 import requests
+from pathlib import Path
 from pydantic import BaseModel
 from requests.structures import CaseInsensitiveDict
 
@@ -105,7 +106,7 @@ def upload_signature(
     resp = requests.post(
         f"{api_url}/samples/{sample_cnf.sample_id}/signature",
         headers=headers,
-        files={"signature": sample_cnf.sourmash_signature.open()},
+        files={"signature": Path(sample_cnf.sourmash_signature).open()},
         timeout=TIMEOUT,
     )
 
@@ -172,7 +173,7 @@ def upload_sample(
         )
     except requests.exceptions.HTTPError as error:
         if error.response.status_code == 409:
-            click.secho("Sample have already been uploaded", fg="yellow")
+            click.secho("Sample has already been uploaded", fg="yellow")
         else:
             msg, _ = _process_generic_status_codes(error, "")
             raise click.UsageError(msg) from error
