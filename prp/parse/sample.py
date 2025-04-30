@@ -107,10 +107,15 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
         with smp_cnf.resfinder.open("r", encoding="utf-8") as resfinder_json:
             pred_res = json.load(resfinder_json)
             for method in [ElementType.AMR, ElementType.STRESS]:
-                resistance.append(resfinder.parse_amr_pred(pred_res, method))
+                tmp_res = resfinder.parse_amr_pred(pred_res, method)
+                if tmp_res.result.genes:
+                    resistance.append(tmp_res)
 
     if smp_cnf.amrfinder:
-        resistance.append(amrfinder.parse_stress_pred(smp_cnf.amrfinder))
+        for method in [ElementType.AMR, ElementType.STRESS]:
+            tmp_res = amrfinder.parse_amr_pred(smp_cnf.amrfinder, method)
+            if tmp_res.result.genes:
+                resistance.append(tmp_res)
 
     if smp_cnf.mykrobe:
         tmp_res = mykrobe.parse_amr_pred(smp_cnf.mykrobe, smp_cnf.sample_id)
