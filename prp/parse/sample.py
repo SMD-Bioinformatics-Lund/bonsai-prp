@@ -57,8 +57,8 @@ def _read_typing(
 ) -> Sequence[MethodIndex | EmmTypingMethodIndex | ShigaTypingMethodIndex | SpatyperTypingMethodIndex]:
     """Read typing all information."""
     typing_result = []
-    if smp_cnf.pymlst:
-        typing_result.append(parse_mlst_results(smp_cnf.pymlst))
+    if smp_cnf.mlst:
+        typing_result.append(parse_mlst_results(smp_cnf.mlst))
 
     if smp_cnf.chewbbaca:
         typing_result.append(parse_cgmlst_results(smp_cnf.chewbbaca))

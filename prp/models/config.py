@@ -76,7 +76,7 @@ class SampleConfig(RWModel):
     gambitcore: FilePath
 
     ## typing
-    pymlst: FilePath | None = None
+    mlst: FilePath | None = None
     chewbbaca: FilePath | None = None
     serotypefinder: FilePath | None = None
     shigapass: FilePath | None = None

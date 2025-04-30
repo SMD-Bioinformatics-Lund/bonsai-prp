@@ -13,6 +13,7 @@
 - Changed `PipelineResult.model_validate_json` to `PipelineResult.model_validate` to fix validate bug
 - Fixed sourmash signature upload bug
 - Fixed erroneus empty array for resfinder
+- Fixed mlst not being produced in json output
 
 ### Changed
 
