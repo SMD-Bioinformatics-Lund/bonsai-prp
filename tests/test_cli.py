@@ -34,7 +34,6 @@ def test_parse_cmd(fixture_name, expected_sw, request):
             output_file,
         ]
         result = runner.invoke(format_jasen, args)
-        print(result)
         assert result.exit_code == 0
 
         # test that the correct output was generated
@@ -73,8 +72,6 @@ def test_cdm_cmd(ecoli_sample_conf_path, ecoli_cdm_input):
         # test correct output format
         with open(output_file, "rb") as inpt:
             cdm_output = json.load(inpt)
-            print(cdm_output)
-            print(ecoli_cdm_input)
             assert cdm_output == ecoli_cdm_input
 
 
