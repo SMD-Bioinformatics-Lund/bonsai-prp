@@ -1,15 +1,46 @@
 """Metadata models."""
 
 from datetime import datetime
-from enum import Enum
-from typing import Optional
+from enum import StrEnum
+from typing import Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, FilePath
 
 from .base import RWModel
 
 
-class SoupType(Enum):
+class MetadataTypes(StrEnum):
+
+    STR = "string"
+    INT ="integer"
+    FLOAT = "float"
+
+
+class GenericMetadataEntry(BaseModel):
+    """Container of basic metadata information"""
+
+    fieldname: str
+    value: str | int | float
+    type: MetadataTypes
+
+
+class DatetimeMetadataEntry(BaseModel):
+    """Container of basic metadata information"""
+
+    fieldname: str
+    value: datetime
+    type: Literal["datetime"]
+
+
+class TableMetadataEntry(BaseModel):
+    """Container of basic metadata information"""
+
+    fieldname: str
+    value: FilePath
+    type: Literal["table"]
+
+
+class SoupType(StrEnum):
     """Type of software of unkown provenance."""
 
     DB = "database"
