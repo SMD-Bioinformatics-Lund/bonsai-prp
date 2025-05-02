@@ -14,17 +14,15 @@ from ..models.phenotype import (
     AmrFinderVariant,
     AmrFinderVirulenceGene,
     AMRMethodIndex,
+    StressMethodIndex,
+    VirulenceMethodIndex,
     AnnotationType,
     ElementType,
     ElementTypeResult,
+    VirulenceElementTypeResult,
     PhenotypeInfo,
 )
 from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import (
-    StressMethodIndex,
-    VirulenceElementTypeResult,
-    VirulenceMethodIndex,
-)
 from .utils import classify_variant_type
 
 LOG = logging.getLogger(__name__)
@@ -168,46 +166,38 @@ def _format_variant(hit: Dict[str, Any], variant_no: int) -> AmrFinderVariant:
     )
 
 
-def parse_amr_pred(path: str) -> AMRMethodIndex:
+def parse_amr_pred(path: str, resistance_category: ElementType) -> AMRMethodIndex | StressMethodIndex:
+    """Parse AMRFinder or related prediction results."""
     raw_genes, variants = _read_result(path)
-    # sort genes
-    element_type = ElementType.AMR
-    genes = [
-        gene
-        for gene in sorted(
-            raw_genes, key=lambda entry: (entry.gene_symbol, entry.coverage)
-        )
-        if gene.element_type == element_type
-    ]
-    # concat resistance profile
-    sr_profile = {
+
+    # Filter and sort genes by symbol and coverage
+    genes = sorted(
+        (gene for gene in raw_genes if gene.element_type == resistance_category),
+        key=lambda gene: (gene.gene_symbol, gene.coverage),
+    )
+
+    # Only compute phenotype profile for AMR
+    phenotypes = {
         "susceptible": [],
-        "resistant": list(
-            {
-                pheno.name
-                for elem in itertools.chain(genes, variants)
-                for pheno in elem.phenotypes
-            }
-        ),
-    }
+        "resistant": list({
+            pheno.name
+            for elem in itertools.chain(genes, variants)
+            for pheno in elem.phenotypes
+        }),
+    } if resistance_category == ElementType.AMR else {}
+
     result = ElementTypeResult(
-        phenotypes=sr_profile,
+        phenotypes=phenotypes,
         genes=genes,
         variants=variants,
     )
-    return AMRMethodIndex(type=element_type, software=Software.AMRFINDER, result=result)
 
+    index_class = AMRMethodIndex if resistance_category == ElementType.AMR else StressMethodIndex
 
-def parse_stress_pred(path: str) -> StressMethodIndex:
-    """Parse amrfinder stress tolerance results."""
-    LOG.info("Parsing amrfinder stress tolerance prediction")
-    raw_genes, _ = _read_result(path)
-    element_type = ElementType.STRESS
-    results = ElementTypeResult(
-        genes=[gene for gene in raw_genes if gene.element_type == element_type],
-    )
-    return StressMethodIndex(
-        type=element_type, software=Software.AMRFINDER, result=results
+    return index_class(
+        type=resistance_category,
+        software=Software.AMRFINDER,
+        result=result,
     )
 
 
@@ -216,13 +206,10 @@ def parse_vir_pred(path: str) -> VirulenceMethodIndex:
     LOG.info("Parsing amrfinder virulence prediction")
     raw_genes, _ = _read_result(path)
     element_type = ElementType.VIR
-    genes = [
-        gene
-        for gene in sorted(
-            raw_genes, key=lambda entry: (entry.gene_symbol, entry.coverage)
-        )
-        if gene.element_type == element_type
-    ]
+    genes = sorted(
+        (gene for gene in raw_genes if gene.element_type == element_type),
+        key=lambda gene: (gene.gene_symbol, gene.coverage),
+    )
     # sort genes
     result = VirulenceElementTypeResult(
         phenotypes={},

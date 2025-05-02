@@ -3,6 +3,7 @@
 import pytest
 
 from prp.parse.amrfinder import (
+    ElementType,
     AMRMethodIndex,
     VirulenceMethodIndex,
     parse_vir_pred,
@@ -32,7 +33,7 @@ def test_parse_amr_prediction(fixture_name, expected, request):
     exp_genes, exp_variants, exp_phenotypes = expected
     filename = request.getfixturevalue(fixture_name)
     # parse result
-    result = parse_amr_pred(filename)
+    result = parse_amr_pred(filename, ElementType.AMR)
 
     # test that result is method index
     assert isinstance(result, AMRMethodIndex)
