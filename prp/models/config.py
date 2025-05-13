@@ -20,7 +20,7 @@ class IgvAnnotation(RWModel):
     index_uri: str | None = None
 
 
-def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
+def convert_rel_to_abs_path(path: Path, validation_info: ValidationInfo) -> Path:
     """Validate that file exist and resolve realtive directories.
 
     if a path is relative, convert to absolute from the configs parent directory
@@ -93,7 +93,7 @@ class SampleConfig(RWModel):
     tbprofiler: FilePath | None = None
 
     ## clustering
-    sourmash_signature: str | None = None
+    sourmash_signature: FilePath | None = None
     ska_index: str | None = None
 
     def assinged_to_group(self) -> bool:
