@@ -2,18 +2,41 @@ sample_id: saureus_test_1
 sample_name: saureus_test_1
 lims_id: longLIMSid
 metadata:
-  - fieldname: region
-    value: skane
-    type: string
-  - fieldname: cmrs
-    value: 123foobar
-    type: string
-  - fieldname: isoalation date
-    value: 2024-03-24
-    type: datetime
-  - fieldname: MIC values
-    value: ./mic_values.csv
-    type: table
+  - general:
+    - fieldname: region
+      value: skane
+      category: geography
+      type: string
+    - fieldname: cmrs
+      value: 123foobar
+      category: ids
+      type: string
+    - fieldname: isoalation date
+      value: 2024-03-24
+      type: datetime
+  - antibiotic resistance:
+    - MIC test:
+      caption: A nice caption
+      records:
+      - fieldname: MIC test date
+        value: 2024-12-23
+        type: datetime
+      - fieldname: Person
+        value: Nollan Nollsson
+        category: antibiotic resistance
+        type: datetime
+    - Other table:
+      caption: Another table
+      records:
+      - fieldname: Some value
+        value: 2024-12-23
+        type: datetime
+      - fieldname: Foo
+        value: Bar
+        type: datetime
+    - fieldname: MIC values
+      value: ./mic_values.csv
+      type: table
 gambitcore: ./gambitcore.tsv
 groups:
   - saureus
