@@ -21,6 +21,7 @@ class GenericMetadataEntry(BaseModel):
 
     fieldname: str
     value: str | int | float
+    category: str
     type: MetadataTypes
 
 
@@ -29,6 +30,7 @@ class DatetimeMetadataEntry(BaseModel):
 
     fieldname: str
     value: datetime
+    category: str
     type: Literal["datetime"]
 
 
@@ -36,8 +38,12 @@ class TableMetadataEntry(BaseModel):
     """Container of basic metadata information"""
 
     fieldname: str
-    value: FilePath
+    value: str
+    category: str
     type: Literal["table"]
+
+
+MetaEntries = GenericMetadataEntry | DatetimeMetadataEntry | TableMetadataEntry
 
 
 class SoupType(StrEnum):
