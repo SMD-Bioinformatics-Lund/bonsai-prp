@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import StrEnum
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from typing_extensions import Annotated
 
 from .base import FilePath, RWModel
@@ -51,6 +51,11 @@ class DatetimeMetadataEntry(BaseModel):
     value: datetime
     category: str = "general"
     type: Literal["datetime"]
+
+    @field_serializer('value')
+    def serialize_datetime(self, date: datetime) -> str:
+        """Serialize datetime object as string."""
+        return date.isoformat()
 
 
 class TableMetadataEntry(BaseModel):

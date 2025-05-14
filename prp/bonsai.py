@@ -165,7 +165,7 @@ def add_metadata_to_sample(
     metadata: list[MetaEntry],
 ):
     # process metadata
-    serialized_data = [rec.model_dump_json() for rec in metadata]
+    serialized_data = [rec.model_dump() for rec in metadata]
     resp = requests.post(
         f"{api_url}/samples/{sample_id}/metadata",
         headers=headers,
