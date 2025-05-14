@@ -165,7 +165,7 @@ def add_metadata_to_sample(
     metadata: list[MetaEntry],
 ):
     # process metadata
-    serialized_data = [rec.model_dump() for rec in metadata]
+    serialized_data = [rec.model_dump_json() for rec in metadata]
     resp = requests.post(
         f"{api_url}/samples/{sample_id}/metadata",
         headers=headers,
@@ -243,11 +243,7 @@ def upload_sample(
         records = process_custom_metadata(cnf.metadata)
         try:
             add_metadata_to_sample(
-                token_obj=conn.token,
-                api_url=conn.api_url,
-                sample_id=cnf.sample_id,
-                metadata=records,
-            )
+                token_obj=conn.token, api_url=conn.api_url, sample_id=cnf.sample_id, metadata=records)
         except HTTPError as error:
             msg, _ = _process_generic_status_codes(error, cnf.sample_id)
             raise click.UsageError(msg) from error
