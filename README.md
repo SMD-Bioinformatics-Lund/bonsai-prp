@@ -5,11 +5,6 @@
 > [!WARNING]
 > Bonsai-PRP is under development in an alpha stage. Expect uneven documentation, breaking changes, and bugs until the official 1.0 release.
 
-## Dependencies (latest)
-* biopython
-* pydantic=2.5.3
-* python=3.10
-
 ## Using prp
 
 Use the help argument for information on prp's functions.
