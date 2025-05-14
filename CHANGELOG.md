@@ -2,6 +2,7 @@
 
 ### Added
 
+- Metadata can be added to samples through the sample config.
 - Added `assay` and `release_life_cycle` to `PipelineInfo`
 - Added `config.py` for migration
 - Added parser for `gambitcore`
