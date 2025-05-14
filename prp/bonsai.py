@@ -159,7 +159,7 @@ def add_sample_to_group(
 
 @api_authentication
 def add_metadata_to_sample(
-    headers: CaseInsensitiveDict[Any],
+    headers: CaseInsensitiveDict[str],
     api_url: str,
     sample_id: str,
     metadata: list[MetaEntry],
@@ -242,7 +242,12 @@ def upload_sample(
     if len(cnf.metadata) > 0:
         records = process_custom_metadata(cnf.metadata)
         try:
-            add_metadata_to_sample(conn, cnf.sample_id, records)
+            add_metadata_to_sample(
+                token_obj=conn.token,
+                api_url=conn.api_url,
+                sample_id=cnf.sample_id,
+                metadata=records,
+            )
         except HTTPError as error:
             msg, _ = _process_generic_status_codes(error, cnf.sample_id)
             raise click.UsageError(msg) from error
