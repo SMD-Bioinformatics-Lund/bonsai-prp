@@ -245,6 +245,10 @@ def upload_sample(
             add_metadata_to_sample(
                 token_obj=conn.token, api_url=conn.api_url, sample_id=cnf.sample_id, metadata=records)
         except HTTPError as error:
-            msg, _ = _process_generic_status_codes(error, cnf.sample_id)
-            raise click.UsageError(msg) from error
+            if error.response.status_code == 422:
+                fmt_records = [rec.model_dump_json() for rec in records]
+                click.secho(f"Bad formatting of input data, {fmt_records}", fg="yellow")
+            else:
+                msg, _ = _process_generic_status_codes(error, cnf.sample_id)
+                raise click.UsageError(msg) from error
     return cnf.sample_id
