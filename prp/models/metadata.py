@@ -62,7 +62,7 @@ class TableMetadataEntry(BaseModel):
     type: Literal["table"]
 
 
-MetaEntries = Annotated[TableMetadataEntry | DatetimeMetadataEntry | StrMetadataEntry | IntMetadataEntry | FloatMetadataEntry, Field(discriminator='type')]
+MetaEntry = Annotated[TableMetadataEntry | DatetimeMetadataEntry | StrMetadataEntry | IntMetadataEntry | FloatMetadataEntry, Field(discriminator='type')]
 
 
 class SoupType(StrEnum):

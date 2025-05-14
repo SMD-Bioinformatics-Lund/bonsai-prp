@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic import Field
 
-from prp.models.metadata import MetaEntries
+from prp.models.metadata import MetaEntry
 
 from .base import RWModel, FilePath
 
@@ -28,7 +28,7 @@ class SampleConfig(RWModel):
 
     # Bonsai paramters
     groups: list[str] = []
-    metadata: list[MetaEntries] = []
+    metadata: list[MetaEntry] = []
 
     # Reference genome
     ref_genome_sequence: Path

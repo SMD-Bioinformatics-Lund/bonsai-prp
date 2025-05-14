@@ -7,7 +7,7 @@ from typing import Any
 
 from Bio import SeqIO
 
-from ..models.metadata import MetaEntries, PipelineInfo, SequencingInfo, SoupVersion, TableMetadataEntry
+from ..models.metadata import MetaEntry, PipelineInfo, SequencingInfo, SoupVersion, TableMetadataEntry
 
 LOG = logging.getLogger(__name__)
 
@@ -101,9 +101,9 @@ def get_gb_genome_version(fasta_path: str) -> str:
     return record.id, record.description.rstrip(", complete genome")
 
 
-def process_custom_metadata(metadata: list[MetaEntries]) -> list[MetaEntries]:
+def process_custom_metadata(metadata: list[MetaEntry]) -> list[MetaEntry]:
     """Processing of custom metadata entries."""
-    proc_meta: list[MetaEntries] = []
+    proc_meta: list[MetaEntry] = []
     for record in metadata:
         # read csv file content to string.
         if isinstance(record, TableMetadataEntry):
