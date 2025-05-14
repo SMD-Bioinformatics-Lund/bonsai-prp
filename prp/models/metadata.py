@@ -3,10 +3,11 @@
 from datetime import datetime
 from enum import StrEnum
 from typing import Literal, Optional
+from typing_extensions import Annotated
 
-from pydantic import BaseModel, FilePath
+from pydantic import BaseModel, Field
 
-from .base import RWModel
+from .base import RWModel, FilePath
 
 
 class MetadataTypes(StrEnum):
@@ -16,13 +17,31 @@ class MetadataTypes(StrEnum):
     FLOAT = "float"
 
 
-class GenericMetadataEntry(BaseModel):
+class StrMetadataEntry(BaseModel):
     """Container of basic metadata information"""
 
     fieldname: str
-    value: str | int | float
-    category: str
-    type: MetadataTypes
+    value: str
+    category: str = "general"
+    type: Literal[MetadataTypes.STR]
+
+
+class IntMetadataEntry(BaseModel):
+    """Container of basic metadata information"""
+
+    fieldname: str
+    value: int
+    category: str = "general"
+    type: Literal[MetadataTypes.INT]
+
+
+class FloatMetadataEntry(BaseModel):
+    """Container of basic metadata information"""
+
+    fieldname: str
+    value: int
+    category: str = "general"
+    type: Literal[MetadataTypes.FLOAT]
 
 
 class DatetimeMetadataEntry(BaseModel):
@@ -30,7 +49,7 @@ class DatetimeMetadataEntry(BaseModel):
 
     fieldname: str
     value: datetime
-    category: str
+    category: str = "general"
     type: Literal["datetime"]
 
 
@@ -38,12 +57,12 @@ class TableMetadataEntry(BaseModel):
     """Container of basic metadata information"""
 
     fieldname: str
-    value: str
-    category: str
+    value: FilePath | str
+    category: str = "general"
     type: Literal["table"]
 
 
-MetaEntries = GenericMetadataEntry | DatetimeMetadataEntry | TableMetadataEntry
+MetaEntries = Annotated[TableMetadataEntry | DatetimeMetadataEntry | StrMetadataEntry | IntMetadataEntry | FloatMetadataEntry, Field(discriminator='type')]
 
 
 class SoupType(StrEnum):

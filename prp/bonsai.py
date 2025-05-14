@@ -9,6 +9,8 @@ from pathlib import Path
 from pydantic import BaseModel
 from requests.structures import CaseInsensitiveDict
 
+from prp.models.metadata import TableMetadataEntry
+
 from .models.config import SampleConfig
 from .models.sample import PipelineResult
 
@@ -211,3 +213,8 @@ def upload_sample(
                 msg, _ = _process_generic_status_codes(error, cnf.sample_id)
                 raise click.UsageError(msg) from error
     return cnf.sample_id
+
+
+def add_metadata_to_sample(conn: ConnectionInfo, sample_id: str, metadata):
+    # process metadata
+    ...
