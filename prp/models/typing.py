@@ -22,6 +22,7 @@ class TypingSoftware(str, Enum):
     EMMTYPER = "emmtyper"
     SPATYPER = "spatyper"
 
+
 class TypingMethod(str, Enum):
     """Valid typing methods."""
 
@@ -147,14 +148,18 @@ class TypingResultGeneAllele(VirulenceGene, SerotypeGene):
 
 CgmlstAlleles = dict[str, int | None | ChewbbacaErrors | MlstErrors | list[int]]
 
+
 class TypingResultSpatyper(RWModel):
     """Spatyper results"""
+
     sequence_name: str | None
     repeats: str | None
     type: str | None
 
+
 class SpatyperTypingMethodIndex(RWModel):
     """Method Index Spatyper."""
+
     type: Literal[TypingMethod.SPATYPE]
     software: Literal[TypingSoftware.SPATYPER]
     result: TypingResultSpatyper

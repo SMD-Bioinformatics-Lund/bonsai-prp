@@ -1,10 +1,11 @@
 """Parse spaTyper results."""
 
-import pandas as pd
 import logging
 
+import pandas as pd
+
 from ..models.sample import SpatyperTypingMethodIndex
-from ..models.typing import (TypingMethod, TypingResultSpatyper)
+from ..models.typing import TypingMethod, TypingResultSpatyper
 from ..models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ def parse_spatyper_results(path: str) -> SpatyperTypingMethodIndex:
             columns={
                 "Sequence name": "sequence_name",
                 "Repeats": "repeats",
-                "Type": "type"
+                "Type": "type",
             }
         )
         .to_dict(orient="records")
@@ -31,11 +32,9 @@ def parse_spatyper_results(path: str) -> SpatyperTypingMethodIndex:
     result_obj = TypingResultSpatyper(
         sequence_name=result.get("sequence_name"),
         repeats=result.get("repeats"),
-        type=result.get("type")
+        type=result.get("type"),
     )
 
     return SpatyperTypingMethodIndex(
-        type=TypingMethod.SPATYPE,
-        software=Software.SPATYPER,
-        result=result_obj
+        type=TypingMethod.SPATYPE, software=Software.SPATYPER, result=result_obj
     )

@@ -1,14 +1,14 @@
 """Upload sample to Bonasi module."""
 
 from functools import wraps
+from pathlib import Path
 from typing import Any, Callable
 
 import click
 import requests
-from pathlib import Path
 from pydantic import BaseModel
-from requests.structures import CaseInsensitiveDict
 from requests.exceptions import HTTPError
+from requests.structures import CaseInsensitiveDict
 
 from prp.models.metadata import MetaEntry
 from prp.parse.metadata import process_custom_metadata
@@ -66,7 +66,9 @@ def api_authentication(func: Callable[..., Any]) -> Callable[..., Any]:
     """
 
     @wraps(func)
-    def wrapper(token_obj: TokenObject, *args: list[Any], **kwargs: dict[str, Any]) -> Callable[..., Any]:
+    def wrapper(
+        token_obj: TokenObject, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Callable[..., Any]:
         """Add authentication headers to API requests.
 
         :param token_obj: Auth token object
@@ -117,7 +119,7 @@ def upload_signature(
 
         resp.raise_for_status()
         return resp.json()
-    raise ValueError('No sourmash signature associated with sample')
+    raise ValueError("No sourmash signature associated with sample")
 
 
 @api_authentication
@@ -156,7 +158,12 @@ def add_sample_to_group(
 
 
 @api_authentication
-def add_metadata_to_sample(headers: CaseInsensitiveDict[Any], api_url: str, sample_id: str, metadata: list[MetaEntry]):
+def add_metadata_to_sample(
+    headers: CaseInsensitiveDict[Any],
+    api_url: str,
+    sample_id: str,
+    metadata: list[MetaEntry],
+):
     # process metadata
     serialized_data = [rec.model_dump() for rec in metadata]
     resp = requests.post(
@@ -240,4 +247,3 @@ def upload_sample(
             msg, _ = _process_generic_status_codes(error, cnf.sample_id)
             raise click.UsageError(msg) from error
     return cnf.sample_id
-

@@ -7,7 +7,13 @@ from typing import Any
 
 from Bio import SeqIO
 
-from ..models.metadata import MetaEntry, PipelineInfo, SequencingInfo, SoupVersion, TableMetadataEntry
+from ..models.metadata import (
+    MetaEntry,
+    PipelineInfo,
+    SequencingInfo,
+    SoupVersion,
+    TableMetadataEntry,
+)
 
 LOG = logging.getLogger(__name__)
 

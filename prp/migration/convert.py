@@ -2,20 +2,22 @@
 
 import logging
 from copy import copy
-from typing import Any, Callable
 from itertools import chain
+from typing import Any, Callable
 
-from prp.models import PipelineResult
 from prp.migration import config
+from prp.models import PipelineResult
 
 LOG = logging.getLogger(__name__)
 
 UnformattedResult = dict[str, Any]
 
 
-def migrate_result(old_result: UnformattedResult, validate: bool = True) -> UnformattedResult | PipelineResult:
+def migrate_result(
+    old_result: UnformattedResult, validate: bool = True
+) -> UnformattedResult | PipelineResult:
     """Migrate old JASEN result to the current schema.
-    
+
     The final model can optionally be validated.
     """
     ALL_FUNCS: dict[int, Callable[..., UnformattedResult]] = {2: v1_to_v2}
@@ -35,7 +37,7 @@ def migrate_result(old_result: UnformattedResult, validate: bool = True) -> Unfo
     for to_version, func in ALL_FUNCS.items():
         if input_schema_version < to_version:
             temp_result = func(temp_result)
-    
+
     # validate migrated model
     if validate:
         return PipelineResult.model_validate(temp_result)
@@ -57,12 +59,18 @@ def v1_to_v2(result: UnformattedResult) -> UnformattedResult:
     upd_result["pipeline"]["analysis_profile"] = upd_profile
     # get assay from upd_profile
     new_assay: str = next(
-        (config.profile_array_modifiers[prof] for prof in upd_profile if prof in config.profile_array_modifiers),
-        None
+        (
+            config.profile_array_modifiers[prof]
+            for prof in upd_profile
+            if prof in config.profile_array_modifiers
+        ),
+        None,
     )
     upd_result["pipeline"]["assay"] = new_assay
     # add release_life_cycle
-    new_release_life_cycle: str = "development" if {"dev", "development"} & set(upd_profile) else "production"
+    new_release_life_cycle: str = (
+        "development" if {"dev", "development"} & set(upd_profile) else "production"
+    )
     upd_result["pipeline"]["release_life_cycle"] = new_release_life_cycle
     # update schema version
     upd_result["schema_version"] = 2

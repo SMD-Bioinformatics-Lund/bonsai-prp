@@ -14,15 +14,17 @@ from ..models.phenotype import (
     AmrFinderVariant,
     AmrFinderVirulenceGene,
     AMRMethodIndex,
-    StressMethodIndex,
-    VirulenceMethodIndex,
     AnnotationType,
     ElementType,
     ElementTypeResult,
-    VirulenceElementTypeResult,
     PhenotypeInfo,
 )
 from ..models.phenotype import PredictionSoftware as Software
+from ..models.phenotype import (
+    StressMethodIndex,
+    VirulenceElementTypeResult,
+    VirulenceMethodIndex,
+)
 from .utils import classify_variant_type
 
 LOG = logging.getLogger(__name__)
@@ -166,7 +168,9 @@ def _format_variant(hit: Dict[str, Any], variant_no: int) -> AmrFinderVariant:
     )
 
 
-def parse_amr_pred(path: str, resistance_category: ElementType) -> AMRMethodIndex | StressMethodIndex:
+def parse_amr_pred(
+    path: str, resistance_category: ElementType
+) -> AMRMethodIndex | StressMethodIndex:
     """Parse AMRFinder or related prediction results."""
     raw_genes, variants = _read_result(path)
 
@@ -177,14 +181,20 @@ def parse_amr_pred(path: str, resistance_category: ElementType) -> AMRMethodInde
     )
 
     # Only compute phenotype profile for AMR
-    phenotypes = {
-        "susceptible": [],
-        "resistant": list({
-            pheno.name
-            for elem in itertools.chain(genes, variants)
-            for pheno in elem.phenotypes
-        }),
-    } if resistance_category == ElementType.AMR else {}
+    phenotypes = (
+        {
+            "susceptible": [],
+            "resistant": list(
+                {
+                    pheno.name
+                    for elem in itertools.chain(genes, variants)
+                    for pheno in elem.phenotypes
+                }
+            ),
+        }
+        if resistance_category == ElementType.AMR
+        else {}
+    )
 
     result = ElementTypeResult(
         phenotypes=phenotypes,
@@ -192,7 +202,9 @@ def parse_amr_pred(path: str, resistance_category: ElementType) -> AMRMethodInde
         variants=variants,
     )
 
-    index_class = AMRMethodIndex if resistance_category == ElementType.AMR else StressMethodIndex
+    index_class = (
+        AMRMethodIndex if resistance_category == ElementType.AMR else StressMethodIndex
+    )
 
     return index_class(
         type=resistance_category,

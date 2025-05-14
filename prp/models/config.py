@@ -6,7 +6,7 @@ from pydantic import Field
 
 from prp.models.metadata import MetaEntry
 
-from .base import RWModel, FilePath
+from .base import FilePath, RWModel
 
 
 class IgvAnnotation(RWModel):

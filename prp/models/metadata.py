@@ -3,17 +3,17 @@
 from datetime import datetime
 from enum import StrEnum
 from typing import Literal, Optional
-from typing_extensions import Annotated
 
 from pydantic import BaseModel, Field
+from typing_extensions import Annotated
 
-from .base import RWModel, FilePath
+from .base import FilePath, RWModel
 
 
 class MetadataTypes(StrEnum):
 
     STR = "string"
-    INT ="integer"
+    INT = "integer"
     FLOAT = "float"
 
 
@@ -62,7 +62,14 @@ class TableMetadataEntry(BaseModel):
     type: Literal["table"]
 
 
-MetaEntry = Annotated[TableMetadataEntry | DatetimeMetadataEntry | StrMetadataEntry | IntMetadataEntry | FloatMetadataEntry, Field(discriminator='type')]
+MetaEntry = Annotated[
+    TableMetadataEntry
+    | DatetimeMetadataEntry
+    | StrMetadataEntry
+    | IntMetadataEntry
+    | FloatMetadataEntry,
+    Field(discriminator="type"),
+]
 
 
 class SoupType(StrEnum):

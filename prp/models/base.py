@@ -1,8 +1,9 @@
 """Generic database objects of which several other models are based on."""
 
 from pathlib import Path
-from typing_extensions import Annotated
+
 from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
+from typing_extensions import Annotated
 
 
 def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
