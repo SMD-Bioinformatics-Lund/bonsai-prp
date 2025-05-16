@@ -40,3 +40,4 @@ amrfinder: ./amrfinder.out
 sourmash_signature: ./sourmash.sig
 ska_index: ./index.sig
 spatyper: ./spatyper.tsv
+sccmec: ./sccmec.tsv

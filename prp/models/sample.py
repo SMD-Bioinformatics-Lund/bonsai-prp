@@ -18,6 +18,7 @@ from .typing import (
     EmmTypingMethodIndex,
     ResultLineageBase,
     ShigaTypingMethodIndex,
+    SccmecTypingMethodIndex,
     SpatyperTypingMethodIndex,
     TbProfilerLineage,
     TypingMethod,
@@ -42,6 +43,7 @@ class MethodIndex(RWModel):
         TbProfilerLineage,
         ResultLineageBase,
         SpatyperTypingMethodIndex,
+        SccmecTypingMethodIndex,
     ]
 
 
@@ -89,6 +91,7 @@ class PipelineResult(SampleBase):
         Union[
             ShigaTypingMethodIndex,
             EmmTypingMethodIndex,
+            SccmecTypingMethodIndex,
             SpatyperTypingMethodIndex,
             MethodIndex,
         ]

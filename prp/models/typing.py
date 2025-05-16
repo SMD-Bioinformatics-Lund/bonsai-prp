@@ -2,6 +2,7 @@
 
 from enum import Enum
 from typing import Any, Literal, Optional, Union
+import numpy as np
 
 from pydantic import Field
 
@@ -21,6 +22,7 @@ class TypingSoftware(str, Enum):
     SHIGAPASS = "shigapass"
     EMMTYPER = "emmtyper"
     SPATYPER = "spatyper"
+    SCCMEC = "sccmec"
 
 
 class TypingMethod(str, Enum):
@@ -35,6 +37,7 @@ class TypingMethod(str, Enum):
     SHIGATYPE = "shigatype"
     EMMTYPE = "emmtype"
     SPATYPE = "spatype"
+    SCCMECTYPE = "sccmectype"
 
 
 class ChewbbacaErrors(str, Enum):
@@ -163,3 +166,24 @@ class SpatyperTypingMethodIndex(RWModel):
     type: Literal[TypingMethod.SPATYPE]
     software: Literal[TypingSoftware.SPATYPER]
     result: TypingResultSpatyper
+
+
+class TypingResultSccmec(RWModel):
+    """Sccmec results"""
+    type: str | None
+    subtype: str | None
+    mecA: str | None
+    targets: str | None
+    regions: str | None
+    coverage: str | None
+    hits: str | None
+    target_comment: str | float
+    region_comment: str | float
+    comment: str | float
+
+
+class SccmecTypingMethodIndex(RWModel):
+    """Method Index Sccmec."""
+    type: Literal[TypingMethod.SCCMECTYPE]
+    software: Literal[TypingSoftware.SCCMEC]
+    result: TypingResultSccmec
