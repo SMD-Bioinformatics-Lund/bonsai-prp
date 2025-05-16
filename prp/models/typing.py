@@ -24,6 +24,7 @@ class TypingSoftware(str, Enum):
     SPATYPER = "spatyper"
     SCCMEC = "sccmec"
 
+
 class TypingMethod(str, Enum):
     """Valid typing methods."""
 
@@ -153,6 +154,7 @@ CgmlstAlleles = dict[str, int | None | ChewbbacaErrors | MlstErrors | list[int]]
 
 class TypingResultSpatyper(RWModel):
     """Spatyper results"""
+
     sequence_name: str | None
     repeats: str | None
     type: str | None
@@ -160,6 +162,7 @@ class TypingResultSpatyper(RWModel):
 
 class SpatyperTypingMethodIndex(RWModel):
     """Method Index Spatyper."""
+
     type: Literal[TypingMethod.SPATYPE]
     software: Literal[TypingSoftware.SPATYPER]
     result: TypingResultSpatyper
@@ -167,15 +170,15 @@ class SpatyperTypingMethodIndex(RWModel):
 
 class TypingResultSccmec(RWModel):
     """Sccmec results"""
-    type: str | None # if there are no results it reports "-"; remove None?
-    subtype: str | None	# if there are no results it reports "-"
-    mecA: str | None # if there are no results it reports "-", fields below (excluding comments) are empty if nothing is found
-    targets: str | None 
+    type: str | None
+    subtype: str | None
+    mecA: str | None
+    targets: str | None
     regions: str | None
-    coverage: str | None # "96.31,83.93" it can be one or multiple numbers; list f floats?
-    hits: str | None # "27,25" it can be one or multiple numbers; list of integers?
-    target_comment: str | float # it can be a string (a comment) or NaN (no value; nan is treated as float)
-    region_comment: str | float # it can be a string (a comment) or NaN (no value; nan is treated as float)
+    coverage: str | None
+    hits: str | None
+    target_comment: str | float
+    region_comment: str | float
     comment: str | float
 
 

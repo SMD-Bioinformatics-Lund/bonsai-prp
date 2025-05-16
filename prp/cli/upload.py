@@ -55,6 +55,7 @@ def bonsai_upload(sample_cnf: SampleConfig, username: str, password: str, api_ur
 
     # Upload sample
     bonsai.upload_sample(conn, sample_obj, sample_cnf)
+
     # add sample to group if it was assigned one.
     for group_id in sample_cnf.groups:
         try:

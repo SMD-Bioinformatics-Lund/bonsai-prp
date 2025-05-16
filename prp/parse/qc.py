@@ -10,7 +10,13 @@ from typing import Any, TextIO
 import pandas as pd
 import pysam
 
-from ..models.qc import PostAlignQcResult, QcMethodIndex, QcSoftware, QuastQcResult, GambitcoreQcResult
+from ..models.qc import (
+    GambitcoreQcResult,
+    PostAlignQcResult,
+    QcMethodIndex,
+    QcSoftware,
+    QuastQcResult,
+)
 
 OptionalFile = TextIO | None
 
@@ -340,7 +346,7 @@ def parse_alignment_results(
 
 def parse_gambitcore_results(gambitcore_fpath: str) -> QcMethodIndex:
     """Parse assembly completion prediction result.
-    
+
     Args:
         sep (str): seperator
 
@@ -357,17 +363,21 @@ def parse_gambitcore_results(gambitcore_fpath: str) -> QcMethodIndex:
         "Assembly Kmers": "assembly_kmers",
         "Species Kmers Mean": "species_kmers_mean",
         "Species Kmers Std Dev": "species_kmers_std_dev",
-        "Assembly QC": "assembly_qc"
+        "Assembly QC": "assembly_qc",
     }
 
-    gambitcore_loa = pd.read_csv(gambitcore_fpath, sep="\t").rename(columns=columns).to_dict(orient="records")
+    gambitcore_loa = (
+        pd.read_csv(gambitcore_fpath, sep="\t")
+        .rename(columns=columns)
+        .to_dict(orient="records")
+    )
     gambitcore_hit = gambitcore_loa[0] if gambitcore_loa else {}
 
     completeness = gambitcore_hit.get("completeness")
 
     gambitcore_result = GambitcoreQcResult(
         scientific_name=gambitcore_hit.get("scientific_name"),
-        completeness = float(completeness.rstrip('%')) if completeness else None,
+        completeness=float(completeness.rstrip("%")) if completeness else None,
         assembly_core=gambitcore_hit.get("assembly_core"),
         closest_accession=gambitcore_hit.get("closest_accession"),
         closest_distance=gambitcore_hit.get("closest_distance"),

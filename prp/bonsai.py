@@ -1,13 +1,17 @@
 """Upload sample to Bonasi module."""
 
 from functools import wraps
-from typing import Callable
+from pathlib import Path
+from typing import Any, Callable
 
 import click
 import requests
-from pathlib import Path
 from pydantic import BaseModel
+from requests.exceptions import HTTPError
 from requests.structures import CaseInsensitiveDict
+
+from prp.models.metadata import MetaEntry
+from prp.parse.metadata import process_custom_metadata
 
 from .models.config import SampleConfig
 from .models.sample import PipelineResult
@@ -52,7 +56,7 @@ def authenticate(api_url: str, username: str, password: str) -> ConnectionInfo:
     )
 
 
-def api_authentication(func: Callable) -> Callable:
+def api_authentication(func: Callable[..., Any]) -> Callable[..., Any]:
     """Use authentication token for api.
 
     :param func: API function to wrap with API auth headers
@@ -62,7 +66,9 @@ def api_authentication(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(token_obj: TokenObject, *args, **kwargs) -> Callable:
+    def wrapper(
+        token_obj: TokenObject, *args: list[Any], **kwargs: dict[str, Any]
+    ) -> Callable[..., Any]:
         """Add authentication headers to API requests.
 
         :param token_obj: Auth token object
@@ -81,7 +87,7 @@ def api_authentication(func: Callable) -> Callable:
 
 @api_authentication
 def upload_sample_result(
-    headers: CaseInsensitiveDict, api_url: str, sample_obj: PipelineResult
+    headers: CaseInsensitiveDict[Any], api_url: str, sample_obj: PipelineResult
 ) -> str:
     """Create a new sample."""
     resp = requests.post(
@@ -98,25 +104,27 @@ def upload_sample_result(
 
 @api_authentication
 def upload_signature(
-    headers: CaseInsensitiveDict,
+    headers: CaseInsensitiveDict[Any],
     api_url: str,
     sample_cnf: SampleConfig,
-) -> str:
+) -> str | None:
     """Upload a genome signature to sample."""
-    resp = requests.post(
-        f"{api_url}/samples/{sample_cnf.sample_id}/signature",
-        headers=headers,
-        files={"signature": Path(sample_cnf.sourmash_signature).open()},
-        timeout=TIMEOUT,
-    )
+    if sample_cnf.sourmash_signature is not None:
+        resp = requests.post(
+            f"{api_url}/samples/{sample_cnf.sample_id}/signature",
+            headers=headers,
+            files={"signature": Path(sample_cnf.sourmash_signature).open()},
+            timeout=TIMEOUT,
+        )
 
-    resp.raise_for_status()
-    return resp.json()
+        resp.raise_for_status()
+        return resp.json()
+    raise ValueError("No sourmash signature associated with sample")
 
 
 @api_authentication
 def add_ska_index(
-    headers: CaseInsensitiveDict,
+    headers: CaseInsensitiveDict[Any],
     api_url: str,
     sample_cnf: SampleConfig,
 ) -> str:
@@ -135,7 +143,7 @@ def add_ska_index(
 
 @api_authentication
 def add_sample_to_group(
-    headers: CaseInsensitiveDict, api_url: str, group_id: str, sample_id: str
+    headers: CaseInsensitiveDict[Any], api_url: str, group_id: str, sample_id: str
 ) -> str:
     """Add sample to a group."""
     resp = requests.put(
@@ -149,7 +157,27 @@ def add_sample_to_group(
     return resp.json()
 
 
-def _process_generic_status_codes(error, sample_id):
+@api_authentication
+def add_metadata_to_sample(
+    headers: CaseInsensitiveDict[str],
+    api_url: str,
+    sample_id: str,
+    metadata: list[MetaEntry],
+):
+    # process metadata
+    serialized_data = [rec.model_dump() for rec in metadata]
+    resp = requests.post(
+        f"{api_url}/samples/{sample_id}/metadata",
+        headers=headers,
+        json=serialized_data,
+        timeout=TIMEOUT,
+    )
+
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _process_generic_status_codes(error: HTTPError, sample_id: str) -> tuple[str, bool]:
     """Process generic http status codes."""
     is_major_error = True
     match error.response.status_code:
@@ -171,7 +199,7 @@ def upload_sample(
         upload_sample_result(  # pylint: disable=no-value-for-parameter
             token_obj=conn.token, api_url=conn.api_url, sample_obj=results
         )
-    except requests.exceptions.HTTPError as error:
+    except HTTPError as error:
         if error.response.status_code == 409:
             click.secho("Sample has already been uploaded", fg="yellow")
         else:
@@ -183,7 +211,7 @@ def upload_sample(
             upload_signature(  # pylint: disable=no-value-for-parameter
                 token_obj=conn.token, api_url=conn.api_url, sample_cnf=cnf
             )
-        except requests.exceptions.HTTPError as error:
+        except HTTPError as error:
             if error.response.status_code == 409:
                 click.secho(
                     f"Sample {cnf.sample_id} has already a signature file, skipping",
@@ -198,7 +226,7 @@ def upload_sample(
             add_ska_index(  # pylint: disable=no-value-for-parameter
                 token_obj=conn.token, api_url=conn.api_url, sample_cnf=cnf
             )
-        except requests.exceptions.HTTPError as error:
+        except HTTPError as error:
             if error.response.status_code == 409:
                 click.secho(
                     (
@@ -207,6 +235,19 @@ def upload_sample(
                     ),
                     fg="yellow",
                 )
+            else:
+                msg, _ = _process_generic_status_codes(error, cnf.sample_id)
+                raise click.UsageError(msg) from error
+    # add metadata to an existing sample
+    if len(cnf.metadata) > 0:
+        records = process_custom_metadata(cnf.metadata)
+        try:
+            add_metadata_to_sample(
+                token_obj=conn.token, api_url=conn.api_url, sample_id=cnf.sample_id, metadata=records)
+        except HTTPError as error:
+            if error.response.status_code == 422:
+                fmt_records = [rec.model_dump_json() for rec in records]
+                click.secho(f"Bad formatting of input data, {fmt_records}", fg="yellow")
             else:
                 msg, _ = _process_generic_status_codes(error, cnf.sample_id)
                 raise click.UsageError(msg) from error

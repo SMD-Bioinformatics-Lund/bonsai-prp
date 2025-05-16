@@ -1,6 +1,19 @@
 sample_id: saureus_test_1
 sample_name: saureus_test_1
 lims_id: longLIMSid
+metadata:
+  - fieldname: isoalation date
+    value: 2024-03-24
+    type: datetime
+    category: general
+  - fieldname: region
+    value: skane
+    category: general
+    type: string
+  - fieldname: MIC test
+    value: ./mic_values.csv
+    category: general
+    type: table
 gambitcore: ./gambitcore.tsv
 groups:
   - saureus

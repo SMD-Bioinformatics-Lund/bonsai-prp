@@ -12,9 +12,9 @@ from prp.models.sample import MethodIndex
 from prp.parse import (
     parse_alignment_results,
     parse_cgmlst_results,
+    parse_gambitcore_results,
     parse_postalignqc_results,
     parse_quast_results,
-    parse_gambitcore_results,
     parse_sample,
 )
 
@@ -81,7 +81,7 @@ def format_cdm(sample_cnf: SampleConfigFile, output: OptionalFile) -> None:
     if sample_cnf.quast:
         LOG.info("Parse quast results")
         results.append(parse_quast_results(sample_cnf.quast))
-    
+
     if sample_cnf.gambitcore:
         LOG.info("Parse gambitcore results")
         results.append(parse_gambitcore_results(sample_cnf.gambitcore))

@@ -17,12 +17,12 @@ from . import (
 )
 from .emmtyper import EmmTypingMethodIndex, parse_emm_pred
 from .metadata import parse_run_info
-from .qc import parse_postalignqc_results, parse_quast_results, parse_gambitcore_results
+from .qc import parse_gambitcore_results, parse_postalignqc_results, parse_quast_results
 from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
+from .sccmec import SccmecTypingMethodIndex, parse_sccmec_results
+from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
 from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
-from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
-from .sccmec import SccmecTypingMethodIndex, parse_sccmec_results
 
 LOG = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
 
     if smp_cnf.postalnqc:
         qc_results.append(parse_postalignqc_results(smp_cnf.postalnqc))
-    
+
     if smp_cnf.gambitcore:
         qc_results.append(parse_gambitcore_results(smp_cnf.gambitcore))
 
@@ -55,7 +55,13 @@ def _read_spp_prediction(smp_cnf) -> Sequence[mykrobe.SppMethodIndex]:
 
 def _read_typing(
     smp_cnf,
-) -> Sequence[MethodIndex | EmmTypingMethodIndex | ShigaTypingMethodIndex | SpatyperTypingMethodIndex | SccmecTypingMethodIndex]:
+) -> Sequence[
+    MethodIndex
+    | EmmTypingMethodIndex
+    | ShigaTypingMethodIndex
+    | SccmecTypingMethodIndex
+    | SpatyperTypingMethodIndex
+]:
     """Read typing all information."""
     typing_result = []
     if smp_cnf.mlst:

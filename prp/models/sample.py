@@ -18,14 +18,14 @@ from .typing import (
     EmmTypingMethodIndex,
     ResultLineageBase,
     ShigaTypingMethodIndex,
+    SccmecTypingMethodIndex,
+    SpatyperTypingMethodIndex,
     TbProfilerLineage,
     TypingMethod,
     TypingResultCgMlst,
     TypingResultGeneAllele,
     TypingResultMlst,
     TypingSoftware,
-    SpatyperTypingMethodIndex,
-    SccmecTypingMethodIndex
 )
 
 SCHEMA_VERSION: int = 2
@@ -42,7 +42,8 @@ class MethodIndex(RWModel):
         TypingResultGeneAllele,
         TbProfilerLineage,
         ResultLineageBase,
-        SpatyperTypingMethodIndex
+        SpatyperTypingMethodIndex,
+        SccmecTypingMethodIndex,
     ]
 
 
@@ -87,7 +88,13 @@ class PipelineResult(SampleBase):
     schema_version: Literal[2] = SCHEMA_VERSION
     # optional typing
     typing_result: list[
-        Union[ShigaTypingMethodIndex, EmmTypingMethodIndex, SccmecTypingMethodIndex, SpatyperTypingMethodIndex, MethodIndex]
+        Union[
+            ShigaTypingMethodIndex,
+            EmmTypingMethodIndex,
+            SccmecTypingMethodIndex,
+            SpatyperTypingMethodIndex,
+            MethodIndex,
+        ]
     ] = Field(..., alias="typingResult")
     # optional phenotype prediction
     element_type_result: list[

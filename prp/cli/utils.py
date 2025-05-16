@@ -32,7 +32,7 @@ class SampleConfigFile(click.ParamType):
         # load yaml and cast to pydantic model
         with cnf_path.open(encoding="utf-8") as cfile:
             data = yaml.safe_load(cfile)
-            return SampleConfig.model_validate({**data, "config_path": cnf_path})
+            return SampleConfig.model_validate(data, context=cnf_path)
 
 
 class JsonFile(click.ParamType):
