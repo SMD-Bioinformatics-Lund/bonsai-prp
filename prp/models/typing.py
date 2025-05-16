@@ -2,6 +2,7 @@
 
 from enum import Enum
 from typing import Any, Literal, Optional, Union
+import numpy as np
 
 from pydantic import Field
 
@@ -21,6 +22,7 @@ class TypingSoftware(str, Enum):
     SHIGAPASS = "shigapass"
     EMMTYPER = "emmtyper"
     SPATYPER = "spatyper"
+    SCCMEC = "sccmec"
 
 class TypingMethod(str, Enum):
     """Valid typing methods."""
@@ -34,6 +36,7 @@ class TypingMethod(str, Enum):
     SHIGATYPE = "shigatype"
     EMMTYPE = "emmtype"
     SPATYPE = "spatype"
+    SCCMECTYPE = "sccmectype"
 
 
 class ChewbbacaErrors(str, Enum):
@@ -147,14 +150,37 @@ class TypingResultGeneAllele(VirulenceGene, SerotypeGene):
 
 CgmlstAlleles = dict[str, int | None | ChewbbacaErrors | MlstErrors | list[int]]
 
+
 class TypingResultSpatyper(RWModel):
     """Spatyper results"""
     sequence_name: str | None
     repeats: str | None
     type: str | None
 
+
 class SpatyperTypingMethodIndex(RWModel):
     """Method Index Spatyper."""
     type: Literal[TypingMethod.SPATYPE]
     software: Literal[TypingSoftware.SPATYPER]
     result: TypingResultSpatyper
+
+
+class TypingResultSccmec(RWModel):
+    """Sccmec results"""
+    type: str | None # if there are no results it reports "-"; remove None?
+    subtype: str | None	# if there are no results it reports "-"
+    mecA: str | None # if there are no results it reports "-", fields below (excluding comments) are empty if nothing is found
+    targets: str | None 
+    regions: str | None
+    coverage: str | None # "96.31,83.93" it can be one or multiple numbers; list f floats?
+    hits: str | None # "27,25" it can be one or multiple numbers; list of integers?
+    target_comment: str | float # it can be a string (a comment) or NaN (no value; nan is treated as float)
+    region_comment: str | float # it can be a string (a comment) or NaN (no value; nan is treated as float)
+    comment: str | float
+
+
+class SccmecTypingMethodIndex(RWModel):
+    """Method Index Sccmec."""
+    type: Literal[TypingMethod.SCCMECTYPE]
+    software: Literal[TypingSoftware.SCCMEC]
+    result: TypingResultSccmec

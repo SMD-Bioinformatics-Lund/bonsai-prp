@@ -24,7 +24,8 @@ from .typing import (
     TypingResultGeneAllele,
     TypingResultMlst,
     TypingSoftware,
-    SpatyperTypingMethodIndex
+    SpatyperTypingMethodIndex,
+    SccmecTypingMethodIndex
 )
 
 SCHEMA_VERSION: int = 2
@@ -86,7 +87,7 @@ class PipelineResult(SampleBase):
     schema_version: Literal[2] = SCHEMA_VERSION
     # optional typing
     typing_result: list[
-        Union[ShigaTypingMethodIndex, EmmTypingMethodIndex, SpatyperTypingMethodIndex, MethodIndex]
+        Union[ShigaTypingMethodIndex, EmmTypingMethodIndex, SccmecTypingMethodIndex, SpatyperTypingMethodIndex, MethodIndex]
     ] = Field(..., alias="typingResult")
     # optional phenotype prediction
     element_type_result: list[
