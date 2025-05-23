@@ -69,7 +69,7 @@ class ReferenceGenome(RWModel):
     name: str
     accession: str
     fasta: str
-    fasta_index: Optional[str] = None
+    fasta_index: str
     genes: str
 
 

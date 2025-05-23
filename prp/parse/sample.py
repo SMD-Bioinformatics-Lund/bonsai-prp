@@ -17,6 +17,7 @@ from . import (
 )
 from .emmtyper import EmmTypingMethodIndex, parse_emm_pred
 from .metadata import parse_run_info
+from .igv import parse_igv_info
 from .qc import parse_gambitcore_results, parse_postalignqc_results, parse_quast_results
 from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
@@ -154,6 +155,9 @@ def parse_sample(smp_cnf) -> PipelineResult:
     sample_info, seq_info, pipeline_info = parse_run_info(
         smp_cnf.nextflow_run_info, smp_cnf.process_metadata
     )
+    ref_genome_info, read_mapping, genome_annotation = parse_igv_info(
+        smp_cnf.ref_genome_sequence, smp_cnf.ref_genome_annotation, smp_cnf.igv_annotations
+    )
     results = {
         "sequencing": seq_info,
         "pipeline": pipeline_info,
@@ -161,6 +165,9 @@ def parse_sample(smp_cnf) -> PipelineResult:
         "species_prediction": _read_spp_prediction(smp_cnf),
         "typing_result": _read_typing(smp_cnf),
         "element_type_result": [],
+        "reference_genome": ref_genome_info,
+        "read_mapping": read_mapping,
+        "genome_annotation": genome_annotation,
         **sample_info,  # add sample_name & lims_id
     }
     # read versions of softwares
