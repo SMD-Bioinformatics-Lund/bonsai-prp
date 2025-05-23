@@ -2,6 +2,9 @@
 
 ### Added
 
+ - Added `igv.py` for getting igv related filepaths
+ - Added `reference_genome`, `read_mapping` & `genome_annotation` to results
+
 ### Fixed
 
 ### Changed
@@ -10,38 +13,38 @@
 
 ### Added
 
-- Metadata can be added to samples through the sample config.
-- Added `assay` and `release_life_cycle` to `PipelineInfo`
-- Added `config.py` for migration
-- Added parser for `gambitcore`
-- Added tests and test files for `gambitcore`
+ - Metadata can be added to samples through the sample config.
+ - Added `assay` and `release_life_cycle` to `PipelineInfo`
+ - Added `config.py` for migration
+ - Added parser for `gambitcore`
+ - Added tests and test files for `gambitcore`
 
 ### Fixed
 
-- Fixed `workflow_name` no longer calls incorrect key (`commitId`)
-- Changed `PipelineResult.model_validate_json` to `PipelineResult.model_validate` to fix validate bug
-- Fixed sourmash signature upload bug
-- Fixed erroneus empty array for resfinder
-- Fixed mlst not being produced in json output
+ - Fixed `workflow_name` no longer calls incorrect key (`commitId`)
+ - Changed `PipelineResult.model_validate_json` to `PipelineResult.model_validate` to fix validate bug
+ - Fixed sourmash signature upload bug
+ - Fixed erroneus empty array for resfinder
+ - Fixed mlst not being produced in json output
 
 ### Changed
 
-- Changed parsing of metadata whereby `analysis_profile` doesn't need list comprehension
-- Updated pytests regarding addition of `assay` and `release_life_cycle`
+ - Changed parsing of metadata whereby `analysis_profile` doesn't need list comprehension
+ - Updated pytests regarding addition of `assay` and `release_life_cycle`
 
 ## [1.1.0]
 
 ### Added
 
-- Added `spatyper` parsing, models and tests
+ - Added `spatyper` parsing, models and tests
 
 ### Fixed
 
-- Fixed `spatyper` parser if no prediction
+ - Fixed `spatyper` parser if no prediction
 
 ### Changed
 
-- Changed processing of `sourmash` in config model
+ - Changed processing of `sourmash` in config model
 
 ## [1.0.1]
 
@@ -49,8 +52,8 @@
 
 ### Fixed
 
-- Fixed `publish_docker_on_commit_to_master.yml` & `publish_docker_on_release.yml`
-- Fixed prp expecting `kraken` to always be in config (JASEN CI doesn't call `kraken`)
+ - Fixed `publish_docker_on_commit_to_master.yml` & `publish_docker_on_release.yml`
+ - Fixed prp expecting `kraken` to always be in config (JASEN CI doesn't call `kraken`)
 
 ### Changed
 
@@ -58,15 +61,15 @@
 
 ### Added
 
-- Added command to upload samples to Bonsai.
-- Added command for migrating old results to the new schema.
+ - Added command to upload samples to Bonsai.
+ - Added command for migrating old results to the new schema.
 
 ### Fixed
 
 ### Changed
 
-- Analysis profiles are now stored as a list to handle multiple profiles.
-- Replaced `create-bonsai-input` command with `parse`
+ - Analysis profiles are now stored as a list to handle multiple profiles.
+ - Replaced `create-bonsai-input` command with `parse`
 
 ## [0.11.5]
 
