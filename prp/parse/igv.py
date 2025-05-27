@@ -1,6 +1,5 @@
 """Parse metadata passed to pipeline."""
 
-import os
 import logging
 from pathlib import Path
 
@@ -13,8 +12,8 @@ LOG = logging.getLogger(__name__)
 
 
 def parse_igv_info(
-    ref_genome_sequence: Path, ref_genome_annotation: Path, igv_annotations: list[str]
-) -> tuple[ReferenceGenome, str, list[dict]]:
+    ref_genome_sequence: Path, ref_genome_annotation: Path, igv_annotations: list[dict[str, str]]
+) -> tuple[ReferenceGenome, str, list[IgvAnnotationTrack]]:
     """Parse IGV information.
 
     :param reference_genome: Nextflow analysis metadata in json format.
@@ -36,8 +35,8 @@ def parse_igv_info(
             )
             read_mapping_info.append(igv_annotation_track)
 
-    ref_genome_sequence_fai = Path(str(ref_genome_sequence) + ".fai")
-    species_name = str(ref_genome_sequence).split("/")[-2].replace("_", " ")
+    ref_genome_sequence_fai = new_path = ref_genome_sequence.parent / (ref_genome_sequence.name + '.fai')
+    species_name = ref_genome_sequence.parent.name.replace("_", " ")
 
     reference_genome_info = ReferenceGenome(
         name=species_name[0].upper() + species_name[1:],
