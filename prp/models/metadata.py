@@ -52,7 +52,7 @@ class DatetimeMetadataEntry(BaseModel):
     category: str = "general"
     type: Literal["datetime"]
 
-    @field_serializer('value')
+    @field_serializer("value")
     def serialize_datetime(self, date: datetime) -> str:
         """Serialize datetime object as string."""
         return date.isoformat()

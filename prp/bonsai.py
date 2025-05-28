@@ -243,7 +243,11 @@ def upload_sample(
         records = process_custom_metadata(cnf.metadata)
         try:
             add_metadata_to_sample(
-                token_obj=conn.token, api_url=conn.api_url, sample_id=cnf.sample_id, metadata=records)
+                token_obj=conn.token,
+                api_url=conn.api_url,
+                sample_id=cnf.sample_id,
+                metadata=records,
+            )
         except HTTPError as error:
             if error.response.status_code == 422:
                 fmt_records = [rec.model_dump_json() for rec in records]
