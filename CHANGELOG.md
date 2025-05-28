@@ -2,12 +2,16 @@
 
 ### Added
 
- - Added `igv.py` for getting igv related filepaths
- - Added `reference_genome`, `read_mapping` & `genome_annotation` to results
-
 ### Fixed
 
 ### Changed
+
+## [1.2.1]
+
+### Added
+
+ - Added `igv.py` for getting igv related filepaths
+ - Added `reference_genome`, `read_mapping` & `genome_annotation` to results
 
 ## [1.2.0]
 
