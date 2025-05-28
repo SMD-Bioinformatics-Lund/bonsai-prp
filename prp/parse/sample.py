@@ -18,8 +18,8 @@ from . import (
     virulencefinder,
 )
 from .emmtyper import EmmTypingMethodIndex, parse_emm_pred
-from .metadata import parse_run_info
 from .igv import parse_igv_info
+from .metadata import parse_run_info
 from .qc import parse_gambitcore_results, parse_postalignqc_results, parse_quast_results
 from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
@@ -158,7 +158,9 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
         smp_cnf.nextflow_run_info, smp_cnf.process_metadata
     )
     ref_genome_info, read_mapping, genome_annotation = parse_igv_info(
-        smp_cnf.ref_genome_sequence, smp_cnf.ref_genome_annotation, smp_cnf.igv_annotations
+        smp_cnf.ref_genome_sequence,
+        smp_cnf.ref_genome_annotation,
+        smp_cnf.igv_annotations,
     )
     results: dict[str, Any] = {
         "sequencing": seq_info,

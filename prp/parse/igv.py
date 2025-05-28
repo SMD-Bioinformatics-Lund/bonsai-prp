@@ -5,16 +5,15 @@ from pathlib import Path
 
 from prp.models.config import IgvAnnotation
 
-from ..models.sample import (
-    ReferenceGenome,
-    IgvAnnotationTrack,
-)
+from ..models.sample import IgvAnnotationTrack, ReferenceGenome
 
 LOG = logging.getLogger(__name__)
 
 
 def parse_igv_info(
-    ref_genome_sequence: Path, ref_genome_annotation: Path, igv_annotations: list[IgvAnnotation]
+    ref_genome_sequence: Path,
+    ref_genome_annotation: Path,
+    igv_annotations: list[IgvAnnotation],
 ) -> tuple[ReferenceGenome, str | None, list[IgvAnnotationTrack]]:
     """Parse IGV information.
 
@@ -38,7 +37,9 @@ def parse_igv_info(
             )
             read_mapping_info.append(igv_annotation_track)
 
-    ref_genome_sequence_fai = ref_genome_sequence.parent / (ref_genome_sequence.name + '.fai')
+    ref_genome_sequence_fai = ref_genome_sequence.parent / (
+        ref_genome_sequence.name + ".fai"
+    )
     species_name = ref_genome_sequence.parent.name.replace("_", " ")
 
     reference_genome_info = ReferenceGenome(
