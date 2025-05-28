@@ -2,7 +2,9 @@
 
 import json
 import logging
-from typing import Sequence
+from typing import Any, Sequence
+
+from prp.models.config import SampleConfig
 
 from ..models.phenotype import AMRMethodIndex, ElementType
 from ..models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
@@ -150,7 +152,7 @@ def _read_virulence(smp_cnf) -> Sequence[VirulenceMethodIndex]:
     return virulence
 
 
-def parse_sample(smp_cnf) -> PipelineResult:
+def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
     """Parse sample config object into a combined result object."""
     sample_info, seq_info, pipeline_info = parse_run_info(
         smp_cnf.nextflow_run_info, smp_cnf.process_metadata
@@ -158,7 +160,7 @@ def parse_sample(smp_cnf) -> PipelineResult:
     ref_genome_info, read_mapping, genome_annotation = parse_igv_info(
         smp_cnf.ref_genome_sequence, smp_cnf.ref_genome_annotation, smp_cnf.igv_annotations
     )
-    results = {
+    results: dict[str, Any] = {
         "sequencing": seq_info,
         "pipeline": pipeline_info,
         "qc": _read_qc(smp_cnf),
