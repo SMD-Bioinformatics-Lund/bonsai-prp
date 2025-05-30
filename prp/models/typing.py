@@ -21,6 +21,7 @@ class TypingSoftware(str, Enum):
     SHIGAPASS = "shigapass"
     EMMTYPER = "emmtyper"
     SPATYPER = "spatyper"
+    SCCMEC = "sccmec"
 
 
 class TypingMethod(str, Enum):
@@ -35,6 +36,7 @@ class TypingMethod(str, Enum):
     SHIGATYPE = "shigatype"
     EMMTYPE = "emmtype"
     SPATYPE = "spatype"
+    SCCMECTYPE = "sccmectype"
 
 
 class ChewbbacaErrors(str, Enum):
@@ -87,8 +89,8 @@ class TypingResultShiga(RWModel):
     mlst: Optional[str] = None
     flic: Optional[str] = None
     crispr: Optional[str] = None
-    ipah: Optional[str] = None
-    predicted_serotype: Optional[str] = None
+    ipah: str
+    predicted_serotype: str
     predicted_flex_serotype: Optional[str] = None
     comments: Optional[str] = None
 
@@ -163,3 +165,24 @@ class SpatyperTypingMethodIndex(RWModel):
     type: Literal[TypingMethod.SPATYPE]
     software: Literal[TypingSoftware.SPATYPER]
     result: TypingResultSpatyper
+
+
+class TypingResultSccmec(RWModel):
+    """Sccmec results"""
+    type: str | None = None
+    subtype: str | None = None
+    mecA: str | None = None
+    targets: list[str] | None = None
+    regions: list[str] | None = None
+    coverage: list[float] | None = None
+    hits: list[int] | None = None
+    target_comment: str | None = None
+    region_comment: str
+    comment: str
+
+
+class SccmecTypingMethodIndex(RWModel):
+    """Method Index Sccmec."""
+    type: Literal[TypingMethod.SCCMECTYPE]
+    software: Literal[TypingSoftware.SCCMEC]
+    result: TypingResultSccmec

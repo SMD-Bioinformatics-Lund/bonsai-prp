@@ -57,8 +57,8 @@ def _parse_shigapass_results(predictions: pd.DataFrame, row: int) -> TypingResul
         mlst=predictions.loc[row, "mlst"],
         flic=predictions.loc[row, "flic"],
         crispr=predictions.loc[row, "crispr"],
-        ipah=predictions.loc[row, "ipah"],
-        predicted_serotype=predictions.loc[row, "predicted_serotype"],
+        ipah=str(predictions.loc[row, "ipah"]),
+        predicted_serotype=str(predictions.loc[row, "predicted_serotype"]),
         predicted_flex_serotype=predictions.loc[row, "predicted_flex_serotype"],
         comments=predictions.loc[row, "comments"],
     )

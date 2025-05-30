@@ -2,7 +2,12 @@
 
 ### Added
 
+ - Added `sccmec` parsing, models and tests
+
 ### Fixed
+
+ - Fixed `shigapass` expected model
+ - Fixed `spatyer` model expectation bug
 
 ### Changed
 

@@ -22,6 +22,7 @@ from .igv import parse_igv_info
 from .metadata import parse_run_info
 from .qc import parse_gambitcore_results, parse_postalignqc_results, parse_quast_results
 from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
+from .sccmec import SccmecTypingMethodIndex, parse_sccmec_results
 from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
 from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
@@ -61,6 +62,7 @@ def _read_typing(
     MethodIndex
     | EmmTypingMethodIndex
     | ShigaTypingMethodIndex
+    | SccmecTypingMethodIndex
     | SpatyperTypingMethodIndex
 ]:
     """Read typing all information."""
@@ -79,6 +81,9 @@ def _read_typing(
 
     if smp_cnf.spatyper:
         typing_result.append(parse_spatyper_results(smp_cnf.spatyper))
+
+    if smp_cnf.sccmec:
+        typing_result.append(parse_sccmec_results(smp_cnf.sccmec))
 
     # stx typing
     if smp_cnf.virulencefinder:

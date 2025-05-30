@@ -99,3 +99,8 @@ def saureus_bracken_path(data_path: Path) -> str:
 def saureus_spatyper_path(data_path: Path) -> str:
     """Get path for saureus spatyper file"""
     return str(data_path.joinpath("saureus", "spatyper.tsv"))
+
+@pytest.fixture()
+def saureus_sccmec_path(data_path: Path) -> str:
+    """Get path for saureus sccmec file"""
+    return str(data_path.joinpath("saureus", "sccmec.tsv"))

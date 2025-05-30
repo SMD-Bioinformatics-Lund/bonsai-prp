@@ -57,6 +57,7 @@ class SampleConfig(RWModel):
     shigapass: FilePath | None = None
     emmtyper: FilePath | None = None
     spatyper: FilePath | None = None
+    sccmec: FilePath | None = None
 
     ## resistance, virulence etc
     amrfinder: FilePath | None = None
