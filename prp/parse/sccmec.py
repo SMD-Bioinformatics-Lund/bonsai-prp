@@ -16,23 +16,23 @@ def parse_sccmec_results(path: str) -> SccmecTypingMethodIndex:
 
     result_loa = (
         pd.read_csv(path, delimiter="\t")
-        .apply(lambda col: col.map(lambda x: '' if pd.isna(x) else x))
+        .apply(lambda col: col.map(lambda x: None if pd.isna(x) or x == "-" else x))
         .to_dict(orient="records") 
     )
 
-    result = result_loa[0] if result_loa else {}
+    result = result_loa[0]
 
     result_obj = TypingResultSccmec(
         type=result.get("type"),
         subtype=result.get("subtype"),
         mecA=result.get("mecA"),
-        targets=result.get("targets"),
-        regions=result.get("regions"),
-        coverage=result.get("coverage"),
-        hits=result.get("hits"),
+        targets=list(map(str, targets.split(","))) if (targets := result.get("targets")) else None,
+        regions=list(map(str, regions.split(","))) if (regions := result.get("regions")) else None,
+        coverage=list(map(float, str(coverage).split(","))) if (coverage := result.get("coverage")) else None,
+        hits=list(map(int, str(hits).split(","))) if (hits := result.get("hits")) else None,
         target_comment=result.get("target_comment"),
         region_comment=result.get("region_comment"),
-        comment=result.get("comment")
+        comment=result.get("comment"),
     )
 
     return SccmecTypingMethodIndex(

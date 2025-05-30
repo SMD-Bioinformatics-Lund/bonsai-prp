@@ -2,7 +2,12 @@
 
 ### Added
 
+ - Added `sccmec` parsing, models and tests
+
 ### Fixed
+
+ - Fixed `shigapass` expected model
+ - Fixed `spatyer` model expectation bug
 
 ### Changed
 
@@ -15,7 +20,6 @@
 - Added `config.py` for migration
 - Added parser for `gambitcore`
 - Added tests and test files for `gambitcore`
-- Added `sccmec` parsing, models and tests
 
 ### Fixed
 

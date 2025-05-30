@@ -2,7 +2,6 @@
 
 from enum import Enum
 from typing import Any, Literal, Optional, Union
-import numpy as np
 
 from pydantic import Field
 
@@ -90,8 +89,8 @@ class TypingResultShiga(RWModel):
     mlst: Optional[str] = None
     flic: Optional[str] = None
     crispr: Optional[str] = None
-    ipah: Optional[str] = None
-    predicted_serotype: Optional[str] = None
+    ipah: str
+    predicted_serotype: str
     predicted_flex_serotype: Optional[str] = None
     comments: Optional[str] = None
 
@@ -170,16 +169,16 @@ class SpatyperTypingMethodIndex(RWModel):
 
 class TypingResultSccmec(RWModel):
     """Sccmec results"""
-    type: str | None
-    subtype: str | None
-    mecA: str | None
-    targets: str | None
-    regions: str | None
-    coverage: str | None
-    hits: str | None
-    target_comment: str | float
-    region_comment: str | float
-    comment: str | float
+    type: str | None = None
+    subtype: str | None = None
+    mecA: str | None = None
+    targets: list[str] | None = None
+    regions: list[str] | None = None
+    coverage: list[float] | None = None
+    hits: list[int] | None = None
+    target_comment: str | None = None
+    region_comment: str
+    comment: str
 
 
 class SccmecTypingMethodIndex(RWModel):
