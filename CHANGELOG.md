@@ -2,6 +2,14 @@
 
 ### Added
 
+### Fixed
+
+### Changed
+
+## [1.3.0a1]
+
+### Added
+
  - Added `sccmec` parsing, models and tests
 
 ### Fixed
