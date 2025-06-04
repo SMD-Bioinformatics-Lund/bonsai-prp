@@ -67,7 +67,7 @@ class SampleConfig(RWModel):
     tbprofiler: FilePath | None = None
 
     ## clustering
-    sourmash_signature: FilePath | None = None
+    sourmash_signature: str | None = None
     ska_index: str | None = None
 
     def assinged_to_group(self) -> bool:
