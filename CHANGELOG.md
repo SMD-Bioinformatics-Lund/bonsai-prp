@@ -6,6 +6,14 @@
 
 ### Changed
 
+## [1.3.1]
+
+### Added
+
+### Fixed
+
+### Changed
+
  - Changed config model format for `sourmash_signature`
 
 ## [1.3.0]
