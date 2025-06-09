@@ -4,6 +4,8 @@
 
 ### Fixed
 
+ - Fixed inclusion of serotype results into json output
+
 ### Changed
 
  - Changed config model format for `sourmash_signature`
