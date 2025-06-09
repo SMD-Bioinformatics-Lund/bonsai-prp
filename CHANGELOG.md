@@ -4,6 +4,14 @@
 
 ### Fixed
 
+### Changed
+
+## [1.3.1]
+
+### Added
+
+### Fixed
+
  - Fixed inclusion of serotype results into json output
 
 ### Changed
