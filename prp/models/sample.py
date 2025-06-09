@@ -42,8 +42,6 @@ class MethodIndex(RWModel):
         TypingResultGeneAllele,
         TbProfilerLineage,
         ResultLineageBase,
-        SpatyperTypingMethodIndex,
-        SccmecTypingMethodIndex,
     ]
 
 

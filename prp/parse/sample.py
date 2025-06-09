@@ -96,11 +96,11 @@ def _read_typing(
     if smp_cnf.serotypefinder:
         LOG.info("Parse serotypefinder results")
         # OH typing
-        tmp_serotype_res: MethodIndex | None = serotypefinder.parse_oh_typing(
+        tmp_serotype_res: list[MethodIndex] | None = serotypefinder.parse_oh_typing(
             smp_cnf.serotypefinder
         )
         if tmp_serotype_res is not None:
-            typing_result.append(tmp_serotype_res)
+            typing_result.extend(tmp_serotype_res)
 
     if smp_cnf.mykrobe:
         lin_res: MethodIndex | None = mykrobe.parse_lineage_pred(smp_cnf.mykrobe)
