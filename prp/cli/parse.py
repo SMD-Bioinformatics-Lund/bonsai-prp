@@ -7,7 +7,7 @@ import click
 from pydantic import TypeAdapter, ValidationError
 
 from prp.models.config import SampleConfig
-from prp.models.qc import QcMethodIndex, QcSoftware
+from prp.models.qc import QcMethodIndex, QcSoftware, CdmQcMethodIndex
 from prp.models.sample import MethodIndex
 from prp.parse import (
     parse_alignment_results,
@@ -83,11 +83,15 @@ def format_cdm(sample_cnf: SampleConfigFile, output: OptionalFile) -> None:
 
     if sample_cnf.quast:
         LOG.info("Parse quast results")
-        results.append(parse_quast_results(sample_cnf.quast))
+        quast_results = parse_quast_results(sample_cnf.quast)
+        results.append(CdmQcMethodIndex(id="quast", **quast_results.model_dump()))
 
     if sample_cnf.gambitcore:
         LOG.info("Parse gambitcore results")
-        results.append(parse_gambitcore_results(sample_cnf.gambitcore))
+        gambitcore_results = parse_gambitcore_results(sample_cnf.gambitcore)
+        results.append(
+            CdmQcMethodIndex(id="gambitcore", **gambitcore_results.model_dump())
+        )
 
     if sample_cnf.chewbbaca:
         LOG.info("Parse cgmlst results")
