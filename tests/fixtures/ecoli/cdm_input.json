@@ -1,5 +1,6 @@
 [
    {
+      "id": "postalignqc",
       "software": "postalignqc",
       "version": null,
       "result": {
@@ -25,6 +26,7 @@
       }
    },
    {
+      "id": "quast",
       "software": "quast",
       "version": null,
       "result": {
@@ -40,6 +42,7 @@
       }
    },
    {
+     "id": "gambitcore",
      "software": "gambitcore",
      "version": null,
      "result": {
@@ -55,6 +58,7 @@
      }
    },
    {
+      "id": "chewbbaca_missing_loci",
       "software": "chewbbaca",
       "version": null,
       "result": {

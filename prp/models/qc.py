@@ -84,3 +84,9 @@ class QcMethodIndex(RWModel):
     software: QcSoftware
     version: str | None = None
     result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult
+
+
+class CdmQcMethodIndex(QcMethodIndex):
+    """Qc results container for CDM"""
+
+    id: str

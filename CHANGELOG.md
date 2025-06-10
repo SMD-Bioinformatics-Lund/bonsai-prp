@@ -2,6 +2,8 @@
 
 ### Added
 
+- Add `id` field to CDM-bound qc-data objects
+
 ### Fixed
 
  - Fixed inclusion of serotype results into json output
