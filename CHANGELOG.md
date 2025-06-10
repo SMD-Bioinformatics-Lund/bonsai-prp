@@ -2,8 +2,6 @@
 
 ### Added
 
-- Add `id` field to CDM-bound qc-data objects
-
 ### Fixed
 
 ### Changed
@@ -11,6 +9,8 @@
 ## [1.3.1]
 
 ### Added
+
+- Add `id` field to CDM-bound qc-data objects
 
 ### Fixed
 
