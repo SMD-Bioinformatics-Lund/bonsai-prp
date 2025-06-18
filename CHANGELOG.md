@@ -6,11 +6,13 @@
 
 ### Changed
 
+ - Added numpy version to `pyproject.toml` dependencies
+
 ## [1.3.1]
 
 ### Added
 
-- Add `id` field to CDM-bound qc-data objects
+ - Added `id` field to CDM-bound qc-data objects
 
 ### Fixed
 
