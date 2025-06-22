@@ -162,11 +162,6 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
     sample_info, seq_info, pipeline_info = parse_run_info(
         smp_cnf.nextflow_run_info, smp_cnf.process_metadata
     )
-    ref_genome_info, read_mapping, genome_annotation = parse_igv_info(
-        smp_cnf.ref_genome_sequence,
-        smp_cnf.ref_genome_annotation,
-        smp_cnf.igv_annotations,
-    )
     results: dict[str, Any] = {
         "sequencing": seq_info,
         "pipeline": pipeline_info,
@@ -174,11 +169,17 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
         "species_prediction": _read_spp_prediction(smp_cnf),
         "typing_result": _read_typing(smp_cnf),
         "element_type_result": [],
-        "reference_genome": ref_genome_info,
-        "read_mapping": read_mapping,
-        "genome_annotation": genome_annotation,
         **sample_info,  # add sample_name & lims_id
     }
+    if smp_cnf.ref_genome_sequence:
+        ref_genome_info, read_mapping, genome_annotation = parse_igv_info(
+            smp_cnf.ref_genome_sequence,
+            smp_cnf.ref_genome_annotation,
+            smp_cnf.igv_annotations,
+        )
+        results["reference_genome"] = ref_genome_info   
+        results["read_mapping"] = read_mapping   
+        results["genome_annotation"] = genome_annotation   
     # read versions of softwares
     if smp_cnf.mykrobe:
         results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))

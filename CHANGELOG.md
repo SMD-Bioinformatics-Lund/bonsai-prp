@@ -4,6 +4,9 @@
 
 ### Fixed
 
+ - Fixed error when no ref genome is provided
+ - Fixed `sccmec` bug when comments section is `None`
+
 ### Changed
 
  - Added numpy version to `pyproject.toml` dependencies
