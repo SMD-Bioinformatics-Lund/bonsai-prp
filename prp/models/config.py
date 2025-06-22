@@ -31,8 +31,8 @@ class SampleConfig(RWModel):
     metadata: list[MetaEntry] = []
 
     # Reference genome
-    ref_genome_sequence: Path
-    ref_genome_annotation: Path
+    ref_genome_sequence: Path | None = None
+    ref_genome_annotation: Path | None = None
 
     igv_annotations: list[IgvAnnotation] = []
 
