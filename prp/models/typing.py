@@ -178,7 +178,7 @@ class TypingResultSccmec(RWModel):
     hits: list[int] | None = None
     target_comment: str | None = None
     region_comment: str
-    comment: str
+    comment: str | None = None
 
 
 class SccmecTypingMethodIndex(RWModel):
