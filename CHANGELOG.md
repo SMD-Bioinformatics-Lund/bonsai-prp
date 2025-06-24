@@ -4,6 +4,14 @@
 
 ### Fixed
 
+### Changed
+
+## [1.3.2-alpha.1]
+
+### Added
+
+### Fixed
+
  - Fixed error when no ref genome is provided
  - Fixed `sccmec` bug when comments section is `None`
 
