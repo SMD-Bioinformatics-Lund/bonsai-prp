@@ -22,7 +22,6 @@ def parse_vir_gene(
 ) -> VirulenceGene:
     """Parse virulence gene prediction results."""
     accnr = None if info["ref_acc"] == "NA" else info["ref_acc"]
-   
     return VirulenceGene(
         # info
         gene_symbol=info["name"],
@@ -51,9 +50,9 @@ def _parse_vir_results(pred: dict[str, Any]) -> VirulenceElementTypeResult:
         function = pheno.get("function", "")
         ref_dbs = pheno.get("ref_database", [])
 
-        # skip stx typing result # needed? How is it different?
-        #if any("stx" in db for db in ref_dbs):
-        #    continue
+        # skip stx typing result
+        if any("stx" in db for db in ref_dbs):
+            continue
 
         # assign element subtype
         subtype = ElementVirulenceSubtype.VIR
@@ -82,7 +81,7 @@ def parse_virulence_pred(path: str) -> VirulenceMethodIndex | None:
     LOG.info("Parsing virulencefinder virulence prediction")
     with open(path, "rb") as inpt:
         pred = json.load(inpt)
-        if "virulencefinder" in pred:
+        if "seq_regions" in pred and "phenotypes" in pred: # Aim: check if file is empty or if it comes from the right tool?
             results: VirulenceElementTypeResult = _parse_vir_results(pred)
             result = VirulenceMethodIndex(
                 type=ElementType.VIR, software=Software.VIRFINDER, result=results
@@ -92,32 +91,32 @@ def parse_virulence_pred(path: str) -> VirulenceMethodIndex | None:
     return result
 
 
-# def parse_stx_typing(path: str) -> MethodIndex | None:
-#     """Parse virulencefinder's output re stx typing"""
-#     LOG.info("Parsing virulencefinder stx results")
-#     with open(path, "rb") as inpt:
-#         pred_obj = json.load(inpt)
-#         # if has valid results
-#         pred_result = None
-#         if "virulencefinder" in pred_obj:
-#             results = pred_obj["virulencefinder"]["results"]
-#             species = list(results)
-#             for assay, result in results[species[0]].items():
-#                 # skip non typing results
-#                 if not assay == "stx":
-#                     continue
-
-#                 # if no stx gene was identified
-#                 if isinstance(result, str):
-#                     continue
-
-#                 # take first result as the valid prediction
-#                 hit = next(iter(result.values()))
-#                 vir_gene = parse_vir_gene(hit)
-#                 gene = TypingResultGeneAllele(**vir_gene.model_dump())
-#                 pred_result = MethodIndex(
-#                     type=TypingMethod.STX,
-#                     software=Software.VIRFINDER,
-#                     result=gene,
-#                 )
-#     return pred_result
+def parse_stx_typing(path: str) -> MethodIndex | None:
+    """Parse virulencefinder's output re stx typing"""
+    LOG.info("Parsing virulencefinder stx results")
+    with open(path, "rb") as inpt:
+        pred_obj = json.load(inpt)
+        # if has valid results
+        pred_result = None
+        if "seq_regions" in pred_obj and "phenotypes" in pred_obj:
+            phenotypes = pred.get("phenotypes", {})
+            seq_regions = pred.get("seq_regions", {})
+    
+            stx_keys = [key for key in phenotypes if key.startswith("stx")]
+            if not stx_keys:
+                return None
+            
+            for stx_key in stx_keys:
+                pheno = phenotypes[stx_key]
+                function = pheno.get("function", "")
+                for region_key in pheno.get("seq_regions", []):
+                    region_info = seq_regions.get(region_key)
+                    if region_info:
+                        vir_gene = parse_vir_gene(region_info, function=function)
+                        gene = TypingResultGeneAllele(**vir_gene.model_dump())
+                        return MethodIndex(
+                            type=TypingMethod.STX,
+                            software=Software.VIRFINDER,
+                            result=gene,
+                        )
+    return pred_result
