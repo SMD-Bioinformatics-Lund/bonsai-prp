@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Fixed upload to group bug
+
 ### Changed
 
 ## [1.3.2-alpha.1]
