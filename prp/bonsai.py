@@ -147,9 +147,9 @@ def add_sample_to_group(
 ) -> str:
     """Add sample to a group."""
     resp = requests.put(
-        f"{api_url}/groups/{group_id}/sample",
+        f"{api_url}/groups/{group_id}/samples",
         headers=headers,
-        params={"sample_id": sample_id},
+        params={"s": sample_id},
         timeout=TIMEOUT,
     )
 
