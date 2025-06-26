@@ -4,13 +4,9 @@
 
 ### Fixed
 
- - Fixed upload to group bug
-
 ### Changed
 
- - Updated 500 error catch message regarding missing group in Bonsai
-
-## [1.3.2-alpha.1]
+## [1.3.2]
 
 ### Added
 
@@ -18,10 +14,12 @@
 
  - Fixed error when no ref genome is provided
  - Fixed `sccmec` bug when comments section is `None`
+ - Fixed upload to group bug
 
 ### Changed
 
  - Added numpy version to `pyproject.toml` dependencies
+ - Updated 500 error catch message regarding missing group in Bonsai
 
 ## [1.3.1]
 
