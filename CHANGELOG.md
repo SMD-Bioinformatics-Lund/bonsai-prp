@@ -4,7 +4,11 @@
 
 ### Fixed
 
+ - Fixed upload to group bug
+
 ### Changed
+
+ - Updated 500 error catch message regarding missing group in Bonsai
 
 ## [1.3.2-alpha.1]
 

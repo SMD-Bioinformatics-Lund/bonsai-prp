@@ -70,7 +70,11 @@ def bonsai_upload(sample_cnf: SampleConfig, username: str, password: str, api_ur
                 case 404:
                     msg = f"Group with id {group_id} is not in Bonsai"
                 case 500:
-                    msg = "An unexpected error occured in Bonsai, check bonsai api logs"
+                    msg = (
+                        "Please ensure that you have added the respective sample's group as a group in Bonsai. "
+                        "Otherwise, an unexpected error occured in Bonsai, check bonsai api logs by running:\n"
+                        "(sudo) docker logs api"
+                    )
                 case _:
                     msg = f"An unknown error occurred; {str(error)}"
             # raise error and abort execution
