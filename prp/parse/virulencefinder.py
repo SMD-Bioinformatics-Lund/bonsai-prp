@@ -18,7 +18,7 @@ LOG = logging.getLogger(__name__)
 
 
 def parse_vir_gene(
-    info: dict[str, Any], subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR, function: str
+    info: dict[str, Any], function: str, subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR
 ) -> VirulenceGene:
     """Parse virulence gene prediction results."""
     accnr = None if info["ref_acc"] == "NA" else info["ref_acc"]
@@ -45,6 +45,9 @@ def _parse_vir_results(pred: dict[str, Any]) -> VirulenceElementTypeResult:
     """Parse virulence prediction results from virulencefinder."""
     # parse virulence finder results
     vir_genes = []
+
+    phenotypes = pred.get("phenotypes", {})
+    seq_regions = pred.get("seq_regions", {})
     
     for key, pheno in phenotypes.items():
         function = pheno.get("function", "")
@@ -99,8 +102,8 @@ def parse_stx_typing(path: str) -> MethodIndex | None:
         # if has valid results
         pred_result = None
         if "seq_regions" in pred_obj and "phenotypes" in pred_obj:
-            phenotypes = pred.get("phenotypes", {})
-            seq_regions = pred.get("seq_regions", {})
+            phenotypes = pred_obj.get("phenotypes", {})
+            seq_regions = pred_obj.get("seq_regions", {})
     
             stx_keys = [key for key in phenotypes if key.startswith("stx")]
             if not stx_keys:
