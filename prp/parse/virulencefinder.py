@@ -21,7 +21,9 @@ def parse_vir_gene(
     info: dict[str, Any], function: str, subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR
 ) -> VirulenceGene:
     """Parse virulence gene prediction results."""
-    accnr = None if info["ref_acc"] == "NA" else info["ref_acc"]
+    accnr = info.get("ref_acc", None)
+    if accnr == "NA":
+        accnr = None
     return VirulenceGene(
         # info
         gene_symbol=info["name"],
