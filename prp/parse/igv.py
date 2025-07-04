@@ -10,6 +10,11 @@ from ..models.sample import IgvAnnotationTrack, ReferenceGenome
 LOG = logging.getLogger(__name__)
 
 
+def _extract_accn_from_header(fasta_fpath: str):
+    with open(fasta_fpath, "r") as fin:
+        header = fin.readline().strip()
+    return str(header[1:].split()[0])
+
 def parse_igv_info(
     ref_genome_sequence: Path,
     ref_genome_annotation: Path,
@@ -37,15 +42,17 @@ def parse_igv_info(
             )
             read_mapping_info.append(igv_annotation_track)
 
+    ref_genome_sequence_fpath = str(ref_genome_sequence)
     ref_genome_sequence_fai = ref_genome_sequence.parent / (
         ref_genome_sequence.name + ".fai"
     )
     species_name = ref_genome_sequence.parent.name.replace("_", " ")
+    accession = _extract_accn_from_header(ref_genome_sequence_fpath)
 
     reference_genome_info = ReferenceGenome(
         name=species_name.capitalize(),
-        accession=str(ref_genome_sequence.stem),
-        fasta=str(ref_genome_sequence),
+        accession=accession,
+        fasta=ref_genome_sequence_fpath,
         fasta_index=str(ref_genome_sequence_fai),
         genes=str(ref_genome_annotation),
     )

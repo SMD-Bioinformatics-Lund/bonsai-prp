@@ -48,7 +48,7 @@ class SampleConfig(RWModel):
     ## QC
     quast: FilePath
     postalnqc: FilePath | None = None
-    gambitcore: FilePath
+    gambitcore: FilePath | None = None
 
     ## typing
     mlst: FilePath | None = None
