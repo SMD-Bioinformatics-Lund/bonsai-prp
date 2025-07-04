@@ -3,6 +3,7 @@
 ### Added
 
  - Created function extract accession from reference fasta header
+ - Added genome fasta files for igv accn parsing in pytests
 
 ### Fixed
 

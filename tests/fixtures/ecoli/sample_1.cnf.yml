@@ -5,7 +5,7 @@ gambitcore: ./gambitcore.tsv
 groups:
   - ecoli
   - ecoli-validation
-ref_genome_sequence: /path/to/genome.fasta
+ref_genome_sequence: ./genome.fasta
 ref_genome_annotation: /path/to/annotation.gff
 igv_annotations:
   - name: Cool variants
