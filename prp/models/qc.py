@@ -63,7 +63,7 @@ class GenomeCompleteness(BaseModel):
 class GambitcoreQcResult(BaseModel):
     """Gambitcore genome completeness QC metrics."""
 
-    scientific_name: str | None = None
+    scientific_name: str
     completeness: float | None = None
     assembly_core: str | None = None
     closest_accession: str | None = None
@@ -71,7 +71,7 @@ class GambitcoreQcResult(BaseModel):
     assembly_kmers: int | None = None
     species_kmers_mean: int | None = None
     species_kmers_std_dev: int | None = None
-    assembly_qc: str
+    assembly_qc: str | None = None
 
 
 class QcMethodIndex(RWModel):

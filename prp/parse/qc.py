@@ -8,6 +8,7 @@ import subprocess
 from typing import Any, TextIO
 
 import pandas as pd
+import numpy as np
 import pysam
 
 from ..models.qc import (
@@ -367,7 +368,8 @@ def parse_gambitcore_results(gambitcore_fpath: str) -> QcMethodIndex:
     }
 
     gambitcore_loa = (
-        pd.read_csv(gambitcore_fpath, sep="\t")
+        pd.read_csv(gambitcore_fpath, sep="\t", na_values=["NA"])
+        .replace(np.nan, None)
         .rename(columns=columns)
         .to_dict(orient="records")
     )

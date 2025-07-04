@@ -2,9 +2,16 @@
 
 ### Added
 
+ - Created function extract accession from reference fasta header
+
 ### Fixed
 
+ - Replaced `NA` with `None` when `gambitcore` returns no hits
+
 ### Changed
+
+ - Changed config model making `gambitcore` filepath optional
+ - Changed `GambitcoreQcResult` model regarding expected `gambitcore` output
 
 ## [1.3.2]
 
