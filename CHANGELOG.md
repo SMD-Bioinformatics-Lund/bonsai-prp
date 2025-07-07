@@ -10,6 +10,7 @@
 
  - Replaced `NA` with `None` when `gambitcore` returns no hits
  - Fixed chewbbaca parser log printing every non-integer call
+ - Fixed multiple hits `mykrobe` bug
 
 ### Changed
 
