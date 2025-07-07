@@ -13,6 +13,8 @@ from ..models.typing import (
 )
 from ..models.typing import TypingSoftware as Software
 
+alt_allele_calls = ["ALM", "ASM", "EXC", "INF", "LNF", "LOTSC ", "NIPH", "NIPHEM", "PAMA", "PLNF", "PLOT3", "PLOT5"]
+
 LOG = logging.getLogger(__name__)
 
 
@@ -79,7 +81,7 @@ def replace_cgmlst_errors(
 
     if include_novel_alleles:
         if allele.startswith("INF"):
-            allele = allele.split("-")[1]
+            allele = allele.split("-")[1].replace("*", "")
         else:
             allele = allele.replace("*", "")
 
@@ -88,10 +90,11 @@ def replace_cgmlst_errors(
         allele = int(allele)
     except ValueError:
         allele = str(allele)
-        LOG.warning(
-            "Possible cgMLST parser error, allele could not be cast as an integer: %s",
-            allele,
-        )
+        if allele not in alt_allele_calls:
+            LOG.warning(
+                "Possible cgMLST parser error, allele could not be cast as an integer: %s",
+                allele,
+            )
     return allele
 
 
