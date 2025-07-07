@@ -6,7 +6,7 @@ groups:
   - ecoli
   - ecoli-validation
 ref_genome_sequence: ./genome.fasta
-ref_genome_annotation: /path/to/annotation.gff
+ref_genome_annotation: ./annotation.gff
 igv_annotations:
   - name: Cool variants
     type: variant
