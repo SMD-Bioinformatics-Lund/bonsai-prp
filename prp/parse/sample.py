@@ -172,14 +172,17 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
         **sample_info,  # add sample_name & lims_id
     }
     if smp_cnf.ref_genome_sequence:
-        ref_genome_info, read_mapping, genome_annotation = parse_igv_info(
+        ref_genome_info, read_mapping, genome_annotation, filtered_variants = parse_igv_info(
             smp_cnf.ref_genome_sequence,
             smp_cnf.ref_genome_annotation,
             smp_cnf.igv_annotations,
         )
-        results["reference_genome"] = ref_genome_info   
-        results["read_mapping"] = read_mapping   
-        results["genome_annotation"] = genome_annotation   
+        results["reference_genome"] = ref_genome_info
+        results["read_mapping"] = read_mapping
+        results["genome_annotation"] = genome_annotation
+        results["sv_variants"] = filtered_variants["sv_variants"]
+        results["indel_variants"] = filtered_variants["indel_variants"]
+        results["snv_variants"] = filtered_variants["snv_variants"]
     # read versions of softwares
     if smp_cnf.mykrobe:
         results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))

@@ -13,19 +13,19 @@ SOURCE_PATTERN = r"##source=(.+)\n"
 
 def _filter_variants(variant_list):
     # Initialize the results dictionary
-    filetered_variants = {"sv_variants": [], "indel_variants": [], "snv_variants": []}
+    filtered_variants = {"sv_variants": [], "indel_variants": [], "snv_variants": []}
 
     # Iterate through each variant in the list
     for variant in variant_list:
         variant_type = dict(variant).get("variant_type")  # Extract the variant_type
         # Append the variant to the appropriate key in the results dictionary
         if variant_type == "SV":
-            filetered_variants["sv_variants"].append(variant)
+            filtered_variants["sv_variants"].append(variant)
         elif variant_type == "INDEL":
-            filetered_variants["indel_variants"].append(variant)
+            filtered_variants["indel_variants"].append(variant)
         elif variant_type == "SNV":
-            filetered_variants["snv_variants"].append(variant)
-    return filetered_variants
+            filtered_variants["snv_variants"].append(variant)
+    return filtered_variants
 
 
 def _get_variant_type(variant) -> VariantType:
