@@ -4,6 +4,8 @@
 
 ### Fixed
 
+ - Fixed missing parsing of vcf file
+
 ### Changed
 
 ## [1.3.3-alpha.1]

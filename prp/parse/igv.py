@@ -3,7 +3,10 @@
 import logging
 from pathlib import Path
 
+from .variant import load_variants
+
 from prp.models.config import IgvAnnotation
+from prp.models.phenotype import VariantBase
 
 from ..models.sample import IgvAnnotationTrack, ReferenceGenome
 
@@ -19,7 +22,7 @@ def parse_igv_info(
     ref_genome_sequence: Path,
     ref_genome_annotation: Path,
     igv_annotations: list[IgvAnnotation],
-) -> tuple[ReferenceGenome, str | None, list[IgvAnnotationTrack]]:
+) -> tuple[ReferenceGenome, str | None, list[IgvAnnotationTrack], list[VariantBase]]:
     """Parse IGV information.
 
     :param reference_genome: Nextflow analysis metadata in json format.
@@ -35,6 +38,13 @@ def parse_igv_info(
     for annotation in igv_annotations:
         if annotation.type == "alignment":
             igv_alignment_track = annotation.uri
+        elif annotation.type == "variant":
+            filtered_variants = load_variants(annotation.uri)
+            igv_annotation_track = IgvAnnotationTrack(
+                name=annotation.name,
+                file=annotation.uri,
+            )
+            read_mapping_info.append(igv_annotation_track)
         else:
             igv_annotation_track = IgvAnnotationTrack(
                 name=annotation.name,
@@ -57,4 +67,4 @@ def parse_igv_info(
         genes=str(ref_genome_annotation),
     )
 
-    return reference_genome_info, igv_alignment_track, read_mapping_info
+    return reference_genome_info, igv_alignment_track, read_mapping_info, filtered_variants
