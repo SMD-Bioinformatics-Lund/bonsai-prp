@@ -36,19 +36,20 @@ def parse_igv_info(
 
     igv_alignment_track: str | None = None
     for annotation in igv_annotations:
+        uri = str(annotation.uri)
         if annotation.type == "alignment":
-            igv_alignment_track = annotation.uri
+            igv_alignment_track = uri
         elif annotation.type == "variant":
-            filtered_variants = load_variants(annotation.uri)
+            filtered_variants = load_variants(uri)
             igv_annotation_track = IgvAnnotationTrack(
                 name=annotation.name,
-                file=annotation.uri,
+                file=uri,
             )
             read_mapping_info.append(igv_annotation_track)
         else:
             igv_annotation_track = IgvAnnotationTrack(
                 name=annotation.name,
-                file=annotation.uri,
+                file=uri,
             )
             read_mapping_info.append(igv_annotation_track)
 

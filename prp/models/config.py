@@ -1,7 +1,5 @@
 """Sample configuration with paths to output files."""
 
-from pathlib import Path
-
 from pydantic import Field
 
 from prp.models.metadata import MetaEntry
@@ -14,8 +12,8 @@ class IgvAnnotation(RWModel):
 
     name: str
     type: str
-    uri: str
-    index_uri: str | None = None
+    uri: FilePath
+    index_uri: FilePath | None = None
 
 
 class SampleConfig(RWModel):
