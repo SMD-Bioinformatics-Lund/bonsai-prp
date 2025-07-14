@@ -4,11 +4,9 @@
 
 ### Fixed
 
- - Fixed missing parsing of vcf file
-
 ### Changed
 
-## [1.3.3-alpha.1]
+## [1.3.3-beta.1]
 
 ### Added
 
@@ -21,6 +19,7 @@
  - Replaced `NA` with `None` when `gambitcore` returns no hits
  - Fixed chewbbaca parser log printing every non-integer call
  - Fixed multiple hits `mykrobe` bug
+ - Fixed missing parsing of vcf file
 
 ### Changed
 
