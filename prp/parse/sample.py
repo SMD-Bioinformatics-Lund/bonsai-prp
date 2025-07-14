@@ -160,7 +160,7 @@ def _read_virulence(smp_cnf) -> Sequence[VirulenceMethodIndex]:
 def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
     """Parse sample config object into a combined result object."""
     sample_info, seq_info, pipeline_info = parse_run_info(
-        smp_cnf.nextflow_run_info, smp_cnf.process_metadata
+        smp_cnf.nextflow_run_info, smp_cnf.software_info
     )
     results: dict[str, Any] = {
         "sequencing": seq_info,

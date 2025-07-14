@@ -37,7 +37,6 @@ class SampleConfig(RWModel):
     # Jasen result files
     # nextflow_run_info: FilePath
     nextflow_run_info: FilePath
-    process_metadata: list[FilePath] = []  # stores versions of tools and databases
     software_info: list[FilePath] = []  # store sw and db version info
 
     ## Classification

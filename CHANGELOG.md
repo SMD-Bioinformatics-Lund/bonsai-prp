@@ -4,6 +4,8 @@
 
 ### Fixed
 
+ - Fixed software database parsing bug by replacing `process_metadata` with `software_info`
+
 ### Changed
 
 ## [1.3.3-beta.1]
