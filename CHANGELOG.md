@@ -4,11 +4,9 @@
 
 ### Fixed
 
- - Fixed software database parsing bug by replacing `process_metadata` with `software_info`
-
 ### Changed
 
-## [1.3.3-beta.1]
+## [1.3.3]
 
 ### Added
 
@@ -22,6 +20,7 @@
  - Fixed chewbbaca parser log printing every non-integer call
  - Fixed multiple hits `mykrobe` bug
  - Fixed missing parsing of vcf file
+ - Fixed software database parsing bug by replacing `process_metadata` with `software_info`
 
 ### Changed
 
