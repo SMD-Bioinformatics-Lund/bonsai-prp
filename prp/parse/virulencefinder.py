@@ -52,7 +52,7 @@ def _parse_vir_results(pred: dict[str, Any]) -> VirulenceElementTypeResult:
     seq_regions = pred.get("seq_regions", {})
     
     for key, pheno in phenotypes.items():
-        function = pheno.get("function", "")
+        function = pheno.get("function")
         ref_dbs = pheno.get("ref_database", [])
 
         # skip stx typing result
