@@ -26,4 +26,4 @@ jobs:
         pip install -e .[test]
     - name: Run test suite
       run: |
-        pytest --cov-fail-under 70 tests
+        pytest --cov-fail-under 80 tests
