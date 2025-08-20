@@ -12,8 +12,8 @@ class IgvAnnotation(RWModel):
 
     name: str
     type: str
-    uri: FilePath
-    index_uri: FilePath | None = None
+    uri: str | None = None
+    index_uri: str | None = None
 
 
 class SampleConfig(RWModel):

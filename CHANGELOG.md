@@ -2,9 +2,17 @@
 
 ### Added
 
+ - Added `target_schema`, `target_schema_version`, `region_schema`, `region_schema_version` & `camlhmp_version` to `sccmec` parser
+
 ### Fixed
 
+ - Fixed `sccmec` `region_comment` model
+ - Fixed bug if vcf filepath not available
+ - Fixed sccmec pytest
+
 ### Changed
+
+ - Changed pytest threshhold cutoff in GA workflow
 
 ## [1.3.3]
 
