@@ -7,8 +7,12 @@
 ### Fixed
 
  - Fixed `sccmec` `region_comment` model
+ - Fixed bug if vcf filepath not available
+ - Fixed sccmec pytest
 
 ### Changed
+
+ - Changed pytest threshhold cutoff in GA workflow
 
 ## [1.3.3]
 

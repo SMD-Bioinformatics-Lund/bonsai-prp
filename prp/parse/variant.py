@@ -112,9 +112,12 @@ def _get_variant_caller(vcf_obj: VCF) -> str | None:
 
 def load_variants(variant_file: str) -> list[VariantBase]:
     """Load variants."""
-    vcf_obj = VCF(variant_file)
     try:
+        vcf_obj = VCF(variant_file)
         next(vcf_obj)
+    except OSError:
+        LOG.warning("Variant filepath %s does not exist, check mounts and filepath...", variant_file)
+        return None
     except StopIteration:
         LOG.warning("Variant file %s does not include any variants", variant_file)
         return None

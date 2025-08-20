@@ -180,9 +180,9 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
         results["reference_genome"] = ref_genome_info
         results["read_mapping"] = read_mapping
         results["genome_annotation"] = genome_annotation
-        results["sv_variants"] = filtered_variants["sv_variants"]
-        results["indel_variants"] = filtered_variants["indel_variants"]
-        results["snv_variants"] = filtered_variants["snv_variants"]
+        results["sv_variants"] = filtered_variants["sv_variants"] if filtered_variants else None
+        results["indel_variants"] = filtered_variants["indel_variants"] if filtered_variants else None
+        results["snv_variants"] = filtered_variants["snv_variants"] if filtered_variants else None
     # read versions of softwares
     if smp_cnf.mykrobe:
         results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))
