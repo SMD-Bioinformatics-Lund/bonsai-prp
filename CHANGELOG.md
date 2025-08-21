@@ -6,6 +6,9 @@
 
 ### Changed
 
+ - Updated virulencefinder outputs for pytest
+ - Changed test fixtures for ecoli stx sample 
+
 ## [1.3.4]
 
 ### Added

@@ -45,7 +45,6 @@ def parse_vir_gene(
 
 def _parse_vir_results(pred: dict[str, Any]) -> VirulenceElementTypeResult:
     """Parse virulence prediction results from virulencefinder."""
-    # parse virulence finder results
     vir_genes = []
 
     phenotypes = pred.get("phenotypes", {})

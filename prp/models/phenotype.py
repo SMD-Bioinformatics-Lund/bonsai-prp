@@ -162,7 +162,7 @@ class GeneBase(BaseModel):
 
 
 class AmrFinderGene(GeneBase):
-    """Container for AMRFinder gene prediction information"""
+    """Container for Resfinder gene prediction information"""
 
     contig_id: str
     query_start_pos: int = Field(
@@ -170,6 +170,7 @@ class AmrFinderGene(GeneBase):
     )
     query_end_pos: int = Field(default=None, description="End position on the assembly")
     strand: SequenceStand
+    phenotypes: list[PhenotypeInfo] = []
 
 
 class AmrFinderVirulenceGene(AmrFinderGene):
@@ -306,9 +307,9 @@ class ElementTypeResult(BaseModel):
     """
 
     phenotypes: dict[str, list[str]] = {}
-    genes: list[Union[AmrFinderGene, AmrFinderResistanceGene, ResfinderGene]]
+    genes: list[Union[AmrFinderResistanceGene, AmrFinderGene, ResfinderGene]]
     variants: list[
-        Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant, AmrFinderVariant]
+        Union[AmrFinderVariant, TbProfilerVariant, MykrobeVariant, ResfinderVariant]
     ] = []
 
 

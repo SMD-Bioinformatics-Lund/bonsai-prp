@@ -18,7 +18,7 @@ def test_parse_virulencefinder_output(ecoli_virulencefinder_stx_pred_stx_path):
     # test that result is method index
     assert isinstance(result, VirulenceMethodIndex)
     # test that all genes are identified
-    assert len(result.result.genes) == 26
+    assert len(result.result.genes) == 29
 
 
 def test_parse_stx_typing(
