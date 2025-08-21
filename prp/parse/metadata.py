@@ -18,16 +18,16 @@ from ..models.metadata import (
 LOG = logging.getLogger(__name__)
 
 
-def get_database_info(process_metadata: list[str]) -> list[SoupVersion]:
+def get_database_info(software_info: list[str]) -> list[SoupVersion]:
     """Get database or software information.
 
-    :param process_metadata: list of file objects for db records.
-    :type process_metadata: list[str]
+    :param software_info: list of file objects for db records.
+    :type software_info: list[str]
     :return: Description of software or database version.
     :rtype: list[SoupVersion]
     """
     db_info = []
-    for soup_filepath in process_metadata:
+    for soup_filepath in software_info:
         with open(soup_filepath, "r", encoding="utf-8") as soup:
             dbs = json.load(soup)
             if isinstance(dbs, (list, tuple)):
@@ -58,7 +58,7 @@ def parse_date_from_run_id(run_id: str) -> datetime | None:
 
 
 def parse_run_info(
-    run_metadata: str, process_metadata: list[str]
+    run_metadata: str, software_info: list[str]
 ) -> tuple[dict[str, Any], SequencingInfo, PipelineInfo]:
     """Parse nextflow analysis information.
 
@@ -84,7 +84,7 @@ def parse_run_info(
         date=parse_date_from_run_id(run_info["sequencing_run"]),
     )
     # get pipeline info
-    soup_versions = get_database_info(process_metadata)
+    soup_versions = get_database_info(software_info)
     pipeline_info = PipelineInfo(
         pipeline=run_info["pipeline"],
         version=run_info["version"],

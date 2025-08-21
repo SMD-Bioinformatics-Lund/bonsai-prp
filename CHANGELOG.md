@@ -4,13 +4,46 @@
 
 ### Fixed
 
- - Fixed upload to group bug
+### Changed
+
+## [1.3.4]
+
+### Added
+
+ - Added `target_schema`, `target_schema_version`, `region_schema`, `region_schema_version` & `camlhmp_version` to `sccmec` parser
+
+### Fixed
+
+ - Fixed `sccmec` `region_comment` model
+ - Fixed bug if vcf filepath not available
+ - Fixed sccmec pytest
 
 ### Changed
 
- - Updated 500 error catch message regarding missing group in Bonsai
+ - Changed pytest threshhold cutoff in GA workflow
 
-## [1.3.2-alpha.1]
+## [1.3.3]
+
+### Added
+
+ - Created function extract accession from reference fasta header
+ - Added genome fasta files for igv accn parsing in pytests
+ - Added gff and sig files for pytests
+
+### Fixed
+
+ - Replaced `NA` with `None` when `gambitcore` returns no hits
+ - Fixed chewbbaca parser log printing every non-integer call
+ - Fixed multiple hits `mykrobe` bug
+ - Fixed missing parsing of vcf file
+ - Fixed software database parsing bug by replacing `process_metadata` with `software_info`
+
+### Changed
+
+ - Changed config model making `gambitcore` filepath optional
+ - Changed `GambitcoreQcResult` model regarding expected `gambitcore` output
+
+## [1.3.2]
 
 ### Added
 
@@ -18,10 +51,12 @@
 
  - Fixed error when no ref genome is provided
  - Fixed `sccmec` bug when comments section is `None`
+ - Fixed upload to group bug
 
 ### Changed
 
  - Added numpy version to `pyproject.toml` dependencies
+ - Updated 500 error catch message regarding missing group in Bonsai
 
 ## [1.3.1]
 

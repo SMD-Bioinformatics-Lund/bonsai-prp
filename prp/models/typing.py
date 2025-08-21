@@ -174,10 +174,15 @@ class TypingResultSccmec(RWModel):
     mecA: str | None = None
     targets: list[str] | None = None
     regions: list[str] | None = None
+    target_schema: str
+    target_schema_version: str
+    region_schema: str
+    region_schema_version: str
+    camlhmp_version: str
     coverage: list[float] | None = None
     hits: list[int] | None = None
     target_comment: str | None = None
-    region_comment: str
+    region_comment: str | None = None
     comment: str | None = None
 
 

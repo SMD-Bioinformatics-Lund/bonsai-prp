@@ -5,16 +5,16 @@ gambitcore: ./gambitcore.tsv
 groups:
   - ecoli
   - ecoli-validation
-ref_genome_sequence: /path/to/genome.fasta
-ref_genome_annotation: /path/to/annotation.gff
+ref_genome_sequence: ./genome.fasta
+ref_genome_annotation: ./annotation.gff
 igv_annotations:
   - name: Cool variants
     type: variant
-    uri: file://rs-fe1/path/to/variants.vcf
+    uri: ./variants.vcf
   - name: Read coverage
     type: alignment
-    uri: file://rs-fe1/path/to/mapping.bam
-    index_uri: file://path/to/mapping.bam.bai
+    uri: ./mapping.bam
+    index_uri: ./mapping.bam.bai
 nextflow_run_info: ./analysis_meta.json
 software_info:
   - ./resfinder_meta.json

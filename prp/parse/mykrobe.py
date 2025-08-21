@@ -231,15 +231,25 @@ def parse_amr_pred(
 def parse_spp_pred(result_path: str | Path) -> SppMethodIndex:
     """Get species prediction result from Mykrobe."""
     LOG.info("Parsing Mykrobe spp result.")
+    result = []
     pred_res = _read_result(result_path)
-    spp_pred = MykrobeSpeciesPrediction(
-        scientific_name=pred_res[0]["species"].replace("_", " "),
-        taxonomy_id=None,
-        phylogenetic_group=pred_res[0]["phylo_group"].replace("_", " "),
-        phylogenetic_group_coverage=pred_res[0]["phylo_group_per_covg"],
-        species_coverage=pred_res[0]["species_per_covg"],
-    )
-    return SppMethodIndex(software=SppPredictionSoftware.MYKROBE, result=[spp_pred])
+
+    # Normalize all fields to strings and split on ";"
+    species = str(pred_res[0].get("species", "")).split(";")
+    phylo_groups = str(pred_res[0].get("phylo_group", "")).split(";")
+    phylo_covg = str(pred_res[0].get("phylo_group_per_covg", "")).split(";")
+    species_covg = str(pred_res[0].get("species_per_covg", "")).split(";")
+
+    for hit_idx in range(len(species)):
+        spp_pred = MykrobeSpeciesPrediction(
+            scientific_name=species[hit_idx].replace("_", " "),
+            taxonomy_id=None,
+            phylogenetic_group=phylo_groups[hit_idx].replace("_", " "),
+            phylogenetic_group_coverage=phylo_covg[hit_idx],
+            species_coverage=species_covg[hit_idx],
+        )
+        result.append(spp_pred)
+    return SppMethodIndex(software=SppPredictionSoftware.MYKROBE, result=result)
 
 
 def parse_lineage_pred(result_path: str | Path) -> MethodIndex | None:
