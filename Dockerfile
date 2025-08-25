@@ -32,12 +32,22 @@ RUN wget https://github.com/broadinstitute/picard/releases/download/3.1.1/picard
 # Stage 2: Final image
 FROM python:3.11
 
+# Set environment variables to avoid interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
 # Set the working directory in the final image
 WORKDIR /usr/src/app
 
-# Install openjdk-17
+# Install openjdk-17 and R
 RUN apt-get update && \
-    apt-get install -y openjdk-17-jre-headless r-base && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+        openjdk-17-jre-headless \
+        r-base \
+        tzdata && \
+    ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
+    dpkg-reconfigure --frontend noninteractive tzdata && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy only the necessary files from the builder image

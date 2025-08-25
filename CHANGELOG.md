@@ -6,6 +6,8 @@
 
 ### Changed
 
+ - Set environment variables to avoid interactive prompts in `Dockerfile` by incl. TZ data
+
 ## [1.3.4]
 
 ### Added
