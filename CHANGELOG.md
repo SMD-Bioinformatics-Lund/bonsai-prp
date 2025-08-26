@@ -7,7 +7,8 @@
 ### Changed
 
  - Updated virulencefinder outputs for pytest
- - Changed test fixtures for ecoli stx sample 
+ - Changed test fixtures for ecoli stx sample
+ - Removed `AmrFinderResistanceGene` as it confuses model
 
 ## [1.3.4]
 

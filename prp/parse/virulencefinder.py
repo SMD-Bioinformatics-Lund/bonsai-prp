@@ -33,13 +33,13 @@ def parse_vir_gene(
         element_type=ElementType.VIR,
         element_subtype=subtype,
         # position
-        ref_start_pos=info["ref_start_pos"],
-        ref_end_pos=info["ref_end_pos"],
-        ref_gene_length=info["ref_seq_length"],
-        alignment_length=info["alignment_length"],
+        ref_start_pos=int(info["ref_start_pos"]),
+        ref_end_pos=int(info["ref_end_pos"]),
+        ref_gene_length=int(info["ref_seq_length"]),
+        alignment_length=int(info["alignment_length"]),
         # prediction
-        identity=info["identity"],
-        coverage=info["coverage"],
+        identity=float(info["identity"]),
+        coverage=float(info["coverage"]),
     )
 
 
