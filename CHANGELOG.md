@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Added
+- Added parsing of `NanoPlot` results and corresponding test
 
 ### Fixed
 
