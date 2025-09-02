@@ -17,6 +17,7 @@ from ..models.qc import (
     QcMethodIndex,
     QcSoftware,
     QuastQcResult,
+    NanoPlotQcResult,
 )
 
 OptionalFile = TextIO | None
@@ -393,3 +394,48 @@ def parse_gambitcore_results(gambitcore_fpath: str) -> QcMethodIndex:
         software=QcSoftware.GAMBITCORE,
         result=gambitcore_result,
     )
+
+
+def parse_nanoplot_results(nanoplot_fpath: str) -> QcMethodIndex:
+    """Parse NanoPlot QC results.
+
+    Args:
+        path: Path to NanoStats.txt file
+
+    Returns:
+        QcMethodIndex with NanoPlot results
+    """
+    LOG.info("Parsing NanoPlot results")
+
+    with open(nanoplot_fpath) as fh:
+        # Skip the first line (header)
+        next(fh)
+        nanoplot_dict = {}
+        
+        # Parse only first set of metrics
+        for _ in range(8):
+            line = next(fh).strip()
+            key, value = line.split(":", 1)
+            value = float(value.strip().replace(",", ""))
+            key = key.lower().strip().replace(" ", "_")
+            nanoplot_dict[key] = value
+
+    result = NanoPlotQcResult(
+        mean_read_length=nanoplot_dict["mean_read_length"],
+        mean_read_quality=nanoplot_dict["mean_read_quality"],
+        median_read_length=nanoplot_dict["median_read_length"],
+        median_read_quality=nanoplot_dict["median_read_quality"],
+        number_of_reads=nanoplot_dict["number_of_reads"],
+        read_length_n50=nanoplot_dict["read_length_n50"],
+        stdev_read_length=nanoplot_dict["stdev_read_length"],
+        total_bases=nanoplot_dict["total_bases"]
+    )
+
+    return QcMethodIndex(
+        software=QcSoftware.NANOPLOT,
+        result=result
+    )
+
+
+###Next: add path to NanoStats.txt in other files
+
