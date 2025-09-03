@@ -39,11 +39,11 @@ ENV TZ=UTC
 # Set the working directory in the final image
 WORKDIR /usr/src/app
 
-# Install openjdk-17 and R
+# Install openjdk-25 and R
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-        openjdk-17-jre-headless \
+        openjdk-25-jre-headless \
         r-base \
         tzdata && \
     ln -fs /usr/share/zoneinfo/$TZ /etc/localtime && \
