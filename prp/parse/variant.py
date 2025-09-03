@@ -2,6 +2,7 @@
 
 import logging
 import re
+import os
 
 from cyvcf2 import VCF, Variant
 
@@ -112,12 +113,13 @@ def _get_variant_caller(vcf_obj: VCF) -> str | None:
 
 def load_variants(variant_file: str) -> list[VariantBase]:
     """Load variants."""
-    try:
-        vcf_obj = VCF(variant_file)
-        next(vcf_obj)
-    except OSError:
+    if not os.path.exists(variant_file):
         LOG.warning("Variant filepath %s does not exist, check mounts and filepath...", variant_file)
         return None
+
+    vcf_obj = VCF(variant_file)
+    try:
+        next(vcf_obj)
     except StopIteration:
         LOG.warning("Variant file %s does not include any variants", variant_file)
         return None
