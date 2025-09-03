@@ -437,5 +437,3 @@ def parse_nanoplot_results(nanoplot_fpath: str) -> QcMethodIndex:
     )
 
 
-###Next: add path to NanoStats.txt in other files
-
