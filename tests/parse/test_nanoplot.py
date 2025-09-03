@@ -12,7 +12,7 @@ def test_parse_nanoplot_results(saureus_nanoplot_path):
     result = parse_nanoplot_results(saureus_nanoplot_path)
     expected_nanoplot = {
         "software": "nanoplot",
-        "variant": None,
+        "version": None,
         "result": {
             "mean_read_length": 4697.8,
             "mean_read_quality": 13.2,
