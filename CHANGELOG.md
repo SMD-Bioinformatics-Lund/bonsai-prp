@@ -6,6 +6,9 @@
 
 ### Changed
 
+ - Set environment variables to avoid interactive prompts in `Dockerfile` by incl. TZ data
+ - Updated `openjdk-17` to `openjdk-25` in `Dockerfile`
+
 ## [1.3.4]
 
 ### Added
