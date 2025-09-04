@@ -117,7 +117,7 @@ def parse_stx_typing(path: str) -> MethodIndex | None:
                     region_info = seq_regions.get(region_key)
                     if region_info:
                         vir_gene = parse_vir_gene(region_info, function=function)
-                        gene = TypingResultGeneAllele(**vir_gene.model_dump())
+                        gene = TypingResultGeneAllele.model_validate(**vir_gene.model_dump())
                         return MethodIndex(
                             type=TypingMethod.STX,
                             software=Software.VIRFINDER,
