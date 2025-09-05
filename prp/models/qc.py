@@ -22,6 +22,7 @@ class QcSoftware(Enum):
     POSTALIGNQC = "postalignqc"
     CHEWBBACA = TypingSoftware.CHEWBBACA.value
     GAMBITCORE = "gambitcore"
+    NANOPLOT = "nanoplot"
 
 
 class QuastQcResult(BaseModel):
@@ -74,6 +75,19 @@ class GambitcoreQcResult(BaseModel):
     assembly_qc: str | None = None
 
 
+class NanoPlotQcResult(BaseModel):
+    """Nanopore sequencing QC metrics from NanoPlot."""
+
+    mean_read_length: float
+    mean_read_quality: float
+    median_read_length: float
+    median_read_quality: float
+    number_of_reads: float
+    read_length_n50: float
+    stdev_read_length: float
+    total_bases: float
+
+
 class QcMethodIndex(RWModel):
     """QC results container.
 
@@ -83,7 +97,7 @@ class QcMethodIndex(RWModel):
 
     software: QcSoftware
     version: str | None = None
-    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult
+    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult | NanoPlotQcResult
 
 
 class CdmQcMethodIndex(QcMethodIndex):

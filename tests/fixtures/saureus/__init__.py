@@ -104,3 +104,8 @@ def saureus_spatyper_path(data_path: Path) -> str:
 def saureus_sccmec_path(data_path: Path) -> str:
     """Get path for saureus sccmec file"""
     return str(data_path.joinpath("saureus", "sccmec.tsv"))
+
+@pytest.fixture()
+def saureus_nanoplot_path(data_path: Path) -> str:
+    """Get path for saureus nanoplot file"""
+    return str(data_path.joinpath("saureus", "nanoplot.txt"))
