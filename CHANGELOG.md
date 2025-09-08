@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Added
+- Added parsing of `NanoPlot` results and corresponding test
 
 ### Fixed
 
@@ -9,6 +10,8 @@
  - Updated virulencefinder outputs for pytest
  - Changed test fixtures for ecoli stx sample
  - Removed `AmrFinderResistanceGene` as it confuses model
+ - Set environment variables to avoid interactive prompts in `Dockerfile` by incl. TZ data
+ - Updated `openjdk-17` to `openjdk-25` in `Dockerfile`
 
 ## [1.3.4]
 
