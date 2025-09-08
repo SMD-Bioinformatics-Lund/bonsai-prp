@@ -10,6 +10,7 @@ import pandas as pd
 
 from ..models.phenotype import (
     AmrFinderGene,
+    AmrFinderResistanceGene,
     AmrFinderVariant,
     AmrFinderVirulenceGene,
     AMRMethodIndex,
@@ -73,14 +74,14 @@ def _read_result(path: str) -> Tuple[AmrFinderGenes, AmrFinderVariants]:
 
 def _format_gene(
     hit: Dict[str, Any]
-) -> AmrFinderGene | AmrFinderVirulenceGene:
+) -> AmrFinderGene | AmrFinderVirulenceGene | AmrFinderResistanceGene:
     """Format AMRfinder gene."""
     element_type = ElementType(hit["element_type"])
     match element_type:
         case ElementType.VIR:
             gene_type = AmrFinderVirulenceGene
         case ElementType.AMR:
-            gene_type = AmrFinderGene
+            gene_type = AmrFinderResistanceGene
         case _:
             gene_type = AmrFinderGene
 
