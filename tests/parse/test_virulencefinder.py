@@ -1,7 +1,5 @@
 """Virulencefinder parser test suite."""
 
-# import pytest
-
 from prp.models.typing import TypingResultGeneAllele
 from prp.parse.virulencefinder import (
     VirulenceMethodIndex,
@@ -10,7 +8,6 @@ from prp.parse.virulencefinder import (
 )
 
 
-# @pytest.mark.parametrize("input", indirect=["ecoli_virulencefinder_wo_sxt_path"])
 def test_parse_virulencefinder_output(ecoli_virulencefinder_stx_pred_stx_path):
     """Test parsing virulencefinder output json file."""
     result = parse_virulence_pred(ecoli_virulencefinder_stx_pred_stx_path)
@@ -18,7 +15,7 @@ def test_parse_virulencefinder_output(ecoli_virulencefinder_stx_pred_stx_path):
     # test that result is method index
     assert isinstance(result, VirulenceMethodIndex)
     # test that all genes are identified
-    assert len(result.result.genes) == 26
+    assert len(result.result.genes) == 29
 
 
 def test_parse_stx_typing(

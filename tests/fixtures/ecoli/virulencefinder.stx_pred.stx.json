@@ -1,402 +1,1301 @@
 {
-  "virulencefinder": {
-    "user_input": {
-      "filename(s)": [
-        "ecoli_test_1_1.fastq.gz",
-        "ecoli_test_1_2.fastq.gz"
-      ],
-      "method": "kma",
-      "file_format": "fastq"
-    },
-    "run_info": {
-      "date": "15.12.2023",
-      "time": "16:16:22"
-    },
-    "results": {
-      "Escherichia coli": {
-        "virulence_ecoli": {
-          "fimH:35:NA": {
-            "virulence_gene": "fimH",
-            "identity": 100,
-            "HSP_length": 489,
-            "template_length": 489,
-            "position_in_ref": "1..490",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "35",
-            "accession": "NA",
-            "protein_function": "   Type 1 fimbriae",
-            "coverage": 100,
-            "hit_id": "fimH:35:NA"
-          },
-          "gad:20:AP010953": {
-            "virulence_gene": "gad",
-            "identity": 100,
-            "HSP_length": 1401,
-            "template_length": 1401,
-            "position_in_ref": "1..1402",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "20",
-            "accession": "AP010953",
-            "protein_function": "  Glutamate decarboxylase",
-            "coverage": 100,
-            "hit_id": "gad:20:AP010953"
-          },
-          "gad:42:AP010953": {
-            "virulence_gene": "gad",
-            "identity": 93.43,
-            "HSP_length": 1309,
-            "template_length": 1401,
-            "position_in_ref": "93..1402",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "42",
-            "accession": "AP010953",
-            "protein_function": "  Glutamate decarboxylase",
-            "coverage": 93.43,
-            "hit_id": "gad:42:AP010953"
-          },
-          "hlyE:3:ECU57430": {
-            "virulence_gene": "hlyE",
-            "identity": 99.02,
-            "HSP_length": 918,
-            "template_length": 918,
-            "position_in_ref": "1..919",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "3",
-            "accession": "ECU57430",
-            "protein_function": "  Avian E. coli haemolysin",
-            "coverage": 99.89,
-            "hit_id": "hlyE:3:ECU57430"
-          },
-          "lpfA:8:CP002185": {
-            "virulence_gene": "lpfA",
-            "identity": 100,
-            "HSP_length": 573,
-            "template_length": 573,
-            "position_in_ref": "1..574",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "8",
-            "accession": "CP002185",
-            "protein_function": "  Long polar fimbriae",
-            "coverage": 100,
-            "hit_id": "lpfA:8:CP002185"
-          },
-          "nfaE:2:FM955462": {
-            "virulence_gene": "nfaE",
-            "identity": 99.73,
-            "HSP_length": 744,
-            "template_length": 744,
-            "position_in_ref": "1..745",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "2",
-            "accession": "FM955462",
-            "protein_function": "  Diffuse adherence fibrillar adhesin gene",
-            "coverage": 100,
-            "hit_id": "nfaE:2:FM955462"
-          },
-          "nlpI:1:CP000243": {
-            "virulence_gene": "nlpI",
-            "identity": 99.77,
-            "HSP_length": 885,
-            "template_length": 885,
-            "position_in_ref": "1..886",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "1",
-            "accession": "CP000243",
-            "protein_function": "  lipoprotein NlpI precursor",
-            "coverage": 100,
-            "hit_id": "nlpI:1:CP000243"
-          },
-          "stx2c-O157-FLY16:52:AB015057:52": {
-            "virulence_gene": "stx2c-O157-FLY16",
-            "identity": 99.92,
-            "HSP_length": 1241,
-            "template_length": 1241,
-            "position_in_ref": "1..1242",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "52",
-            "accession": "AB015057",
-            "protein_function": "   stx2c-O157-FLY16",
-            "coverage": 100,
-            "hit_id": "stx2c-O157-FLY16:52:AB015057:52"
-          },
-          "afaA:1:X76688": {
-            "virulence_gene": "afaA",
-            "identity": 100,
-            "HSP_length": 306,
-            "template_length": 306,
-            "position_in_ref": "1..307",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "1",
-            "accession": "X76688",
-            "protein_function": "  Transcriptional regulator",
-            "coverage": 100,
-            "hit_id": "afaA:1:X76688"
-          },
-          "afaC:10:KR338832": {
-            "virulence_gene": "afaC",
-            "identity": 96.75,
-            "HSP_length": 2513,
-            "template_length": 2583,
-            "position_in_ref": "31..2544",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "10",
-            "accession": "KR338832",
-            "protein_function": "  Outer membrane usher protein",
-            "coverage": 97.29,
-            "hit_id": "afaC:10:KR338832"
-          },
-          "afaC:2:JN688153": {
-            "virulence_gene": "afaC",
-            "identity": 91.79,
-            "HSP_length": 2439,
-            "template_length": 2583,
-            "position_in_ref": "145..2584",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "2",
-            "accession": "JN688153",
-            "protein_function": "  Outer membrane usher protein",
-            "coverage": 92.49,
-            "hit_id": "afaC:2:JN688153"
-          },
-          "afaD:24:FM955462": {
-            "virulence_gene": "afaD",
-            "identity": 100,
-            "HSP_length": 444,
-            "template_length": 444,
-            "position_in_ref": "1..445",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "24",
-            "accession": "FM955462",
-            "protein_function": "  Afimbrial adhesion",
-            "coverage": 100,
-            "hit_id": "afaD:24:FM955462"
-          },
-          "fyuA:1:CU928163": {
-            "virulence_gene": "fyuA",
-            "identity": 100,
-            "HSP_length": 2022,
-            "template_length": 2022,
-            "position_in_ref": "1..2023",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "1",
-            "accession": "CU928163",
-            "protein_function": "  Siderophore receptor",
-            "coverage": 100,
-            "hit_id": "fyuA:1:CU928163"
-          },
-          "irp2:254:NZ_UEMU01000024": {
-            "virulence_gene": "irp2",
-            "identity": 100,
-            "HSP_length": 6108,
-            "template_length": 6108,
-            "position_in_ref": "1..6109",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "254",
-            "accession": "NZ_UEMU01000024",
-            "protein_function": "  High molecular weight protein 2 non-ribosomal peptide synthetase",
-            "coverage": 100,
-            "hit_id": "irp2:254:NZ_UEMU01000024"
-          },
-          "terC:23:MG591698": {
-            "virulence_gene": "terC",
-            "identity": 99.9,
-            "HSP_length": 966,
-            "template_length": 966,
-            "position_in_ref": "1..967",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "23",
-            "accession": "MG591698",
-            "protein_function": "  Tellurium ion resistance protein",
-            "coverage": 100,
-            "hit_id": "terC:23:MG591698"
-          },
-          "terC:5:CP007491": {
-            "virulence_gene": "terC",
-            "identity": 100,
-            "HSP_length": 714,
-            "template_length": 714,
-            "position_in_ref": "1..715",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "5",
-            "accession": "CP007491",
-            "protein_function": "  Tellurium ion resistance protein",
-            "coverage": 100,
-            "hit_id": "terC:5:CP007491"
-          },
-          "traT:39:CYGN01000138": {
-            "virulence_gene": "traT",
-            "identity": 100,
-            "HSP_length": 732,
-            "template_length": 732,
-            "position_in_ref": "1..733",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "39",
-            "accession": "CYGN01000138",
-            "protein_function": "  Outer membrane protein complement resistance",
-            "coverage": 100,
-            "hit_id": "traT:39:CYGN01000138"
-          },
-          "traT:82:NZ_UIIQ01000098": {
-            "virulence_gene": "traT",
-            "identity": 91.43,
-            "HSP_length": 674,
-            "template_length": 735,
-            "position_in_ref": "1..675",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "82",
-            "accession": "NZ_UIIQ01000098",
-            "protein_function": "  Outer membrane protein complement resistance",
-            "coverage": 91.7,
-            "hit_id": "traT:82:NZ_UIIQ01000098"
-          },
-          "yehA:1:CP042934": {
-            "virulence_gene": "yehA",
-            "identity": 97.97,
-            "HSP_length": 1035,
-            "template_length": 1035,
-            "position_in_ref": "1..1036",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "1",
-            "accession": "CP042934",
-            "protein_function": "  Outer membrane lipoprotein, YHD fimbriael cluster",
-            "coverage": 100,
-            "hit_id": "yehA:1:CP042934"
-          },
-          "yehB:1:CP042934": {
-            "virulence_gene": "yehB",
-            "identity": 97.86,
-            "HSP_length": 2481,
-            "template_length": 2481,
-            "position_in_ref": "1..2482",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "1",
-            "accession": "CP042934",
-            "protein_function": " Usher, YHD fimbriael cluster",
-            "coverage": 100,
-            "hit_id": "yehB:1:CP042934"
-          },
-          "yehC:1:CP042934": {
-            "virulence_gene": "yehC",
-            "identity": 98.37,
-            "HSP_length": 675,
-            "template_length": 675,
-            "position_in_ref": "1..676",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "1",
-            "accession": "CP042934",
-            "protein_function": " Chaperone, YHD fimbriael cluster",
-            "coverage": 100,
-            "hit_id": "yehC:1:CP042934"
-          },
-          "yehD:1:CP042934": {
-            "virulence_gene": "yehD",
-            "identity": 98.71,
-            "HSP_length": 543,
-            "template_length": 543,
-            "position_in_ref": "1..544",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "1",
-            "accession": "CP042934",
-            "protein_function": " Major pilin subunit, YHD fimbriael cluster",
-            "coverage": 100,
-            "hit_id": "yehD:1:CP042934"
-          },
-          "csgA:1:CP069646": {
-            "virulence_gene": "csgA",
-            "identity": 98.9,
-            "HSP_length": 456,
-            "template_length": 456,
-            "position_in_ref": "1..457",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "1",
-            "accession": "CP069646",
-            "protein_function": " curlin major subunit CsgA",
-            "coverage": 100,
-            "hit_id": "csgA:1:CP069646"
-          },
-          "anr:shigella:AL391753": {
-            "virulence_gene": "anr",
-            "identity": 94.37,
-            "HSP_length": 213,
-            "template_length": 213,
-            "position_in_ref": "1..214",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "shigella",
-            "accession": "AL391753",
-            "protein_function": " AraC negative regulator",
-            "coverage": 100,
-            "hit_id": "anr:shigella:AL391753"
-          },
-          "fdeC:1:AP010953": {
-            "virulence_gene": "fdeC",
-            "identity": 94.85,
-            "HSP_length": 4254,
-            "template_length": 4254,
-            "position_in_ref": "1..4255",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "1",
-            "accession": "AP010953",
-            "protein_function": " intimin-like adhesin FdeC",
-            "coverage": 97.67,
-            "hit_id": "fdeC:1:AP010953"
-          },
-          "shiA:3:CP058222": {
-            "virulence_gene": "shiA",
-            "identity": 100,
-            "HSP_length": 1044,
-            "template_length": 1044,
-            "position_in_ref": "1..1045",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "3",
-            "accession": "CP058222",
-            "protein_function": " homologs of the Shigella flexneri SHI-2 pathogenicity island gene shiA",
-            "coverage": 100,
-            "hit_id": "shiA:3:CP058222"
-          }
-        },
-        "stx": {
-          "stx2:52:AB015057:52": {
-            "virulence_gene": "stx2",
-            "identity": 100,
-            "HSP_length": 1241,
-            "template_length": 1241,
-            "position_in_ref": "1..1242",
-            "contig_name": "NA",
-            "positions_in_contig": "NA..NA",
-            "note": "52",
-            "accession": "AB015057",
-            "protein_function": "O157 FLY16, variant c",
-            "coverage": 100,
-            "hit_id": "stx2:52:AB015057:52"
-          }
-        }
+  "type": "software_result",
+  "databases": {
+      "VirulenceFinder-2.0.1": {
+          "type": "database",
+          "database_name": "VirulenceFinder",
+          "database_version": "2.0.1",
+          "key": "VirulenceFinder-2.0.1",
+          "database_commit": "9638945ea72ec748beded45bb9fe48351eee346f"
       }
-    }
-  }
+  },
+  "seq_regions": {
+      "AslA;;1;;CP022686": {
+          "type": "seq_region",
+          "phenotypes": [
+              "AslA"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "AslA:1:CP022686",
+          "name": "AslA",
+          "ref_acc": "CP022686",
+          "identity": 92.93,
+          "alignment_length": 1656,
+          "ref_seq_length": 1656,
+          "depth": 81.28,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1657,
+          "coverage": 97.83,
+          "grade": 1,
+          "key": "AslA;;1;;CP022686"
+      },
+      "eae-g01-gamma_1;;44;;AF071034": {
+          "type": "seq_region",
+          "phenotypes": [
+              "eae-g01-gamma 1"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "eae-g01-gamma_1:44:AF071034",
+          "name": "eae-g01-gamma_1",
+          "ref_acc": "AF071034",
+          "identity": 100.0,
+          "alignment_length": 2805,
+          "ref_seq_length": 2805,
+          "depth": 112.31,
+          "ref_start_pos": 1,
+          "ref_end_pos": 2806,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "eae-g01-gamma_1;;44;;AF071034"
+      },
+      "espA;;19;;AE005174": {
+          "type": "seq_region",
+          "phenotypes": [
+              "espA"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "espA:19:AE005174",
+          "name": "espA",
+          "ref_acc": "AE005174",
+          "identity": 100.0,
+          "alignment_length": 579,
+          "ref_seq_length": 579,
+          "depth": 97.86,
+          "ref_start_pos": 1,
+          "ref_end_pos": 580,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "espA;;19;;AE005174"
+      },
+      "espB;;6;;AE005174": {
+          "type": "seq_region",
+          "phenotypes": [
+              "espB"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "espB:6:AE005174",
+          "name": "espB",
+          "ref_acc": "AE005174",
+          "identity": 100.0,
+          "alignment_length": 939,
+          "ref_seq_length": 939,
+          "depth": 101.97,
+          "ref_start_pos": 1,
+          "ref_end_pos": 940,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "espB;;6;;AE005174"
+      },
+      "espJ;;2;;AE005174": {
+          "type": "seq_region",
+          "phenotypes": [
+              "espJ"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "espJ:2:AE005174",
+          "name": "espJ",
+          "ref_acc": "AE005174",
+          "identity": 100.0,
+          "alignment_length": 654,
+          "ref_seq_length": 654,
+          "depth": 65.74,
+          "ref_start_pos": 1,
+          "ref_end_pos": 655,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "espJ;;2;;AE005174"
+      },
+      "espP;;4;;AB011549": {
+          "type": "seq_region",
+          "phenotypes": [
+              "espP"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "espP:4:AB011549",
+          "name": "espP",
+          "ref_acc": "AB011549",
+          "identity": 99.92,
+          "alignment_length": 3903,
+          "ref_seq_length": 3903,
+          "depth": 241.53,
+          "ref_start_pos": 1,
+          "ref_end_pos": 3904,
+          "coverage": 99.97,
+          "grade": 1,
+          "key": "espP;;4;;AB011549"
+      },
+      "etpD;;1;;AB011549": {
+          "type": "seq_region",
+          "phenotypes": [
+              "etpD"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "etpD:1:AB011549",
+          "name": "etpD",
+          "ref_acc": "AB011549",
+          "identity": 100.0,
+          "alignment_length": 1758,
+          "ref_seq_length": 1758,
+          "depth": 275.85,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1759,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "etpD;;1;;AB011549"
+      },
+      "fimH": {
+          "type": "seq_region",
+          "phenotypes": [
+              "fimH"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "fimH:82:NA",
+          "name": "fimH",
+          "identity": 100.0,
+          "alignment_length": 489,
+          "ref_seq_length": 489,
+          "depth": 97.6,
+          "ref_start_pos": 1,
+          "ref_end_pos": 490,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "fimH"
+      },
+      "gad;;6;;BA000007": {
+          "type": "seq_region",
+          "phenotypes": [
+              "gad"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "gad:6:BA000007",
+          "name": "gad",
+          "ref_acc": "BA000007",
+          "identity": 100.0,
+          "alignment_length": 1401,
+          "ref_seq_length": 1401,
+          "depth": 101.82,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1402,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "gad;;6;;BA000007"
+      },
+      "gad;;44;;BA000007": {
+          "type": "seq_region",
+          "phenotypes": [
+              "gad"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "gad:44:BA000007",
+          "name": "gad",
+          "ref_acc": "BA000007",
+          "identity": 100.0,
+          "alignment_length": 1401,
+          "ref_seq_length": 1401,
+          "depth": 109.37,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1402,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "gad;;44;;BA000007"
+      },
+      "ehxA;;3;;AB011549": {
+          "type": "seq_region",
+          "phenotypes": [
+              "ehxA"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "ehxA:3:AB011549",
+          "name": "ehxA",
+          "ref_acc": "AB011549",
+          "identity": 100.0,
+          "alignment_length": 2997,
+          "ref_seq_length": 2997,
+          "depth": 219.95,
+          "ref_start_pos": 1,
+          "ref_end_pos": 2998,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "ehxA;;3;;AB011549"
+      },
+      "hlyE;;3;;ECU57430": {
+          "type": "seq_region",
+          "phenotypes": [
+              "hlyE"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "hlyE:3:ECU57430",
+          "name": "hlyE",
+          "ref_acc": "ECU57430",
+          "identity": 98.47,
+          "alignment_length": 918,
+          "ref_seq_length": 918,
+          "depth": 141.0,
+          "ref_start_pos": 1,
+          "ref_end_pos": 919,
+          "coverage": 100.0,
+          "grade": 2,
+          "key": "hlyE;;3;;ECU57430"
+      },
+      "iha;;14;;AE005174": {
+          "type": "seq_region",
+          "phenotypes": [
+              "iha"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "iha:14:AE005174",
+          "name": "iha",
+          "ref_acc": "AE005174",
+          "identity": 100.0,
+          "alignment_length": 2091,
+          "ref_seq_length": 2091,
+          "depth": 223.66,
+          "ref_start_pos": 1,
+          "ref_end_pos": 2092,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "iha;;14;;AE005174"
+      },
+      "iss;;3;;CP001509": {
+          "type": "seq_region",
+          "phenotypes": [
+              "iss"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "iss:3:CP001509",
+          "name": "iss",
+          "ref_acc": "CP001509",
+          "identity": 95.24,
+          "alignment_length": 284,
+          "ref_seq_length": 294,
+          "depth": 99.11,
+          "ref_start_pos": 1,
+          "ref_end_pos": 285,
+          "coverage": 96.6,
+          "grade": 1,
+          "key": "iss;;3;;CP001509"
+      },
+      "iss;;6;;CP001846": {
+          "type": "seq_region",
+          "phenotypes": [
+              "iss"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "iss:6:CP001846",
+          "name": "iss",
+          "ref_acc": "CP001846",
+          "identity": 93.54,
+          "alignment_length": 282,
+          "ref_seq_length": 294,
+          "depth": 54.06,
+          "ref_start_pos": 13,
+          "ref_end_pos": 295,
+          "coverage": 94.56,
+          "grade": 1,
+          "key": "iss;;6;;CP001846"
+      },
+      "katP;;1;;AB011549": {
+          "type": "seq_region",
+          "phenotypes": [
+              "katP"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "katP:1:AB011549",
+          "name": "katP",
+          "ref_acc": "AB011549",
+          "identity": 100.0,
+          "alignment_length": 2211,
+          "ref_seq_length": 2211,
+          "depth": 245.54,
+          "ref_start_pos": 1,
+          "ref_end_pos": 2212,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "katP;;1;;AB011549"
+      },
+      "nleA;;8;;AE005174": {
+          "type": "seq_region",
+          "phenotypes": [
+              "nleA"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "nleA:8:AE005174",
+          "name": "nleA",
+          "ref_acc": "AE005174",
+          "identity": 100.0,
+          "alignment_length": 1326,
+          "ref_seq_length": 1326,
+          "depth": 133.91,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1327,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "nleA;;8;;AE005174"
+      },
+      "nleB;;3;;AE005174": {
+          "type": "seq_region",
+          "phenotypes": [
+              "nleB"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "nleB:3:AE005174",
+          "name": "nleB",
+          "ref_acc": "AE005174",
+          "identity": 100.0,
+          "alignment_length": 981,
+          "ref_seq_length": 981,
+          "depth": 75.15,
+          "ref_start_pos": 1,
+          "ref_end_pos": 982,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "nleB;;3;;AE005174"
+      },
+      "nleB;;13;;AE005174": {
+          "type": "seq_region",
+          "phenotypes": [
+              "nleB"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "nleB:13:AE005174",
+          "name": "nleB",
+          "ref_acc": "AE005174",
+          "identity": 100.0,
+          "alignment_length": 990,
+          "ref_seq_length": 990,
+          "depth": 91.38,
+          "ref_start_pos": 1,
+          "ref_end_pos": 991,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "nleB;;13;;AE005174"
+      },
+      "nleC;;4;;AE005174": {
+          "type": "seq_region",
+          "phenotypes": [
+              "nleC"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "nleC:4:AE005174",
+          "name": "nleC",
+          "ref_acc": "AE005174",
+          "identity": 100.0,
+          "alignment_length": 993,
+          "ref_seq_length": 993,
+          "depth": 98.05,
+          "ref_start_pos": 1,
+          "ref_end_pos": 994,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "nleC;;4;;AE005174"
+      },
+      "nlpI;;1;;CP000243": {
+          "type": "seq_region",
+          "phenotypes": [
+              "nlpI"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "nlpI:1:CP000243",
+          "name": "nlpI",
+          "ref_acc": "CP000243",
+          "identity": 99.77,
+          "alignment_length": 885,
+          "ref_seq_length": 885,
+          "depth": 115.84,
+          "ref_start_pos": 1,
+          "ref_end_pos": 886,
+          "coverage": 100.0,
+          "grade": 2,
+          "key": "nlpI;;1;;CP000243"
+      },
+      "stx2c-O157-FLY16;;52;;AB015057_52": {
+          "type": "seq_region",
+          "phenotypes": [
+              "stx2c-O157-FLY16"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "stx2c-O157-FLY16:52:AB015057:52",
+          "name": "stx2c-O157-FLY16",
+          "ref_acc": "AB015057_52",
+          "identity": 99.92,
+          "alignment_length": 1241,
+          "ref_seq_length": 1241,
+          "depth": 103.34,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1242,
+          "coverage": 100.0,
+          "grade": 2,
+          "key": "stx2c-O157-FLY16;;52;;AB015057_52"
+      },
+      "tccP;;29;;CP001368": {
+          "type": "seq_region",
+          "phenotypes": [
+              "tccP"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "tccP:29:CP001368",
+          "name": "tccP",
+          "ref_acc": "CP001368",
+          "identity": 100.0,
+          "alignment_length": 1014,
+          "ref_seq_length": 1014,
+          "depth": 168.49,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1015,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "tccP;;29;;CP001368"
+      },
+      "tir;;18;;EU871626": {
+          "type": "seq_region",
+          "phenotypes": [
+              "tir"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "tir:18:EU871626",
+          "name": "tir",
+          "ref_acc": "EU871626",
+          "identity": 100.0,
+          "alignment_length": 1695,
+          "ref_seq_length": 1695,
+          "depth": 97.71,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1696,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "tir;;18;;EU871626"
+      },
+      "toxB;;1;;AB011549": {
+          "type": "seq_region",
+          "phenotypes": [
+              "toxB"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "toxB:1:AB011549",
+          "name": "toxB",
+          "ref_acc": "AB011549",
+          "identity": 99.94,
+          "alignment_length": 9510,
+          "ref_seq_length": 9510,
+          "depth": 139.58,
+          "ref_start_pos": 1,
+          "ref_end_pos": 9511,
+          "coverage": 100.0,
+          "grade": 2,
+          "key": "toxB;;1;;AB011549"
+      },
+      "chuA;;9;;UGGA01000003": {
+          "type": "seq_region",
+          "phenotypes": [
+              "chuA"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "chuA:9:UGGA01000003",
+          "name": "chuA",
+          "ref_acc": "UGGA01000003",
+          "identity": 100.0,
+          "alignment_length": 1983,
+          "ref_seq_length": 1983,
+          "depth": 123.97,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1984,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "chuA;;9;;UGGA01000003"
+      },
+      "ompT;;45;;AKKY01000312": {
+          "type": "seq_region",
+          "phenotypes": [
+              "ompT"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "ompT:45:AKKY01000312",
+          "name": "ompT",
+          "ref_acc": "AKKY01000312",
+          "identity": 100.0,
+          "alignment_length": 954,
+          "ref_seq_length": 954,
+          "depth": 172.75,
+          "ref_start_pos": 1,
+          "ref_end_pos": 955,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "ompT;;45;;AKKY01000312"
+      },
+      "terC;;23;;MG591698": {
+          "type": "seq_region",
+          "phenotypes": [
+              "terC"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "terC:23:MG591698",
+          "name": "terC",
+          "ref_acc": "MG591698",
+          "identity": 98.45,
+          "alignment_length": 966,
+          "ref_seq_length": 966,
+          "depth": 118.81,
+          "ref_start_pos": 1,
+          "ref_end_pos": 967,
+          "coverage": 100.0,
+          "grade": 2,
+          "key": "terC;;23;;MG591698"
+      },
+      "terC;;5;;CP007491": {
+          "type": "seq_region",
+          "phenotypes": [
+              "terC"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "terC:5:CP007491",
+          "name": "terC",
+          "ref_acc": "CP007491",
+          "identity": 90.2,
+          "alignment_length": 669,
+          "ref_seq_length": 714,
+          "depth": 47.83,
+          "ref_start_pos": 1,
+          "ref_end_pos": 670,
+          "coverage": 91.32,
+          "grade": 1,
+          "key": "terC;;5;;CP007491"
+      },
+      "terC;;9;;AE005174": {
+          "type": "seq_region",
+          "phenotypes": [
+              "terC"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "terC:9:AE005174",
+          "name": "terC",
+          "ref_acc": "AE005174",
+          "identity": 100.0,
+          "alignment_length": 1041,
+          "ref_seq_length": 1041,
+          "depth": 227.02,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1042,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "terC;;9;;AE005174"
+      },
+      "traT;;60;;AMTE01000156": {
+          "type": "seq_region",
+          "phenotypes": [
+              "traT"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "traT:60:AMTE01000156",
+          "name": "traT",
+          "ref_acc": "AMTE01000156",
+          "identity": 100.0,
+          "alignment_length": 129,
+          "ref_seq_length": 129,
+          "depth": 127.61,
+          "ref_start_pos": 1,
+          "ref_end_pos": 130,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "traT;;60;;AMTE01000156"
+      },
+      "traT;;61;;AKKX01000148": {
+          "type": "seq_region",
+          "phenotypes": [
+              "traT"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "traT:61:AKKX01000148",
+          "name": "traT",
+          "ref_acc": "AKKX01000148",
+          "identity": 95.74,
+          "alignment_length": 414,
+          "ref_seq_length": 423,
+          "depth": 62.76,
+          "ref_start_pos": 10,
+          "ref_end_pos": 424,
+          "coverage": 95.74,
+          "grade": 1,
+          "key": "traT;;61;;AKKX01000148"
+      },
+      "traT;;66;;AKLG01000186": {
+          "type": "seq_region",
+          "phenotypes": [
+              "traT"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "traT:66:AKLG01000186",
+          "name": "traT",
+          "ref_acc": "AKLG01000186",
+          "identity": 98.71,
+          "alignment_length": 620,
+          "ref_seq_length": 618,
+          "depth": 156.26,
+          "ref_start_pos": 4,
+          "ref_end_pos": 624,
+          "coverage": 99.84,
+          "grade": 1,
+          "key": "traT;;66;;AKLG01000186"
+      },
+      "csgA;;1;;CP069646": {
+          "type": "seq_region",
+          "phenotypes": [
+              "csgA"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "csgA:1:CP069646",
+          "name": "csgA",
+          "ref_acc": "CP069646",
+          "identity": 93.64,
+          "alignment_length": 459,
+          "ref_seq_length": 456,
+          "depth": 108.47,
+          "ref_start_pos": 1,
+          "ref_end_pos": 460,
+          "coverage": 100.66,
+          "grade": 1,
+          "key": "csgA;;1;;CP069646"
+      },
+      "anr;;shigella;;AL391753": {
+          "type": "seq_region",
+          "phenotypes": [
+              "anr"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "anr:shigella:AL391753",
+          "name": "anr",
+          "ref_acc": "AL391753",
+          "identity": 94.37,
+          "alignment_length": 213,
+          "ref_seq_length": 213,
+          "depth": 149.46,
+          "ref_start_pos": 1,
+          "ref_end_pos": 214,
+          "coverage": 100.0,
+          "grade": 2,
+          "key": "anr;;shigella;;AL391753"
+      },
+      "espY2;;1;;000868321": {
+          "type": "seq_region",
+          "phenotypes": [
+              "espY2"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "gene": true,
+          "ref_id": "espY2:1:000868321",
+          "name": "espY2",
+          "ref_acc": "000868321",
+          "identity": 100.0,
+          "alignment_length": 570,
+          "ref_seq_length": 570,
+          "depth": 104.76,
+          "ref_start_pos": 1,
+          "ref_end_pos": 571,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "espY2;;1;;000868321"
+      },
+      "stx2;;52;;AB015057_52": {
+          "type": "seq_region",
+          "phenotypes": [
+              "stx2"
+          ],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:stx"
+          ],
+          "gene": true,
+          "ref_id": "stx2:52:AB015057:52",
+          "name": "stx2",
+          "ref_acc": "AB015057_52",
+          "identity": 100.0,
+          "alignment_length": 1241,
+          "ref_seq_length": 1241,
+          "depth": 108.58,
+          "ref_start_pos": 1,
+          "ref_end_pos": 1242,
+          "coverage": 100.0,
+          "grade": 3,
+          "key": "stx2;;52;;AB015057_52"
+      }
+  },
+  "seq_variations": {},
+  "phenotypes": {
+      "AslA": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "AslA;;1;;CP022686"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "AslA",
+          "function": "No function found in database"
+      },
+      "eae-g01-gamma 1": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "eae-g01-gamma_1;;44;;AF071034"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "eae-g01-gamma 1",
+          "function": "No function found in database"
+      },
+      "espA": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "espA;;19;;AE005174"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "espA",
+          "function": "Type III secretions system"
+      },
+      "espB": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "espB;;6;;AE005174"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "espB",
+          "function": "Secreted protein B"
+      },
+      "espJ": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "espJ;;2;;AE005174"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "espJ",
+          "function": "Prophage-encoded type III secretion system effector"
+      },
+      "espP": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "espP;;4;;AB011549"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "espP",
+          "function": "Serine protease autotransporter EspP"
+      },
+      "etpD": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "etpD;;1;;AB011549"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "etpD",
+          "function": "Type II secretion protein EtpD"
+      },
+      "fimH": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "fimH"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "fimH",
+          "function": "Type 1 fimbriae"
+      },
+      "gad": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "gad;;6;;BA000007",
+              "gad"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "gad",
+          "function": "Glutamate decarboxylase"
+      },
+      "ehxA": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "ehxA;;3;;AB011549"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "ehxA",
+          "function": "Enterohaemolysin"
+      },
+      "hlyE": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "hlyE;;3;;ECU57430"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "hlyE",
+          "function": "Avian E. coli haemolysin"
+      },
+      "iha": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "iha;;14;;AE005174"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "iha",
+          "function": "Adherence protein"
+      },
+      "iss": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "iss;;3;;CP001509",
+              "iss"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "iss",
+          "function": "Increased serum survival"
+      },
+      "katP": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "katP;;1;;AB011549"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "katP",
+          "function": "Plasmid-encoded catalase peroxidase"
+      },
+      "nleA": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "nleA;;8;;AE005174"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "nleA",
+          "function": "Non-LEE encoded effector A"
+      },
+      "nleB": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "nleB;;3;;AE005174",
+              "nleB"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "nleB",
+          "function": "Non-LEE encoded effector B"
+      },
+      "nleC": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "nleC;;4;;AE005174"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "nleC",
+          "function": "Non-LEE encoded effector C"
+      },
+      "nlpI": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "nlpI;;1;;CP000243"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "nlpI",
+          "function": "lipoprotein NlpI precursor"
+      },
+      "stx2c-O157-FLY16": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "stx2c-O157-FLY16;;52;;AB015057_52"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "stx2c-O157-FLY16",
+          "function": "stx2c-O157-FLY16"
+      },
+      "tccP": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "tccP;;29;;CP001368"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "tccP",
+          "function": "Tir-cytoskeleton coupling protein"
+      },
+      "tir": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "tir;;18;;EU871626"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "tir",
+          "function": "Translocated intimin receptor protein"
+      },
+      "toxB": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "toxB;;1;;AB011549"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "toxB",
+          "function": "Toxin B"
+      },
+      "chuA": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "chuA;;9;;UGGA01000003"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "chuA",
+          "function": "Outer membrane hemin receptor"
+      },
+      "ompT": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "ompT;;45;;AKKY01000312"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "ompT",
+          "function": "Outer membrane protease (protein protease 7)"
+      },
+      "terC": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "terC;;23;;MG591698",
+              "terC",
+              "terC"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "terC",
+          "function": "Tellurium ion resistance protein"
+      },
+      "traT": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "traT;;60;;AMTE01000156",
+              "traT",
+              "traT"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "traT",
+          "function": "Outer membrane protein complement resistance"
+      },
+      "csgA": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "csgA;;1;;CP069646"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "csgA",
+          "function": "curlin major subunit CsgA"
+      },
+      "anr": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "anr;;shigella;;AL391753"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "anr",
+          "function": "AraC negative regulator"
+      },
+      "espY2": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "espY2;;1;;000868321"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:virulence_ecoli"
+          ],
+          "category": "virulence",
+          "key": "espY2",
+          "function": "No function found in database"
+      },
+      "stx2": {
+          "type": "phenotype",
+          "amr_classes": [],
+          "seq_regions": [
+              "stx2;;52;;AB015057_52"
+          ],
+          "seq_variations": [],
+          "ref_database": [
+              "VirulenceFinder-2.0.1:stx"
+          ],
+          "category": "virulence",
+          "key": "stx2",
+          "function": "No function found in database"
+      }
+  },
+  "software_executions": {
+      "2573b3d308469c8fe0a3d09a93b2f3cd69cae86e": {
+          "type": "software_exec",
+          "command": "/usr/local/lib/python3.13/site-packages/virulencefinder/__main__.py --inputfastq /fs1/markus/pipelines/jasen/DRR076814_1.fastq.gz /fs1/markus/pipelines/jasen/DRR076814_2.fastq.gz --databases virulence_ecoli,stx --databasePath /data/bnf/dev/ryan/jasen_dev/assets/virulencefinder_db",
+          "parameters": {
+              "virulence_finder_root": "/usr/local/lib/python3.13/site-packages/virulencefinder/",
+              "env_var_file": "/usr/local/lib/python3.13/site-packages/virulencefinder/cge/environment_variables.md",
+              "outputPath": "/data/bnf/dev/ryan/test/virulencefinder/test_virulencefinder_v3.2.0",
+              "tmp_dir": "/data/bnf/dev/ryan/test/virulencefinder/test_virulencefinder_v3.2.0/tmp",
+              "out_json": false,
+              "speciesinfo_json": null,
+              "inputfasta": null,
+              "inputfastq_1": "/fs1/markus/pipelines/jasen/DRR076814_1.fastq.gz",
+              "inputfastq_2": "/fs1/markus/pipelines/jasen/DRR076814_2.fastq.gz",
+              "outPath_kma": "/data/bnf/dev/ryan/test/virulencefinder/test_virulencefinder_v3.2.0/virulencefinder_kma",
+              "sample_name": "DRR076814_1.fastq.gz",
+              "kma": "kma",
+              "nanopore": false,
+              "aligner": "kma",
+              "db_path_vir": "/data/bnf/dev/ryan/jasen_dev/assets/virulencefinder_db",
+              "db_path_vir_kma": "/data/bnf/dev/ryan/jasen_dev/assets/virulencefinder_db",
+              "db_config_file": "/data/bnf/dev/ryan/jasen_dev/assets/virulencefinder_db/config",
+              "db_notes_file": "/data/bnf/dev/ryan/jasen_dev/assets/virulencefinder_db/notes.txt",
+              "min_cov": 0.6,
+              "min_id": 0.9,
+              "overlap": 30,
+              "databases": [
+                  "virulence_ecoli",
+                  "stx"
+              ],
+              "species": [
+                  "Escherichia coli"
+              ],
+              "extended_output": false
+          },
+          "key": "2573b3d308469c8fe0a3d09a93b2f3cd69cae86e"
+      }
+  },
+  "aln_hits": {},
+  "software_name": "VirulenceFinder",
+  "software_version": "unknown",
+  "software_commit": "unknown",
+  "run_date": "2025-08-19",
+  "key": "VirulenceFinder-unknown"
 }

@@ -162,7 +162,7 @@ class GeneBase(BaseModel):
 
 
 class AmrFinderGene(GeneBase):
-    """Container for AMRFinder gene prediction information"""
+    """Container for Resfinder gene prediction information"""
 
     contig_id: str
     query_start_pos: int = Field(
