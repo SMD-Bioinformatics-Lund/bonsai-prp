@@ -11,20 +11,20 @@ def test_parse_samtools_coverage_results(saureus_samtools_coverage_path):
     # test parsing the output
     result = parse_samtools_coverage_results(saureus_samtools_coverage_path)
     expected_samtools = {
-        "type": "qc",
         "software": "samtools",
+        "version": None,
         "result": {
             "contigs": [
                 {
-                    "rname": "NC_007795.1",
+                    "rname": "NC_002951.2",
                     "startpos": 1,
-                    "endpos": 2821361,
-                    "numreads": 543217,
-                    "covbases": 2821361,
-                    "coverage": 100.0,
-                    "meandepth": 42.5,
-                    "meanbaseq": 35.8,
-                    "meanmapq": 60.0
+                    "endpos": 2809422,
+                    "numreads": 175210,
+                    "covbases": 2678233,
+                    "coverage": 95.3304,
+                    "meandepth": 186.651,
+                    "meanbaseq": 22.6,
+                    "meanmapq": 57.5
                 },
                 {
                     "rname": "NC_006629.2",
