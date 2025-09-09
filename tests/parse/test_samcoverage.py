@@ -9,7 +9,7 @@ def test_parse_samtools_coverage_results(saureus_samtools_coverage_path):
     """Test parsing of SAMtools coverage result file."""
 
     # test parsing the output
-    result = parse_samtools_coverage_results(saures_samtools_coverage_path)
+    result = parse_samtools_coverage_results(saureus_samtools_coverage_path)
     expected_samtools = {
         "type": "qc",
         "software": "samtools",
