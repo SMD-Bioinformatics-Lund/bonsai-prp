@@ -5,11 +5,11 @@ import pytest
 from prp.parse.qc import parse_samtools_coverage_results
 
 
-def test_parse_samtools_coverage_results(test_samtools_coverage_path):
+def test_parse_samtools_coverage_results(saureus_samtools_coverage_path):
     """Test parsing of SAMtools coverage result file."""
 
     # test parsing the output
-    result = parse_samtools_coverage_results(test_samtools_coverage_path)
+    result = parse_samtools_coverage_results(saures_samtools_coverage_path)
     expected_samtools = {
         "type": "qc",
         "software": "samtools",
