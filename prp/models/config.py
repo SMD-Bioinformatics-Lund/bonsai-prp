@@ -47,6 +47,7 @@ class SampleConfig(RWModel):
     postalnqc: FilePath | None = None
     gambitcore: FilePath | None = None
     nanoplot: FilePath | None = None
+    samtools: FilePath | None = None
 
     ## typing
     mlst: FilePath | None = None

@@ -42,3 +42,4 @@ ska_index: ./index.sig
 spatyper: ./spatyper.tsv
 sccmec: ./sccmec.tsv
 nanoplot: ./nanoplot.txt
+samtools: ./samcoverage.txt
