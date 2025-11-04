@@ -33,6 +33,7 @@ def parse_igv_info(
     LOG.info("Parse IGV info.")
 
     read_mapping_info: list[IgvAnnotationTrack] = []
+    filtered_variants: list[VariantBase] = []
 
     igv_alignment_track: str | None = None
     for annotation in igv_annotations:
