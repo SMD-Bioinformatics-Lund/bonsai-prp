@@ -2,9 +2,6 @@
 
 *A collection of tools for working with [JASEN](https://github.com/genomic-medicine-sweden/jasen) results or uploading it to the visualization tool [Bonsai](https://github.com/Clinical-Genomics-Lund/bonsai).*
 
-> [!WARNING]
-> Bonsai-PRP is under development in an alpha stage. Expect uneven documentation, breaking changes, and bugs until the official 1.0 release.
-
 ## Using prp
 
 Use the help argument for information on prp's functions.
@@ -20,13 +17,13 @@ PRP takes a file with information on the sample and paths to the individual resu
 This commands combines the JASEN output into serialized json object. This is good for backuping or computational analysis of the data.
 
 ```sh
-prp parse --sample /path/to/sample.cnf.yml -o dump.json
+prp format-jasen --sample /path/to/sample.cnf.yml -o dump.json
 ```
 
 ### Validate output format of result json file
 
 ```
-prp validate -o OUTPUT_FILE [-h]
+prp validate-result -o OUTPUT_FILE [-h]
 ```
 
 ### Create CDM input from pipeline data
@@ -34,7 +31,7 @@ prp validate -o OUTPUT_FILE [-h]
 Calculate quality metrics and present them in a format compatible with [CDM](https://github.com/SMD-Bioinformatics-Lund/cmd-data-management).
 
 ```sh
-prp cdm --sample /path/to/sample.cnf.yml -o dump.json
+prp format-cdm --sample /path/to/sample.cnf.yml -o dump.json
 ```
 
 ## Upload a sample to Bonsai
@@ -44,7 +41,7 @@ Use the sample config to upload a sample to Bonsai.
 The username and password can be set using either flags or by setting the environment variables `BONSAI_USER` and `BONSAI_PASSWD`.
 
 ```sh
-prp upload                         \
+prp bonsai-upload                  \
   --sample /path/to/sample.cnf.yml \
   --api http://bonsai/api          \
   --username admin                 \
