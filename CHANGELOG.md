@@ -5,6 +5,7 @@
 ### Fixed
 
 ### Changed
+- Updated prp commands in readme
 
 ## [1.4.0]
 
