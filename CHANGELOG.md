@@ -5,6 +5,7 @@
 ### Fixed
 
 ### Changed
+- Made variant input opional for creation of .json file
 
 ## [1.4.0]
 
