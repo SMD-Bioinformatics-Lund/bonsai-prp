@@ -6,6 +6,7 @@
 
 ### Changed
 - Made variant input opional for creation of .json file
+- Updated prp commands in readme
 
 ## [1.4.0]
 
