@@ -13,7 +13,8 @@
 ### Added
 
 - Added parsing of `NanoPlot` results and corresponding test
-
+- Added parsing of `SAMtools coverage` results and corresponding tests
+ 
 ### Fixed
 
 ### Changed

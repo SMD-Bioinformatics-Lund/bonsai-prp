@@ -18,6 +18,8 @@ from ..models.qc import (
     QcSoftware,
     QuastQcResult,
     NanoPlotQcResult,
+    ContigCoverage,
+    SamtoolsCoverageQcResult,
 )
 
 OptionalFile = TextIO | None
@@ -400,7 +402,7 @@ def parse_nanoplot_results(nanoplot_fpath: str) -> QcMethodIndex:
     """Parse NanoPlot QC results.
 
     Args:
-        path: Path to NanoStats.txt file
+        nanoplot_fpath: Path to NanoStats.txt file
 
     Returns:
         QcMethodIndex with NanoPlot results
@@ -437,3 +439,44 @@ def parse_nanoplot_results(nanoplot_fpath: str) -> QcMethodIndex:
     )
 
 
+def parse_samtools_coverage_results(coverage_fpath: str) -> QcMethodIndex:
+    """Parse SAMtools coverage output file and extract relevant metrics.
+
+    Args:
+        coverage_fpath (str): Path to the SAMtools coverage .txt output file
+
+    Returns:
+        QcMethodIndex: QC method index containing SAMtools coverage results
+    """
+    LOG.info("Parsing SAMtools coverage")
+    
+    contigs = []
+
+    with open(coverage_fpath, "r", encoding="utf-8") as covfile:
+        # Skip header line
+        header = covfile.readline().strip('#').strip().split('\t')
+        
+        # Process each line (contig)
+        for line in covfile:
+            data = dict(zip(header, line.strip().split('\t')))
+
+            # Convert types appropriately
+            contig = ContigCoverage(
+                rname=data["rname"],
+                startpos=int(data["startpos"]),
+                endpos=int(data["endpos"]),
+                numreads=int(data["numreads"]),
+                covbases=int(data["covbases"]),
+                coverage=float(data["coverage"]),
+                meandepth=float(data["meandepth"]),
+                meanbaseq=float(data["meanbaseq"]),
+                meanmapq=float(data["meanmapq"])
+            )
+            contigs.append(contig)
+
+    samcov_result = SamtoolsCoverageQcResult(contigs=contigs)
+
+    return QcMethodIndex(
+        software=QcSoftware.SAMTOOLS,
+        result=samcov_result
+    )

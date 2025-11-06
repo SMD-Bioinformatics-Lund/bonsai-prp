@@ -100,12 +100,20 @@ def saureus_spatyper_path(data_path: Path) -> str:
     """Get path for saureus spatyper file"""
     return str(data_path.joinpath("saureus", "spatyper.tsv"))
 
+
 @pytest.fixture()
 def saureus_sccmec_path(data_path: Path) -> str:
     """Get path for saureus sccmec file"""
     return str(data_path.joinpath("saureus", "sccmec.tsv"))
 
+
 @pytest.fixture()
 def saureus_nanoplot_path(data_path: Path) -> str:
     """Get path for saureus nanoplot file"""
     return str(data_path.joinpath("saureus", "nanoplot.txt"))
+
+
+@pytest.fixture()
+def saureus_samtools_coverage_path(data_path: Path) -> str:
+    """Get path for saureus samtools coverage file"""
+    return str(data_path.joinpath("saureus", "samcoverage.txt"))
