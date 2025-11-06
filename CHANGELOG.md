@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Changed alias for `TypingResultCgMlst.n_missing` to `nMissing`
+
 ### Changed
 - Made variant input opional for creation of .json file
 - Updated prp commands in readme
