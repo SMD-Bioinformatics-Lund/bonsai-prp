@@ -3,6 +3,7 @@
 import json
 
 import pytest
+from pathlib import Path
 
 from ..fixtures import data_path
 
@@ -115,3 +116,9 @@ def ecoli_cdm_input(data_path):
     path = data_path.joinpath("ecoli", "cdm_input.json")
     with open(path, "rb") as inpt:
         return json.load(inpt)
+
+
+@pytest.fixture()
+def ecoli_kleborate_path(data_path: Path):
+    """Get path for kleborate result file"""
+    return str(data_path.joinpath("ecoli", "kleborate_v3_escherichia_output.txt"))
