@@ -2,6 +2,7 @@
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 from click.testing import CliRunner
@@ -19,7 +20,7 @@ from prp.models import PipelineResult
         ("mtuberculosis_sample_conf_path", ["mykrobe", "tbprofiler"]),
     ],
 )
-def test_parse_cmd(fixture_name, expected_sw, request):
+def test_parse_cmd(fixture_name: str, expected_sw: list[str], request: pytest.FixtureRequest):
     """Test creating a analysis summary.
 
     The test is intended as an end-to-end test.
@@ -28,7 +29,7 @@ def test_parse_cmd(fixture_name, expected_sw, request):
     output_file = "test_output.json"
     runner = CliRunner()
     with runner.isolated_filesystem():
-        args = [
+        args: list[str] = [
             "--sample",
             sample_conf,
             "--output",
@@ -54,14 +55,14 @@ def test_parse_cmd(fixture_name, expected_sw, request):
         assert prp_output == json.loads(output_data_model.model_dump_json())
 
 
-def test_cdm_cmd(ecoli_sample_conf_path: Path, ecoli_cdm_input):
+def test_cdm_cmd(ecoli_sample_conf_path: Path, ecoli_cdm_input: list[dict[str, Any]]):
     """Test command for creating CDM input."""
     output_file = "test_output.json"
     runner = CliRunner()
     with runner.isolated_filesystem():
-        args = [
+        args: list[str] = [
             "--sample",
-            ecoli_sample_conf_path,
+            str(ecoli_sample_conf_path),
             "--output",
             output_file,
         ]
@@ -109,7 +110,7 @@ def test_annotate_delly(
             assert test_contents == expected_contents
 
 
-def test_add_igv_annotation_track(mtuberculosis_snv_vcf_path, simple_pipeline_result):
+def test_add_igv_annotation_track(mtuberculosis_snv_vcf_path: Path, simple_pipeline_result: PipelineResult):
     """Test command for adding IGV annotation track to a result file."""
     runner = CliRunner()
     with runner.isolated_filesystem():
