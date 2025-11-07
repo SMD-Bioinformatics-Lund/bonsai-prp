@@ -1,8 +1,10 @@
 """Generic database objects of which several other models are based on."""
 
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
+from pysam import Callable
 from typing_extensions import Annotated
 
 
@@ -24,6 +26,16 @@ def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
 
     assert upd_path.is_file(), f"Invalid path: {upd_path}"
     return upd_path
+
+
+class ParserOutput(BaseModel):
+    """Common output data structure for all parsers."""
+
+    target_field: str
+    data: Any
+
+
+ParserFunc = Callable[[Any], ParserOutput]
 
 
 FilePath = Annotated[Path, BeforeValidator(convert_rel_to_abs_path)]

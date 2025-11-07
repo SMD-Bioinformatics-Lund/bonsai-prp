@@ -1,6 +1,6 @@
 """QC data models."""
 
-from enum import Enum
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +14,7 @@ class ValidQualityStr(Enum):
     LOWCONTIGQUAL = "-"
 
 
-class QcSoftware(Enum):
+class QcSoftware(StrEnum):
     """Valid tools."""
 
     QUAST = "quast"
@@ -23,6 +23,7 @@ class QcSoftware(Enum):
     CHEWBBACA = TypingSoftware.CHEWBBACA.value
     GAMBITCORE = "gambitcore"
     NANOPLOT = "nanoplot"
+    KLEBORATE = "kleborate"
 
 
 class QuastQcResult(BaseModel):
