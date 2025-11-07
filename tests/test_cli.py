@@ -1,6 +1,7 @@
 """Test PRP cli functions."""
 
 import json
+from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
@@ -53,7 +54,7 @@ def test_parse_cmd(fixture_name, expected_sw, request):
         assert prp_output == json.loads(output_data_model.model_dump_json())
 
 
-def test_cdm_cmd(ecoli_sample_conf_path, ecoli_cdm_input):
+def test_cdm_cmd(ecoli_sample_conf_path: Path, ecoli_cdm_input):
     """Test command for creating CDM input."""
     output_file = "test_output.json"
     runner = CliRunner()
@@ -76,7 +77,7 @@ def test_cdm_cmd(ecoli_sample_conf_path, ecoli_cdm_input):
 
 
 def test_annotate_delly(
-    mtuberculosis_delly_bcf_path, converged_bed_path, annotated_delly_path
+    mtuberculosis_delly_bcf_path: Path, converged_bed_path: Path, annotated_delly_path: Path
 ):
     """Test command for annotating delly output."""
     runner = CliRunner()
@@ -87,9 +88,9 @@ def test_annotate_delly(
             annotate_delly,
             [
                 "--vcf",
-                mtuberculosis_delly_bcf_path,
+                str(mtuberculosis_delly_bcf_path),
                 "--bed",
-                converged_bed_path,
+                str(converged_bed_path),
                 "--output",
                 output_fname,
             ],
@@ -122,7 +123,7 @@ def test_add_igv_annotation_track(mtuberculosis_snv_vcf_path, simple_pipeline_re
             "--track-name",
             "snv",
             "--annotation-file",
-            mtuberculosis_snv_vcf_path,
+            str(mtuberculosis_snv_vcf_path),
             "--bonsai-input-file",
             result_fname,
             "--output",
