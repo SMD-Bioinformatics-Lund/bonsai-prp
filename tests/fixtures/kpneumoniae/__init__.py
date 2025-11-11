@@ -9,3 +9,9 @@ import pytest
 def kp_kleborate_path(data_path: Path) -> Path:
     """Get path for kleborate result file"""
     return data_path.joinpath("kpneumoniae", "kleborate_v3_kpsc_output.txt")
+
+
+@pytest.fixture()
+def kp_kleborate_hamronization_path(data_path: Path) -> Path:
+    """Get path for kleborate result file"""
+    return data_path.joinpath("kpneumoniae", "kleborate_v3_kpsc_hamronization_output.txt")
