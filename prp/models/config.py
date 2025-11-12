@@ -63,6 +63,8 @@ class SampleConfig(RWModel):
     virulencefinder: FilePath | None = None
     mykrobe: FilePath | None = None
     tbprofiler: FilePath | None = None
+    kleborate: FilePath | None = None
+    kleborate_hamronization: FilePath | None = None
 
     ## clustering
     sourmash_signature: str | None = None
