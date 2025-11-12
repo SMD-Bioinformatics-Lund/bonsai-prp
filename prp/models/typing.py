@@ -191,3 +191,9 @@ class SccmecTypingMethodIndex(RWModel):
     type: Literal[TypingMethod.SCCMECTYPE]
     software: Literal[TypingSoftware.SCCMEC]
     result: TypingResultSccmec
+
+
+class LineageMixin(RWModel):
+    """Adds a lineage field to existing model"""
+
+    lineage: str

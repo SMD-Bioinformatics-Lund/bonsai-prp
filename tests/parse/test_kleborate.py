@@ -5,14 +5,20 @@ from typing import Any
 
 import pytest
 
+from prp.models.hamronization import HamronizationEntry
 from prp.parse import kleborate
 
 
 def test_parse_kleborate_output(kp_kleborate_path: Path):
     """Test parsing of kleborate output."""
 
-    test_file = Path(kp_kleborate_path)
-    kleborate.parse_kleborate_v3(test_file)
+    kleborate.parse_kleborate_v3(kp_kleborate_path, version="3.1.3")
+
+
+def test_hamronization_to_amr_record(hamronization_entry: HamronizationEntry):
+    """Test converting kleborate hAMRonization a PRP resistance record."""
+
+    idx = kleborate.hamronization_to_restance_entry([hamronization_entry])
 
 
 @pytest.mark.parametrize(

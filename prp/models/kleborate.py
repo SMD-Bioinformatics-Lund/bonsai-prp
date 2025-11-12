@@ -1,10 +1,12 @@
 """Kleborate specific models."""
 
-from typing import Literal
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
+
 from .base import RWModel
-from .qc import QcSoftware
-from .typing import TypingResultMlst
+from .phenotype import ElementTypeResult
+from .typing import LineageMixin, TypingResultMlst
 
 
 class KleborateQcResult(BaseModel):
@@ -22,12 +24,47 @@ class KleboreateSppResult(BaseModel):
     """Species prediction results."""
 
     scientific_name: str = Field(..., alias="scientificName")
-    match: Literal['strong', 'weak'] = Field(..., description="Strength of the species call depending on the Mash didstance.")
+    match: Literal["strong", "weak"] = Field(
+        ..., description="Strength of the species call depending on the Mash didstance."
+    )
+
+
+class KleborateMlstLikeResults(TypingResultMlst, LineageMixin):
+    """Kleborate MLST-like analysis"""
+
+
+class KleborateVirulenceScore(RWModel):
+    """Records and validate virulence score."""
+
+    score: int = Field(..., ge=0, le=5)
+    spurious_hits: Any
+
+
+class KleborateKaptiveLocus(RWModel):
+    """Kleboraete curation of Kaptive typing."""
+
+    locus: str
+    type: str
+    identity: float = Field(..., ge=0, le=1)
+    confidence: Literal["typeable", "untypeable"]
+    problems: Any
+    missing_genes: Any
+
+
+class KleborateKaptiveTypingResult(RWModel):
+    k_type: KleborateKaptiveLocus
+    o_type: KleborateKaptiveLocus
+
+
+class KleborateAmrPrediction(RWModel):
+    """Store Kleborate AMR results."""
+
+    score: int = Field(..., ge=0, le=6)
 
 
 class KleborateMethodIndex(RWModel):
     """Indexing of Kleborate data."""
 
-    software: Literal[QcSoftware.KLEBORATE]
+    software: Literal["kleborate"] = "kleborate"
     version: str
-    result: KleborateQcResult | KleboreateSppResult | TypingResultMlst
+    result: KleborateQcResult | KleboreateSppResult | KleborateMlstLikeResults | KleborateKaptiveTypingResult | KleborateVirulenceScore | ElementTypeResult

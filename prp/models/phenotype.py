@@ -25,6 +25,7 @@ class PredictionSoftware(str, Enum):
     SEROTYPEFINDER = "serotypefinder"
     MYKROBE = "mykrobe"
     TBPROFILER = "tbprofiler"
+    KLEBORATE = "kleborate"
 
 
 class VariantType(str, Enum):
