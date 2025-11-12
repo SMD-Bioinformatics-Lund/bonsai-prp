@@ -17,6 +17,7 @@ from prp.models import PipelineResult
     [
         ("saureus_sample_conf_path", ["resfinder", "amrfinder", "virulencefinder"]),
         ("ecoli_sample_conf_path", ["resfinder", "amrfinder", "virulencefinder"]),
+        ("kp_sample_conf_path", ["kleborate"]),
         ("mtuberculosis_sample_conf_path", ["mykrobe", "tbprofiler"]),
     ],
 )
