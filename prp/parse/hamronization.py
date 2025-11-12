@@ -5,6 +5,7 @@ Kleborate implementation: https://kleborate.readthedocs.io/en/stable/kpsc_module
 
 import csv
 import re
+import logging
 from typing import Any, Literal, TextIO, TypeAlias
 
 from prp.models.hamronization import (
@@ -13,6 +14,9 @@ from prp.models.hamronization import (
     InputSequence,
     ReferenceSequence,
 )
+from prp.models.metadata import SoupType, SoupVersion
+
+LOG = logging.getLogger(__name__)
 
 HamronizationEntries = list[HamronizationEntry]
 PercentMode: TypeAlias = Literal["fraction", "percent"]
@@ -77,6 +81,18 @@ def _convert_strand_orientation(value: str) -> Literal["+", "-"] | None:
         return "+"
     if value in antisense_symbols:
         return "-"
+    
+
+def get_version(source: TextIO) -> SoupVersion | None:
+    """Naive get software and version from a hAMRonization file."""
+    LOG.debug("Get analysis software and version from hAMRonization file.")
+    # deduplicate versions and entries
+    for entry in parse_hamronization(source):
+        return SoupVersion(
+            name=entry.analysis_software_name,
+            version=entry.analysis_software_version,
+            type=SoupType.SW,
+        )
 
 
 def parse_hamronization(

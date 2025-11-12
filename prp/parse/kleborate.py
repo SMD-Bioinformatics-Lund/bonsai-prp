@@ -30,7 +30,6 @@ from prp.models.phenotype import (
     ElementTypeResult,
     PhenotypeInfo,
     SequenceStand,
-    VariantBase,
     VariantSubType,
     VariantType,
 )
@@ -388,15 +387,15 @@ def format_kleborate_output(
     return formatted
 
 
-def _get_hamr_phenotype(record: HamronizationEntry) -> PhenotypeInfo:
+def _get_hamr_phenotype(record: HamronizationEntry) -> PhenotypeInfo | None:
     """Get phenotypic info from hamronization entry."""
-    name, drug_class = record.drug_class.split(" ", maxsplit=1)
-    return PhenotypeInfo(
-        type=ElementType.AMR,
-        name=name,
-        group=drug_class,
-        annotation_type=AnnotationType.TOOL,
-    )
+    if record.drug_class is not None:
+        return PhenotypeInfo(
+            type=ElementType.AMR,
+            name=record.drug_class,
+            group=record.drug_class,
+            annotation_type=AnnotationType.TOOL,
+        )
 
 
 def hamronization_to_restance_entry(
@@ -413,6 +412,7 @@ def hamronization_to_restance_entry(
         strand = SequenceStand(entry.strand_orientation)
         if "gene" in entry.genetic_variation_type.lower():
             # build gene entry
+            pheno = _get_hamr_phenotype(entry)
             rec = AmrFinderResistanceGene(
                 gene_symbol=entry.gene_symbol,
                 sequence_name=entry.gene_name,
@@ -425,10 +425,10 @@ def hamronization_to_restance_entry(
                 ref_start_pos=entry.reference.gene_start,
                 ref_end_pos=entry.reference.gene_stop,
                 target_length=entry.reference.gene_length,
-                method="kleborate",
+                method=entry.analysis_software_name,
                 identity=entry.sequence_identity,
                 coverage=entry.coverage_percentage,
-                phenotypes=[_get_hamr_phenotype(entry)],
+                phenotypes=[pheno] if pheno else [],
             )
             res_genes.append(rec)
         elif "variant" in entry.genetic_variation_type.lower():
