@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Added
+- Add basic mypy configuration to pyproject.toml
 
 ### Fixed
 
