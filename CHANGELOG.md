@@ -1,10 +1,14 @@
 ## [Unreleased]
 
 ### Added
+- Add basic mypy configuration to pyproject.toml
 
 ### Fixed
 
+- Changed alias for `TypingResultCgMlst.n_missing` to `nMissing`
+
 ### Changed
+- Made variant input opional for creation of .json file
 - Updated prp commands in readme
 
 ## [1.4.0]
@@ -12,7 +16,8 @@
 ### Added
 
 - Added parsing of `NanoPlot` results and corresponding test
-
+- Added parsing of `SAMtools coverage` results and corresponding tests
+ 
 ### Fixed
 
 ### Changed

@@ -22,7 +22,7 @@ from . import (
 from .emmtyper import EmmTypingMethodIndex, parse_emm_pred
 from .igv import parse_igv_info
 from .metadata import parse_run_info
-from .qc import parse_gambitcore_results, parse_postalignqc_results, parse_quast_results, parse_nanoplot_results
+from .qc import parse_gambitcore_results, parse_postalignqc_results, parse_quast_results, parse_nanoplot_results, parse_samtools_coverage_results
 from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .sccmec import SccmecTypingMethodIndex, parse_sccmec_results
 from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
@@ -46,6 +46,9 @@ def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
 
     if smp_cnf.nanoplot:
         qc_results.append(parse_nanoplot_results(smp_cnf.nanoplot))
+
+    if smp_cnf.samtools:
+        qc_results.append(parse_samtools_coverage_results(smp_cnf.samtools))
 
     return qc_results
 

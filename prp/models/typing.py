@@ -78,7 +78,7 @@ class TypingResultCgMlst(ResultMlstBase):
     """MLST results"""
 
     n_novel: int = Field(0, alias="nNovel")
-    n_missing: int = Field(0, alias="nNovel")
+    n_missing: int = Field(0, alias="nMissing")
 
 
 class TypingResultShiga(RWModel):

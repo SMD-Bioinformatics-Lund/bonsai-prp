@@ -25,6 +25,7 @@ class QcSoftware(StrEnum):
     GAMBITCORE = "gambitcore"
     NANOPLOT = "nanoplot"
     KLEBORATE = "kleborate"
+    SAMTOOLS = "samtools"
 
 
 class QuastQcResult(BaseModel):
@@ -90,6 +91,23 @@ class NanoPlotQcResult(BaseModel):
     total_bases: float
 
 
+class ContigCoverage(BaseModel):
+    """Coverage information for a single contig."""
+    rname: str
+    startpos: int
+    endpos: int
+    numreads: int
+    covbases: int
+    coverage: float
+    meandepth: float
+    meanbaseq: float
+    meanmapq: float
+
+class SamtoolsCoverageQcResult(BaseModel):
+    """SAMtools coverage QC result model."""
+    contigs: list[ContigCoverage]
+
+
 class QcMethodIndex(RWModel):
     """QC results container.
 
@@ -99,9 +117,9 @@ class QcMethodIndex(RWModel):
 
     software: QcSoftware
     version: str | None = None
-    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult | NanoPlotQcResult | KleborateQcResult
+    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult | NanoPlotQcResult | SamtoolsCoverageQcResult | KleborateQcResult
 
-
+      
 class CdmQcMethodIndex(QcMethodIndex):
     """Qc results container for CDM"""
 
