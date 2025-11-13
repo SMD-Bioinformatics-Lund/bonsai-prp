@@ -33,6 +33,8 @@ from prp.models.phenotype import (
     VariantSubType,
     VariantType,
 )
+from prp.models.qc import QcMethodIndex, QcSoftware
+from prp.models.species import SppMethodIndex, SppPredictionSoftware
 from prp.models.typing import TypingResultMlst
 
 LOG = logging.getLogger(__name__)
@@ -54,6 +56,8 @@ PercentMode: TypeAlias = Literal["fraction", "percent"]
 _PERCENT_RE = re.compile(r"\s*(-?\d+(?:\.\d+)?)\s*%")
 _FLOAT_RE = re.compile(r"\s*-?\d+\.\d+\s*")
 _INT_RE = re.compile(r"\s*-?\d+\s*")
+_HGVS_PROTEIN_RE = re.compile(r"p\.([A-Za-z]+)(\d+)([A-Za-z]+)")
+_HGVS_NUCLEOTIDE_RE = re.compile(r"c\.([A-Za-z]+)(\d+)([A-Za-z]+)")
 
 
 def _normalize_scalar(
@@ -187,29 +191,36 @@ def _mlst_like_formatter(
 
     Note: Qc keys are omitted until the data format allows for generic information.
     """
+    typing_result = d.get(schema_name, {})
     # sanity check input
     if not lineage_key:
         raise RuntimeError("Lineage key must be set, check definition")
 
-    if lineage_key not in d:
+    if lineage_key not in typing_result:
         raise ValueError(
             f"Lineage key: {lineage_key} not found in data, check definition"
         )
 
     lineage = (
-        "; ".join(d[lineage_key]) if isinstance(d[lineage_key], str) else d[lineage_key]
+        "; ".join(typing_result[lineage_key]) if isinstance(typing_result[lineage_key], list) else typing_result[lineage_key]
     )
 
-    if st_key not in d:
+    if st_key not in typing_result:
         raise ValueError(
             f"Sequence type key: {lineage_key} not in data, check definition"
         )
 
-    sequence_type = int(d[st_key]) if isinstance(d[st_key], str) else d[st_key]
+    if isinstance(typing_result[st_key], str):
+        try:
+            sequence_type = int(typing_result[st_key])
+        except ValueError:
+            sequence_type = typing_result[st_key]
+    else:
+            sequence_type = typing_result[st_key]
 
     # buld allele list, skip lineage, st, and qc
     skip_keys: list[str] = [lineage_key, st_key, *qc_keys]
-    alleles = {key: val for key, val in d.items() if key not in skip_keys}
+    alleles = {key: val for key, val in typing_result.items() if key not in skip_keys}
 
     # TODO add QC metrics to output
     return KleborateMlstLikeResults(
@@ -275,7 +286,7 @@ def _format_mlst_typing(result: dict[str, Any], schema_name: str) -> TypingResul
     return TypingResultMlst(scheme=schema_name, sequenceType=4242, alleles=alleles)
 
 
-def _parse_qc(result: dict[str, JSONLike], version: str) -> KleborateMethodIndex:
+def _parse_qc(result: dict[str, JSONLike], version: str) -> QcMethodIndex:
     contig_stats = result.get("general", {}).get("contig_stats")
     if contig_stats:
         res = KleborateQcResult(
@@ -286,7 +297,7 @@ def _parse_qc(result: dict[str, JSONLike], version: str) -> KleborateMethodIndex
             ambigious_bases=True if contig_stats["ambiguous_bases"] == "yes" else "no",
             qc_warnings=contig_stats["QC_warnings"],
         )
-        return KleborateMethodIndex(version=version, result=res)
+        return QcMethodIndex(software=QcSoftware.KLEBORATE, version=version, result=res)
 
 
 def _parse_kaptive(d: dict[str, JSONLike], version: str) -> KleborateMethodIndex:
@@ -334,7 +345,8 @@ def format_kleborate_output(
             scientificName=raw_spp.get("species", "unknown"),
             match=raw_spp.get("species_match"),
         )
-        formatted.append(ParserOutput(target_field="species_prediction", data=spp_pred))
+        idx = SppMethodIndex(software=SppPredictionSoftware.KLEBORATE, result=spp_pred)
+        formatted.append(ParserOutput(target_field="species_prediction", data=idx))
 
     # parse various typing methods
     if "klebsiella" in result:
@@ -353,9 +365,9 @@ def format_kleborate_output(
         # parse mlst
         # KoSC -> pubmlst
         # KpSC -> pasteur
-        if (mlst_res := preset_results.get("mlst", {})) and isinstance(mlst_res, dict):
-            idx = _format_mlst_typing(preset_results, schema_name="pasteur")
-            formatted.append(ParserOutput(target_field="typing_result", data=idx))
+        # if (mlst_res := preset_results.get("mlst", {})) and isinstance(mlst_res, dict):
+        #     idx = _format_mlst_typing(preset_results, schema_name="pasteur")
+        #     formatted.append(ParserOutput(target_field="typing_result", data=idx))
         # parse virulence
         if (vir_score := preset_results.get("virulence_score", {})) and isinstance(
             vir_score, dict
@@ -370,7 +382,7 @@ def format_kleborate_output(
             formatted.append(ParserOutput(target_field="element_type_result", data=idx))
         # parse kapsule typing
         if (kaptive_res := preset_results.get("kaptive", {})) and isinstance(
-            mlst_res, dict
+            kaptive_res, dict
         ):
             formatted.append(
                 ParserOutput(
@@ -398,6 +410,17 @@ def _get_hamr_phenotype(record: HamronizationEntry) -> PhenotypeInfo | None:
         )
 
 
+def _convert_strand_orientation(orientation: str | None) -> SequenceStand | None:
+    """Convert hAMRonization strand orientation to a SequenceStrand enum."""
+    forward_notations: list[str] = ['+', 'sense']
+    reverse_notations: list[str] = ['-', 'antisense']
+    if orientation in forward_notations:
+        return SequenceStand.FORWARD
+    if orientation in reverse_notations:
+        return SequenceStand.REVERSE
+    return None
+
+
 def hamronization_to_restance_entry(
     entries: HamronizationEntries,
 ) -> KleborateMethodIndex:
@@ -409,7 +432,7 @@ def hamronization_to_restance_entry(
     for row_no, entry in enumerate(entries, start=1):
         q_start = entry.input.gene_start if entry.input.gene_start else 0
         q_end = entry.input.gene_stop if entry.input.gene_stop else 0
-        strand = SequenceStand(entry.strand_orientation)
+        strand = _convert_strand_orientation(entry.strand_orientation)
         if "gene" in entry.genetic_variation_type.lower():
             # build gene entry
             pheno = _get_hamr_phenotype(entry)
@@ -431,7 +454,18 @@ def hamronization_to_restance_entry(
                 phenotypes=[pheno] if pheno else [],
             )
             res_genes.append(rec)
-        elif "variant" in entry.genetic_variation_type.lower():
+        elif "variant" in entry.genetic_variation_type.lower() or "mutation" in entry.genetic_variation_type.lower():
+            variant_info = {}
+            if entry.protein_mutation:
+                if (match := re.fullmatch(_HGVS_PROTEIN_RE, entry.protein_mutation)) and match:
+                    ref, _, alt = match.groups()
+                    variant_info['ref_aa'] = ref
+                    variant_info['alt_aa'] = alt
+            if entry.nucleotide_mutation:
+                if (match := re.fullmatch(_HGVS_NUCLEOTIDE_RE, entry.nucleotide_mutation)) and match:
+                    ref, _, alt = match.groups()
+                    variant_info['ref_nt'] = ref
+                    variant_info['alt_nt'] = alt
             rec = AmrFinderVariant(
                 id=row_no,
                 gene_symbol=entry.gene_symbol,
@@ -450,6 +484,7 @@ def hamronization_to_restance_entry(
                 confidence=None,
                 method="kleborate",
                 strand=strand,
+                **variant_info
             )
             res_variants.append(rec)
         else:

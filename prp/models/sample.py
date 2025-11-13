@@ -4,6 +4,7 @@ from typing import Literal, Optional, Union
 
 from pydantic import Field
 
+
 from .base import RWModel
 from .metadata import PipelineInfo, SequencingInfo
 from .phenotype import (
@@ -27,6 +28,7 @@ from .typing import (
     TypingResultMlst,
     TypingSoftware,
 )
+from .kleborate import KleborateMethodIndex
 
 SCHEMA_VERSION: int = 2
 
@@ -91,12 +93,13 @@ class PipelineResult(SampleBase):
             EmmTypingMethodIndex,
             SccmecTypingMethodIndex,
             SpatyperTypingMethodIndex,
+            KleborateMethodIndex,
             MethodIndex,
         ]
     ] = Field(..., alias="typingResult")
     # optional phenotype prediction
     element_type_result: list[
-        Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, MethodIndex]
+        Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, KleborateMethodIndex, MethodIndex]
     ] = Field(..., alias="elementTypeResult")
     # optional variant info
     snv_variants: Optional[list[VariantBase]] = None

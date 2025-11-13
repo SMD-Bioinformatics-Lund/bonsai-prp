@@ -71,7 +71,7 @@ class TypingResultMlst(ResultMlstBase):
     """MLST results"""
 
     scheme: str
-    sequence_type: Optional[int] = Field(None, alias="sequenceType")
+    sequence_type: int | str | None = Field(None, alias="sequenceType")
 
 
 class TypingResultCgMlst(ResultMlstBase):
@@ -196,4 +196,4 @@ class SccmecTypingMethodIndex(RWModel):
 class LineageMixin(RWModel):
     """Adds a lineage field to existing model"""
 
-    lineage: str
+    lineage: str | None

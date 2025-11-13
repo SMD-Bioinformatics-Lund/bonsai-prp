@@ -4,6 +4,7 @@ from enum import Enum, StrEnum
 
 from pydantic import BaseModel, Field
 
+from .kleborate import KleborateQcResult
 from .base import RWModel
 from .typing import TypingSoftware
 
@@ -98,7 +99,7 @@ class QcMethodIndex(RWModel):
 
     software: QcSoftware
     version: str | None = None
-    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult | NanoPlotQcResult
+    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult | NanoPlotQcResult | KleborateQcResult
 
 
 class CdmQcMethodIndex(QcMethodIndex):

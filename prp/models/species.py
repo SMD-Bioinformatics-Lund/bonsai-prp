@@ -5,6 +5,7 @@ from enum import Enum
 from pydantic import Field
 
 from .base import RWModel
+from .kleborate import KleboreateSppResult
 
 
 class TaxLevel(Enum):
@@ -24,6 +25,7 @@ class SppPredictionSoftware(Enum):
     MYKROBE = "mykrobe"
     TBPROFILER = "tbprofiler"
     BRACKEN = "bracken"
+    KLEBORATE = "kleborate"
 
 
 class SpeciesPrediction(RWModel):
@@ -58,4 +60,4 @@ class SppMethodIndex(RWModel):
     """Container for key-value lookup of analytical results."""
 
     software: SppPredictionSoftware
-    result: list[BrackenSpeciesPrediction | MykrobeSpeciesPrediction]
+    result: list[BrackenSpeciesPrediction | MykrobeSpeciesPrediction] | KleboreateSppResult
