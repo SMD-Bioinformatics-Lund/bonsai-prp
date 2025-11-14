@@ -1,7 +1,7 @@
 """Typing related data models"""
 
-from enum import Enum
-from typing import Any, Literal, Optional, Union
+from enum import StrEnum
+from typing import Any, Literal, Union
 
 from pydantic import Field
 
@@ -9,7 +9,7 @@ from .base import RWModel
 from .phenotype import SerotypeGene, VirulenceGene
 
 
-class TypingSoftware(str, Enum):
+class TypingSoftware(StrEnum):
     """Container for software names."""
 
     CHEWBBACA = "chewbbaca"
@@ -24,7 +24,7 @@ class TypingSoftware(str, Enum):
     SCCMEC = "sccmec"
 
 
-class TypingMethod(str, Enum):
+class TypingMethod(StrEnum):
     """Valid typing methods."""
 
     MLST = "mlst"
@@ -39,7 +39,7 @@ class TypingMethod(str, Enum):
     SCCMECTYPE = "sccmectype"
 
 
-class ChewbbacaErrors(str, Enum):
+class ChewbbacaErrors(StrEnum):
     """Chewbbaca error codes."""
 
     PLOT5 = "PLOT5"
@@ -54,7 +54,7 @@ class ChewbbacaErrors(str, Enum):
     PAMA = "PAMA"
 
 
-class MlstErrors(str, Enum):
+class MlstErrors(StrEnum):
     """MLST error codes."""
 
     NOVEL = "novel"
