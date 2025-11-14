@@ -9,6 +9,12 @@ from .fixtures import *
 
 
 @pytest.fixture()
+def data_path() -> Path:
+    """Get path of this file"""
+    return Path(__file__).parent / 'fixtures'
+
+
+@pytest.fixture()
 def simple_pipeline_result():
     """Return a basic analysis result."""
 

@@ -7,10 +7,13 @@ from typing import Any, Sequence
 from prp.models.config import SampleConfig
 
 from ..models.phenotype import AMRMethodIndex, ElementType
+from ..models.species import SppMethodIndex
 from ..models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
 from . import (
     amrfinder,
+    hamronization,
     kraken,
+    kleborate,
     mykrobe,
     resfinder,
     serotypefinder,
@@ -51,7 +54,7 @@ def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
     return qc_results
 
 
-def _read_spp_prediction(smp_cnf) -> Sequence[mykrobe.SppMethodIndex]:
+def _read_spp_prediction(smp_cnf) -> Sequence[SppMethodIndex]:
     """Read all species prediction results."""
     spp_results = []
     if smp_cnf.kraken:
@@ -194,11 +197,33 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
         results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))
     if smp_cnf.tbprofiler:
         results["pipeline"].softwares.append(tbprofiler.get_version(smp_cnf.tbprofiler))
+    if smp_cnf.kleborate_hamronization:
+        with smp_cnf.kleborate_hamronization.open() as inpt:
+            if (kleborate_version := hamronization.get_version(inpt)) or kleborate_version is not None:
+                results["pipeline"].softwares.append(kleborate_version)
 
     # add amr and virulence
     results["element_type_result"].extend(
         [*_read_resistance(smp_cnf), *_read_virulence(smp_cnf)]
     )
+
+    # add kleborate results
+    # this is a test of a updated way of sorting outputs into their dedicated category
+    if smp_cnf.kleborate and smp_cnf.kleborate_hamronization:
+        with smp_cnf.kleborate_hamronization.open() as inpt:
+            if (kleborate_version := hamronization.get_version(inpt)) and kleborate_version is None:
+                raise ValueError("Could not parse Kleborate version from hAMRonization file.")
+        # reopen the file to get all entries
+        with smp_cnf.kleborate_hamronization.open() as inpt:
+            hamronization_entries = hamronization.parse_hamronization(inpt)
+            analysis_results = kleborate.parse_kleborate_v3(path=smp_cnf.kleborate, version=kleborate_version.version, hamronization_entries=hamronization_entries)
+
+        # append the kleborate result to the individual categories in the result dict
+        for res in analysis_results:
+            # add new category if not previously defined
+            if not res.target_field in results:
+                results[res.target_field] = []
+            results[res.target_field].append(res.data)
 
     # verify data consistancy
     return PipelineResult(

@@ -1,13 +1,15 @@
 """Species related data models."""
 
-from enum import Enum
+from enum import StrEnum
+from typing import Annotated, Literal
 
 from pydantic import Field
 
 from .base import RWModel
+from .kleborate import KleboreateSppResult
 
 
-class TaxLevel(Enum):
+class TaxLevel(StrEnum):
     """Braken phylogenetic level."""
 
     P = "phylum"
@@ -18,12 +20,13 @@ class TaxLevel(Enum):
     S = "species"
 
 
-class SppPredictionSoftware(Enum):
+class SppPredictionSoftware(StrEnum):
     """Container for prediciton software names."""
 
     MYKROBE = "mykrobe"
     TBPROFILER = "tbprofiler"
     BRACKEN = "bracken"
+    KLEBORATE = "kleborate"
 
 
 class SpeciesPrediction(RWModel):
@@ -54,8 +57,22 @@ class MykrobeSpeciesPrediction(SpeciesPrediction):
     species_coverage: float = Field(..., description="Species kmer converage.")
 
 
-class SppMethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
+class BrackenSppIndex(RWModel):
+    """Bracken specifik spp prediction result container."""
 
-    software: SppPredictionSoftware
-    result: list[BrackenSpeciesPrediction | MykrobeSpeciesPrediction]
+    software: Literal[SppPredictionSoftware.BRACKEN] = SppPredictionSoftware.BRACKEN
+    result: list[BrackenSpeciesPrediction]
+
+class MykrobeSppIndex(RWModel):
+    """Mykrobe specifik spp prediction result container."""
+
+    software: Literal[SppPredictionSoftware.MYKROBE] = SppPredictionSoftware.MYKROBE
+    result: list[MykrobeSpeciesPrediction]
+
+class KleborateSppIndex(RWModel):
+    """Kleborate specifik spp prediction result container."""
+
+    software: Literal[SppPredictionSoftware.KLEBORATE] = SppPredictionSoftware.KLEBORATE
+    result: KleboreateSppResult
+
+SppMethodIndex = Annotated[BrackenSppIndex | MykrobeSppIndex | KleborateSppIndex, Field(discriminator="software")]

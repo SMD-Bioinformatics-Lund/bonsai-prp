@@ -45,7 +45,7 @@ def parse_mlst_results(mlst_fpath: str) -> MethodIndex:
         result_obj = TypingResultMlst(
             scheme=result["scheme"],
             sequence_type=(
-                None if result["sequence_type"] == "-" else result["sequence_type"]
+                None if result["sequence_type"] == "-" else int(result["sequence_type"])
             ),
             alleles={
                 gene: _process_allele_call(allele) for gene, allele in alleles.items()

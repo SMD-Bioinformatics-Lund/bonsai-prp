@@ -1,9 +1,10 @@
 """QC data models."""
 
-from enum import Enum
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel, Field
 
+from .kleborate import KleborateQcResult
 from .base import RWModel
 from .typing import TypingSoftware
 
@@ -14,7 +15,7 @@ class ValidQualityStr(Enum):
     LOWCONTIGQUAL = "-"
 
 
-class QcSoftware(Enum):
+class QcSoftware(StrEnum):
     """Valid tools."""
 
     QUAST = "quast"
@@ -23,6 +24,7 @@ class QcSoftware(Enum):
     CHEWBBACA = TypingSoftware.CHEWBBACA.value
     GAMBITCORE = "gambitcore"
     NANOPLOT = "nanoplot"
+    KLEBORATE = "kleborate"
     SAMTOOLS = "samtools"
 
 
@@ -115,9 +117,9 @@ class QcMethodIndex(RWModel):
 
     software: QcSoftware
     version: str | None = None
-    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult | NanoPlotQcResult | SamtoolsCoverageQcResult
+    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult | NanoPlotQcResult | SamtoolsCoverageQcResult | KleborateQcResult
 
-
+      
 class CdmQcMethodIndex(QcMethodIndex):
     """Qc results container for CDM"""
 

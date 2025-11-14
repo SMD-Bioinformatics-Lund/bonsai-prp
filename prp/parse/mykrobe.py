@@ -10,8 +10,7 @@ import pandas as pd
 
 from prp.models.species import (
     MykrobeSpeciesPrediction,
-    SppMethodIndex,
-    SppPredictionSoftware,
+    MykrobeSppIndex,
 )
 
 from ..models.metadata import SoupType, SoupVersion
@@ -228,7 +227,7 @@ def parse_amr_pred(
     return result
 
 
-def parse_spp_pred(result_path: str | Path) -> SppMethodIndex:
+def parse_spp_pred(result_path: str | Path) -> MykrobeSppIndex:
     """Get species prediction result from Mykrobe."""
     LOG.info("Parsing Mykrobe spp result.")
     result = []
@@ -249,7 +248,7 @@ def parse_spp_pred(result_path: str | Path) -> SppMethodIndex:
             species_coverage=species_covg[hit_idx],
         )
         result.append(spp_pred)
-    return SppMethodIndex(software=SppPredictionSoftware.MYKROBE, result=result)
+    return MykrobeSppIndex(result=result)
 
 
 def parse_lineage_pred(result_path: str | Path) -> MethodIndex | None:

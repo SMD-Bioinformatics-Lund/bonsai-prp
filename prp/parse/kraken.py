@@ -2,10 +2,10 @@
 
 import pandas as pd
 
-from prp.models.species import SppMethodIndex, SppPredictionSoftware
+from prp.models.species import BrackenSppIndex, BrackenSpeciesPrediction
 
 
-def parse_result(file: str, cutoff: float = 0.0001) -> SppMethodIndex:
+def parse_result(file: str, cutoff: float = 0.0001) -> BrackenSppIndex:
     """Parse species prediction result"""
     tax_lvl_dict = {
         "P": "phylum",
@@ -24,7 +24,5 @@ def parse_result(file: str, cutoff: float = 0.0001) -> SppMethodIndex:
         .loc[lambda df: df["fraction_total_reads"] >= cutoff]
     )
     # cast as method index
-    return SppMethodIndex(
-        software=SppPredictionSoftware.BRACKEN,
-        result=species_pred.to_dict(orient="records"),
-    )
+    result = [BrackenSpeciesPrediction.model_validate(row) for row in species_pred.to_dict(orient="records")]
+    return BrackenSppIndex(result=result)
