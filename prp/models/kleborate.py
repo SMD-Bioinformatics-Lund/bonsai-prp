@@ -25,7 +25,7 @@ class KleboreateSppResult(RWModel):
 
     scientific_name: str = Field(..., alias="scientificName")
     match: Literal["strong", "weak"] = Field(
-        ..., description="Strength of the species call depending on the Mash didstance."
+        ..., description="Strength of the species call depending on the Mash distance."
     )
 
 
