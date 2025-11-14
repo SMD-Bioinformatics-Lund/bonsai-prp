@@ -52,8 +52,9 @@ def test_parse_cmd(fixture_name: str, expected_sw: list[str], request: pytest.Fi
         assert len(set(expected_sw) & prediction_sw) == len(expected_sw)
 
         # 2. that the output datamodel can be used to format input data as well
-        output_data_model = PipelineResult(**prp_output)
-        assert prp_output == json.loads(output_data_model.model_dump_json())
+        output_data_model = PipelineResult.model_validate(prp_output)
+        output_data_model_json = json.loads(output_data_model.model_dump_json())
+        assert prp_output == output_data_model_json
 
 
 def test_cdm_cmd(ecoli_sample_conf_path: Path, ecoli_cdm_input: list[dict[str, Any]]):
