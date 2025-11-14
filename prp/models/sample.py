@@ -1,6 +1,6 @@
 """Data model definition of input/ output data"""
 
-from typing import Literal, Optional, Union
+from typing import Literal, Union
 
 from pydantic import Field
 
@@ -102,10 +102,10 @@ class PipelineResult(SampleBase):
         Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, KleborateMethodIndex, MethodIndex]
     ] = Field(..., alias="elementTypeResult")
     # optional variant info
-    snv_variants: Optional[list[VariantBase]] = None
-    sv_variants: Optional[list[VariantBase]] = None
-    indel_variants: Optional[list[VariantBase]] = None
+    snv_variants: list[VariantBase] | None = None
+    sv_variants: list[VariantBase] | None = None
+    indel_variants: list[VariantBase] | None = None
     # optional alignment info
-    reference_genome: Optional[ReferenceGenome] = None
-    read_mapping: Optional[str] = None
-    genome_annotation: Optional[list[IgvAnnotationTrack]] = None
+    reference_genome: ReferenceGenome | None = None
+    read_mapping: str | None = None
+    genome_annotation: list[IgvAnnotationTrack] | None = None

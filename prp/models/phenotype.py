@@ -1,7 +1,7 @@
 """Datamodels used for prediction results."""
 
 from enum import StrEnum
-from typing import Literal, Optional, Union
+from typing import Any, Literal, Union
 
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
@@ -119,17 +119,17 @@ class PhenotypeInfo(RWModel):
 class DatabaseReference(RWModel):
     """Reference to a database."""
 
-    ref_database: Optional[str] = None
-    ref_id: Optional[str] = None
+    ref_database: str | None = None
+    ref_id: str | None = None
 
 
 class GeneBase(RWModel):
     """Container for gene information"""
 
     # basic info
-    gene_symbol: Optional[str] = None
-    accession: Optional[str] = None
-    sequence_name: Optional[str] = Field(
+    gene_symbol: str | None = None
+    accession: str | None = None
+    sequence_name: str | None = Field(
         default=None, description="Reference sequence name"
     )
     element_type: ElementType = Field(
@@ -142,22 +142,22 @@ class GeneBase(RWModel):
         ElementSerotypeSubtype,
     ] = Field(description="Further functional categorization of the genes.")
     # position
-    ref_start_pos: Optional[int] = Field(
+    ref_start_pos: int | None = Field(
         None, description="Alignment start in reference"
     )
-    ref_end_pos: Optional[int] = Field(None, description="Alignment end in reference")
-    ref_gene_length: Optional[int] = Field(
+    ref_end_pos: int | None = Field(None, description="Alignment end in reference")
+    ref_gene_length: int | None = Field(
         default=None,
         alias="target_length",
         description="The length of the reference protein or gene.",
     )
 
     # prediction
-    method: Optional[str] = Field(None, description="Method used to predict gene")
-    identity: Optional[float] = Field(
+    method: str | None = Field(None, description="Method used to predict gene")
+    identity: float | None = Field(
         None, description="Identity to reference sequence"
     )
-    coverage: Optional[float] = Field(
+    coverage: float | None = Field(
         None, description="Ratio reference sequence covered"
     )
 
@@ -196,7 +196,7 @@ class SerotypeGene(GeneBase):
 class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
 
-    depth: Optional[float] = Field(
+    depth: float | None = Field(
         None, description="Amount of sequence data supporting the gene."
     )
 
@@ -204,7 +204,7 @@ class VirulenceGene(GeneBase, DatabaseReference):
 class ResfinderGene(ResistanceGene):
     """Container for Resfinder gene prediction information"""
 
-    depth: Optional[float] = Field(
+    depth: float | None = Field(
         None, description="Amount of sequence data supporting the gene."
     )
 
@@ -224,22 +224,22 @@ class VariantBase(RWModel):
         description="Reference sequence such as chromosome, gene or contig id.",
         alias="gene_symbol",
     )
-    accession: Optional[str] = None
+    accession: str | None = None
     start: int
     end: int
-    ref_nt: Optional[str] = None
-    alt_nt: Optional[str] = None
-    ref_aa: Optional[str] = None
-    alt_aa: Optional[str] = None
+    ref_nt: str | None = None
+    alt_nt: str | None = None
+    ref_aa: str | None = None
+    alt_aa: str | None = None
 
     # prediction info
-    depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
-    frequency: Optional[float] = Field(None, description="Alt allele frequency.")
-    confidence: Optional[float] = Field(None, description="Genotype confidence.")
-    method: Optional[str] = Field(
+    depth: float | None = Field(None, description="Total depth, ref + alt.")
+    frequency: float | None = Field(None, description="Alt allele frequency.")
+    confidence: float | None = Field(None, description="Genotype confidence.")
+    method: str | None = Field(
         ..., description="Prediction method used to call variant"
     )
-    passed_qc: Optional[bool] = Field(
+    passed_qc: bool | None = Field(
         ..., description="Describe if variant has passed the tool qc check"
     )
 
@@ -267,7 +267,7 @@ class AmrFinderVariant(VariantBase):
     contig_id: str
     query_start_pos: int = Field(..., description="Alignment start in contig")
     query_end_pos: int = Field(..., description="Alignment start in contig")
-    ref_gene_length: Optional[int] = Field(
+    ref_gene_length: int | None = Field(
         default=None,
         alias="target_length",
         description="The length of the reference protein or gene.",
@@ -281,10 +281,8 @@ class TbProfilerVariant(VariantBase):
     """Container for TbProfiler variant information"""
 
     variant_effect: str | None = None
-    hgvs_nt_change: Optional[str] = Field(..., description="DNA change in HGVS format")
-    hgvs_aa_change: Optional[str] = Field(
-        ..., description="Protein change in HGVS format"
-    )
+    hgvs_nt_change: str | None = Field(None, description="DNA change in HGVS format")
+    hgvs_aa_change: str | None = Field(None, description="Protein change in HGVS format")
 
 
 class VirulenceElementTypeResult(BaseModel):
@@ -296,7 +294,7 @@ class VirulenceElementTypeResult(BaseModel):
 
     phenotypes: dict[str, list[str]]
     genes: list[AmrFinderVirulenceGene | VirulenceGene]
-    variants: list
+    variants: list[Any]
 
 
 class ElementTypeResult(BaseModel):

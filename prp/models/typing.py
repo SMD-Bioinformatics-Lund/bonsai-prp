@@ -84,15 +84,15 @@ class TypingResultCgMlst(ResultMlstBase):
 class TypingResultShiga(RWModel):
     """Container for shigatype gene information"""
 
-    rfb: Optional[str] = None
-    rfb_hits: Optional[float] = None
-    mlst: Optional[str] = None
-    flic: Optional[str] = None
-    crispr: Optional[str] = None
+    rfb: str | None = None
+    rfb_hits: float | None = None
+    mlst: str | None = None
+    flic: str | None = None
+    crispr: str | None = None
     ipah: str
     predicted_serotype: str
-    predicted_flex_serotype: Optional[str] = None
-    comments: Optional[str] = None
+    predicted_flex_serotype: str | None = None
+    comments: str | None = None
 
 
 class ShigaTypingMethodIndex(RWModel):

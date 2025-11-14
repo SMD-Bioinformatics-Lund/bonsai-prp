@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_serializer
 from typing_extensions import Annotated
@@ -97,7 +97,7 @@ class SequencingInfo(RWModel):
 
     run_id: str
     platform: str
-    instrument: Optional[str]
+    instrument: str | None
     method: dict[str, str] = {}
     date: datetime | None
 
