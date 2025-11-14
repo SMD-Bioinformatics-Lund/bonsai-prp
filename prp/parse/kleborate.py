@@ -29,7 +29,7 @@ from prp.models.phenotype import (
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
-    SequenceStand,
+    SequenceStrand,
     VariantSubType,
     VariantType,
 )
@@ -410,14 +410,14 @@ def _get_hamr_phenotype(record: HamronizationEntry) -> PhenotypeInfo | None:
         )
 
 
-def _convert_strand_orientation(orientation: str | None) -> SequenceStand | None:
+def _convert_strand_orientation(orientation: str | None) -> SequenceStrand | None:
     """Convert hAMRonization strand orientation to a SequenceStrand enum."""
     forward_notations: list[str] = ['+', 'sense']
     reverse_notations: list[str] = ['-', 'antisense']
     if orientation in forward_notations:
-        return SequenceStand.FORWARD
+        return SequenceStrand.FORWARD
     if orientation in reverse_notations:
-        return SequenceStand.REVERSE
+        return SequenceStrand.REVERSE
     return None
 
 

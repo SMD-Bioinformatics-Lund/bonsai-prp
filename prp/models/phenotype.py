@@ -9,7 +9,7 @@ from typing_extensions import Self
 from .base import RWModel
 
 
-class SequenceStand(str, Enum):
+class SequenceStrand(str, Enum):
     """Definition of DNA strand."""
 
     FORWARD = "+"
@@ -170,7 +170,7 @@ class AmrFinderGene(GeneBase):
         default=None, description="Start position on the assembly"
     )
     query_end_pos: int = Field(default=None, description="End position on the assembly")
-    strand: SequenceStand | None
+    strand: SequenceStrand | None
 
 
 class AmrFinderVirulenceGene(AmrFinderGene):
@@ -272,7 +272,7 @@ class AmrFinderVariant(VariantBase):
         alias="target_length",
         description="The length of the reference protein or gene.",
     )
-    strand: SequenceStand | None
+    strand: SequenceStrand | None
     coverage: float
     identity: float
 
