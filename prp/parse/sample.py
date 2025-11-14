@@ -7,6 +7,7 @@ from typing import Any, Sequence
 from prp.models.config import SampleConfig
 
 from ..models.phenotype import AMRMethodIndex, ElementType
+from ..models.species import SppMethodIndex
 from ..models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
 from . import (
     amrfinder,
@@ -53,7 +54,7 @@ def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
     return qc_results
 
 
-def _read_spp_prediction(smp_cnf) -> Sequence[mykrobe.SppMethodIndex]:
+def _read_spp_prediction(smp_cnf) -> Sequence[SppMethodIndex]:
     """Read all species prediction results."""
     spp_results = []
     if smp_cnf.kraken:

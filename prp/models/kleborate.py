@@ -20,7 +20,7 @@ class KleborateQcResult(BaseModel):
     qc_warnings: None | bool
 
 
-class KleboreateSppResult(BaseModel):
+class KleboreateSppResult(RWModel):
     """Species prediction results."""
 
     scientific_name: str = Field(..., alias="scientificName")

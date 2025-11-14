@@ -34,7 +34,7 @@ from prp.models.phenotype import (
     VariantType,
 )
 from prp.models.qc import QcMethodIndex, QcSoftware
-from prp.models.species import SppMethodIndex, SppPredictionSoftware
+from prp.models.species import KleborateSppIndex
 from prp.models.typing import TypingResultMlst
 
 LOG = logging.getLogger(__name__)
@@ -345,7 +345,7 @@ def format_kleborate_output(
             scientificName=raw_spp.get("species", "unknown"),
             match=raw_spp.get("species_match"),
         )
-        idx = SppMethodIndex(software=SppPredictionSoftware.KLEBORATE, result=spp_pred)
+        idx = KleborateSppIndex(result=spp_pred)
         formatted.append(ParserOutput(target_field="species_prediction", data=idx))
 
     # parse various typing methods
