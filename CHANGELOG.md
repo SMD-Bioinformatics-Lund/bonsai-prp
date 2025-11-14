@@ -1,6 +1,8 @@
 ## [Unreleased]
 
 ### Added
+
+- Added support for the tool Kleborate
 - Add basic mypy configuration to pyproject.toml
 
 ### Fixed
@@ -8,8 +10,9 @@
 - Changed alias for `TypingResultCgMlst.n_missing` to `nMissing`
 
 ### Changed
+
 - Made variant input opional for creation of .json file
-- Updated prp commands in readme
+- Updated PRP commands in README
 
 ## [1.4.0]
 
