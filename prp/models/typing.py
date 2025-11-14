@@ -75,7 +75,7 @@ class TypingResultMlst(ResultMlstBase):
 
 
 class TypingResultCgMlst(ResultMlstBase):
-    """MLST results"""
+    """cgMLST results"""
 
     n_novel: int = Field(0, alias="nNovel")
     n_missing: int = Field(0, alias="nMissing")
