@@ -2,10 +2,10 @@
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .base import RWModel
-from .phenotype import ElementTypeResult
+from .phenotype import ElementTypeResult, VariantSubType
 from .typing import LineageMixin, TypingResultMlst
 
 
@@ -68,3 +68,19 @@ class KleborateMethodIndex(RWModel):
     software: Literal["kleborate"] = "kleborate"
     version: str
     result: KleborateQcResult | KleboreateSppResult | KleborateMlstLikeResults | KleborateKaptiveTypingResult | KleborateVirulenceScore | ElementTypeResult
+
+
+class ParsedVariant(BaseModel):
+    """Structured output of a Kleborate HGVS-like variant string."""
+
+    ref: str = Field(default="", min_length=0, max_length=10)
+    alt: str = Field(default="", min_length=0, max_length=20)
+    start: int = Field(..., ge=1)
+    end: int | None = Field(default=None, ge=1)
+    residue: Literal['nucleotide', 'protein']
+    type: VariantSubType
+
+    @field_validator('ref', 'alt', mode='before')
+    @classmethod
+    def strip_whitespace(cls, v: Any):
+        return v.strip() if isinstance(v, str) else v

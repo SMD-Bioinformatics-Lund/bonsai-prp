@@ -49,6 +49,7 @@ class VariantSubType(str, Enum):
     INVERSION = "INV"
     DUPLICATION = "DUP"
     TRANSLOCATION = "BND"
+    FRAME_SHIFT = "FS"
 
 
 class ElementType(str, Enum):
