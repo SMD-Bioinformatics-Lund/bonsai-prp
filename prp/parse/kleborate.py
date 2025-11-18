@@ -10,6 +10,8 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, TextIO, TypeAlias
 
+from pydantic import BaseModel
+
 from prp.models.base import ParserOutput
 from prp.models.hamronization import HamronizationEntries, HamronizationEntry
 from prp.models.kleborate import (
@@ -20,6 +22,7 @@ from prp.models.kleborate import (
     KleborateQcResult,
     KleborateVirulenceScore,
     KleboreateSppResult,
+    ParsedVariant,
 )
 from prp.models.phenotype import (
     AmrFinderResistanceGene,
@@ -56,9 +59,6 @@ PercentMode: TypeAlias = Literal["fraction", "percent"]
 _PERCENT_RE = re.compile(r"\s*(-?\d+(?:\.\d+)?)\s*%")
 _FLOAT_RE = re.compile(r"\s*-?\d+\.\d+\s*")
 _INT_RE = re.compile(r"\s*-?\d+\s*")
-_HGVS_PROTEIN_RE = re.compile(r"p\.([A-Za-z]+)(\d+)([A-Za-z]+)")
-_HGVS_NUCLEOTIDE_RE = re.compile(r"c\.([A-Za-z]+)(\d+)([A-Za-z]+)")
-
 
 def _normalize_scalar(
     s: str | None,
@@ -421,6 +421,59 @@ def _convert_strand_orientation(orientation: str | None) -> SequenceStrand | Non
     return None
 
 
+def _parse_variant_str(variant_str: str | None) -> ParsedVariant | None:
+    """Parse the HGVS-like variant string reported by Kleborate."""
+    if not variant_str:
+        return None
+    
+    variant_type = (
+        VariantSubType.INSERTION if 'ins' in variant_str else
+        VariantSubType.DELETION if 'del' in variant_str else
+        VariantSubType.DUPLICATION if 'dup' in variant_str else
+        VariantSubType.INVERSION if 'inv' in variant_str else
+        VariantSubType.FRAME_SHIFT if 'fs' in variant_str else
+        VariantSubType.SUBSTITUTION
+    )
+
+    nucleotide_prefix = ('c', 'g')
+    if variant_str[0] in nucleotide_prefix:
+        residue_type = 'nucleotide'
+    elif variant_str.startswith('p.'):
+        residue_type = 'protein'
+    else:
+        raise ValueError(f"Unknown variant type: {variant_str}")
+    
+    def compile(p: str) -> re.Pattern[str]:
+        """Shorthand regex compiler"""
+        return re.compile(p, re.I)
+
+    # define patterns for parsing hgvs-like strings
+    variant_patterns: dict[tuple[str, VariantSubType], re.Pattern[str]] = {
+        ('protein', VariantSubType.SUBSTITUTION): compile(r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)(?P<alt>[A-Z]+)"),
+        ('protein', VariantSubType.INSERTION): compile(r"\w\.(?P<start>\d+)_(?P<end>\d+)ins(?P<alt>[A-Z]+)"),
+        ('protein', VariantSubType.FRAME_SHIFT): compile(r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)fs"),
+        ('protein', VariantSubType.DELETION): compile(r"\w\.(?P<ref>[A-Z]+)(?P<pos>\d+)del"),
+        ('nucleotide', VariantSubType.SUBSTITUTION): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)(?P<alt>[ACGTURYSWKMBDHVN]+)"),
+        ('nucleotide', VariantSubType.FRAME_SHIFT): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)fs"),
+        ('nucleotide', VariantSubType.DELETION): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)del"),
+        ('nucleotide', VariantSubType.DUPLICATION): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)dup"),
+        ('nucleotide', VariantSubType.INVERSION): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)inv"),
+    }
+
+    # try get the approproate pattern for matching the string
+    pattern = variant_patterns.get((residue_type, variant_type))
+    if not pattern:
+        LOG.warning(f"Dont know how to parse {residue_type} {variant_type}: {variant_str}")
+        return None
+
+    # try matching the pattern and return a structured result
+    if (match := re.fullmatch(pattern, variant_str)) and match:
+        return ParsedVariant.model_validate({"residue": residue_type, "type": variant_type, **match.groupdict()})
+
+    LOG.warning(f"Could not parse the {variant_str} using the pattern for {residue_type} {variant_type}")
+    return None
+
+
 def hamronization_to_restance_entry(
     entries: HamronizationEntries,
 ) -> KleborateMethodIndex:
@@ -455,17 +508,18 @@ def hamronization_to_restance_entry(
             )
             res_genes.append(rec)
         elif "variant" in entry.genetic_variation_type.lower() or "mutation" in entry.genetic_variation_type.lower():
-            variant_info = {}
-            if entry.protein_mutation:
-                if (match := re.fullmatch(_HGVS_PROTEIN_RE, entry.protein_mutation)) and match:
-                    ref, _, alt = match.groups()
-                    variant_info['ref_aa'] = ref
-                    variant_info['alt_aa'] = alt
-            if entry.nucleotide_mutation:
-                if (match := re.fullmatch(_HGVS_NUCLEOTIDE_RE, entry.nucleotide_mutation)) and match:
-                    ref, _, alt = match.groups()
-                    variant_info['ref_nt'] = ref
-                    variant_info['alt_nt'] = alt
+            variant_info = _parse_variant_str(entry.protein_mutation or entry.nucleotide_mutation)
+
+            # Prepare optional fields based on variant_info
+            extra_fields = {}
+            if variant_info:
+                if variant_info.residue == "nucleotide":
+                    extra_fields["ref_nt"] = variant_info.ref
+                    extra_fields["alt_nt"] = variant_info.alt
+                elif variant_info.residue == "protein":
+                    extra_fields["ref_aa"] = variant_info.ref
+                    extra_fields["alt_aa"] = variant_info.alt
+
             rec = AmrFinderVariant(
                 id=row_no,
                 gene_symbol=entry.gene_symbol,
@@ -484,7 +538,7 @@ def hamronization_to_restance_entry(
                 confidence=None,
                 method="kleborate",
                 strand=strand,
-                **variant_info
+                **extra_fields
             )
             res_variants.append(rec)
         else:

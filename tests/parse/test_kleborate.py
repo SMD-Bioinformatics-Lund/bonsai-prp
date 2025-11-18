@@ -83,3 +83,22 @@ def test_set_nested(path: list[str], expected: dict[str, Any]):
     result = kleborate._set_nested({}, path, "here")
 
     assert result == expected
+
+
+@pytest.mark.parametrize("variant,expected,warn_msg", [
+    ("p.Leu35Gln", ParsedVariant(ref="Leu", alt="Gln", start=35, residue='protein', type=VariantSubType.SUBSTITUTION), None),
+    ("p.134_135insGlyAsp", ParsedVariant(ref="", alt="GlyAsp", start=134, end=135, residue="protein", type=VariantSubType.INSERTION), None),
+    ("p.Lys28fs", ParsedVariant(ref="Lys", start=28, residue="protein", type=VariantSubType.FRAME_SHIFT), None),
+    ("c.T68del", ParsedVariant(ref="T", alt="", start=68, residue="nucleotide", type=VariantSubType.DELETION), None),
+    ("c.T68foo", None, None),
+    (None, None, None)
+])
+def test_parse_variant_str(variant: str, expected: ParsedVariant, warn_msg: str | None, caplog):
+    """Test parsing of HGVS-like string."""
+
+    with caplog.at_level(logging.WARNING):
+        result = kleborate._parse_variant_str(variant)
+        assert result == expected
+
+        if warn_msg:
+            assert any(warn_msg in message for message in caplog.messages)
