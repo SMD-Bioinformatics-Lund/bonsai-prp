@@ -10,17 +10,18 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, TextIO, TypeAlias
 
-from pydantic import BaseModel
-
 from prp.models.base import ParserOutput
 from prp.models.hamronization import HamronizationEntries, HamronizationEntry
 from prp.models.kleborate import (
     KleborateKaptiveLocus,
     KleborateKaptiveTypingResult,
-    KleborateMethodIndex,
+    KleborateEtIndex,
+    KleborateMlstLikeIndex,
+    KleborateKtypeIndex,
     KleborateMlstLikeResults,
     KleborateQcResult,
-    KleborateVirulenceScore,
+    KleborateScoreIndex,
+    KleborateEtScore,
     KleboreateSppResult,
     ParsedVariant,
 )
@@ -38,7 +39,7 @@ from prp.models.phenotype import (
 )
 from prp.models.qc import QcMethodIndex, QcSoftware
 from prp.models.species import KleborateSppIndex
-from prp.models.typing import TypingResultMlst
+from prp.models.typing import TypingMethod, TypingResultMlst
 
 LOG = logging.getLogger(__name__)
 
@@ -59,6 +60,7 @@ PercentMode: TypeAlias = Literal["fraction", "percent"]
 _PERCENT_RE = re.compile(r"\s*(-?\d+(?:\.\d+)?)\s*%")
 _FLOAT_RE = re.compile(r"\s*-?\d+\.\d+\s*")
 _INT_RE = re.compile(r"\s*-?\d+\s*")
+
 
 def _normalize_scalar(
     s: str | None,
@@ -230,7 +232,7 @@ def _mlst_like_formatter(
 
 def _format_mlst_like_typing(
     result: dict[str, Any], version: str
-) -> list[KleborateMethodIndex]:
+) -> list[KleborateMlstLikeIndex]:
     """Generic MLST-like formatter.
 
     lineage_key: str
@@ -266,11 +268,11 @@ def _format_mlst_like_typing(
         },
     }
 
-    typing_result: list[KleborateMethodIndex] = []
+    typing_result: list[KleborateMlstLikeIndex] = []
     for name, schema_def in mlst_like_typing_schemas.items():
         try:
             res = _mlst_like_formatter(result, schema_name=name, **schema_def)
-            out = KleborateMethodIndex(version=version, result=res)
+            out = KleborateMlstLikeIndex(type=TypingMethod(name), version=version, result=res)
             typing_result.append(out)
         except RuntimeError as exc:
             LOG.error(f"Critial Kleborate parser error; {exc}")
@@ -300,7 +302,7 @@ def _parse_qc(result: dict[str, JSONLike], version: str) -> QcMethodIndex:
         return QcMethodIndex(software=QcSoftware.KLEBORATE, version=version, result=res)
 
 
-def _parse_kaptive(d: dict[str, JSONLike], version: str) -> KleborateMethodIndex:
+def _parse_kaptive(d: dict[str, JSONLike], version: str) -> KleborateKtypeIndex:
     """Parse kaptive results in Kleborate."""
 
     def _fmt_res(
@@ -315,7 +317,7 @@ def _parse_kaptive(d: dict[str, JSONLike], version: str) -> KleborateMethodIndex
             missing_genes=d[f"{type}_Missing_expected_genes"],
         )
 
-    return KleborateMethodIndex(
+    return KleborateKtypeIndex(
         version=version,
         result=KleborateKaptiveTypingResult(
             k_type=_fmt_res(d, "K"), o_type=_fmt_res(d, "O")
@@ -372,9 +374,10 @@ def format_kleborate_output(
         if (vir_score := preset_results.get("virulence_score", {})) and isinstance(
             vir_score, dict
         ):
-            idx = KleborateMethodIndex(
+            idx = KleborateScoreIndex(
                 version=version,
-                result=KleborateVirulenceScore(
+                type=ElementType.VIR,
+                result=KleborateEtScore(
                     score=int(vir_score["virulence_score"]),
                     spurious_hits=vir_score["spurious_virulence_hits"],
                 ),
@@ -476,7 +479,7 @@ def _parse_variant_str(variant_str: str | None) -> ParsedVariant | None:
 
 def hamronization_to_restance_entry(
     entries: HamronizationEntries,
-) -> KleborateMethodIndex:
+) -> KleborateEtIndex:
     """Convert hamronization formatted data to a PRP structured record."""
     res_genes: list[AmrFinderResistanceGene] = []
     res_variants: list[AmrFinderVariant] = []
@@ -546,8 +549,8 @@ def hamronization_to_restance_entry(
                 f"Could not determine wether entry {row_no} is a gene or variant",
                 entry.genetic_variation_type,
             )
-    return KleborateMethodIndex(
-        version=sw_version,
+    return KleborateEtIndex(
+        version=sw_version, type=ElementType.AMR,
         result=ElementTypeResult(variants=res_variants, genes=res_genes),
     )
 

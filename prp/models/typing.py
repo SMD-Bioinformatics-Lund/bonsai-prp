@@ -13,30 +13,37 @@ class TypingSoftware(str, Enum):
     """Container for software names."""
 
     CHEWBBACA = "chewbbaca"
+    EMMTYPER = "emmtyper"
+    KLEBORATE = "kleborate"
     MLST = "mlst"
-    TBPROFILER = "tbprofiler"
     MYKROBE = "mykrobe"
-    VIRULENCEFINDER = "virulencefinder"
+    SCCMEC = "sccmec"
     SEROTYPEFINDER = "serotypefinder"
     SHIGAPASS = "shigapass"
-    EMMTYPER = "emmtyper"
     SPATYPER = "spatyper"
-    SCCMEC = "sccmec"
+    TBPROFILER = "tbprofiler"
+    VIRULENCEFINDER = "virulencefinder"
 
 
 class TypingMethod(str, Enum):
     """Valid typing methods."""
 
-    MLST = "mlst"
+    ABST = "abst"
+    CBST = "cbst"
     CGMLST = "cgmlst"
-    LINEAGE = "lineage"
-    STX = "stx"
-    OTYPE = "O_type"
-    HTYPE = "H_type"
-    SHIGATYPE = "shigatype"
     EMMTYPE = "emmtype"
-    SPATYPE = "spatype"
+    HTYPE = "H_type"
+    LINEAGE = "lineage"
+    KTYPE = "K_type"
+    MLST = "mlst"
+    OTYPE = "O_type"
+    RMST = "rmst"
     SCCMECTYPE = "sccmectype"
+    SHIGATYPE = "shigatype"
+    SMST = "smst"
+    SPATYPE = "spatype"
+    STX = "stx"
+    YBST = "ybst"
 
 
 class ChewbbacaErrors(str, Enum):

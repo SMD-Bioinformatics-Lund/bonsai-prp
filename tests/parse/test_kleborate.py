@@ -7,7 +7,7 @@ import logging
 import pytest
 
 from prp.models.hamronization import HamronizationEntry
-from prp.models.kleborate import KleborateMethodIndex, ParsedVariant
+from prp.models.kleborate import KleborateEtIndex, ParsedVariant
 from prp.models.base import ParserOutput
 from prp.models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo, VariantSubType
 from prp.parse import kleborate
@@ -45,7 +45,7 @@ def test_convert_hamronization_to_amr_record(hamronization_entry: HamronizationE
     res = kleborate.hamronization_to_restance_entry([hamronization_entry])
 
     # Test that result in strucutred data
-    assert isinstance(res, KleborateMethodIndex)
+    assert isinstance(res, KleborateEtIndex)
 
     assert res.version == hamronization_entry.analysis_software_version
 

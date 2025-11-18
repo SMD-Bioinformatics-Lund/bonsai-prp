@@ -81,7 +81,7 @@ def _convert_strand_orientation(value: str) -> Literal["+", "-"] | None:
         return "+"
     if value in antisense_symbols:
         return "-"
-    
+
 
 def get_version(source: TextIO) -> SoupVersion | None:
     """Naive get software and version from a hAMRonization file."""
@@ -138,10 +138,11 @@ def parse_hamronization(
 
         # convert mutation entry. This is specifically for the Kleborate implementation of the specification
         variant_info: dict[str, Any] = {}
+        nucleotide_mutations = ('c', 'g', 'n')
         if (mutation := clean_row.get("mutation")) is not None:
             if isinstance(mutation, str) and mutation.startswith("p."):
                 variant_info["protein_mutation"] = mutation
-            if isinstance(mutation, str) and mutation.startswith("n."):
+            elif isinstance(mutation, str) and mutation[0] in nucleotide_mutations:
                 variant_info["nucleotide_mutation"] = mutation
 
         gene_symbol = clean_row.get("gene_symbol")

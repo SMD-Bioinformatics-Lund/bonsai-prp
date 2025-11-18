@@ -13,7 +13,7 @@ from .phenotype import (
     VariantBase,
     VirulenceMethodIndex,
 )
-from .qc import QcMethodIndex
+from .qc import QcMethodIndex, KleborateQcIndex
 from .species import SppMethodIndex
 from .typing import (
     EmmTypingMethodIndex,
@@ -28,7 +28,7 @@ from .typing import (
     TypingResultMlst,
     TypingSoftware,
 )
-from .kleborate import KleborateMethodIndex
+from .kleborate import KleborateEtIndex, KleborateScoreIndex, KleborateTypeIndex
 
 SCHEMA_VERSION: int = 2
 
@@ -59,7 +59,7 @@ class SampleBase(RWModel):
     pipeline: PipelineInfo
 
     # quality
-    qc: list[QcMethodIndex] = Field(...)
+    qc: list[QcMethodIndex | KleborateQcIndex] = Field(...)
 
     # species identification
     species_prediction: list[SppMethodIndex] = Field(..., alias="speciesPrediction")
@@ -93,13 +93,13 @@ class PipelineResult(SampleBase):
             EmmTypingMethodIndex,
             SccmecTypingMethodIndex,
             SpatyperTypingMethodIndex,
-            KleborateMethodIndex,
+            KleborateTypeIndex,
             MethodIndex,
         ]
     ] = Field(..., alias="typingResult")
     # optional phenotype prediction
     element_type_result: list[
-        Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, KleborateMethodIndex, MethodIndex]
+        Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, KleborateEtIndex, KleborateScoreIndex, MethodIndex]
     ] = Field(..., alias="elementTypeResult")
     # optional variant info
     snv_variants: Optional[list[VariantBase]] = None

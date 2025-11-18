@@ -5,8 +5,8 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
 from .base import RWModel
-from .phenotype import ElementTypeResult, VariantSubType
-from .typing import LineageMixin, TypingResultMlst
+from .phenotype import ElementType, ElementTypeResult, PredictionSoftware, VariantSubType
+from .typing import LineageMixin, TypingMethod, TypingResultMlst, TypingSoftware
 
 
 class KleborateQcResult(BaseModel):
@@ -33,8 +33,8 @@ class KleborateMlstLikeResults(TypingResultMlst, LineageMixin):
     """Kleborate MLST-like analysis"""
 
 
-class KleborateVirulenceScore(RWModel):
-    """Records and validate virulence score."""
+class KleborateEtScore(RWModel):
+    """Records and validate score."""
 
     score: int = Field(..., ge=0, le=5)
     spurious_hits: Any
@@ -62,12 +62,43 @@ class KleborateAmrPrediction(RWModel):
     score: int = Field(..., ge=0, le=6)
 
 
-class KleborateMethodIndex(RWModel):
+class KleborateEtIndex(RWModel):
     """Indexing of Kleborate data."""
 
-    software: Literal["kleborate"] = "kleborate"
+    software: Literal[PredictionSoftware.KLEBORATE] = PredictionSoftware.KLEBORATE
+    type: Literal[ElementType.AMR, ElementType.VIR]
     version: str
-    result: KleborateQcResult | KleboreateSppResult | KleborateMlstLikeResults | KleborateKaptiveTypingResult | KleborateVirulenceScore | ElementTypeResult
+    result: ElementTypeResult
+
+
+class KleborateScoreIndex(RWModel):
+    """Indexing of Kleborate data."""
+
+    software: Literal[PredictionSoftware.KLEBORATE] = PredictionSoftware.KLEBORATE
+    type: Literal[ElementType.AMR, ElementType.VIR]
+    version: str
+    result: KleborateEtScore
+
+
+class KleborateMlstLikeIndex(RWModel):
+    """Container for MLST-like typing result."""
+
+    type: Literal[TypingMethod.MLST, TypingMethod.ABST, TypingMethod.CBST, TypingMethod.RMST, TypingMethod.SMST, TypingMethod.YBST]
+    software: Literal[TypingSoftware.KLEBORATE] = TypingSoftware.KLEBORATE
+    version: str
+    result: KleborateMlstLikeResults
+
+
+class KleborateKtypeIndex(RWModel):
+    """Container for MLST-like typing result."""
+
+    type: Literal[TypingMethod.KTYPE] = TypingMethod.KTYPE
+    software: Literal[TypingSoftware.KLEBORATE] = TypingSoftware.KLEBORATE
+    version: str
+    result: KleborateKaptiveTypingResult
+
+
+KleborateTypeIndex = KleborateMlstLikeIndex | KleborateKtypeIndex
 
 
 class ParsedVariant(BaseModel):
