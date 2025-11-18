@@ -2,13 +2,14 @@
 
 from pathlib import Path
 from typing import Any
+import logging
 
 import pytest
 
 from prp.models.hamronization import HamronizationEntry
-from prp.models.kleborate import KleborateMethodIndex
+from prp.models.kleborate import KleborateMethodIndex, ParsedVariant
 from prp.models.base import ParserOutput
-from prp.models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo
+from prp.models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo, VariantSubType
 from prp.parse import kleborate
 
 

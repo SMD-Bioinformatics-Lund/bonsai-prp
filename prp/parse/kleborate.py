@@ -122,10 +122,10 @@ def _normalize_cell(
         )
 
 
-def _set_nested(d: dict[str, Any], path: list[str], value: Any) -> dict[str, Any]:
+def _set_nested(d: dict[str, Any], path: list[str], value: Any) -> dict[str, Any] | None:
     """Set value in a nested dict according to path."""
     if not path:
-        return
+        return None
 
     key = path[0]
     # create new node if node has not yet been added
