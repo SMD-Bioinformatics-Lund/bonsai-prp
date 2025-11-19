@@ -125,7 +125,7 @@ class PostAlignQcMethodIndex(MethodIndexBase[PostAlignQcResult]):
 
 
 class GenomeCompletenessIndex(MethodIndexBase[GenomeCompleteness]):
-    software: str = "GENOMECOMPLETENESS"
+    software: Literal["GENOMECOMPLETENESS"] = "GENOMECOMPLETENESS"
 
 
 class GambitIndex(MethodIndexBase[GambitcoreQcResult]):
