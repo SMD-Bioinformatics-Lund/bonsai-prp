@@ -1,7 +1,9 @@
 """Generic database objects of which several other models are based on."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Generic
+
+from pyparsing import TypeVar
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
 from pysam import Callable
@@ -48,3 +50,13 @@ class RWModel(BaseModel):  # pylint: disable=too-few-public-methods
         populate_by_name=True,
         use_enum_values=True,
     )
+
+
+T = TypeVar("T")
+
+class MethodIndexBase(RWModel, Generic[T]):
+    """Generic container for typing method results."""
+    
+    software: str
+    type: str
+    result: T
