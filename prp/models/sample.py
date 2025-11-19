@@ -8,10 +8,8 @@ from pydantic import Field
 from .base import RWModel
 from .metadata import PipelineInfo, SequencingInfo
 from .phenotype import (
-    AMRMethodIndex,
-    StressMethodIndex,
+    TraitMethodIndex,
     VariantBase,
-    VirulenceMethodIndex,
 )
 from .qc import QcMethodIndex
 from .species import SppMethodIndex
@@ -62,9 +60,7 @@ class PipelineResult(SampleBase):
     # optional typing
     typing_result: list[TypingMethodIndex] = Field(..., alias="typingResult")
     # optional phenotype prediction
-    element_type_result: list[
-        Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, KleborateMethodIndex, MethodIndex]
-    ] = Field(..., alias="elementTypeResult")
+    element_type_result: list[TraitMethodIndex] = Field(..., alias="elementTypeResult")
     # optional variant info
     snv_variants: list[VariantBase] | None = None
     sv_variants: list[VariantBase] | None = None

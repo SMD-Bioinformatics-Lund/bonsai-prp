@@ -1,12 +1,12 @@
 """Datamodels used for prediction results."""
 
 from enum import StrEnum
-from typing import Any, Literal, Union
+from typing import Annotated, Any, Literal, Union, Protocol
 
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 
-from .base import RWModel
+from .base import MethodIndexBase, RWModel
 
 
 class SequenceStrand(StrEnum):
@@ -297,7 +297,7 @@ class VirulenceElementTypeResult(BaseModel):
     variants: list[Any]
 
 
-class ElementTypeResult(BaseModel):
+class ElementTypeProtocol(Protocol):
     """Phenotype result data model.
 
     A phenotype result is a generic data structure that stores predicted genes,
@@ -311,33 +311,46 @@ class ElementTypeResult(BaseModel):
     ] = []
 
 
-class AMRMethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
-
-    type: Literal[ElementType.AMR]
-    software: PredictionSoftware
-    result: ElementTypeResult
+class ElementTypeBase(BaseModel):
+    """Base element type model used exmple to store AMR and virulence prediction."""
+    phenotypes: dict[str, list[str]] = {}
 
 
-class AntigenMethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
-
-    type: Literal[ElementType.ANTIGEN]
-    software: PredictionSoftware
-    result: ElementTypeResult
+class AmrFinderResult(ElementTypeBase):
+    genes: list[AmrFinderGene | AmrFinderResistanceGene]
+    variants: list[AmrFinderVariant] = []
 
 
-class StressMethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
-
-    type: Literal[ElementType.STRESS]
-    software: PredictionSoftware
-    result: ElementTypeResult
+class ResFinderResult(ElementTypeBase):
+    genes: list[ResfinderGene]
+    variants: list[ResfinderVariant] = []
 
 
-class VirulenceMethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
+class AmrFinderIndex(MethodIndexBase[AmrFinderResult]):
+    type: Literal[ElementType.AMR, ElementType.STRESS, ElementType.VIR]
+    software = PredictionSoftware.AMRFINDER
 
-    type: Literal[ElementType.VIR]
-    software: PredictionSoftware
-    result: VirulenceElementTypeResult
+
+class ResFinderIndex(MethodIndexBase[ResFinderResult]):
+    type: Literal[ElementType.AMR, ElementType.STRESS]
+    software = PredictionSoftware.RESFINDER
+
+
+class KleborateIndex(MethodIndexBase[ResFinderResult]):
+    type: Literal[ElementType.AMR, ElementType.VIR]
+    software = PredictionSoftware.KLEBORATE
+
+
+class VirulenceIndex(MethodIndexBase[VirulenceElementTypeResult]):
+    type = ElementType.VIR
+    software: PredictionSoftware.VIRFINDER | PredictionSoftware.AMRFINDER
+
+
+# Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, KleborateMethodIndex, MethodIndex]
+TraitMethodIndex = Annotated[
+    AmrFinderIndex
+    | KleborateIndex
+    | ResFinderIndex
+    | VirulenceIndex,
+    Field(desciminator="software"),
+]
