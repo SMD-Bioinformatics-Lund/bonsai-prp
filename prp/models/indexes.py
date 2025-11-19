@@ -42,7 +42,7 @@ QcMethodIndex = Annotated[
     | PostAlignQcMethodIndex
     | QuastIndex
     | SamtoolsCoverageIndex,
-    Field(desciminator="software"),
+    Field(discriminator="software"),
 ]
 
 SppMethodIndex = Annotated[
@@ -56,7 +56,7 @@ TraitMethodIndex = Annotated[
     | ResFinderIndex
     | VirulenceFinderIndex
     | TbProfilerEtIndex,
-    Field(desciminator="software"),
+    Field(discriminator="software"),
 ]
 
 TypingMethodIndex = Annotated[
@@ -67,5 +67,5 @@ TypingMethodIndex = Annotated[
     | ShigaTypingIndex
     | SpatyperTypingIndex
     | TbProfilerLineageTypingIndex,
-    Field(desciminator="type"),
+    Field(discriminator="type"),
 ]
