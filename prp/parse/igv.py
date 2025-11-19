@@ -8,7 +8,7 @@ from .variant import load_variants
 from prp.models.config import IgvAnnotation
 from prp.models.phenotype import VariantBase
 
-from ..models.sample import IgvAnnotationTrack, ReferenceGenome
+from prp.models.sample import IgvAnnotationTrack, ReferenceGenome
 
 LOG = logging.getLogger(__name__)
 

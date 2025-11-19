@@ -5,8 +5,8 @@ from typing import Any, Iterable
 
 import pandas as pd
 
-from ..models.typing import EmmTypingMethodIndex, TypingMethod, TypingResultEmm
-from ..models.typing import TypingSoftware as Software
+from prp.models.typing import EmmTypingMethodIndex, TypingMethod, TypingResultEmm
+from prp.models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 

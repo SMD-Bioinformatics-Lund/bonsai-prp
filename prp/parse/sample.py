@@ -6,9 +6,9 @@ from typing import Any, Sequence
 
 from prp.models.config import SampleConfig
 
-from ..models.phenotype import AMRMethodIndex, ElementType
-from ..models.species import SppMethodIndex
-from ..models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
+from prp.models.phenotype import AMRMethodIndex, ElementType
+from prp.models.species import SppMethodIndex
+from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
 from . import (
     amrfinder,
     hamronization,

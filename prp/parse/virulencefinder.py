@@ -4,15 +4,15 @@ import json
 import logging
 from typing import Any
 
-from ..models.phenotype import ElementType, ElementVirulenceSubtype
-from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import (
+from prp.models.phenotype import ElementType, ElementVirulenceSubtype
+from prp.models.phenotype import PredictionSoftware as Software
+from prp.models.phenotype import (
     VirulenceElementTypeResult,
     VirulenceGene,
     VirulenceMethodIndex,
 )
-from ..models.sample import MethodIndex
-from ..models.typing import TypingMethod, TypingResultGeneAllele
+from prp.models.sample import MethodIndex
+from prp.models.typing import TypingMethod, TypingResultGeneAllele
 
 LOG = logging.getLogger(__name__)
 

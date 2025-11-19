@@ -13,8 +13,8 @@ from prp.models.species import (
     MykrobeSppIndex,
 )
 
-from ..models.metadata import SoupType, SoupVersion
-from ..models.phenotype import (
+from prp.models.metadata import SoupType, SoupVersion
+from prp.models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
     ElementType,
@@ -22,10 +22,10 @@ from ..models.phenotype import (
     MykrobeVariant,
     PhenotypeInfo,
 )
-from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import VariantSubType, VariantType
-from ..models.sample import MethodIndex
-from ..models.typing import ResultLineageBase, TypingMethod
+from prp.models.phenotype import PredictionSoftware as Software
+from prp.models.phenotype import VariantSubType, VariantType
+from prp.models.sample import MethodIndex
+from prp.models.typing import ResultLineageBase, TypingMethod
 from .utils import get_nt_change, is_prediction_result_empty
 
 LOG = logging.getLogger(__name__)

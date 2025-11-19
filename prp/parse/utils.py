@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Tuple
 
-from ..models.phenotype import ElementTypeResult, VariantSubType, VariantType
+from prp.models.phenotype import ElementTypeResult, VariantSubType, VariantType
 
 
 def classify_variant_type(

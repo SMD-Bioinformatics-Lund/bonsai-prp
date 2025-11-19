@@ -4,10 +4,10 @@ import json
 import logging
 from typing import Any
 
-from ..models.phenotype import ElementSerotypeSubtype, ElementType, SerotypeGene
-from ..models.sample import MethodIndex
-from ..models.typing import TypingResultGeneAllele
-from ..models.typing import TypingSoftware as Software
+from prp.models.phenotype import ElementSerotypeSubtype, ElementType, SerotypeGene
+from prp.models.sample import MethodIndex
+from prp.models.typing import TypingResultGeneAllele
+from prp.models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 

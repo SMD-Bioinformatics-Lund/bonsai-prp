@@ -3,9 +3,9 @@
 import pandas as pd
 import logging
 
-from ..models.sample import SccmecTypingMethodIndex
-from ..models.typing import (TypingMethod, TypingResultSccmec)
-from ..models.typing import TypingSoftware as Software
+from prp.models.sample import SccmecTypingMethodIndex
+from prp.models.typing import (TypingMethod, TypingResultSccmec)
+from prp.models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 

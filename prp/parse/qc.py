@@ -11,16 +11,16 @@ import pandas as pd
 import numpy as np
 import pysam
 
-from ..models.qc import (
+from prp.models.qc import (
     GambitcoreQcResult,
     PostAlignQcResult,
-    QcMethodIndex,
     QcSoftware,
     QuastQcResult,
     NanoPlotQcResult,
     ContigCoverage,
     SamtoolsCoverageQcResult,
 )
+from prp.models.indexes import QcMethodIndex
 
 OptionalFile = TextIO | None
 

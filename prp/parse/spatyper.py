@@ -4,9 +4,9 @@ import logging
 
 import pandas as pd
 
-from ..models.sample import SpatyperTypingMethodIndex
-from ..models.typing import TypingMethod, TypingResultSpatyper
-from ..models.typing import TypingSoftware as Software
+from prp.models.sample import SpatyperTypingMethodIndex
+from prp.models.typing import TypingMethod, TypingResultSpatyper
+from prp.models.typing import TypingSoftware as Software
 
 LOG = logging.getLogger(__name__)
 

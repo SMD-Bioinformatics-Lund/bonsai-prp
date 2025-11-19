@@ -8,19 +8,15 @@ from typing import Any, Dict, Sequence, Tuple
 import numpy as np
 import pandas as pd
 
-from ..models.phenotype import (
-    AmrFinderGene,
-    AmrFinderResistanceGene,
-    AmrFinderVariant,
-    AmrFinderVirulenceGene,
-    AMRMethodIndex,
+from prp.models.amrfinder import AmrFinderGene, AmrFinderResistanceGene, AmrFinderVariant, AmrFinderVirulenceGene, AmrFinderIndex
+from prp.models.phenotype import (
     AnnotationType,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
 )
-from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import (
+from prp.models.phenotype import PredictionSoftware as Software
+from prp.models.phenotype import (
     StressMethodIndex,
     VirulenceElementTypeResult,
     VirulenceMethodIndex,

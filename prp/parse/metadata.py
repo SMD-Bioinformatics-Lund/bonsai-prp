@@ -7,7 +7,7 @@ from typing import Any
 
 from Bio import SeqIO
 
-from ..models.metadata import (
+from prp.models.metadata import (
     MetaEntry,
     PipelineInfo,
     SequencingInfo,

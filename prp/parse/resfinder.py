@@ -4,7 +4,7 @@ import logging
 from itertools import chain
 from typing import Any
 
-from ..models.phenotype import (
+from prp.models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
     ElementAmrSubtype,
@@ -13,8 +13,8 @@ from ..models.phenotype import (
     ElementTypeResult,
     PhenotypeInfo,
 )
-from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import (
+from prp.models.phenotype import PredictionSoftware as Software
+from prp.models.phenotype import (
     ResfinderGene,
     ResfinderVariant,
     StressMethodIndex,
