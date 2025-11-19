@@ -1,19 +1,11 @@
 """QC data models."""
 
 from enum import StrEnum
-from typing import Annotated
+from typing_extensions import Literal
 
 from pydantic import BaseModel, Field
 
-from .kleborate import KleborateQcResult
-from .base import RWModel, MethodIndexBase
-from .typing import TypingSoftware
-
-
-class ValidQualityStr(StrEnum):
-    """Valid strings for qc entries."""
-
-    LOWCONTIGQUAL = "-"
+from .base import MethodIndexBase
 
 
 class QcSoftware(StrEnum):
@@ -22,11 +14,17 @@ class QcSoftware(StrEnum):
     QUAST = "quast"
     FASTQC = "fastqc"
     POSTALIGNQC = "postalignqc"
-    CHEWBBACA = TypingSoftware.CHEWBBACA.value
+    CHEWBBACA = "chewbbaca"
     GAMBITCORE = "gambitcore"
     NANOPLOT = "nanoplot"
     KLEBORATE = "kleborate"
     SAMTOOLS = "samtools"
+
+
+class ValidQualityStr(StrEnum):
+    """Valid strings for qc entries."""
+
+    LOWCONTIGQUAL = "-"
 
 
 class QuastQcResult(BaseModel):
@@ -119,40 +117,24 @@ class CdmQcMethodIndex(MethodIndexBase):
 
 
 class QuastIndex(MethodIndexBase[QuastQcResult]):
-    software = QcSoftware.QUAST
+    software: Literal[QcSoftware.QUAST] = QcSoftware.QUAST
 
 
 class PostAlignQcMethodIndex(MethodIndexBase[PostAlignQcResult]):
-    software = QcSoftware.POSTALIGNQC
+    software: Literal[QcSoftware.POSTALIGNQC] = QcSoftware.POSTALIGNQC
 
 
 class GenomeCompletenessIndex(MethodIndexBase[GenomeCompleteness]):
-    software = "GENOMECOMPLETENESS"
+    software: str = "GENOMECOMPLETENESS"
 
 
 class GambitIndex(MethodIndexBase[GambitcoreQcResult]):
-    software = QcSoftware.GAMBITCORE
+    software: Literal[QcSoftware.GAMBITCORE] = QcSoftware.GAMBITCORE
 
 
 class NanoPlotIndex(MethodIndexBase[NanoPlotQcResult]):
-    software = QcSoftware.NANOPLOT
+    software: Literal[QcSoftware.NANOPLOT] = QcSoftware.NANOPLOT
 
 
 class SamtoolsCoverageIndex(MethodIndexBase[SamtoolsCoverageQcResult]):
-    software = QcSoftware.SAMTOOLS
-
-
-class KleborateQcIndex(MethodIndexBase[KleborateQcResult]):
-    software = QcSoftware.KLEBORATE
-
-
-QcMethodIndex = Annotated[
-    GambitIndex
-    | GenomeCompletenessIndex
-    | KleborateQcIndex
-    | NanoPlotIndex
-    | PostAlignQcMethodIndex
-    | QuastIndex
-    | SamtoolsCoverageIndex,
-    Field(desciminator="software"),
-]
+    software: Literal[QcSoftware.SAMTOOLS] = QcSoftware.SAMTOOLS

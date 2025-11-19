@@ -1,12 +1,10 @@
 """Species related data models."""
 
 from enum import StrEnum
-from typing import Annotated, Literal
-
+from typing import Literal
 from pydantic import Field
 
 from .base import MethodIndexBase, RWModel
-from .kleborate import KleboreateSppResult
 
 
 class TaxLevel(StrEnum):
@@ -44,32 +42,5 @@ class BrackenSpeciesPrediction(SpeciesPrediction):
     added_reads: int = Field(..., alias="addedReads")
     fraction_total_reads: float = Field(..., alias="fractionTotalReads")
 
-
-class MykrobeSpeciesPrediction(SpeciesPrediction):
-    """Mykrobe species prediction results."""
-
-    phylogenetic_group: str = Field(
-        ..., description="Group with phylogenetic related species."
-    )
-    phylogenetic_group_coverage: float = Field(
-        ..., description="Kmer converage for phylo group."
-    )
-    species_coverage: float = Field(..., description="Species kmer converage.")
-
-
 class BrackenSppIndex(MethodIndexBase[BrackenSpeciesPrediction]):
-    software = SppPredictionSoftware.BRACKEN
-
-
-class MykrobeSppIndex(MethodIndexBase[MykrobeSpeciesPrediction]):
-    software = SppPredictionSoftware.MYKROBE
-
-
-class KleborateSppIndex(MethodIndexBase[KleboreateSppResult]):
-    software = SppPredictionSoftware.KLEBORATE
-
-
-SppMethodIndex = Annotated[
-    BrackenSppIndex | MykrobeSppIndex | KleborateSppIndex,
-    Field(discriminator="software"),
-]
+    software: Literal[SppPredictionSoftware.BRACKEN] = SppPredictionSoftware.BRACKEN

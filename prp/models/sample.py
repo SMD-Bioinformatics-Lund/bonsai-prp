@@ -4,16 +4,10 @@ from typing import Literal
 
 from pydantic import Field
 
-
 from .base import RWModel
+from .indexes import QcMethodIndex, SppMethodIndex, TraitMethodIndex, TypingMethodIndex
 from .metadata import PipelineInfo, SequencingInfo
-from .phenotype import (
-    TraitMethodIndex,
-    VariantBase,
-)
-from .qc import QcMethodIndex
-from .species import SppMethodIndex
-from .typing import TypingMethodIndex
+from .phenotype import VariantBase
 
 SCHEMA_VERSION: int = 2
 

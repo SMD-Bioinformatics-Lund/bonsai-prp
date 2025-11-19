@@ -1,9 +1,7 @@
 """Generic database objects of which several other models are based on."""
 
 from pathlib import Path
-from typing import Any, Generic
-
-from pyparsing import TypeVar
+from typing import Any, Generic, TypeVar
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
 from pysam import Callable

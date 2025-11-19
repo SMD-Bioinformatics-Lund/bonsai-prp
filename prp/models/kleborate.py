@@ -1,11 +1,13 @@
 """Kleborate specific models."""
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
-from .base import RWModel
-from .phenotype import ElementTypeResult
+from .base import MethodIndexBase, RWModel
+from .constants import PredictionSoftware, ElementType
+from .species import SppPredictionSoftware
+from .qc import QcSoftware
 from .typing import LineageMixin, TypingResultMlst
 
 
@@ -62,9 +64,14 @@ class KleborateAmrPrediction(RWModel):
     score: int = Field(..., ge=0, le=6)
 
 
-class KleborateMethodIndex(RWModel):
-    """Indexing of Kleborate data."""
+KleborateResult = Annotated[KleborateQcResult | KleboreateSppResult | KleborateMlstLikeResults | KleborateKaptiveTypingResult | KleborateVirulenceScore, Field()]
 
-    software: Literal["kleborate"] = "kleborate"
-    version: str
-    result: KleborateQcResult | KleboreateSppResult | KleborateMlstLikeResults | KleborateKaptiveTypingResult | KleborateVirulenceScore | ElementTypeResult
+class KleborateEtIndex(MethodIndexBase[KleborateResult]):
+    type: Literal[ElementType.AMR, ElementType.VIR]
+    software: Literal[PredictionSoftware.KLEBORATE] = PredictionSoftware.KLEBORATE
+
+class KleborateQcIndex(MethodIndexBase[KleborateQcResult]):
+    software: Literal[QcSoftware.KLEBORATE] = QcSoftware.KLEBORATE
+
+class KleborateSppIndex(MethodIndexBase[KleboreateSppResult]):
+    software: Literal[SppPredictionSoftware.KLEBORATE] = SppPredictionSoftware.KLEBORATE
