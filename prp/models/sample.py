@@ -1,6 +1,6 @@
 """Data model definition of input/ output data"""
 
-from typing import Literal, Union
+from typing import Literal
 
 from pydantic import Field
 
@@ -15,7 +15,7 @@ from .phenotype import (
 )
 from .qc import QcMethodIndex
 from .species import SppMethodIndex
-from .kleborate import KleborateMethodIndex
+from .typing import TypingMethodIndex
 
 SCHEMA_VERSION: int = 2
 
