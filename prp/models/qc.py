@@ -1,15 +1,16 @@
 """QC data models."""
 
-from enum import Enum, StrEnum
+from enum import StrEnum
+from typing import Annotated
 
 from pydantic import BaseModel, Field
 
 from .kleborate import KleborateQcResult
-from .base import RWModel
+from .base import RWModel, MethodIndexBase
 from .typing import TypingSoftware
 
 
-class ValidQualityStr(Enum):
+class ValidQualityStr(StrEnum):
     """Valid strings for qc entries."""
 
     LOWCONTIGQUAL = "-"
@@ -93,6 +94,7 @@ class NanoPlotQcResult(BaseModel):
 
 class ContigCoverage(BaseModel):
     """Coverage information for a single contig."""
+
     rname: str
     startpos: int
     endpos: int
@@ -103,24 +105,54 @@ class ContigCoverage(BaseModel):
     meanbaseq: float
     meanmapq: float
 
+
 class SamtoolsCoverageQcResult(BaseModel):
     """SAMtools coverage QC result model."""
+
     contigs: list[ContigCoverage]
 
 
-class QcMethodIndex(RWModel):
-    """QC results container.
-
-    Based on Mongo db Attribute pattern.
-    Reference: https://www.mongodb.com/developer/products/mongodb/attribute-pattern/
-    """
-
-    software: QcSoftware
-    version: str | None = None
-    result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult | NanoPlotQcResult | SamtoolsCoverageQcResult | KleborateQcResult
-
-      
-class CdmQcMethodIndex(QcMethodIndex):
+class CdmQcMethodIndex(MethodIndexBase):
     """Qc results container for CDM"""
 
     id: str
+
+
+class QuastIndex(MethodIndexBase[QuastQcResult]):
+    software = QcSoftware.QUAST
+
+
+class PostAlignQcMethodIndex(MethodIndexBase[PostAlignQcResult]):
+    software = QcSoftware.POSTALIGNQC
+
+
+class GenomeCompletenessIndex(MethodIndexBase[GenomeCompleteness]):
+    software = "GENOMECOMPLETENESS"
+
+
+class GambitIndex(MethodIndexBase[GambitcoreQcResult]):
+    software = QcSoftware.GAMBITCORE
+
+
+class NanoPlotIndex(MethodIndexBase[NanoPlotQcResult]):
+    software = QcSoftware.NANOPLOT
+
+
+class SamtoolsCoverageIndex(MethodIndexBase[SamtoolsCoverageQcResult]):
+    software = QcSoftware.SAMTOOLS
+
+
+class KleborateQcIndex(MethodIndexBase[KleborateQcResult]):
+    software = QcSoftware.KLEBORATE
+
+
+QcMethodIndex = Annotated[
+    GambitIndex
+    | GenomeCompletenessIndex
+    | KleborateQcIndex
+    | NanoPlotIndex
+    | PostAlignQcMethodIndex
+    | QuastIndex
+    | SamtoolsCoverageIndex,
+    Field(desciminator="software"),
+]

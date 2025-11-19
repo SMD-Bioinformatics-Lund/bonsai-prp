@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from .base import RWModel
+from .base import MethodIndexBase, RWModel
 from .kleborate import KleboreateSppResult
 
 
@@ -57,22 +57,19 @@ class MykrobeSpeciesPrediction(SpeciesPrediction):
     species_coverage: float = Field(..., description="Species kmer converage.")
 
 
-class BrackenSppIndex(RWModel):
-    """Bracken specifik spp prediction result container."""
+class BrackenSppIndex(MethodIndexBase[BrackenSpeciesPrediction]):
+    software = SppPredictionSoftware.BRACKEN
 
-    software: Literal[SppPredictionSoftware.BRACKEN] = SppPredictionSoftware.BRACKEN
-    result: list[BrackenSpeciesPrediction]
 
-class MykrobeSppIndex(RWModel):
-    """Mykrobe specifik spp prediction result container."""
+class MykrobeSppIndex(MethodIndexBase[MykrobeSpeciesPrediction]):
+    software = SppPredictionSoftware.MYKROBE
 
-    software: Literal[SppPredictionSoftware.MYKROBE] = SppPredictionSoftware.MYKROBE
-    result: list[MykrobeSpeciesPrediction]
 
-class KleborateSppIndex(RWModel):
-    """Kleborate specifik spp prediction result container."""
+class KleborateSppIndex(MethodIndexBase[KleboreateSppResult]):
+    software = SppPredictionSoftware.KLEBORATE
 
-    software: Literal[SppPredictionSoftware.KLEBORATE] = SppPredictionSoftware.KLEBORATE
-    result: KleboreateSppResult
 
-SppMethodIndex = Annotated[BrackenSppIndex | MykrobeSppIndex | KleborateSppIndex, Field(discriminator="software")]
+SppMethodIndex = Annotated[
+    BrackenSppIndex | MykrobeSppIndex | KleborateSppIndex,
+    Field(discriminator="software"),
+]
