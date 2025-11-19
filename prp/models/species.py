@@ -1,12 +1,10 @@
 """Species related data models."""
 
 from enum import StrEnum
-from typing import Annotated, Literal
-
+from typing import Literal
 from pydantic import Field
 
-from .base import RWModel
-from .kleborate import KleboreateSppResult
+from .base import MethodIndexBase, RWModel
 
 
 class TaxLevel(StrEnum):
@@ -44,35 +42,5 @@ class BrackenSpeciesPrediction(SpeciesPrediction):
     added_reads: int = Field(..., alias="addedReads")
     fraction_total_reads: float = Field(..., alias="fractionTotalReads")
 
-
-class MykrobeSpeciesPrediction(SpeciesPrediction):
-    """Mykrobe species prediction results."""
-
-    phylogenetic_group: str = Field(
-        ..., description="Group with phylogenetic related species."
-    )
-    phylogenetic_group_coverage: float = Field(
-        ..., description="Kmer converage for phylo group."
-    )
-    species_coverage: float = Field(..., description="Species kmer converage.")
-
-
-class BrackenSppIndex(RWModel):
-    """Bracken specifik spp prediction result container."""
-
+class BrackenSppIndex(MethodIndexBase[BrackenSpeciesPrediction]):
     software: Literal[SppPredictionSoftware.BRACKEN] = SppPredictionSoftware.BRACKEN
-    result: list[BrackenSpeciesPrediction]
-
-class MykrobeSppIndex(RWModel):
-    """Mykrobe specifik spp prediction result container."""
-
-    software: Literal[SppPredictionSoftware.MYKROBE] = SppPredictionSoftware.MYKROBE
-    result: list[MykrobeSpeciesPrediction]
-
-class KleborateSppIndex(RWModel):
-    """Kleborate specifik spp prediction result container."""
-
-    software: Literal[SppPredictionSoftware.KLEBORATE] = SppPredictionSoftware.KLEBORATE
-    result: KleboreateSppResult
-
-SppMethodIndex = Annotated[BrackenSppIndex | MykrobeSppIndex | KleborateSppIndex, Field(discriminator="software")]

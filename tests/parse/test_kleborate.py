@@ -6,9 +6,10 @@ from typing import Any
 import pytest
 
 from prp.models.hamronization import HamronizationEntry
-from prp.models.kleborate import KleborateMethodIndex
+from prp.models.kleborate import KleborateAmrIndex
 from prp.models.base import ParserOutput
-from prp.models.phenotype import ElementType, ElementTypeResult, PhenotypeInfo
+from prp.models.constants import ElementType
+from prp.models.phenotype import PhenotypeInfo
 from prp.parse import kleborate
 
 
@@ -32,7 +33,7 @@ def test_parse_kleborate_output_w_hamronization(kp_kleborate_path: Path, hamroni
 
     # Test that hamronization was parsed
     exp_hamronization = out[-1]
-    assert isinstance(exp_hamronization, ParserOutput) and isinstance(exp_hamronization.data.result, ElementTypeResult)
+    assert isinstance(exp_hamronization, ParserOutput) and isinstance(exp_hamronization.data.result, )
 
     # Test that target field was set correctly
     assert exp_hamronization.target_field == "element_type_result"
@@ -44,7 +45,7 @@ def test_convert_hamronization_to_amr_record(hamronization_entry: HamronizationE
     res = kleborate.hamronization_to_restance_entry([hamronization_entry])
 
     # Test that result in strucutred data
-    assert isinstance(res, KleborateMethodIndex)
+    assert isinstance(res, KleborateAmrIndex)
 
     assert res.version == hamronization_entry.analysis_software_version
 

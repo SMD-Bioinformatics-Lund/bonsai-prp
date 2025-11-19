@@ -1,70 +1,79 @@
 """Typing related data models"""
 
-from enum import Enum
-from typing import Any, Literal, Optional, Union
+from enum import StrEnum
+from typing import Any, Literal, Protocol, TypeVar, Union
 
 from pydantic import Field
 
-from .base import RWModel
+from .base import MethodIndexBase, RWModel
 from .phenotype import SerotypeGene, VirulenceGene
 
 
-class TypingSoftware(str, Enum):
+class TypingSoftware(StrEnum):
     """Container for software names."""
 
     CHEWBBACA = "chewbbaca"
+    EMMTYPER = "emmtyper"
+    KLEBORATE = "kleborate"
     MLST = "mlst"
-    TBPROFILER = "tbprofiler"
     MYKROBE = "mykrobe"
-    VIRULENCEFINDER = "virulencefinder"
+    SCCMEC = "sccmec"
     SEROTYPEFINDER = "serotypefinder"
     SHIGAPASS = "shigapass"
-    EMMTYPER = "emmtyper"
     SPATYPER = "spatyper"
-    SCCMEC = "sccmec"
+    TBPROFILER = "tbprofiler"
+    VIRULENCEFINDER = "virulencefinder"
 
 
-class TypingMethod(str, Enum):
+class TypingMethod(StrEnum):
     """Valid typing methods."""
 
-    MLST = "mlst"
+    ABST = "abst"
+    CBST = "cbst"
     CGMLST = "cgmlst"
-    LINEAGE = "lineage"
-    STX = "stx"
-    OTYPE = "O_type"
-    HTYPE = "H_type"
-    SHIGATYPE = "shigatype"
     EMMTYPE = "emmtype"
-    SPATYPE = "spatype"
+    HTYPE = "H_type"
+    KTYPE = "K_type"
+    LINEAGE = "lineage"
+    MLST = "mlst"
+    OTYPE = "O_type"
+    RMST = "rmst"
     SCCMECTYPE = "sccmectype"
+    SHIGATYPE = "shigatype"
+    SMST = "smst"
+    SPATYPE = "spatype"
+    STX = "stx"
+    YBST = "ymst"
 
 
-class ChewbbacaErrors(str, Enum):
+class ChewbbacaErrors(StrEnum):
     """Chewbbaca error codes."""
 
-    PLOT5 = "PLOT5"
-    PLOT3 = "PLOT3"
+    ALM = "ALM"
+    ASM = "ASM"
+    EXC = "EXC"
+    LNF = "LNF"
     LOTSC = "LOTSC"
     NIPH = "NIPH"
     NIPHEM = "NIPHEM"
-    ALM = "ALM"
-    ASM = "ASM"
-    LNF = "LNF"
-    EXC = "EXC"
     PAMA = "PAMA"
+    PLOT3 = "PLOT3"
+    PLOT5 = "PLOT5"
 
 
-class MlstErrors(str, Enum):
+class MlstErrors(StrEnum):
     """MLST error codes."""
 
     NOVEL = "novel"
     PARTIAL = "partial"
 
 
+Alleles = int | str | list | None
+
 class ResultMlstBase(RWModel):
     """Base class for storing MLST-like typing results"""
 
-    alleles: dict[str, Union[int, str, list, None]]
+    alleles: dict[str, Alleles]
 
 
 class TypingResultMlst(ResultMlstBase):
@@ -75,7 +84,7 @@ class TypingResultMlst(ResultMlstBase):
 
 
 class TypingResultCgMlst(ResultMlstBase):
-    """MLST results"""
+    """cgMLST results"""
 
     n_novel: int = Field(0, alias="nNovel")
     n_missing: int = Field(0, alias="nMissing")
@@ -84,23 +93,15 @@ class TypingResultCgMlst(ResultMlstBase):
 class TypingResultShiga(RWModel):
     """Container for shigatype gene information"""
 
-    rfb: Optional[str] = None
-    rfb_hits: Optional[float] = None
-    mlst: Optional[str] = None
-    flic: Optional[str] = None
-    crispr: Optional[str] = None
+    rfb: str | None = None
+    rfb_hits: float | None = None
+    mlst: str | None = None
+    flic: str | None = None
+    crispr: str | None = None
     ipah: str
     predicted_serotype: str
-    predicted_flex_serotype: Optional[str] = None
-    comments: Optional[str] = None
-
-
-class ShigaTypingMethodIndex(RWModel):
-    """Method Index Shiga."""
-
-    type: Literal[TypingMethod.SHIGATYPE]
-    software: Literal[TypingSoftware.SHIGAPASS]
-    result: TypingResultShiga
+    predicted_flex_serotype: str | None = None
+    comments: str | None = None
 
 
 class TypingResultEmm(RWModel):
@@ -110,14 +111,6 @@ class TypingResultEmm(RWModel):
     emmtype: str | None = None
     emm_like_alleles: list[str] | None = None
     emm_cluster: str | None = None
-
-
-class EmmTypingMethodIndex(RWModel):
-    """Method Index Emm."""
-
-    type: Literal[TypingMethod.EMMTYPE]
-    software: Literal[TypingSoftware.EMMTYPER]
-    result: TypingResultEmm
 
 
 class ResultLineageBase(RWModel):
@@ -138,12 +131,6 @@ class LineageInformation(RWModel):
     support: list[dict[str, Any]] | None = None
 
 
-class TbProfilerLineage(ResultLineageBase):
-    """Base class for storing MLST-like typing results"""
-
-    lineages: list[LineageInformation]
-
-
 class TypingResultGeneAllele(VirulenceGene, SerotypeGene):
     """Identification of individual gene alleles."""
 
@@ -159,16 +146,9 @@ class TypingResultSpatyper(RWModel):
     type: str | None
 
 
-class SpatyperTypingMethodIndex(RWModel):
-    """Method Index Spatyper."""
-
-    type: Literal[TypingMethod.SPATYPE]
-    software: Literal[TypingSoftware.SPATYPER]
-    result: TypingResultSpatyper
-
-
 class TypingResultSccmec(RWModel):
     """Sccmec results"""
+
     type: str | None = None
     subtype: str | None = None
     mecA: str | None = None
@@ -186,14 +166,41 @@ class TypingResultSccmec(RWModel):
     comment: str | None = None
 
 
-class SccmecTypingMethodIndex(RWModel):
-    """Method Index Sccmec."""
-    type: Literal[TypingMethod.SCCMECTYPE]
-    software: Literal[TypingSoftware.SCCMEC]
-    result: TypingResultSccmec
-
-
 class LineageMixin(RWModel):
     """Adds a lineage field to existing model"""
 
     lineage: str | None
+
+
+class TypingMethodContract(Protocol):
+    type: str
+
+
+class EmmTypingIndex(MethodIndexBase[TypingResultEmm]):
+    software: Literal[TypingSoftware.EMMTYPER] = TypingSoftware.EMMTYPER
+    type: Literal[TypingMethod.EMMTYPE] = TypingMethod.EMMTYPE
+
+
+class SccmecTypingIndex(MethodIndexBase[TypingResultSccmec]):
+    software: Literal[TypingSoftware.SCCMEC] = TypingSoftware.SCCMEC
+    type: Literal[TypingMethod.SCCMECTYPE] = TypingMethod.SCCMECTYPE
+
+
+class ShigaTypingIndex(MethodIndexBase[TypingResultShiga]):
+    software: Literal[TypingSoftware.SHIGAPASS] = TypingSoftware.SHIGAPASS
+    type: Literal[TypingMethod.SHIGATYPE] = TypingMethod.SHIGATYPE
+
+
+class MlstTypingIndex(MethodIndexBase[TypingResultMlst]):
+    software: Literal[TypingSoftware.MLST] = TypingSoftware.MLST
+    type: Literal[TypingMethod.MLST] = TypingMethod.MLST
+
+
+class CgMlstTypingIndex(MethodIndexBase[TypingResultCgMlst]):
+    software: Literal[TypingSoftware.CHEWBBACA] = TypingSoftware.CHEWBBACA
+    type: Literal[TypingMethod.CGMLST] = TypingMethod.CGMLST
+
+
+class SpatyperTypingIndex(MethodIndexBase[TypingResultSpatyper]):
+    software: Literal[TypingSoftware.SPATYPER] = TypingSoftware.SPATYPER
+    type: Literal[TypingMethod.SPATYPE] = TypingMethod.SPATYPE

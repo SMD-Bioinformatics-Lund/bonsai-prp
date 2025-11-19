@@ -1,50 +1,15 @@
 """Data model definition of input/ output data"""
 
-from typing import Literal, Optional, Union
+from typing import Literal
 
 from pydantic import Field
 
-
 from .base import RWModel
+from .indexes import QcMethodIndex, SppMethodIndex, TraitMethodIndex, TypingMethodIndex
 from .metadata import PipelineInfo, SequencingInfo
-from .phenotype import (
-    AMRMethodIndex,
-    StressMethodIndex,
-    VariantBase,
-    VirulenceMethodIndex,
-)
-from .qc import QcMethodIndex
-from .species import SppMethodIndex
-from .typing import (
-    EmmTypingMethodIndex,
-    ResultLineageBase,
-    ShigaTypingMethodIndex,
-    SccmecTypingMethodIndex,
-    SpatyperTypingMethodIndex,
-    TbProfilerLineage,
-    TypingMethod,
-    TypingResultCgMlst,
-    TypingResultGeneAllele,
-    TypingResultMlst,
-    TypingSoftware,
-)
-from .kleborate import KleborateMethodIndex
+from .phenotype import VariantBase
 
 SCHEMA_VERSION: int = 2
-
-
-class MethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
-
-    type: TypingMethod
-    software: TypingSoftware | None
-    result: Union[
-        TypingResultMlst,
-        TypingResultCgMlst,
-        TypingResultGeneAllele,
-        TbProfilerLineage,
-        ResultLineageBase,
-    ]
 
 
 class SampleBase(RWModel):
@@ -87,25 +52,14 @@ class PipelineResult(SampleBase):
 
     schema_version: Literal[2] = SCHEMA_VERSION
     # optional typing
-    typing_result: list[
-        Union[
-            ShigaTypingMethodIndex,
-            EmmTypingMethodIndex,
-            SccmecTypingMethodIndex,
-            SpatyperTypingMethodIndex,
-            KleborateMethodIndex,
-            MethodIndex,
-        ]
-    ] = Field(..., alias="typingResult")
+    typing_result: list[TypingMethodIndex] = Field(..., alias="typingResult")
     # optional phenotype prediction
-    element_type_result: list[
-        Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, KleborateMethodIndex, MethodIndex]
-    ] = Field(..., alias="elementTypeResult")
+    element_type_result: list[TraitMethodIndex] = Field(..., alias="elementTypeResult")
     # optional variant info
-    snv_variants: Optional[list[VariantBase]] = None
-    sv_variants: Optional[list[VariantBase]] = None
-    indel_variants: Optional[list[VariantBase]] = None
+    snv_variants: list[VariantBase] | None = None
+    sv_variants: list[VariantBase] | None = None
+    indel_variants: list[VariantBase] | None = None
     # optional alignment info
-    reference_genome: Optional[ReferenceGenome] = None
-    read_mapping: Optional[str] = None
-    genome_annotation: Optional[list[IgvAnnotationTrack]] = None
+    reference_genome: ReferenceGenome | None = None
+    read_mapping: str | None = None
+    genome_annotation: list[IgvAnnotationTrack] | None = None

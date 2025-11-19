@@ -1,12 +1,14 @@
 """Kleborate specific models."""
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
-from .base import RWModel
-from .phenotype import ElementTypeResult
-from .typing import LineageMixin, TypingResultMlst
+from .base import MethodIndexBase, RWModel, VersionMixin
+from .constants import PredictionSoftware, ElementType
+from .species import SppPredictionSoftware
+from .qc import QcSoftware
+from .typing import LineageMixin, TypingResultMlst, TypingMethod
 
 
 class KleborateQcResult(BaseModel):
@@ -56,15 +58,43 @@ class KleborateKaptiveTypingResult(RWModel):
     o_type: KleborateKaptiveLocus
 
 
-class KleborateAmrPrediction(RWModel):
+class KleborateAmrScoreResult(RWModel):
     """Store Kleborate AMR results."""
 
     score: int = Field(..., ge=0, le=6)
 
 
-class KleborateMethodIndex(RWModel):
-    """Indexing of Kleborate data."""
+class KleborateAmrResult(RWModel):
+    """Store Kleborate AMR results."""
 
-    software: Literal["kleborate"] = "kleborate"
-    version: str
-    result: KleborateQcResult | KleboreateSppResult | KleborateMlstLikeResults | KleborateKaptiveTypingResult | KleborateVirulenceScore | ElementTypeResult
+    score: int = Field(..., ge=0, le=6)
+
+
+KleborateTypingResult = Annotated[KleborateMlstLikeResults | KleborateKaptiveTypingResult, Field()]
+
+
+class KleborateTypingIndex(MethodIndexBase[KleborateTypingResult], VersionMixin):
+    type: Literal[TypingMethod.ABST, TypingMethod.CBST]
+    software: Literal[PredictionSoftware.KLEBORATE] = PredictionSoftware.KLEBORATE
+
+
+class KleborateVirulenceIndex(MethodIndexBase[KleborateVirulenceScore], VersionMixin):
+    type: Literal[ElementType.VIR] = ElementType.VIR
+    software: Literal[PredictionSoftware.KLEBORATE] = PredictionSoftware.KLEBORATE
+
+
+class KleborateAmrScoreIndex(MethodIndexBase[KleborateAmrScoreResult], VersionMixin):
+    type: Literal[ElementType.AMR] = ElementType.AMR
+    software: Literal[PredictionSoftware.KLEBORATE] = PredictionSoftware.KLEBORATE
+
+
+class KleborateAmrIndex(MethodIndexBase[KleborateAmrResult], VersionMixin):
+    type: Literal[ElementType.AMR] = ElementType.AMR
+    software: Literal[PredictionSoftware.KLEBORATE] = PredictionSoftware.KLEBORATE
+
+
+class KleborateQcIndex(MethodIndexBase[KleborateQcResult], VersionMixin):
+    software: Literal[QcSoftware.KLEBORATE] = QcSoftware.KLEBORATE
+
+class KleborateSppIndex(MethodIndexBase[KleboreateSppResult], VersionMixin):
+    software: Literal[SppPredictionSoftware.KLEBORATE] = SppPredictionSoftware.KLEBORATE

@@ -1,34 +1,23 @@
 """Datamodels used for prediction results."""
 
-from enum import Enum
-from typing import Literal, Optional, Union
+from enum import StrEnum 
+from typing import Union
 
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 
 from .base import RWModel
+from .constants import ElementType
 
 
-class SequenceStrand(str, Enum):
+class SequenceStrand(StrEnum):
     """Definition of DNA strand."""
 
     FORWARD = "+"
     REVERSE = "-"
 
 
-class PredictionSoftware(str, Enum):
-    """Container for prediciton software names."""
-
-    AMRFINDER = "amrfinder"
-    RESFINDER = "resfinder"
-    VIRFINDER = "virulencefinder"
-    SEROTYPEFINDER = "serotypefinder"
-    MYKROBE = "mykrobe"
-    TBPROFILER = "tbprofiler"
-    KLEBORATE = "kleborate"
-
-
-class VariantType(str, Enum):
+class VariantType(StrEnum):
     """Types of variants."""
 
     SNV = "SNV"
@@ -38,7 +27,7 @@ class VariantType(str, Enum):
     STR = "STR"
 
 
-class VariantSubType(str, Enum):
+class VariantSubType(StrEnum):
     """Variant subtypes."""
 
     INSERTION = "INS"
@@ -51,16 +40,7 @@ class VariantSubType(str, Enum):
     TRANSLOCATION = "BND"
 
 
-class ElementType(str, Enum):
-    """Categories of resistance and virulence genes."""
-
-    AMR = "AMR"
-    STRESS = "STRESS"
-    VIR = "VIRULENCE"
-    ANTIGEN = "ANTIGEN"
-
-
-class ElementStressSubtype(str, Enum):
+class ElementStressSubtype(StrEnum):
     """Categories of resistance and virulence genes."""
 
     ACID = "ACID"
@@ -69,14 +49,14 @@ class ElementStressSubtype(str, Enum):
     HEAT = "HEAT"
 
 
-class ElementAmrSubtype(str, Enum):
+class ElementAmrSubtype(StrEnum):
     """Categories of resistance genes."""
 
     AMR = "AMR"
     POINT = "POINT"
 
 
-class ElementVirulenceSubtype(str, Enum):
+class ElementVirulenceSubtype(StrEnum):
     """Categories of resistance and virulence genes."""
 
     VIR = "VIRULENCE"
@@ -84,14 +64,14 @@ class ElementVirulenceSubtype(str, Enum):
     TOXIN = "TOXIN"
 
 
-class AnnotationType(str, Enum):
+class AnnotationType(StrEnum):
     """Valid annotation types."""
 
     TOOL = "tool"
     USER = "user"
 
 
-class ElementSerotypeSubtype(str, Enum):
+class ElementSerotypeSubtype(StrEnum):
     """Categories of serotype genes."""
 
     ANTIGEN = "ANTIGEN"
@@ -119,17 +99,17 @@ class PhenotypeInfo(RWModel):
 class DatabaseReference(RWModel):
     """Reference to a database."""
 
-    ref_database: Optional[str] = None
-    ref_id: Optional[str] = None
+    ref_database: str | None = None
+    ref_id: str | None = None
 
 
 class GeneBase(RWModel):
     """Container for gene information"""
 
     # basic info
-    gene_symbol: Optional[str] = None
-    accession: Optional[str] = None
-    sequence_name: Optional[str] = Field(
+    gene_symbol: str | None = None
+    accession: str | None = None
+    sequence_name: str | None = Field(
         default=None, description="Reference sequence name"
     )
     element_type: ElementType = Field(
@@ -142,45 +122,24 @@ class GeneBase(RWModel):
         ElementSerotypeSubtype,
     ] = Field(description="Further functional categorization of the genes.")
     # position
-    ref_start_pos: Optional[int] = Field(
+    ref_start_pos: int | None = Field(
         None, description="Alignment start in reference"
     )
-    ref_end_pos: Optional[int] = Field(None, description="Alignment end in reference")
-    ref_gene_length: Optional[int] = Field(
+    ref_end_pos: int | None = Field(None, description="Alignment end in reference")
+    ref_gene_length: int | None = Field(
         default=None,
         alias="target_length",
         description="The length of the reference protein or gene.",
     )
 
     # prediction
-    method: Optional[str] = Field(None, description="Method used to predict gene")
-    identity: Optional[float] = Field(
+    method: str | None = Field(None, description="Method used to predict gene")
+    identity: float | None = Field(
         None, description="Identity to reference sequence"
     )
-    coverage: Optional[float] = Field(
+    coverage: float | None = Field(
         None, description="Ratio reference sequence covered"
     )
-
-
-class AmrFinderGene(GeneBase):
-    """Container for Resfinder gene prediction information"""
-
-    contig_id: str
-    query_start_pos: int | None = Field(
-        default=None, description="Start position on the assembly"
-    )
-    query_end_pos: int | None = Field(default=None, description="End position on the assembly")
-    strand: SequenceStrand | None
-
-
-class AmrFinderVirulenceGene(AmrFinderGene):
-    """Container for a virulence gene for AMRfinder."""
-
-
-class AmrFinderResistanceGene(AmrFinderGene):
-    """AMRfinder resistance gene information."""
-
-    phenotypes: list[PhenotypeInfo] = []
 
 
 class ResistanceGene(GeneBase):
@@ -196,15 +155,7 @@ class SerotypeGene(GeneBase):
 class VirulenceGene(GeneBase, DatabaseReference):
     """Container for virulence gene information"""
 
-    depth: Optional[float] = Field(
-        None, description="Amount of sequence data supporting the gene."
-    )
-
-
-class ResfinderGene(ResistanceGene):
-    """Container for Resfinder gene prediction information"""
-
-    depth: Optional[float] = Field(
+    depth: float | None = Field(
         None, description="Amount of sequence data supporting the gene."
     )
 
@@ -224,22 +175,22 @@ class VariantBase(RWModel):
         description="Reference sequence such as chromosome, gene or contig id.",
         alias="gene_symbol",
     )
-    accession: Optional[str] = None
+    accession: str | None = None
     start: int
     end: int
-    ref_nt: Optional[str] = None
-    alt_nt: Optional[str] = None
-    ref_aa: Optional[str] = None
-    alt_aa: Optional[str] = None
+    ref_nt: str | None = None
+    alt_nt: str | None = None
+    ref_aa: str | None = None
+    alt_aa: str | None = None
 
     # prediction info
-    depth: Optional[float] = Field(None, description="Total depth, ref + alt.")
-    frequency: Optional[float] = Field(None, description="Alt allele frequency.")
-    confidence: Optional[float] = Field(None, description="Genotype confidence.")
-    method: Optional[str] = Field(
+    depth: float | None = Field(None, description="Total depth, ref + alt.")
+    frequency: float | None = Field(None, description="Alt allele frequency.")
+    confidence: float | None = Field(None, description="Genotype confidence.")
+    method: str | None = Field(
         ..., description="Prediction method used to call variant"
     )
-    passed_qc: Optional[bool] = Field(
+    passed_qc: bool | None = Field(
         ..., description="Describe if variant has passed the tool qc check"
     )
 
@@ -253,93 +204,10 @@ class VariantBase(RWModel):
         return self
 
 
-class ResfinderVariant(VariantBase):
-    """Container for ResFinder variant information"""
-
-
 class MykrobeVariant(VariantBase):
     """Container for Mykrobe variant information"""
 
 
-class AmrFinderVariant(VariantBase):
-    """Container for AmrFinder variant information."""
-
-    contig_id: str
-    query_start_pos: int = Field(..., description="Alignment start in contig")
-    query_end_pos: int = Field(..., description="Alignment start in contig")
-    ref_gene_length: Optional[int] = Field(
-        default=None,
-        alias="target_length",
-        description="The length of the reference protein or gene.",
-    )
-    strand: SequenceStrand | None
-    coverage: float
-    identity: float
-
-
-class TbProfilerVariant(VariantBase):
-    """Container for TbProfiler variant information"""
-
-    variant_effect: str | None = None
-    hgvs_nt_change: Optional[str] = Field(..., description="DNA change in HGVS format")
-    hgvs_aa_change: Optional[str] = Field(
-        ..., description="Protein change in HGVS format"
-    )
-
-
-class VirulenceElementTypeResult(BaseModel):
-    """Phenotype result data model.
-
-    A phenotype result is a generic data structure that stores predicted genes,
-    mutations and phenotyp changes.
-    """
-
-    phenotypes: dict[str, list[str]]
-    genes: list[AmrFinderVirulenceGene | VirulenceGene]
-    variants: list
-
-
-class ElementTypeResult(BaseModel):
-    """Phenotype result data model.
-
-    A phenotype result is a generic data structure that stores predicted genes,
-    mutations and phenotyp changes.
-    """
-
+class ElementTypeBase(BaseModel):
+    """Base element type model used exmple to store AMR and virulence prediction."""
     phenotypes: dict[str, list[str]] = {}
-    genes: list[Union[AmrFinderGene, AmrFinderResistanceGene, ResfinderGene]]
-    variants: list[
-        Union[TbProfilerVariant, MykrobeVariant, ResfinderVariant, AmrFinderVariant]
-    ] = []
-
-
-class AMRMethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
-
-    type: Literal[ElementType.AMR]
-    software: PredictionSoftware
-    result: ElementTypeResult
-
-
-class AntigenMethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
-
-    type: Literal[ElementType.ANTIGEN]
-    software: PredictionSoftware
-    result: ElementTypeResult
-
-
-class StressMethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
-
-    type: Literal[ElementType.STRESS]
-    software: PredictionSoftware
-    result: ElementTypeResult
-
-
-class VirulenceMethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
-
-    type: Literal[ElementType.VIR]
-    software: PredictionSoftware
-    result: VirulenceElementTypeResult

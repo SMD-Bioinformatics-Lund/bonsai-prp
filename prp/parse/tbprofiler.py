@@ -5,18 +5,18 @@ import logging
 from pathlib import Path
 from typing import Any, Dict
 
-from ..models.metadata import SoupType, SoupVersion
-from ..models.phenotype import (
+from prp.models.metadata import SoupType, SoupVersion
+from prp.models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
 )
-from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import TbProfilerVariant, VariantSubType, VariantType
-from ..models.sample import MethodIndex
-from ..models.typing import LineageInformation, TbProfilerLineage, TypingMethod
+from prp.models.phenotype import PredictionSoftware as Software
+from prp.models.phenotype import TbProfilerVariant, VariantSubType, VariantType
+from prp.models.sample import MethodIndex
+from prp.models.typing import LineageInformation, TbProfilerLineage, TypingMethod
 from .utils import get_db_version
 
 LOG = logging.getLogger(__name__)

@@ -4,14 +4,14 @@ import csv
 import json
 import logging
 
-from ..models.sample import MethodIndex
-from ..models.typing import (
+from prp.models.sample import MethodIndex
+from prp.models.typing import (
     ChewbbacaErrors,
     TypingMethod,
     TypingResultCgMlst,
     TypingResultMlst,
 )
-from ..models.typing import TypingSoftware as Software
+from prp.models.typing import TypingSoftware as Software
 
 alt_allele_calls = ["ALM", "ASM", "EXC", "INF", "LNF", "LOTSC ", "NIPH", "NIPHEM", "PAMA", "PLNF", "PLOT3", "PLOT5"]
 
