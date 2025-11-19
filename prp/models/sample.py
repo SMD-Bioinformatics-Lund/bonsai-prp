@@ -15,36 +15,9 @@ from .phenotype import (
 )
 from .qc import QcMethodIndex
 from .species import SppMethodIndex
-from .typing import (
-    EmmTypingMethodIndex,
-    ResultLineageBase,
-    ShigaTypingMethodIndex,
-    SccmecTypingMethodIndex,
-    SpatyperTypingMethodIndex,
-    TbProfilerLineage,
-    TypingMethod,
-    TypingResultCgMlst,
-    TypingResultGeneAllele,
-    TypingResultMlst,
-    TypingSoftware,
-)
 from .kleborate import KleborateMethodIndex
 
 SCHEMA_VERSION: int = 2
-
-
-class MethodIndex(RWModel):
-    """Container for key-value lookup of analytical results."""
-
-    type: TypingMethod
-    software: TypingSoftware | None
-    result: Union[
-        TypingResultMlst,
-        TypingResultCgMlst,
-        TypingResultGeneAllele,
-        TbProfilerLineage,
-        ResultLineageBase,
-    ]
 
 
 class SampleBase(RWModel):
@@ -87,16 +60,7 @@ class PipelineResult(SampleBase):
 
     schema_version: Literal[2] = SCHEMA_VERSION
     # optional typing
-    typing_result: list[
-        Union[
-            ShigaTypingMethodIndex,
-            EmmTypingMethodIndex,
-            SccmecTypingMethodIndex,
-            SpatyperTypingMethodIndex,
-            KleborateMethodIndex,
-            MethodIndex,
-        ]
-    ] = Field(..., alias="typingResult")
+    typing_result: list[TypingMethodIndex] = Field(..., alias="typingResult")
     # optional phenotype prediction
     element_type_result: list[
         Union[VirulenceMethodIndex, AMRMethodIndex, StressMethodIndex, KleborateMethodIndex, MethodIndex]
