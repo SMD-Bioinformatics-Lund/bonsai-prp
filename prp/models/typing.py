@@ -150,7 +150,6 @@ class TypingResultSpatyper(RWModel):
     type: str | None
 
 
-
 class TypingResultSccmec(RWModel):
     """Sccmec results"""
 
@@ -206,7 +205,7 @@ class CgMlstTypingIndex(MethodIndexBase[TypingResultCgMlst]):
     type = TypingMethod.CGMLST
 
 
-class SpatyperTypingIndex(MethodIndexBase[TypingResultSpatyper])):
+class SpatyperTypingIndex(MethodIndexBase[TypingResultSpatyper]):
     software = TypingSoftware.SPATYPER
     type = TypingMethod.SPATYPE
 
