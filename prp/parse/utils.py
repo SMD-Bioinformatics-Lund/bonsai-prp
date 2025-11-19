@@ -1,14 +1,14 @@
 """Shared utility functions."""
 
 from datetime import datetime
-from typing import Tuple
+from typing import Any
 
-from prp.models.phenotype import ElementTypeResult, VariantSubType, VariantType
+from prp.models.phenotype import VariantSubType, VariantType
 
 
 def classify_variant_type(
     ref: str, alt: str, nucleotide: bool = True
-) -> Tuple[VariantType, VariantSubType]:
+) -> tuple[VariantType, VariantSubType]:
     """Classify the type of variant based on the variant length."""
     var_len = abs(len(ref) - len(alt))
     threshold = 50 if nucleotide else 18
@@ -27,7 +27,7 @@ def classify_variant_type(
     return var_type, var_sub_type
 
 
-def is_prediction_result_empty(result: ElementTypeResult) -> bool:
+def is_prediction_result_empty(result) -> bool:
     """Check if prediction result is emtpy.
 
     :param result: Prediction result
@@ -65,7 +65,7 @@ def format_nt_change(
     alt: str,
     var_type: VariantSubType,
     start_pos: int,
-    end_pos: int = None,
+    end_pos: int | None = None,
 ) -> str:
     """Format nucleotide change
 
@@ -105,7 +105,7 @@ def reformat_date_str(input_date: str) -> str:
     return formatted_date
 
 
-def get_db_version(db_version: dict) -> str:
+def get_db_version(db_version: dict[str, Any]) -> str:
     """Get database version"""
     backup_version = db_version["name"] + "_" + reformat_date_str(db_version["Date"])
     return db_version["commit"] if "commit" in db_version else backup_version

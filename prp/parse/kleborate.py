@@ -15,26 +15,28 @@ from prp.models.hamronization import HamronizationEntries, HamronizationEntry
 from prp.models.kleborate import (
     KleborateKaptiveLocus,
     KleborateKaptiveTypingResult,
-    KleborateMethodIndex,
     KleborateMlstLikeResults,
     KleborateQcResult,
+    KleborateVirulenceIndex,
     KleborateVirulenceScore,
     KleboreateSppResult,
+    KleborateSppIndex,
+    KleborateAmrIndex,
+    KleborateAmrScoreIndex,
+    KleborateQcIndex,
+    KleborateTypingIndex
 )
+from prp.models.amrfinder import AmrFinderResistanceGene, AmrFinderVariant
 from prp.models.phenotype import (
-    AmrFinderResistanceGene,
-    AmrFinderVariant,
     AnnotationType,
     ElementAmrSubtype,
-    ElementType,
-    ElementTypeResult,
     PhenotypeInfo,
     SequenceStrand,
     VariantSubType,
     VariantType,
 )
-from prp.models.qc import QcMethodIndex, QcSoftware
-from prp.models.species import KleborateSppIndex
+from prp.models.constants import ElementType
+from prp.models.qc import QcSoftware
 from prp.models.typing import TypingResultMlst
 
 LOG = logging.getLogger(__name__)
@@ -230,7 +232,7 @@ def _mlst_like_formatter(
 
 def _format_mlst_like_typing(
     result: dict[str, Any], version: str
-) -> list[KleborateMethodIndex]:
+) -> list[KleborateTypingIndex]:
     """Generic MLST-like formatter.
 
     lineage_key: str
@@ -266,11 +268,11 @@ def _format_mlst_like_typing(
         },
     }
 
-    typing_result: list[KleborateMethodIndex] = []
+    typing_result: list[KleborateTypingIndex] = []
     for name, schema_def in mlst_like_typing_schemas.items():
         try:
             res = _mlst_like_formatter(result, schema_name=name, **schema_def)
-            out = KleborateMethodIndex(version=version, result=res)
+            out = KleborateTypingIndex(version=version, result=res)
             typing_result.append(out)
         except RuntimeError as exc:
             LOG.error(f"Critial Kleborate parser error; {exc}")
@@ -286,7 +288,7 @@ def _format_mlst_typing(result: dict[str, Any], schema_name: str) -> TypingResul
     return TypingResultMlst(scheme=schema_name, sequenceType=4242, alleles=alleles)
 
 
-def _parse_qc(result: dict[str, JSONLike], version: str) -> QcMethodIndex:
+def _parse_qc(result: dict[str, JSONLike], version: str) -> KleborateQcIndex:
     contig_stats = result.get("general", {}).get("contig_stats")
     if contig_stats:
         res = KleborateQcResult(
@@ -297,10 +299,10 @@ def _parse_qc(result: dict[str, JSONLike], version: str) -> QcMethodIndex:
             ambigious_bases=True if contig_stats["ambiguous_bases"] == "yes" else "no",
             qc_warnings=contig_stats["QC_warnings"],
         )
-        return QcMethodIndex(software=QcSoftware.KLEBORATE, version=version, result=res)
+        return KleborateQcIndex(software=QcSoftware.KLEBORATE, version=version, result=res)
 
 
-def _parse_kaptive(d: dict[str, JSONLike], version: str) -> KleborateMethodIndex:
+def _parse_kaptive(d: dict[str, JSONLike], version: str) -> KleborateTypingIndex:
     """Parse kaptive results in Kleborate."""
 
     def _fmt_res(
@@ -315,7 +317,7 @@ def _parse_kaptive(d: dict[str, JSONLike], version: str) -> KleborateMethodIndex
             missing_genes=d[f"{type}_Missing_expected_genes"],
         )
 
-    return KleborateMethodIndex(
+    return KleborateTypingIndex(
         version=version,
         result=KleborateKaptiveTypingResult(
             k_type=_fmt_res(d, "K"), o_type=_fmt_res(d, "O")
@@ -372,8 +374,9 @@ def format_kleborate_output(
         if (vir_score := preset_results.get("virulence_score", {})) and isinstance(
             vir_score, dict
         ):
-            idx = KleborateMethodIndex(
+            idx = KleborateVirulenceIndex(
                 version=version,
+                type=ElementType.VIR,
                 result=KleborateVirulenceScore(
                     score=int(vir_score["virulence_score"]),
                     spurious_hits=vir_score["spurious_virulence_hits"],
@@ -423,7 +426,7 @@ def _convert_strand_orientation(orientation: str | None) -> SequenceStrand | Non
 
 def hamronization_to_restance_entry(
     entries: HamronizationEntries,
-) -> KleborateMethodIndex:
+) -> KleborateAmrIndex:
     """Convert hamronization formatted data to a PRP structured record."""
     res_genes: list[AmrFinderResistanceGene] = []
     res_variants: list[AmrFinderVariant] = []
@@ -492,8 +495,9 @@ def hamronization_to_restance_entry(
                 f"Could not determine wether entry {row_no} is a gene or variant",
                 entry.genetic_variation_type,
             )
-    return KleborateMethodIndex(
+    return KleborateAmrIndex(
         version=sw_version,
+        type=ElementType.AMR,
         result=ElementTypeResult(variants=res_variants, genes=res_genes),
     )
 

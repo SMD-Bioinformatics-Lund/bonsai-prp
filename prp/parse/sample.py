@@ -6,9 +6,9 @@ from typing import Any, Sequence
 
 from prp.models.config import SampleConfig
 
-from prp.models.phenotype import AMRMethodIndex, ElementType
-from prp.models.species import SppMethodIndex
-from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
+from prp.models.constants import ElementType
+from prp.models.indexes import TraitMethodIndex, SppMethodIndex, QcMethodIndex
+from prp.models.sample import SCHEMA_VERSION, PipelineResult
 from . import (
     amrfinder,
     hamronization,
@@ -68,8 +68,7 @@ def _read_spp_prediction(smp_cnf) -> Sequence[SppMethodIndex]:
 def _read_typing(
     smp_cnf,
 ) -> Sequence[
-    MethodIndex
-    | EmmTypingMethodIndex
+    EmmTypingMethodIndex
     | ShigaTypingMethodIndex
     | SccmecTypingMethodIndex
     | SpatyperTypingMethodIndex
@@ -96,7 +95,7 @@ def _read_typing(
 
     # stx typing
     if smp_cnf.virulencefinder:
-        tmp_virfinder_res: MethodIndex | None = virulencefinder.parse_stx_typing(
+        tmp_virfinder_res = virulencefinder.parse_stx_typing(
             smp_cnf.virulencefinder
         )
         if tmp_virfinder_res is not None:
@@ -105,14 +104,14 @@ def _read_typing(
     if smp_cnf.serotypefinder:
         LOG.info("Parse serotypefinder results")
         # OH typing
-        tmp_serotype_res: list[MethodIndex] | None = serotypefinder.parse_oh_typing(
+        tmp_serotype_res = serotypefinder.parse_oh_typing(
             smp_cnf.serotypefinder
         )
         if tmp_serotype_res is not None:
             typing_result.extend(tmp_serotype_res)
 
     if smp_cnf.mykrobe:
-        lin_res: MethodIndex | None = mykrobe.parse_lineage_pred(smp_cnf.mykrobe)
+        lin_res = mykrobe.parse_lineage_pred(smp_cnf.mykrobe)
         if lin_res is not None:
             typing_result.append(lin_res)
 
@@ -122,7 +121,7 @@ def _read_typing(
     return typing_result
 
 
-def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
+def _read_resistance(smp_cnf) -> Sequence[TraitMethodIndex]:
     """Read resistance predictions."""
     resistance = []
     if smp_cnf.resfinder:

@@ -3,24 +3,22 @@
 import itertools
 import logging
 import re
-from typing import Any, Dict, Sequence, Tuple
+from typing import Any, Sequence
 
 import numpy as np
 import pandas as pd
 
-from prp.models.amrfinder import AmrFinderGene, AmrFinderResistanceGene, AmrFinderVariant, AmrFinderVirulenceGene, AmrFinderIndex
-from prp.models.phenotype import (
-    AnnotationType,
-    ElementType,
-    ElementTypeResult,
-    PhenotypeInfo,
+from prp.models.amrfinder import (
+    AmrFinderGene,
+    AmrFinderResistanceGene,
+    AmrFinderResult,
+    AmrFinderVariant,
+    AmrFinderVirulenceGene,
 )
-from prp.models.phenotype import PredictionSoftware as Software
-from prp.models.phenotype import (
-    StressMethodIndex,
-    VirulenceElementTypeResult,
-    VirulenceMethodIndex,
-)
+from prp.models.constants import ElementType
+from prp.models.indexes import AmrFinderIndex
+from prp.models.phenotype import AnnotationType, PhenotypeInfo
+
 from .utils import classify_variant_type
 
 LOG = logging.getLogger(__name__)
@@ -31,7 +29,7 @@ AmrFinderGenes = Sequence[
 AmrFinderVariants = Sequence[AmrFinderVariant]
 
 
-def _read_result(path: str) -> Tuple[AmrFinderGenes, AmrFinderVariants]:
+def _read_result(path: str) -> tuple[AmrFinderGenes, AmrFinderVariants]:
     """Read AMRfinder output file."""
     result = (
         pd.read_csv(path, delimiter="\t")
@@ -69,7 +67,7 @@ def _read_result(path: str) -> Tuple[AmrFinderGenes, AmrFinderVariants]:
 
 
 def _format_gene(
-    hit: Dict[str, Any]
+    hit: dict[str, Any]
 ) -> AmrFinderGene | AmrFinderVirulenceGene | AmrFinderResistanceGene:
     """Format AMRfinder gene."""
     element_type = ElementType(hit["element_type"])
@@ -118,7 +116,7 @@ def _format_gene(
     return gene
 
 
-def _format_variant(hit: Dict[str, Any], variant_no: int) -> AmrFinderVariant:
+def _format_variant(hit: dict[str, Any], variant_no: int) -> AmrFinderVariant:
     gene_name, variant = hit["gene_symbol"].split("_")
     match = re.match(r"([a-z]+)([0-9]+)([a-z]+)", variant, re.IGNORECASE)
     if not match:
@@ -164,9 +162,7 @@ def _format_variant(hit: Dict[str, Any], variant_no: int) -> AmrFinderVariant:
     )
 
 
-def parse_amr_pred(
-    path: str, resistance_category: ElementType
-) -> AMRMethodIndex | StressMethodIndex:
+def parse_amr_pred(path: str, resistance_category: ElementType) -> AmrFinderIndex:
     """Parse AMRFinder or related prediction results."""
     raw_genes, variants = _read_result(path)
 
@@ -192,24 +188,19 @@ def parse_amr_pred(
         else {}
     )
 
-    result = ElementTypeResult(
+    result = AmrFinderResult(
         phenotypes=phenotypes,
         genes=genes,
         variants=variants,
     )
 
-    index_class = (
-        AMRMethodIndex if resistance_category == ElementType.AMR else StressMethodIndex
-    )
-
-    return index_class(
+    return AmrFinderIndex(
         type=resistance_category,
-        software=Software.AMRFINDER,
         result=result,
     )
 
 
-def parse_vir_pred(path: str) -> VirulenceMethodIndex:
+def parse_vir_pred(path: str) -> AmrFinderIndex:
     """Parse amrfinder virulence prediction results."""
     LOG.info("Parsing amrfinder virulence prediction")
     raw_genes, _ = _read_result(path)
@@ -219,11 +210,9 @@ def parse_vir_pred(path: str) -> VirulenceMethodIndex:
         key=lambda gene: (gene.gene_symbol, gene.coverage),
     )
     # sort genes
-    result = VirulenceElementTypeResult(
+    result = AmrFinderResult(
         phenotypes={},
         genes=genes,
         variants=[],
     )
-    return VirulenceMethodIndex(
-        type=element_type, software=Software.AMRFINDER, result=result
-    )
+    return AmrFinderIndex(type=element_type, result=result)

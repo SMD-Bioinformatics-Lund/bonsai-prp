@@ -5,7 +5,7 @@ from typing import Annotated
 from pydantic import Field
 
 from .amrfinder import AmrFinderIndex
-from .kleborate import KleborateEtIndex, KleborateQcIndex, KleborateSppIndex
+from .kleborate import KleborateAmrIndex, KleborateQcIndex, KleborateSppIndex, KleborateVirulenceIndex
 from .mykrobe import MykrobeSppIndex
 from .qc import (
     GambitIndex,
@@ -52,7 +52,8 @@ SppMethodIndex = Annotated[
 
 TraitMethodIndex = Annotated[
     AmrFinderIndex
-    | KleborateEtIndex
+    | KleborateVirulenceIndex
+    | KleborateAmrIndex
     | ResFinderIndex
     | VirulenceFinderIndex
     | TbProfilerEtIndex,

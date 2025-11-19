@@ -3,27 +3,24 @@
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
-from prp.models.species import (
-    MykrobeSpeciesPrediction,
-    MykrobeSppIndex,
-)
-
+from prp.models.constants import ElementType
+from prp.models.constants import PredictionSoftware as Software
+from prp.models.mykrobe import MykrobeSpeciesPrediction, MykrobeSppIndex
 from prp.models.metadata import SoupType, SoupVersion
 from prp.models.phenotype import (
     AMRMethodIndex,
     AnnotationType,
-    ElementType,
     ElementTypeResult,
     MykrobeVariant,
     PhenotypeInfo,
+    VariantSubType, 
+    VariantType
 )
-from prp.models.phenotype import PredictionSoftware as Software
-from prp.models.phenotype import VariantSubType, VariantType
 from prp.models.sample import MethodIndex
 from prp.models.typing import ResultLineageBase, TypingMethod
 from .utils import get_nt_change, is_prediction_result_empty
@@ -50,7 +47,7 @@ def _get_mykrobe_amr_sr_profie(mykrobe_result):
     return {"susceptible": list(susceptible), "resistant": list(resistant)}
 
 
-def get_mutation_type(var_nom: str) -> tuple[str, Union[VariantSubType, str, int]]:
+def get_mutation_type(var_nom: str) -> tuple[str, VariantSubType | str | int]]:
     """Extract mutation type from Mykrobe mutation description.
 
     GCG7569GTG -> mutation type, ref_nt, alt_nt, pos
@@ -172,7 +169,7 @@ def _parse_mykrobe_amr_variants(mykrobe_result) -> tuple[MykrobeVariant, ...]:
     return variants
 
 
-def _read_result(result_path: str) -> Dict[str, Any]:
+def _read_result(result_path: str) -> dict[str, Any]:
     """Read Mykrobe result file."""
     pred_res = pd.read_csv(result_path, quotechar='"')
     pred_res = (

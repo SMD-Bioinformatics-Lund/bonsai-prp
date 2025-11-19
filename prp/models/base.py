@@ -58,3 +58,9 @@ class MethodIndexBase(RWModel, Generic[T]):
     software: str
     type: str
     result: T
+
+
+class VersionMixin(BaseModel):
+    """Add version field to data model."""
+    
+    version: str
