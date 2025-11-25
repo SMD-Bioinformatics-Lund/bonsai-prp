@@ -7,13 +7,13 @@ from typing import Any, Sequence
 from prp.models.config import SampleConfig
 
 from ..models.phenotype import AMRMethodIndex, ElementType
-from ..models.species import SppMethodIndex
 from ..models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
+from ..models.species import SppMethodIndex
 from . import (
     amrfinder,
     hamronization,
-    kraken,
     kleborate,
+    kraken,
     mykrobe,
     resfinder,
     serotypefinder,
@@ -23,9 +23,15 @@ from . import (
 from .emmtyper import EmmTypingMethodIndex, parse_emm_pred
 from .igv import parse_igv_info
 from .metadata import parse_run_info
-from .qc import parse_gambitcore_results, parse_postalignqc_results, parse_quast_results, parse_nanoplot_results, parse_samtools_coverage_results
-from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
+from .qc import (
+    parse_gambitcore_results,
+    parse_nanoplot_results,
+    parse_postalignqc_results,
+    parse_quast_results,
+    parse_samtools_coverage_results,
+)
 from .sccmec import SccmecTypingMethodIndex, parse_sccmec_results
+from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
 from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
@@ -181,7 +187,12 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
         **sample_info,  # add sample_name & lims_id
     }
     if smp_cnf.ref_genome_sequence:
-        ref_genome_info, read_mapping, genome_annotation, filtered_variants = parse_igv_info(
+        (
+            ref_genome_info,
+            read_mapping,
+            genome_annotation,
+            filtered_variants,
+        ) = parse_igv_info(
             smp_cnf.ref_genome_sequence,
             smp_cnf.ref_genome_annotation,
             smp_cnf.igv_annotations,
@@ -189,9 +200,15 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
         results["reference_genome"] = ref_genome_info
         results["read_mapping"] = read_mapping
         results["genome_annotation"] = genome_annotation
-        results["sv_variants"] = filtered_variants["sv_variants"] if filtered_variants else None
-        results["indel_variants"] = filtered_variants["indel_variants"] if filtered_variants else None
-        results["snv_variants"] = filtered_variants["snv_variants"] if filtered_variants else None
+        results["sv_variants"] = (
+            filtered_variants["sv_variants"] if filtered_variants else None
+        )
+        results["indel_variants"] = (
+            filtered_variants["indel_variants"] if filtered_variants else None
+        )
+        results["snv_variants"] = (
+            filtered_variants["snv_variants"] if filtered_variants else None
+        )
     # read versions of softwares
     if smp_cnf.mykrobe:
         results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))
@@ -199,7 +216,9 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
         results["pipeline"].softwares.append(tbprofiler.get_version(smp_cnf.tbprofiler))
     if smp_cnf.kleborate_hamronization:
         with smp_cnf.kleborate_hamronization.open() as inpt:
-            if (kleborate_version := hamronization.get_version(inpt)) or kleborate_version is not None:
+            if (
+                kleborate_version := hamronization.get_version(inpt)
+            ) or kleborate_version is not None:
                 results["pipeline"].softwares.append(kleborate_version)
 
     # add amr and virulence
@@ -211,12 +230,20 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
     # this is a test of a updated way of sorting outputs into their dedicated category
     if smp_cnf.kleborate and smp_cnf.kleborate_hamronization:
         with smp_cnf.kleborate_hamronization.open() as inpt:
-            if (kleborate_version := hamronization.get_version(inpt)) and kleborate_version is None:
-                raise ValueError("Could not parse Kleborate version from hAMRonization file.")
+            if (
+                kleborate_version := hamronization.get_version(inpt)
+            ) and kleborate_version is None:
+                raise ValueError(
+                    "Could not parse Kleborate version from hAMRonization file."
+                )
         # reopen the file to get all entries
         with smp_cnf.kleborate_hamronization.open() as inpt:
             hamronization_entries = hamronization.parse_hamronization(inpt)
-            analysis_results = kleborate.parse_kleborate_v3(path=smp_cnf.kleborate, version=kleborate_version.version, hamronization_entries=hamronization_entries)
+            analysis_results = kleborate.parse_kleborate_v3(
+                path=smp_cnf.kleborate,
+                version=kleborate_version.version,
+                hamronization_entries=hamronization_entries,
+            )
 
         # append the kleborate result to the individual categories in the result dict
         for res in analysis_results:

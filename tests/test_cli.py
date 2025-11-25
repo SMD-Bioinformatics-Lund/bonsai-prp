@@ -7,8 +7,8 @@ from typing import Any
 import pytest
 from click.testing import CliRunner
 
-from prp.cli.parse import format_jasen, format_cdm
 from prp.cli.annotate import add_igv_annotation_track, annotate_delly
+from prp.cli.parse import format_cdm, format_jasen
 from prp.models import PipelineResult
 
 
@@ -21,7 +21,9 @@ from prp.models import PipelineResult
         ("mtuberculosis_sample_conf_path", ["mykrobe", "tbprofiler"]),
     ],
 )
-def test_parse_cmd(fixture_name: str, expected_sw: list[str], request: pytest.FixtureRequest):
+def test_parse_cmd(
+    fixture_name: str, expected_sw: list[str], request: pytest.FixtureRequest
+):
     """Test creating a analysis summary.
 
     The test is intended as an end-to-end test.
@@ -80,7 +82,9 @@ def test_cdm_cmd(ecoli_sample_conf_path: Path, ecoli_cdm_input: list[dict[str, A
 
 
 def test_annotate_delly(
-    mtuberculosis_delly_bcf_path: Path, converged_bed_path: Path, annotated_delly_path: Path
+    mtuberculosis_delly_bcf_path: Path,
+    converged_bed_path: Path,
+    annotated_delly_path: Path,
 ):
     """Test command for annotating delly output."""
     runner = CliRunner()
@@ -112,7 +116,9 @@ def test_annotate_delly(
             assert test_contents == expected_contents
 
 
-def test_add_igv_annotation_track(mtuberculosis_snv_vcf_path: Path, simple_pipeline_result: PipelineResult):
+def test_add_igv_annotation_track(
+    mtuberculosis_snv_vcf_path: Path, simple_pipeline_result: PipelineResult
+):
     """Test command for adding IGV annotation track to a result file."""
     runner = CliRunner()
     with runner.isolated_filesystem():

@@ -4,8 +4,8 @@ Kleborate implementation: https://kleborate.readthedocs.io/en/stable/kpsc_module
 """
 
 import csv
-import re
 import logging
+import re
 from typing import Any, Literal, TextIO, TypeAlias
 
 from prp.models.hamronization import (
@@ -138,7 +138,7 @@ def parse_hamronization(
 
         # convert mutation entry. This is specifically for the Kleborate implementation of the specification
         variant_info: dict[str, Any] = {}
-        nucleotide_mutations = ('c', 'g', 'n')
+        nucleotide_mutations = ("c", "g", "n")
         if (mutation := clean_row.get("mutation")) is not None:
             if isinstance(mutation, str) and mutation.startswith("p."):
                 variant_info["protein_mutation"] = mutation

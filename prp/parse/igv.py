@@ -3,12 +3,11 @@
 import logging
 from pathlib import Path
 
-from .variant import load_variants
-
 from prp.models.config import IgvAnnotation
 from prp.models.phenotype import VariantBase
 
 from ..models.sample import IgvAnnotationTrack, ReferenceGenome
+from .variant import load_variants
 
 LOG = logging.getLogger(__name__)
 
@@ -17,6 +16,7 @@ def _extract_accn_from_header(fasta_fpath: str):
     with open(fasta_fpath, "r") as fin:
         header = fin.readline().strip()
     return str(header[1:].split()[0])
+
 
 def parse_igv_info(
     ref_genome_sequence: Path,
@@ -69,4 +69,9 @@ def parse_igv_info(
         genes=str(ref_genome_annotation),
     )
 
-    return reference_genome_info, igv_alignment_track, read_mapping_info, filtered_variants
+    return (
+        reference_genome_info,
+        igv_alignment_track,
+        read_mapping_info,
+        filtered_variants,
+    )

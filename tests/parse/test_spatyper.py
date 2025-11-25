@@ -16,8 +16,8 @@ def test_parse_spatyper_results(saureus_spatyper_path):
         "result": {
             "sequence_name": "contig_1",
             "repeats": "15-12-16-02-16-02-25-17-24",
-            "type": "t021"
-        }
+            "type": "t021",
+        },
     }
     # check if data matches
     assert expected_spatyper == result.model_dump()

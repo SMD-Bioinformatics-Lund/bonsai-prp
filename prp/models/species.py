@@ -63,6 +63,7 @@ class BrackenSppIndex(RWModel):
     software: Literal[SppPredictionSoftware.BRACKEN] = SppPredictionSoftware.BRACKEN
     result: list[BrackenSpeciesPrediction]
 
+
 class MykrobeSppIndex(RWModel):
     """Mykrobe specifik spp prediction result container."""
 
@@ -77,4 +78,7 @@ class KleborateSppIndex(RWModel):
     result: KleboreateSppResult
 
 
-SppMethodIndex = Annotated[BrackenSppIndex | MykrobeSppIndex | KleborateSppIndex, Field(discriminator="software")]
+SppMethodIndex = Annotated[
+    BrackenSppIndex | MykrobeSppIndex | KleborateSppIndex,
+    Field(discriminator="software"),
+]

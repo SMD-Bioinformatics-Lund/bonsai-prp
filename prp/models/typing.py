@@ -176,6 +176,7 @@ class SpatyperTypingMethodIndex(RWModel):
 
 class TypingResultSccmec(RWModel):
     """Sccmec results"""
+
     type: str | None = None
     subtype: str | None = None
     mecA: str | None = None
@@ -195,6 +196,7 @@ class TypingResultSccmec(RWModel):
 
 class SccmecTypingMethodIndex(RWModel):
     """Method Index Sccmec."""
+
     type: Literal[TypingMethod.SCCMECTYPE]
     software: Literal[TypingSoftware.SCCMEC]
     result: TypingResultSccmec

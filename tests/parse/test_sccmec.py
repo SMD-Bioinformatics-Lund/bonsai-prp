@@ -20,16 +20,25 @@ def test_parse_sccmec_results(saureus_sccmec_path):
             "mecA": "+",
             "target_schema": "sccmec_targets",
             "target_schema_version": "1.2.0",
-            "targets": ["ccrA2", "ccrB2", "IS431", "IS431_1", "IS431_2", "IS1272", "mecA", "mecR1"],
+            "targets": [
+                "ccrA2",
+                "ccrB2",
+                "IS431",
+                "IS431_1",
+                "IS431_2",
+                "IS1272",
+                "mecA",
+                "mecR1",
+            ],
             "regions": ["IVa", "IVn"],
             "coverage": [96.31, 83.93],
-            "hits": [27,25],
+            "hits": [27, 25],
             "target_comment": None,
             "region_schema": "sccmec_regions",
             "region_schema_version": "1.2.0",
             "region_comment": "Found matches for multiple types including: IVa, IVn",
-            "comment": "The type was determined based on matches to multiple subtypes of the same type"
-        }
+            "comment": "The type was determined based on matches to multiple subtypes of the same type",
+        },
     }
     # check if data matches
     assert expected_sccmec == result.model_dump()

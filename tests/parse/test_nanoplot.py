@@ -21,8 +21,8 @@ def test_parse_nanoplot_results(saureus_nanoplot_path):
             "number_of_reads": 1000.0,
             "read_length_n50": 6893.0,
             "stdev_read_length": 5845.6,
-            "total_bases": 4697845.0
-        }
+            "total_bases": 4697845.0,
+        },
     }
 
     # Check if data matches

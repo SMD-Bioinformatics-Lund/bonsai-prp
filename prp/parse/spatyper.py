@@ -30,7 +30,9 @@ def parse_spatyper_results(path: str) -> SpatyperTypingMethodIndex:
     result = result_loa[0] if result_loa else {}
 
     result_obj = TypingResultSpatyper(
-        sequence_name=str(sequence_name) if (sequence_name := result.get("sequence_name")) else None,
+        sequence_name=str(sequence_name)
+        if (sequence_name := result.get("sequence_name"))
+        else None,
         repeats=str(repeats) if (repeats := result.get("repeats")) else None,
         type=str(type) if (type := result.get("type")) else None,
     )

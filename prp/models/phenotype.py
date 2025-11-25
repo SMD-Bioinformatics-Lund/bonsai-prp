@@ -170,7 +170,9 @@ class AmrFinderGene(GeneBase):
     query_start_pos: int | None = Field(
         default=None, description="Start position on the assembly"
     )
-    query_end_pos: int | None = Field(default=None, description="End position on the assembly")
+    query_end_pos: int | None = Field(
+        default=None, description="End position on the assembly"
+    )
     strand: SequenceStrand | None
 
 

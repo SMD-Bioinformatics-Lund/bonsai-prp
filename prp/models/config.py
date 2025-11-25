@@ -29,8 +29,8 @@ class SampleConfig(RWModel):
     metadata: list[MetaEntry] = []
 
     # Reference genome
-    ref_genome_sequence: FilePath  | None = None
-    ref_genome_annotation: FilePath  | None = None
+    ref_genome_sequence: FilePath | None = None
+    ref_genome_annotation: FilePath | None = None
 
     igv_annotations: list[IgvAnnotation] = []
 

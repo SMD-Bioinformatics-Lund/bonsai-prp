@@ -15,7 +15,8 @@ LOG = logging.getLogger(__name__)
 
 
 @click.group("validate")
-def validate_gr(): ...
+def validate_gr():
+    ...
 
 
 @validate_gr.command()

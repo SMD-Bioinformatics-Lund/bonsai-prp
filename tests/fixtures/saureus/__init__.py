@@ -94,6 +94,7 @@ def saureus_bracken_path(data_path: Path) -> Path:
     """Get path for saureus bracken file"""
     return data_path.joinpath("saureus", "bracken.out")
 
+
 @pytest.fixture()
 def saureus_spatyper_path(data_path: Path) -> Path:
     """Get path for saureus spatyper file"""

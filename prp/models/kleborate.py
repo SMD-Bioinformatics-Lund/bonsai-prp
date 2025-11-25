@@ -5,7 +5,12 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
 from .base import RWModel
-from .phenotype import ElementType, ElementTypeResult, PredictionSoftware, VariantSubType
+from .phenotype import (
+    ElementType,
+    ElementTypeResult,
+    PredictionSoftware,
+    VariantSubType,
+)
 from .typing import LineageMixin, TypingMethod, TypingResultMlst, TypingSoftware
 
 
@@ -83,7 +88,14 @@ class KleborateScoreIndex(RWModel):
 class KleborateMlstLikeIndex(RWModel):
     """Container for MLST-like typing result."""
 
-    type: Literal[TypingMethod.MLST, TypingMethod.ABST, TypingMethod.CBST, TypingMethod.RMST, TypingMethod.SMST, TypingMethod.YBST]
+    type: Literal[
+        TypingMethod.MLST,
+        TypingMethod.ABST,
+        TypingMethod.CBST,
+        TypingMethod.RMST,
+        TypingMethod.SMST,
+        TypingMethod.YBST,
+    ]
     software: Literal[TypingSoftware.KLEBORATE] = TypingSoftware.KLEBORATE
     version: str
     result: KleborateMlstLikeResults
@@ -108,10 +120,10 @@ class ParsedVariant(BaseModel):
     alt: str = Field(default="", min_length=0, max_length=20)
     start: int = Field(..., ge=1)
     end: int | None = Field(default=None, ge=1)
-    residue: Literal['nucleotide', 'protein']
+    residue: Literal["nucleotide", "protein"]
     type: VariantSubType
 
-    @field_validator('ref', 'alt', mode='before')
+    @field_validator("ref", "alt", mode="before")
     @classmethod
     def strip_whitespace(cls, v: Any):
         return v.strip() if isinstance(v, str) else v

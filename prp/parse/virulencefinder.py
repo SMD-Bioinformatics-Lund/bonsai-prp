@@ -18,7 +18,9 @@ LOG = logging.getLogger(__name__)
 
 
 def parse_vir_gene(
-    info: dict[str, Any], function: str, subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR
+    info: dict[str, Any],
+    function: str,
+    subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR,
 ) -> VirulenceGene:
     """Parse virulence gene prediction results."""
     accnr = info.get("ref_acc", None)
@@ -49,7 +51,7 @@ def _parse_vir_results(pred: dict[str, Any]) -> VirulenceElementTypeResult:
 
     phenotypes = pred.get("phenotypes", {})
     seq_regions = pred.get("seq_regions", {})
-    
+
     for key, pheno in phenotypes.items():
         function = pheno.get("function")
         ref_dbs = pheno.get("ref_database", [])
@@ -68,7 +70,9 @@ def _parse_vir_results(pred: dict[str, Any]) -> VirulenceElementTypeResult:
             seq_info = seq_regions.get(region_key)
             if not seq_info:
                 continue
-            vir_genes.append(parse_vir_gene(seq_info, subtype=subtype, function=function))
+            vir_genes.append(
+                parse_vir_gene(seq_info, subtype=subtype, function=function)
+            )
     # sort genes
     genes = sorted(vir_genes, key=lambda entry: (entry.gene_symbol, entry.coverage))
     return VirulenceElementTypeResult(genes=genes, phenotypes={}, variants=[])
@@ -85,7 +89,9 @@ def parse_virulence_pred(path: str) -> VirulenceMethodIndex | None:
     LOG.info("Parsing virulencefinder virulence prediction")
     with open(path, "rb") as inpt:
         pred = json.load(inpt)
-        if "seq_regions" in pred and "phenotypes" in pred: # Aim: check if file is empty or if it comes from the right tool?
+        if (
+            "seq_regions" in pred and "phenotypes" in pred
+        ):  # Aim: check if file is empty or if it comes from the right tool?
             results: VirulenceElementTypeResult = _parse_vir_results(pred)
             result = VirulenceMethodIndex(
                 type=ElementType.VIR, software=Software.VIRFINDER, result=results
@@ -105,11 +111,11 @@ def parse_stx_typing(path: str) -> MethodIndex | None:
         if "seq_regions" in pred_obj and "phenotypes" in pred_obj:
             phenotypes = pred_obj.get("phenotypes", {})
             seq_regions = pred_obj.get("seq_regions", {})
-    
+
             stx_keys = [key for key in phenotypes if key.startswith("stx")]
             if not stx_keys:
                 return None
-            
+
             for stx_key in stx_keys:
                 pheno = phenotypes[stx_key]
                 function = pheno.get("function", "")

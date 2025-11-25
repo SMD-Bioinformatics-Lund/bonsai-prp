@@ -13,7 +13,20 @@ from ..models.typing import (
 )
 from ..models.typing import TypingSoftware as Software
 
-alt_allele_calls = ["ALM", "ASM", "EXC", "INF", "LNF", "LOTSC ", "NIPH", "NIPHEM", "PAMA", "PLNF", "PLOT3", "PLOT5"]
+alt_allele_calls = [
+    "ALM",
+    "ASM",
+    "EXC",
+    "INF",
+    "LNF",
+    "LOTSC ",
+    "NIPH",
+    "NIPHEM",
+    "PAMA",
+    "PLNF",
+    "PLOT3",
+    "PLOT5",
+]
 
 LOG = logging.getLogger(__name__)
 

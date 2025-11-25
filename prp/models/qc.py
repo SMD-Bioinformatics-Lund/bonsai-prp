@@ -5,8 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from .kleborate import KleborateQcResult
 from .base import RWModel
+from .kleborate import KleborateQcResult
 
 
 class ValidQualityStr(StrEnum):
@@ -93,6 +93,7 @@ class NanoPlotQcResult(BaseModel):
 
 class ContigCoverage(BaseModel):
     """Coverage information for a single contig."""
+
     rname: str
     startpos: int
     endpos: int
@@ -103,8 +104,10 @@ class ContigCoverage(BaseModel):
     meanbaseq: float
     meanmapq: float
 
+
 class SamtoolsCoverageQcResult(BaseModel):
     """SAMtools coverage QC result model."""
+
     contigs: list[ContigCoverage]
 
 
@@ -127,7 +130,7 @@ class KleborateQcIndex(RWModel):
     version: str
     result: KleborateQcResult
 
-      
+
 class CdmQcMethodIndex(QcMethodIndex):
     """Qc results container for CDM"""
 

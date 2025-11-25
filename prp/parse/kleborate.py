@@ -13,15 +13,15 @@ from typing import Any, Literal, TextIO, TypeAlias
 from prp.models.base import ParserOutput
 from prp.models.hamronization import HamronizationEntries, HamronizationEntry
 from prp.models.kleborate import (
+    KleborateEtIndex,
+    KleborateEtScore,
     KleborateKaptiveLocus,
     KleborateKaptiveTypingResult,
-    KleborateEtIndex,
-    KleborateMlstLikeIndex,
     KleborateKtypeIndex,
+    KleborateMlstLikeIndex,
     KleborateMlstLikeResults,
     KleborateQcResult,
     KleborateScoreIndex,
-    KleborateEtScore,
     KleboreateSppResult,
     ParsedVariant,
 )
@@ -124,7 +124,9 @@ def _normalize_cell(
         )
 
 
-def _set_nested(d: dict[str, Any], path: list[str], value: Any) -> dict[str, Any] | None:
+def _set_nested(
+    d: dict[str, Any], path: list[str], value: Any
+) -> dict[str, Any] | None:
     """Set value in a nested dict according to path."""
     if not path:
         return None
@@ -204,7 +206,9 @@ def _mlst_like_formatter(
         )
 
     lineage = (
-        "; ".join(typing_result[lineage_key]) if isinstance(typing_result[lineage_key], list) else typing_result[lineage_key]
+        "; ".join(typing_result[lineage_key])
+        if isinstance(typing_result[lineage_key], list)
+        else typing_result[lineage_key]
     )
 
     if st_key not in typing_result:
@@ -218,7 +222,7 @@ def _mlst_like_formatter(
         except ValueError:
             sequence_type = typing_result[st_key]
     else:
-            sequence_type = typing_result[st_key]
+        sequence_type = typing_result[st_key]
 
     # buld allele list, skip lineage, st, and qc
     skip_keys: list[str] = [lineage_key, st_key, *qc_keys]
@@ -272,7 +276,9 @@ def _format_mlst_like_typing(
     for name, schema_def in mlst_like_typing_schemas.items():
         try:
             res = _mlst_like_formatter(result, schema_name=name, **schema_def)
-            out = KleborateMlstLikeIndex(type=TypingMethod(name), version=version, result=res)
+            out = KleborateMlstLikeIndex(
+                type=TypingMethod(name), version=version, result=res
+            )
             typing_result.append(out)
         except RuntimeError as exc:
             LOG.error(f"Critial Kleborate parser error; {exc}")
@@ -415,8 +421,8 @@ def _get_hamr_phenotype(record: HamronizationEntry) -> PhenotypeInfo | None:
 
 def _convert_strand_orientation(orientation: str | None) -> SequenceStrand | None:
     """Convert hAMRonization strand orientation to a SequenceStrand enum."""
-    forward_notations: list[str] = ['+', 'sense']
-    reverse_notations: list[str] = ['-', 'antisense']
+    forward_notations: list[str] = ["+", "sense"]
+    reverse_notations: list[str] = ["-", "antisense"]
     if orientation in forward_notations:
         return SequenceStrand.FORWARD
     if orientation in reverse_notations:
@@ -428,52 +434,81 @@ def _parse_variant_str(variant_str: str | None) -> ParsedVariant | None:
     """Parse the HGVS-like variant string reported by Kleborate."""
     if not variant_str:
         return None
-    
+
     variant_type = (
-        VariantSubType.INSERTION if 'ins' in variant_str else
-        VariantSubType.DELETION if 'del' in variant_str else
-        VariantSubType.DUPLICATION if 'dup' in variant_str else
-        VariantSubType.INVERSION if 'inv' in variant_str else
-        VariantSubType.FRAME_SHIFT if 'fs' in variant_str else
-        VariantSubType.SUBSTITUTION
+        VariantSubType.INSERTION
+        if "ins" in variant_str
+        else VariantSubType.DELETION
+        if "del" in variant_str
+        else VariantSubType.DUPLICATION
+        if "dup" in variant_str
+        else VariantSubType.INVERSION
+        if "inv" in variant_str
+        else VariantSubType.FRAME_SHIFT
+        if "fs" in variant_str
+        else VariantSubType.SUBSTITUTION
     )
 
-    nucleotide_prefix = ('c', 'g')
+    nucleotide_prefix = ("c", "g")
     if variant_str[0] in nucleotide_prefix:
-        residue_type = 'nucleotide'
-    elif variant_str.startswith('p.'):
-        residue_type = 'protein'
+        residue_type = "nucleotide"
+    elif variant_str.startswith("p."):
+        residue_type = "protein"
     else:
         raise ValueError(f"Unknown variant type: {variant_str}")
-    
+
     def compile(p: str) -> re.Pattern[str]:
         """Shorthand regex compiler"""
         return re.compile(p, re.I)
 
     # define patterns for parsing hgvs-like strings
     variant_patterns: dict[tuple[str, VariantSubType], re.Pattern[str]] = {
-        ('protein', VariantSubType.SUBSTITUTION): compile(r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)(?P<alt>[A-Z]+)"),
-        ('protein', VariantSubType.INSERTION): compile(r"\w\.(?P<start>\d+)_(?P<end>\d+)ins(?P<alt>[A-Z]+)"),
-        ('protein', VariantSubType.FRAME_SHIFT): compile(r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)fs"),
-        ('protein', VariantSubType.DELETION): compile(r"\w\.(?P<ref>[A-Z]+)(?P<pos>\d+)del"),
-        ('nucleotide', VariantSubType.SUBSTITUTION): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)(?P<alt>[ACGTURYSWKMBDHVN]+)"),
-        ('nucleotide', VariantSubType.FRAME_SHIFT): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)fs"),
-        ('nucleotide', VariantSubType.DELETION): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)del"),
-        ('nucleotide', VariantSubType.DUPLICATION): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)dup"),
-        ('nucleotide', VariantSubType.INVERSION): compile(r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)inv"),
+        ("protein", VariantSubType.SUBSTITUTION): compile(
+            r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)(?P<alt>[A-Z]+)"
+        ),
+        ("protein", VariantSubType.INSERTION): compile(
+            r"\w\.(?P<start>\d+)_(?P<end>\d+)ins(?P<alt>[A-Z]+)"
+        ),
+        ("protein", VariantSubType.FRAME_SHIFT): compile(
+            r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)fs"
+        ),
+        ("protein", VariantSubType.DELETION): compile(
+            r"\w\.(?P<ref>[A-Z]+)(?P<pos>\d+)del"
+        ),
+        ("nucleotide", VariantSubType.SUBSTITUTION): compile(
+            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)(?P<alt>[ACGTURYSWKMBDHVN]+)"
+        ),
+        ("nucleotide", VariantSubType.FRAME_SHIFT): compile(
+            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)fs"
+        ),
+        ("nucleotide", VariantSubType.DELETION): compile(
+            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)del"
+        ),
+        ("nucleotide", VariantSubType.DUPLICATION): compile(
+            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)dup"
+        ),
+        ("nucleotide", VariantSubType.INVERSION): compile(
+            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)inv"
+        ),
     }
 
     # try get the approproate pattern for matching the string
     pattern = variant_patterns.get((residue_type, variant_type))
     if not pattern:
-        LOG.warning(f"Dont know how to parse {residue_type} {variant_type}: {variant_str}")
+        LOG.warning(
+            f"Dont know how to parse {residue_type} {variant_type}: {variant_str}"
+        )
         return None
 
     # try matching the pattern and return a structured result
     if (match := re.fullmatch(pattern, variant_str)) and match:
-        return ParsedVariant.model_validate({"residue": residue_type, "type": variant_type, **match.groupdict()})
+        return ParsedVariant.model_validate(
+            {"residue": residue_type, "type": variant_type, **match.groupdict()}
+        )
 
-    LOG.warning(f"Could not parse the {variant_str} using the pattern for {residue_type} {variant_type}")
+    LOG.warning(
+        f"Could not parse the {variant_str} using the pattern for {residue_type} {variant_type}"
+    )
     return None
 
 
@@ -510,8 +545,13 @@ def hamronization_to_restance_entry(
                 phenotypes=[pheno] if pheno else [],
             )
             res_genes.append(rec)
-        elif "variant" in entry.genetic_variation_type.lower() or "mutation" in entry.genetic_variation_type.lower():
-            variant_info = _parse_variant_str(entry.protein_mutation or entry.nucleotide_mutation)
+        elif (
+            "variant" in entry.genetic_variation_type.lower()
+            or "mutation" in entry.genetic_variation_type.lower()
+        ):
+            variant_info = _parse_variant_str(
+                entry.protein_mutation or entry.nucleotide_mutation
+            )
 
             # Prepare optional fields based on variant_info
             extra_fields = {}
@@ -541,7 +581,7 @@ def hamronization_to_restance_entry(
                 confidence=None,
                 method="kleborate",
                 strand=strand,
-                **extra_fields
+                **extra_fields,
             )
             res_variants.append(rec)
         else:
@@ -550,7 +590,8 @@ def hamronization_to_restance_entry(
                 entry.genetic_variation_type,
             )
     return KleborateEtIndex(
-        version=sw_version, type=ElementType.AMR,
+        version=sw_version,
+        type=ElementType.AMR,
         result=ElementTypeResult(variants=res_variants, genes=res_genes),
     )
 
