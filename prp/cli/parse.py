@@ -7,7 +7,7 @@ import click
 from pydantic import TypeAdapter, ValidationError
 
 from prp.models.config import SampleConfig
-from prp.models.qc import QcMethodIndex, QcSoftware, CdmQcMethodIndex
+from prp.models.qc import CdmQcMethodIndex, QcMethodIndex, QcSoftware
 from prp.models.sample import MethodIndex
 from prp.parse import (
     parse_alignment_results,
@@ -24,7 +24,8 @@ LOG = logging.getLogger(__name__)
 
 
 @click.group("parse")
-def parse_gr(): ...
+def parse_gr():
+    ...
 
 
 @parse_gr.command()

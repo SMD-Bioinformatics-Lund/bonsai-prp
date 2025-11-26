@@ -11,7 +11,6 @@ from .base import FilePath, RWModel
 
 
 class MetadataTypes(StrEnum):
-
     STR = "string"
     INT = "integer"
     FLOAT = "float"

@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from prp.models.species import BrackenSppIndex, BrackenSpeciesPrediction
+from prp.models.species import BrackenSpeciesPrediction, BrackenSppIndex
 
 
 def parse_result(file: str, cutoff: float = 0.0001) -> BrackenSppIndex:
@@ -24,5 +24,8 @@ def parse_result(file: str, cutoff: float = 0.0001) -> BrackenSppIndex:
         .loc[lambda df: df["fraction_total_reads"] >= cutoff]
     )
     # cast as method index
-    result = [BrackenSpeciesPrediction.model_validate(row) for row in species_pred.to_dict(orient="records")]
+    result = [
+        BrackenSpeciesPrediction.model_validate(row)
+        for row in species_pred.to_dict(orient="records")
+    ]
     return BrackenSppIndex(result=result)

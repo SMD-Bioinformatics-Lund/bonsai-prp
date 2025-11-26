@@ -7,18 +7,18 @@ import os
 import subprocess
 from typing import Any, TextIO
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pysam
 
 from ..models.qc import (
+    ContigCoverage,
     GambitcoreQcResult,
+    NanoPlotQcResult,
     PostAlignQcResult,
     QcMethodIndex,
     QcSoftware,
     QuastQcResult,
-    NanoPlotQcResult,
-    ContigCoverage,
     SamtoolsCoverageQcResult,
 )
 
@@ -413,7 +413,7 @@ def parse_nanoplot_results(nanoplot_fpath: str) -> QcMethodIndex:
         # Skip the first line (header)
         next(fh)
         nanoplot_dict = {}
-        
+
         # Parse only first set of metrics
         for _ in range(8):
             line = next(fh).strip()
@@ -430,13 +430,10 @@ def parse_nanoplot_results(nanoplot_fpath: str) -> QcMethodIndex:
         number_of_reads=nanoplot_dict["number_of_reads"],
         read_length_n50=nanoplot_dict["read_length_n50"],
         stdev_read_length=nanoplot_dict["stdev_read_length"],
-        total_bases=nanoplot_dict["total_bases"]
+        total_bases=nanoplot_dict["total_bases"],
     )
 
-    return QcMethodIndex(
-        software=QcSoftware.NANOPLOT,
-        result=result
-    )
+    return QcMethodIndex(software=QcSoftware.NANOPLOT, result=result)
 
 
 def parse_samtools_coverage_results(coverage_fpath: str) -> QcMethodIndex:
@@ -449,16 +446,16 @@ def parse_samtools_coverage_results(coverage_fpath: str) -> QcMethodIndex:
         QcMethodIndex: QC method index containing SAMtools coverage results
     """
     LOG.info("Parsing SAMtools coverage")
-    
+
     contigs = []
 
     with open(coverage_fpath, "r", encoding="utf-8") as covfile:
         # Skip header line
-        header = covfile.readline().strip('#').strip().split('\t')
-        
+        header = covfile.readline().strip("#").strip().split("\t")
+
         # Process each line (contig)
         for line in covfile:
-            data = dict(zip(header, line.strip().split('\t')))
+            data = dict(zip(header, line.strip().split("\t")))
 
             # Convert types appropriately
             contig = ContigCoverage(
@@ -470,13 +467,10 @@ def parse_samtools_coverage_results(coverage_fpath: str) -> QcMethodIndex:
                 coverage=float(data["coverage"]),
                 meandepth=float(data["meandepth"]),
                 meanbaseq=float(data["meanbaseq"]),
-                meanmapq=float(data["meanmapq"])
+                meanmapq=float(data["meanmapq"]),
             )
             contigs.append(contig)
 
     samcov_result = SamtoolsCoverageQcResult(contigs=contigs)
 
-    return QcMethodIndex(
-        software=QcSoftware.SAMTOOLS,
-        result=samcov_result
-    )
+    return QcMethodIndex(software=QcSoftware.SAMTOOLS, result=samcov_result)

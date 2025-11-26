@@ -8,10 +8,7 @@ from typing import Any, Dict, Union
 import numpy as np
 import pandas as pd
 
-from prp.models.species import (
-    MykrobeSpeciesPrediction,
-    MykrobeSppIndex,
-)
+from prp.models.species import MykrobeSpeciesPrediction, MykrobeSppIndex
 
 from ..models.metadata import SoupType, SoupVersion
 from ..models.phenotype import (

@@ -24,7 +24,7 @@ def test_parse_samtools_coverage_results(saureus_samtools_coverage_path):
                     "coverage": 95.3304,
                     "meandepth": 186.651,
                     "meanbaseq": 22.6,
-                    "meanmapq": 57.5
+                    "meanmapq": 57.5,
                 },
                 {
                     "rname": "NC_006629.2",
@@ -35,10 +35,10 @@ def test_parse_samtools_coverage_results(saureus_samtools_coverage_path):
                     "coverage": 99.2342,
                     "meandepth": 351.234,
                     "meanbaseq": 24.7,
-                    "meanmapq": 30.7
-                }
-            ]       
-        }
+                    "meanmapq": 30.7,
+                },
+            ]
+        },
     }
     # check if data matches
     assert expected_samtools == result.model_dump()

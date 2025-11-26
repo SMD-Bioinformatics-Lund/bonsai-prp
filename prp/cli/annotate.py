@@ -16,7 +16,8 @@ LOG = logging.getLogger(__name__)
 
 
 @click.group("annotate")
-def annotate_gr(): ...
+def annotate_gr():
+    ...
 
 
 @annotate_gr.command()

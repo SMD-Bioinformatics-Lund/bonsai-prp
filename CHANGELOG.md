@@ -1,8 +1,10 @@
 ## [Unreleased]
 
+## [1.5.0]
+
 ### Added
 
-- Added support for the tool Kleborate
+- Added support for the Kleborate pipeline
 - Add basic mypy configuration to pyproject.toml
 
 ### Fixed

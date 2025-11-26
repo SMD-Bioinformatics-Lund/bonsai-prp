@@ -3,11 +3,11 @@
 import pytest
 
 from prp.parse.amrfinder import (
-    ElementType,
     AMRMethodIndex,
+    ElementType,
     VirulenceMethodIndex,
+    parse_amr_pred,
     parse_vir_pred,
-    parse_amr_pred
 )
 
 
@@ -24,10 +24,26 @@ def test_parse_virulence_prediction(saureus_amrfinder_path):
 
 
 EXPECTED_RESULT = [
-    ('saureus_amrfinder_path', (8, 3, ("beta-lactam", "fosfomycin", "methicillin", "quinolone", "tetracycline", "tigecycline"))),
-    ('saureus_amrfinder_no_amr_path', (0, 0, tuple()))
+    (
+        "saureus_amrfinder_path",
+        (
+            8,
+            3,
+            (
+                "beta-lactam",
+                "fosfomycin",
+                "methicillin",
+                "quinolone",
+                "tetracycline",
+                "tigecycline",
+            ),
+        ),
+    ),
+    ("saureus_amrfinder_no_amr_path", (0, 0, tuple())),
 ]
-@pytest.mark.parametrize('fixture_name,expected', EXPECTED_RESULT)
+
+
+@pytest.mark.parametrize("fixture_name,expected", EXPECTED_RESULT)
 def test_parse_amr_prediction(fixture_name, expected, request):
     """Test parsing amrfinder resistance."""
     exp_genes, exp_variants, exp_phenotypes = expected
@@ -45,4 +61,4 @@ def test_parse_amr_prediction(fixture_name, expected, request):
     assert len(result.result.variants) == exp_variants
 
     # test that all phenotypes have been reported
-    assert set(result.result.phenotypes['resistant']) == set(exp_phenotypes)
+    assert set(result.result.phenotypes["resistant"]) == set(exp_phenotypes)

@@ -1,15 +1,15 @@
 """QC data models."""
 
-from enum import Enum, StrEnum
+from enum import StrEnum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from .kleborate import KleborateQcResult
 from .base import RWModel
-from .typing import TypingSoftware
+from .kleborate import KleborateQcResult
 
 
-class ValidQualityStr(Enum):
+class ValidQualityStr(StrEnum):
     """Valid strings for qc entries."""
 
     LOWCONTIGQUAL = "-"
@@ -18,13 +18,13 @@ class ValidQualityStr(Enum):
 class QcSoftware(StrEnum):
     """Valid tools."""
 
-    QUAST = "quast"
+    CHEWBBACA = "chewbbaca"
     FASTQC = "fastqc"
-    POSTALIGNQC = "postalignqc"
-    CHEWBBACA = TypingSoftware.CHEWBBACA.value
     GAMBITCORE = "gambitcore"
-    NANOPLOT = "nanoplot"
     KLEBORATE = "kleborate"
+    NANOPLOT = "nanoplot"
+    POSTALIGNQC = "postalignqc"
+    QUAST = "quast"
     SAMTOOLS = "samtools"
 
 
@@ -93,6 +93,7 @@ class NanoPlotQcResult(BaseModel):
 
 class ContigCoverage(BaseModel):
     """Coverage information for a single contig."""
+
     rname: str
     startpos: int
     endpos: int
@@ -103,8 +104,10 @@ class ContigCoverage(BaseModel):
     meanbaseq: float
     meanmapq: float
 
+
 class SamtoolsCoverageQcResult(BaseModel):
     """SAMtools coverage QC result model."""
+
     contigs: list[ContigCoverage]
 
 
@@ -119,7 +122,15 @@ class QcMethodIndex(RWModel):
     version: str | None = None
     result: QuastQcResult | PostAlignQcResult | GenomeCompleteness | GambitcoreQcResult | NanoPlotQcResult | SamtoolsCoverageQcResult | KleborateQcResult
 
-      
+
+class KleborateQcIndex(RWModel):
+    """Indexing of Kleborate data."""
+
+    software: Literal[QcSoftware.KLEBORATE] = QcSoftware.KLEBORATE
+    version: str
+    result: KleborateQcResult
+
+
 class CdmQcMethodIndex(QcMethodIndex):
     """Qc results container for CDM"""
 

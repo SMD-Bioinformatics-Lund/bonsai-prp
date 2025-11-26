@@ -20,7 +20,8 @@ PASSWD_ENV = "BONSAI_PASSWD"
 
 
 @click.group()
-def upload(): ...
+def upload():
+    ...
 
 
 @upload.command()

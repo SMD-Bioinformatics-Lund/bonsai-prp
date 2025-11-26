@@ -24,12 +24,13 @@ def test_parse_sequence_date_from_run_id():
     date = parse_date_from_run_id("my_unknown_run_id")
     assert date == None
 
+
 def test_process_custom_metadata(saureus_sample_conf_path: str):
     """Test that custom metadata fields are handled properly."""
     cnf_path = Path(saureus_sample_conf_path)
     with cnf_path.open(encoding="utf-8") as cfile:
         data = yaml.safe_load(cfile)
-    
+
     # cast metadata records as expcected data type
     cnf = SampleConfig.model_validate(data, context=saureus_sample_conf_path)
     # run process function
