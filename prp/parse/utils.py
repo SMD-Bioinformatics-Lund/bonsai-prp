@@ -1,7 +1,10 @@
 """Shared utility functions."""
 
+import csv
 from datetime import datetime
-from typing import Tuple
+import io
+from pathlib import Path
+from typing import IO, Any, Mapping, Tuple
 
 from ..models.phenotype import ElementTypeResult, VariantSubType, VariantType
 
@@ -109,3 +112,53 @@ def get_db_version(db_version: dict) -> str:
     """Get database version"""
     backup_version = db_version["name"] + "_" + reformat_date_str(db_version["Date"])
     return db_version["commit"] if "commit" in db_version else backup_version
+
+
+def read_delimited(
+    source: IO[bytes] | IO[str] | str | Path,
+    *,
+    delimiter: str = "\t",
+    encoding: str = "utf-8",
+):
+    """
+    Read a delimited text file (TSV/CSV) and yield each row as a dict.
+
+    Supports:
+      - path-like (str/Path)
+      - text streams (IO[str])
+      - binary streams (IO[bytes]) e.g. FastAPI UploadFile.file
+
+    Returns raw string values as produced by csv.DictReader.
+    """
+    if isinstance(source, (str, Path)):
+        with open(source, "r", encoding=encoding, newline="") as fp:
+            yield from read_delimited(fp, delimiter=delimiter, encoding=encoding)
+        return
+
+    # If it's a binary stream, wrap as text
+    if isinstance(getattr(source, "read", None), type(lambda: None)):
+        # peek at type by reading attribute 'mode' is unreliable; do safe wrapping:
+        if isinstance(source.read(0), (bytes, bytearray)):  # type: ignore[arg-type]
+            text_stream: IO[str] = io.TextIOWrapper(source, encoding=encoding, newline="")
+        else:
+            text_stream = source
+    else:
+        raise TypeError("source must be a path or file-like object")
+
+    reader = csv.DictReader(text_stream, delimiter=delimiter)
+    for row in reader:
+        # DictReader may return None keys on malformed rows; ignore those safely
+        if None in row:
+            row.pop(None, None)
+        yield row
+
+
+def convert_empty_to_none(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Convert empty strings to None and preserve other values."""
+    out: dict[str, Any] = {}
+    for key, val in row.items():
+        if val == "":
+            out[key] = None
+        else:
+            out[key] = val
+    return out
