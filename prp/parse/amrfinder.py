@@ -261,7 +261,7 @@ class AmrFinderParser(BaseParser):
         genes, variants = _read_result(stream)
 
         for analysis_type in [AnalysisType.AMR, AnalysisType.STRESS]:
-            if AnalysisType.AMR in want:
+            if analysis_type in want:
                 out.results[analysis_type.value] = self._to_resistance_results(genes, variants, type=analysis_type)
 
         if AnalysisType.VIRULENCE in want:

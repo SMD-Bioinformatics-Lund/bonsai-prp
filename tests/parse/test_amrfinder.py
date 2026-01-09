@@ -1,6 +1,6 @@
 """Virulencefinder parser test suite."""
 
-from prp.models.base import ParserOutput
+from prp.models.base import AnalysisType, ParserOutput
 import pytest
 
 from prp.parse.amrfinder import (
@@ -112,3 +112,14 @@ def test_amrfinder_parser_results(fixture_name, expected, request):
     assert len(result.results["amr"].genes) == exp_genes
     assert len(result.results["amr"].variants) == exp_variants
     assert set(result.results["amr"].phenotypes["resistant"]) == set(exp_phenotypes)
+
+
+def test_amrfinder_parser_filter(saureus_amrfinder_path):
+    """Test that filtering of AMRfinder results works."""
+    selected_result = AnalysisType.AMR
+    with open(saureus_amrfinder_path) as intp:
+        parser = AmrFinderParser()
+        result = parser.parse(stream=intp, want=selected_result)
+
+    assert list(result.results.keys()) == [selected_result.value]
+    
