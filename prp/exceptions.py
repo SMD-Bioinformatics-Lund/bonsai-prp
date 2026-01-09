@@ -9,6 +9,9 @@ class ParserError(Exception):
         super().__init__(message)
         self.context = context or {}
 
+class UnsupportedMethod(ParserError):
+    ...
+
 class SchemaMismatchError(ParserError):
     ...
 

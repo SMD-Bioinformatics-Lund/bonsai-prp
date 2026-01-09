@@ -4,13 +4,15 @@ import json
 import logging
 from typing import Any, Sequence
 
+from prp.exceptions import UnsupportedMethod
+from prp.models.analysis import AnalysisType
 from prp.models.config import SampleConfig
 
-from ..models.phenotype import AMRMethodIndex, ElementType
-from ..models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
-from ..models.species import SppMethodIndex
+from prp.models.phenotype import AMRMethodIndex, ElementType, PredictionSoftware, StressMethodIndex
+from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
+from prp.models.species import SppMethodIndex
+from .registry import get_parser
 from . import (
-    amrfinder,
     hamronization,
     kleborate,
     kraken,
@@ -140,10 +142,30 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
                     resistance.append(tmp_res)
 
     if smp_cnf.amrfinder:
-        for method in [ElementType.AMR, ElementType.STRESS]:
-            tmp_res = amrfinder.parse_amr_pred(smp_cnf.amrfinder, method)
-            if tmp_res.result.genes:
-                resistance.append(tmp_res)
+        parser = get_parser("amrfinder", version=None)
+        with open(smp_cnf.amrfinder, encoding="UTF-8") as inpt:
+            results = parser.parse(inpt)
+
+            # Assert that the parser produces expected results
+            target = AnalysisType.AMR
+            if target in parser.produces and target.value in results.result:
+                # cast as method index and append to resistance results
+                resistance.append(
+                    AMRMethodIndex(
+                        software=PredictionSoftware.AMRFINDER,
+                        result=results.result
+                    )
+                )
+
+            target = AnalysisType.STRESS
+            if target in parser.produces and target.value in results.result:
+                # cast as method index and append to resistance results
+                resistance.append(
+                    StressMethodIndex(
+                        software=PredictionSoftware.AMRFINDER,
+                        result=results.result
+                    )
+                )
 
     if smp_cnf.mykrobe:
         tmp_res = mykrobe.parse_amr_pred(smp_cnf.mykrobe, smp_cnf.sample_id)
@@ -160,7 +182,20 @@ def _read_virulence(smp_cnf) -> Sequence[VirulenceMethodIndex]:
     """Read virulence results."""
     virulence = []
     if smp_cnf.amrfinder:
-        virulence.append(amrfinder.parse_vir_pred(smp_cnf.amrfinder))
+        parser = get_parser("amrfinder", version=None)
+        with open(smp_cnf.amrfinder, encoding="UTF-8") as inpt:
+            results = parser.parse(inpt)
+
+            # Assert that the parser produces expected results
+            target = AnalysisType.VIRULENCE
+            if target in parser.produces and target.value in results.result:
+                # cast as method index and append to resistance results
+                virulence.append(
+                    VirulenceMethodIndex(
+                        software=PredictionSoftware.AMRFINDER,
+                        result=results.result
+                    )
+                )
 
     if smp_cnf.virulencefinder:
         # virulence genes

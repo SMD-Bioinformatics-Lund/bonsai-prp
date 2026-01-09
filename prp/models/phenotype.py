@@ -319,7 +319,7 @@ class ElementTypeResult(BaseModel):
 class AMRMethodIndex(RWModel):
     """Container for key-value lookup of analytical results."""
 
-    type: Literal[ElementType.AMR]
+    type: Literal[ElementType.AMR] = ElementType.AMR
     software: PredictionSoftware
     result: ElementTypeResult
 
@@ -327,7 +327,7 @@ class AMRMethodIndex(RWModel):
 class AntigenMethodIndex(RWModel):
     """Container for key-value lookup of analytical results."""
 
-    type: Literal[ElementType.ANTIGEN]
+    type: Literal[ElementType.ANTIGEN] = ElementType.ANTIGEN
     software: PredictionSoftware
     result: ElementTypeResult
 
@@ -335,7 +335,7 @@ class AntigenMethodIndex(RWModel):
 class StressMethodIndex(RWModel):
     """Container for key-value lookup of analytical results."""
 
-    type: Literal[ElementType.STRESS]
+    type: Literal[ElementType.STRESS] = ElementType.STRESS
     software: PredictionSoftware
     result: ElementTypeResult
 
@@ -343,6 +343,6 @@ class StressMethodIndex(RWModel):
 class VirulenceMethodIndex(RWModel):
     """Container for key-value lookup of analytical results."""
 
-    type: Literal[ElementType.VIR]
+    type: Literal[ElementType.VIR] = ElementType.VIR
     software: PredictionSoftware
     result: VirulenceElementTypeResult

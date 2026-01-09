@@ -41,7 +41,7 @@ def register_parser(software: str, min_version: str | None = None, max_version: 
     return wrapper
 
 
-def get_parser(software: str, version: str) -> Callable:
+def get_parser(software: str, *, version: str) -> RegistryEntry:
     """Get parser from registry."""
     version = Version(version)
 
