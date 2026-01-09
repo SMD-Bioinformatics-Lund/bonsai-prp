@@ -1,11 +1,22 @@
 """Generic database objects of which several other models are based on."""
 
+from enum import StrEnum
 from pathlib import Path
-from typing import Any
-
+from typing import Any, Annotated
 from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
-from pysam import Callable
-from typing_extensions import Annotated
+
+
+class AnalysisType(StrEnum):
+    """The various types of analysis a parser can produce."""
+
+    AMR = "amr"
+    VIRULENCE = "virulence"
+    STRESS = "stress"
+    TYPING = "typing"
+    SPECIES = "species"
+    QC = "qc"
+    VARIANT = "variant"
+    COVERAGE = "coverage"
 
 
 def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
@@ -31,11 +42,13 @@ def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
 class ParserOutput(BaseModel):
     """Common output data structure for all parsers."""
 
-    target_field: str
-    data: Any
+    software: str
+    software_version: str | None = None
+    parser_name: str
+    parser_version: str
+    schema_version: int = 1
 
-
-ParserFunc = Callable[[Any], ParserOutput]
+    results: dict[AnalysisType, Any]
 
 
 FilePath = Annotated[Path, BeforeValidator(convert_rel_to_abs_path)]
