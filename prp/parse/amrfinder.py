@@ -3,12 +3,13 @@
 import itertools
 import logging
 import re
-from typing import Any, Dict, Sequence, Tuple
+from typing import IO, Any, Tuple
 
 import numpy as np
 import pandas as pd
 
-from ..models.phenotype import (
+from prp.models.base import AnalysisType, ParserOutput
+from prp.models.phenotype import (
     AmrFinderGene,
     AmrFinderResistanceGene,
     AmrFinderVariant,
@@ -19,20 +20,24 @@ from ..models.phenotype import (
     ElementTypeResult,
     PhenotypeInfo,
 )
-from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import (
+from prp.models.phenotype import PredictionSoftware as Software
+from prp.models.phenotype import (
     StressMethodIndex,
     VirulenceElementTypeResult,
     VirulenceMethodIndex,
 )
+from .base import BaseParser
 from .utils import classify_variant_type
+from .registry import register_parser
 
 LOG = logging.getLogger(__name__)
 
-AmrFinderGenes = Sequence[
+AmrFinderGenes = list[
     AmrFinderGene | AmrFinderVirulenceGene | AmrFinderVirulenceGene
 ]
-AmrFinderVariants = Sequence[AmrFinderVariant]
+AmrFinderVariants = list[AmrFinderVariant]
+
+AMRFINDER = "amrfinder"
 
 
 def _read_result(path: str) -> Tuple[AmrFinderGenes, AmrFinderVariants]:
@@ -73,7 +78,7 @@ def _read_result(path: str) -> Tuple[AmrFinderGenes, AmrFinderVariants]:
 
 
 def _format_gene(
-    hit: Dict[str, Any]
+    hit: dict[str, Any]
 ) -> AmrFinderGene | AmrFinderVirulenceGene | AmrFinderResistanceGene:
     """Format AMRfinder gene."""
     element_type = ElementType(hit["element_type"])
@@ -122,7 +127,7 @@ def _format_gene(
     return gene
 
 
-def _format_variant(hit: Dict[str, Any], variant_no: int) -> AmrFinderVariant:
+def _format_variant(hit: dict[str, Any], variant_no: int) -> AmrFinderVariant:
     gene_name, variant = hit["gene_symbol"].split("_")
     match = re.match(r"([a-z]+)([0-9]+)([a-z]+)", variant, re.IGNORECASE)
     if not match:
@@ -231,3 +236,73 @@ def parse_vir_pred(path: str) -> VirulenceMethodIndex:
     return VirulenceMethodIndex(
         type=element_type, software=Software.AMRFINDER, result=result
     )
+
+
+@register_parser(AMRFINDER)
+class AmrFinderParser(BaseParser):
+    """Parse AmrFinder and AmrFinder plus results."""
+
+    software = AMRFINDER
+    parser_name = "AmrFinderParser"
+    parser_version = "1"
+    schema_version = 1
+    produces = {AnalysisType.AMR, AnalysisType.VIRULENCE, AnalysisType.STRESS}
+
+    def parse(self, stream: IO[bytes], want: set[AnalysisType] | None = None) -> ParserOutput:
+        """Parse analysis results."""
+        want = want or self.produces
+
+        out = ParserOutput(
+            software=self.software,
+            parser_name=self.parser_name,
+            parser_version=self.parser_version,
+            results={},
+        )
+        genes, variants = _read_result(stream)
+
+        for analysis_type in [AnalysisType.AMR, AnalysisType.STRESS]:
+            if AnalysisType.AMR in want:
+                out.results[analysis_type.value] = self._to_resistance_results(genes, variants, type=analysis_type)
+
+        if AnalysisType.VIRULENCE in want:
+            out.results[AnalysisType.VIRULENCE.value] = self._to_virulence_results(genes, variants)
+
+        return out
+    
+    def _to_resistance_results(self, genes, variants, *, type: AnalysisType) -> ElementTypeResult:
+        """Get AMR predictions from raw results."""
+
+        # filter genes on variants on AMR
+        filtered_genes = (gene for gene in genes if gene.element_type.lower() == type)
+        filtered_genes = sorted(
+            filtered_genes,
+            key=lambda gene: (gene.gene_symbol, gene.coverage),
+        )
+
+        # Only compute phenotype profile for AMR
+        phenotypes = {}
+        if type == AnalysisType.AMR:
+            phenotypes = (
+                {
+                    "susceptible": [],
+                    "resistant": list(
+                        {
+                            pheno.name
+                            for elem in itertools.chain(filtered_genes, variants)
+                            for pheno in elem.phenotypes
+                        }
+                    ),
+                }
+            )
+
+        return ElementTypeResult(
+            phenotypes=phenotypes,
+            genes=filtered_genes,
+            variants=variants,
+        )
+
+    def _to_virulence_results(self, genes, _) -> ElementTypeResult:
+        """Get virulence results."""
+        filtered_genes = (gene for gene in genes if gene.element_type == ElementType.VIR)
+        parsed_genes = sorted(filtered_genes, key=lambda gene: (gene.gene_symbol, gene.coverage))
+        return ElementTypeResult(phenotypes={}, genes=parsed_genes, variants=[])
