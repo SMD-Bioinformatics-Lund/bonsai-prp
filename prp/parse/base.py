@@ -1,9 +1,13 @@
 """Base parser functionality."""
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from logging import Logger, getLogger
 from typing import Type, IO
 from prp.models.base import ParserOutput, AnalysisType
+
+
+ParserInput = IO[bytes] | IO[str] | str | Path
 
 class BaseParser(ABC):
     """Parser class structure."""
@@ -28,7 +32,7 @@ class BaseParser(ABC):
         self.logger.error(msg, extra={"context": ctx})
     
     @abstractmethod
-    def parse(self, *, stream: IO[bytes], want: set[AnalysisType] | None = None) -> ParserOutput:
+    def parse(self, *, input: ParserInput, want: set[AnalysisType] | None = None) -> ParserOutput:
         ...
 
 ParserClass = Type[BaseParser]

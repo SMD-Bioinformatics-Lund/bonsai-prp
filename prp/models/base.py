@@ -17,6 +17,7 @@ class AnalysisType(StrEnum):
     QC = "qc"
     VARIANT = "variant"
     COVERAGE = "coverage"
+    EMM = "emmtype"
 
 
 def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
