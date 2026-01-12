@@ -1,10 +1,11 @@
 """Parser registry."""
 
 from dataclasses import dataclass
-from typing import Callable, TypeAlias
+from typing import Any, Callable, TypeAlias
 from packaging.version import Version
+from prp.models.analysis import AnalysisType
 from prp.models.base import ParserOutput
-from prp.parse.base import BaseParser
+from prp.parse.base import BaseParser, ParserInput
 
 
 ParserFn: TypeAlias = Callable[..., ParserOutput]
@@ -65,3 +66,25 @@ def registered_version_ranges(software: str) -> list[VersionRange]:
     """Get ranges for registered software."""
 
     return _REGISTRY.get(software, [])
+
+
+def resolve_parser(entry, **init_kwargs) -> Callable[..., ParserOutput]:
+    if isinstance(entry, type) and issubclass(entry, BaseParser):
+        return entry(**init_kwargs).parse
+    if callable(entry):
+        return entry
+    raise TypeError(f"Unsupported registry entry: {entry!r}")
+
+
+def run_parser(
+    software: str,
+    *,
+    version: str,
+    data: ParserInput,
+    want: set[AnalysisType] | None = None,
+    parser_init: dict[str, Any] | None = None,
+    **parse_kwargs: Any,
+) -> ParserOutput:
+    entry = get_parser(software, version=version)
+    parse_fn = resolve_parser(entry, **(parser_init or {}))
+    return parse_fn(data, want=want, **parse_kwargs)
