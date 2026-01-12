@@ -10,19 +10,18 @@ from prp.models.config import SampleConfig
 
 from prp.models.phenotype import AMRMethodIndex, ElementType, PredictionSoftware, StressMethodIndex
 from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
-from prp.models.species import SppMethodIndex
+from prp.models.species import SppMethodIndex, SppPredictionSoftware
+from prp.models.typing import EmmTypingMethodIndex
 from .registry import get_parser
 from . import (
     hamronization,
     kleborate,
-    kraken,
     mykrobe,
     resfinder,
     serotypefinder,
     tbprofiler,
     virulencefinder,
 )
-from .emmtyper import EmmTypingMethodIndex, parse_emm_pred
 from .igv import parse_igv_info
 from .metadata import parse_run_info
 from .qc import (
@@ -66,7 +65,12 @@ def _read_spp_prediction(smp_cnf) -> Sequence[SppMethodIndex]:
     """Read all species prediction results."""
     spp_results = []
     if smp_cnf.kraken:
-        spp_results.append(kraken.parse_result(smp_cnf.kraken))
+        parser_class = get_parser(SppPredictionSoftware.BRACKEN.value, version="1.0.0")
+        parser = parser_class()
+        out = parser.parse(smp_cnf.kraken)
+        spp_results.append(SppMethodIndex(
+            result=out.results,
+        ))
 
     if smp_cnf.mykrobe:
         spp_results.append(mykrobe.parse_spp_pred(smp_cnf.mykrobe))
@@ -91,7 +95,12 @@ def _read_typing(
         typing_result.append(parse_cgmlst_results(smp_cnf.chewbbaca))
 
     if smp_cnf.emmtyper:
-        typing_result.extend(parse_emm_pred(smp_cnf.emmtyper))
+        parser_class = get_parser("EMM", version="1.0.0")
+        parser = parser_class()
+        out = parser.parse(smp_cnf.emmtyper)
+        typing_result.extend(EmmTypingMethodIndex(
+            result=out.results
+        ))
 
     if smp_cnf.shigapass:
         typing_result.append(parse_shiga_pred(smp_cnf.shigapass))
