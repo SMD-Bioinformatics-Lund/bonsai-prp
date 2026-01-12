@@ -1,41 +1,29 @@
 """Functions for parsing emmtyper result."""
 
 import logging
-from typing import Any, Iterable
+from pathlib import Path
+from typing import IO, Any
 
 import pandas as pd
 
-from ..models.typing import EmmTypingMethodIndex, TypingMethod, TypingResultEmm
-from ..models.typing import TypingSoftware as Software
+from prp.parse.base import BaseParser
+from prp.parse.registry import register_parser
+
+from prp.models.base import AnalysisType, ParserOutput
+from prp.models.typing import TypingResultEmm
+
+from .utils import read_delimited
 
 LOG = logging.getLogger(__name__)
 
-
-def parse_emm_pred(path: str) -> Iterable[EmmTypingMethodIndex]:
-    """Parse emmtyper's output re emm-typing"""
-    LOG.info("Parsing emmtyper results")
-    pred_result = []
-    df = pd.read_csv(path, sep="\t", header=None)
-    df.columns = [
-        "sample_name",
-        "cluster_count",
-        "emmtype",
-        "emm_like_alleles",
-        "emm_cluster",
-    ]
-    df.replace(["-", ""], None, inplace=True)
-    df_loa = df.to_dict(orient="records")
-    for emmtype_array in df_loa:
-        emmtype_results = _parse_emmtyper_results(emmtype_array)
-        pred_result.append(
-            EmmTypingMethodIndex(
-                type=TypingMethod.EMMTYPE,
-                result=emmtype_results,
-                software=Software.EMMTYPER,
-            )
-        )
-    return pred_result
-
+EMMTYPER = "emmtyper"
+EMM_FIELDS = [
+    "sample_name",
+    "cluster_count",
+    "emmtype",
+    "emm_like_alleles",
+    "emm_cluster",
+]
 
 def _parse_emmtyper_results(info: dict[str, Any]) -> TypingResultEmm:
     """Parse emm gene prediction results."""
@@ -50,3 +38,48 @@ def _parse_emmtyper_results(info: dict[str, Any]) -> TypingResultEmm:
         emm_like_alleles=emm_like_alleles,
         emm_cluster=info["emm_cluster"],
     )
+
+
+@register_parser(EMMTYPER)
+class EmmTyperParser(BaseParser):
+    """Parse emmtyper output into a normalized ParserOutput bundle."""
+
+    software = EMMTYPER
+    parser_name = "EmmTyperParser"
+    parser_version = "1"
+    schema_version = 1
+    produces = {AnalysisType.EMM}
+
+
+    def parse(self, source: IO[bytes] | Path, want: set[AnalysisType] | None = None) -> ParserOutput:
+            """
+            Parse emmtyper results from a binary stream.
+
+            Args:
+                stream: Binary stream (e.g. FastAPI UploadFile.file).
+                want: Which analysis blocks to produce. Defaults to all supported.
+
+            Returns:
+                ParserOutput where results include a typing block (emmtype).
+            """
+            want = want or self.produces
+
+            out = ParserOutput(
+                software=self.software,
+                parser_name=self.parser_name,
+                parser_version=self.parser_version,
+                results={},
+            )
+
+            # If caller doesn't want typing, return empty bundle
+            if AnalysisType.EMM not in want:
+                return out
+            
+            self.log_info("Parsing EMMtyper results")
+            reader = read_delimited(source, has_header=False, fieldnames=EMM_FIELDS, none_values=['-', ''])
+            emm_results = [_parse_emmtyper_results(row) for row in reader]
+
+            # append emm results else
+            if emm_results:
+                out.results[AnalysisType.EMM.value] = emm_results[0]
+            return out
