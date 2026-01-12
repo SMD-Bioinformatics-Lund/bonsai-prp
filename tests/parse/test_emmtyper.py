@@ -2,7 +2,7 @@
 
 from prp.models.base import ParserOutput
 from prp.models.typing import TypingResultEmm
-from prp.parse.emmtyper import parse_emm_pred, EmmTyperParser
+from prp.parse.emmtyper import EmmTyperParser
 
 
 def test_parse_emmtyper_results(streptococcus_emmtyper_path):
