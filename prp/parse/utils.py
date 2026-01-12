@@ -1,12 +1,17 @@
 """Shared utility functions."""
 
 import csv
+import logging
 from datetime import datetime
 import io
 from pathlib import Path
 from typing import IO, Any, Iterator, Mapping, Sequence
 
-from ..models.phenotype import ElementTypeResult, VariantSubType, VariantType
+from prp.models.phenotype import ElementTypeResult, VariantSubType, VariantType
+from prp.models.phenotype import SequenceStrand
+
+
+LOG = logging.getLogger(__name__)
 
 
 def classify_variant_type(
@@ -212,3 +217,134 @@ def convert_empty_to_none(row: Mapping[str, Any]) -> dict[str, Any]:
         else:
             out[key] = val
     return out
+
+
+_NULLISH = {None, "", " ", "NA", "N/A", "na", "n/a", ".", "-"}
+
+def _is_nullish(value: Any, null_values: set[str] = _NULLISH) -> bool:
+    """Check if value is a null value."""
+    if value is None:
+        return True
+    if isinstance(value, str) and value.lower().strip() in null_values:
+        return True
+    return False
+
+
+def safe_int(
+        value: Any, 
+        *,
+        strict: bool = False,
+        min_value: int | None = None,
+        max_value: int | None = None,
+        logger: logging.Logger = LOG
+        ) -> int | None:
+        """Safely cast a string as an integer."""
+        if _is_nullish(value):
+            return None
+        try:
+            if isinstance(value, bool):
+                raise ValueError("bool is not a valid int metric")
+            if isinstance(value, (int,)):
+                out = value
+            elif isinstance(value, float):
+                # avoid truncating floats, 12.7 -> 12
+                if not value.is_integer():
+                    raise ValueError(f"non-integer float {value}")
+                out = int(value)
+            else:
+                # strip potential white space
+                stringed = str(value).strip()
+                out = int(stringed)
+            if min_value is not None and out < min_value:
+                raise ValueError(f"value {out} < min {min_value}")
+            if max_value is not None and out > max_value:
+                raise ValueError(f"value {out} > max {max_value}")
+            return out
+        except Exception as exc:
+            reason = str(exc)
+            if strict:
+                raise ValueError("Failed to cast {value} as an integer: {reason}") from exc
+            logger.warning("Bad int cast: value=%s reason=%s", value, reason)
+            return None
+
+
+def safe_float(
+        value: Any, 
+        *,
+        strict: bool = False,
+        min_value: int | None = None,
+        max_value: int | None = None,
+        logger: logging.Logger = LOG
+        ) -> float | None:
+        """Safely cast a string as a float."""
+        if _is_nullish(value):
+            return None
+        try:
+            if isinstance(value, bool):
+                raise ValueError("bool is not a valid int metric")
+            if isinstance(value, (int, float)):
+                out = float(value)
+            else:
+                # strip potential white space
+                stringed = str(value).strip().replace(",", "")  # allow 1,234.5
+                out = float(stringed)
+            if min_value is not None and out < min_value:
+                raise ValueError(f"value {out} < min {min_value}")
+            if max_value is not None and out > max_value:
+                raise ValueError(f"value {out} > max {max_value}")
+            return out
+        except Exception as exc:
+            reason = str(exc)
+            if strict:
+                raise ValueError("Failed to cast {value} as a float: {reason}") from exc
+            logger.warning("Bad float cast: value=%s reason=%s", value, reason)
+            return None
+
+
+def safe_percent(value: Any, *, logger: logging.Logger = LOG) -> float | None:
+    """Accept percentages, 98.7 or '98.7' -> float in [0, 100]."""
+    if _is_nullish(value):
+            return None
+    if isinstance(value, str):
+        stripped = value.strip()
+        if stripped.endswith("%"):
+            stripped = stripped[:-1].strip()
+        value = stripped
+    return safe_float(value, min_value=0.0, max_value=100.0, strict=True, logger=logger)
+
+
+def safe_stand(value: str | int) -> SequenceStrand:
+    """Convert sequence strand. [+, 1, sense] -> SequenceStrand enum."""
+
+    # Accept common forward/reverse encodings from bioinformatics tools
+    forward_tokens = {
+        "+", "1",
+        "f", "fwd", "forward",
+        "sense", "plus", "pos", "positive",
+    }
+    reverse_tokens = {
+        "-", "-1",
+        "r", "rev", "reverse",
+        "antisense", "anti-sense", "minus", "neg", "negative",
+    }
+
+    # Normalize input
+    if isinstance(value, int):
+        token = str(value)  # 1 / -1
+    else:
+        token = value.strip().lower()
+
+    # Some tools may emit " +1 " or " -1 " or "+1"
+    # Normalize those into "+"/"-" or "1"/"-1" where possible.
+    if token in {"+1", "1+"}:
+        token = "1"
+    elif token in {"-1", "1-"}:
+        token = "-1"
+
+    if value in forward_tokens:
+        return SequenceStrand.FORWARD
+
+    if value in reverse_tokens:
+        return SequenceStrand.REVERSE
+    
+    raise ValueError(f"Could not covert {value} to SequenceStrand")
