@@ -1,14 +1,14 @@
 """Parse kraken results."""
 
-import pandas as pd
 from typing import Any
 
 from prp.exceptions import ParserError
 from prp.models.base import AnalysisType, ParserOutput
 from prp.models.species import BrackenSpeciesPrediction, BrackenSppIndex, TaxLevel
-from prp.parse.base import BaseParser, ParserInput
-from prp.parse.registry import register_parser
-from prp.parse.utils import read_delimited
+
+from .base import BaseParser, ParserInput
+from .registry import register_parser
+from .utils import read_delimited, safe_float, safe_int
 
 BRACKEN = "bracken"
 REQUIRED_COLUMNS = {
@@ -32,32 +32,6 @@ def _validate_columns(row: dict[str, object], *, strict: bool = False) -> None:
         extra = cols - REQUIRED_COLUMNS
         if extra:
             raise ValueError(f"Bracken file has unexpected extra columns: {sorted(extra)}")
-
-
-def parse_result(file: str, cutoff: float = 0.0001) -> BrackenSppIndex:
-    """Parse species prediction result"""
-    tax_lvl_dict = {
-        "P": "phylum",
-        "C": "class",
-        "O": "order",
-        "F": "family",
-        "G": "genus",
-        "S": "species",
-    }
-    columns = {"name": "scientific_name"}
-    species_pred: pd.DataFrame = (
-        pd.read_csv(file, sep="\t")
-        .sort_values("fraction_total_reads", ascending=False)
-        .rename(columns=columns)
-        .replace({"taxonomy_lvl": tax_lvl_dict})
-        .loc[lambda df: df["fraction_total_reads"] >= cutoff]
-    )
-    # cast as method index
-    result = [
-        BrackenSpeciesPrediction.model_validate(row)
-        for row in species_pred.to_dict(orient="records")
-    ]
-    return BrackenSppIndex(result=result)
 
 
 def to_taxlevel(lvl: str | TaxLevel) -> TaxLevel:
@@ -109,7 +83,7 @@ class BrackenParser(BaseParser):
         )
 
         if AnalysisType.SPECIES not in want:
-            self.log_info("Skipping Bracken parse; requested analyses=%s", want)
+            self.log_info(f"Skipping Bracken parse; requested analyses={want}")
             return out
 
         rows = read_delimited(data)
@@ -155,7 +129,7 @@ class BrackenParser(BaseParser):
             scientific_name=row['name'],
             taxonomy_id=row['taxonomy_id'],
             taxonomy_lvl=tax_level,
-            kraken_assigned_reads=row['kraken_assigned_reads'],
-            added_reads=row['added_reads'],
-            fraction_total_reads=row['fraction_total_reads']
+            kraken_assigned_reads=safe_int(row['kraken_assigned_reads'], logger=self.logger),
+            added_reads=safe_int(row['added_reads'], logger=self.logger),
+            fraction_total_reads=safe_float(row['fraction_total_reads'], logger=self.logger)
         )

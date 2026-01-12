@@ -19,7 +19,7 @@ from prp.models.phenotype import (
 
 from .base import BaseParser
 from .registry import register_parser
-from .utils import classify_variant_type, convert_empty_to_none, read_delimited
+from .utils import classify_variant_type, convert_empty_to_none, read_delimited, safe_int, safe_float, safe_stand
 
 LOG = logging.getLogger(__name__)
 
@@ -134,19 +134,20 @@ def _parse_gene(hit: dict[str, Any]) -> AmrFinderGeneT:
         element_type=element_type,
         element_subtype=hit["element_subtype"],
         contig_id=hit["contig_id"],
-        query_start_pos=hit["Start"],
-        query_end_pos=hit["Stop"],
-        strand=hit["Strand"],
-        ref_gene_length=hit["ref_seq_len"],
-        alignment_length=hit["align_len"],
+        query_start_pos=safe_int(hit["Start"]),
+        query_end_pos=safe_int(hit["Stop"]),
+        strand=safe_stand(hit["Strand"]),
+        ref_gene_length=safe_int(hit["ref_seq_len"]),
+        alignment_length=safe_int(hit["align_len"]),
         method=hit["Method"],
-        identity=hit["ref_seq_identity"],
-        coverage=hit["ref_seq_cov"],
+        identity=safe_float(hit["ref_seq_identity"]),
+        coverage=safe_float(hit["ref_seq_cov"]),
     )
 
     phenotypes = _phenotypes_from_hit(hit, element_type=element_type)
     if phenotypes:
         gene = gene.model_copy(update={"phenotypes": phenotypes})
+    return gene
 
 
 def _parse_variant(hit: dict[str, Any], variant_no: int) -> AmrFinderVariant:
@@ -180,14 +181,14 @@ def _parse_variant(hit: dict[str, Any], variant_no: int) -> AmrFinderVariant:
         start=pos_i,
         end=pos_i + (len(alt_aa) - 1),
         contig_id=hit["contig_id"],
-        query_start_pos=hit["Start"],
-        query_end_pos=hit["Stop"],
-        strand=hit["Strand"],
-        ref_gene_length=hit["ref_seq_len"],
+        query_start_pos=safe_int(hit["Start"]),
+        query_end_pos=safe_int(hit["Stop"]),
+        strand=safe_stand(hit["Strand"]),
+        ref_gene_length=safe_int(hit["ref_seq_len"]),
         alignment_length=hit["align_len"],
         method=hit["Method"],
-        identity=hit["ref_seq_identity"],
-        coverage=hit["ref_seq_cov"],
+        identity=safe_float(hit["ref_seq_identity"]),
+        coverage=safe_float(hit["ref_seq_cov"]),
         passed_qc=True,
         phenotypes=phenotypes,
     )
@@ -208,6 +209,7 @@ def read_amrfinder_results(
 
         if hit.get("element_subtype") == "POINT":
             variants.append(_parse_variant(hit, variant_no=var_no))
+            var_no += 1
         else:
             genes.append(_parse_gene(hit))
     return genes, variants
@@ -232,7 +234,7 @@ class AmrFinderParser(BaseParser):
     produces = {AnalysisType.AMR, AnalysisType.VIRULENCE, AnalysisType.STRESS}
 
     def parse(
-        self, stream: IO[bytes], want: set[AnalysisType] | None = None
+        self, stream: IO[bytes], *, want: set[AnalysisType] | None = None
     ) -> ParserOutput:
         """Parse analysis results."""
         want = want or self.produces
@@ -292,10 +294,10 @@ class AmrFinderParser(BaseParser):
 
     def _to_virulence_results(self, genes, _) -> ElementTypeResult:
         """Build virulence result block."""
-        filtered_genes = (
+        filtered_genes = [
             gene for gene in genes if gene.element_type == ElementType.VIR
+        ]
+        filtered_genes.sort(
+            key=lambda gene: (gene.gene_symbol, gene.coverage)
         )
-        parsed_genes = sorted(
-            filtered_genes, key=lambda gene: (gene.gene_symbol, gene.coverage)
-        )
-        return ElementTypeResult(phenotypes={}, genes=parsed_genes, variants=[])
+        return ElementTypeResult(phenotypes={}, genes=filtered_genes, variants=[])
