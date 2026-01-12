@@ -1,6 +1,6 @@
 """Datamodels used for prediction results."""
 
-from enum import Enum
+from enum import StrEnum
 from typing import Literal, Optional, Union
 
 from pydantic import BaseModel, Field, model_validator
@@ -9,14 +9,14 @@ from typing_extensions import Self
 from .base import RWModel
 
 
-class SequenceStrand(str, Enum):
+class SequenceStrand(StrEnum):
     """Definition of DNA strand."""
 
     FORWARD = "+"
     REVERSE = "-"
 
 
-class PredictionSoftware(str, Enum):
+class PredictionSoftware(StrEnum):
     """Container for prediciton software names."""
 
     AMRFINDER = "amrfinder"
@@ -28,7 +28,7 @@ class PredictionSoftware(str, Enum):
     KLEBORATE = "kleborate"
 
 
-class VariantType(str, Enum):
+class VariantType(StrEnum):
     """Types of variants."""
 
     SNV = "SNV"
@@ -38,7 +38,7 @@ class VariantType(str, Enum):
     STR = "STR"
 
 
-class VariantSubType(str, Enum):
+class VariantSubType(StrEnum):
     """Variant subtypes."""
 
     INSERTION = "INS"
@@ -52,7 +52,7 @@ class VariantSubType(str, Enum):
     FRAME_SHIFT = "FS"
 
 
-class ElementType(str, Enum):
+class ElementType(StrEnum):
     """Categories of resistance and virulence genes."""
 
     AMR = "AMR"
@@ -61,7 +61,7 @@ class ElementType(str, Enum):
     ANTIGEN = "ANTIGEN"
 
 
-class ElementStressSubtype(str, Enum):
+class ElementStressSubtype(StrEnum):
     """Categories of resistance and virulence genes."""
 
     ACID = "ACID"
@@ -70,14 +70,14 @@ class ElementStressSubtype(str, Enum):
     HEAT = "HEAT"
 
 
-class ElementAmrSubtype(str, Enum):
+class ElementAmrSubtype(StrEnum):
     """Categories of resistance genes."""
 
     AMR = "AMR"
     POINT = "POINT"
 
 
-class ElementVirulenceSubtype(str, Enum):
+class ElementVirulenceSubtype(StrEnum):
     """Categories of resistance and virulence genes."""
 
     VIR = "VIRULENCE"
@@ -85,14 +85,14 @@ class ElementVirulenceSubtype(str, Enum):
     TOXIN = "TOXIN"
 
 
-class AnnotationType(str, Enum):
+class AnnotationType(StrEnum):
     """Valid annotation types."""
 
     TOOL = "tool"
     USER = "user"
 
 
-class ElementSerotypeSubtype(str, Enum):
+class ElementSerotypeSubtype(StrEnum):
     """Categories of serotype genes."""
 
     ANTIGEN = "ANTIGEN"
