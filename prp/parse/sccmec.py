@@ -2,53 +2,104 @@
 
 import logging
 
-import pandas as pd
-
-from ..models.sample import SccmecTypingMethodIndex
-from ..models.typing import TypingMethod, TypingResultSccmec
-from ..models.typing import TypingSoftware as Software
+from prp.io.delimited import DelimiterRow, normalize_nulls, read_delimited
+from prp.models.analysis import AnalysisType
+from prp.models.typing import TypingResultSccmec
+from prp.parse.base import ParserInput, SingleAnalysisParser
+from prp.parse.registry import register_parser
+from prp.parse.utils import safe_float
 
 LOG = logging.getLogger(__name__)
 
+SCCMEC_TYPER = "sccmectyper"
+REQUIRED_COLUMNS = {
+    "sample",
+    "type",
+    "subtype",
+    "mecA",
+    "targets",
+    "regions",
+    "coverage",
+    "hits",
+}
+OPTIONAL_COLUMNS = {
+    "target_schema",
+    "target_schema_version",
+    "region_schema",
+    "region_schema_version",
+    "camlhmp_version",
+    "params",
+    "target_comment",
+    "region_comment",
+    "comment",
+}
 
-def parse_sccmec_results(path: str) -> SccmecTypingMethodIndex:
-    """Read sccmec output file."""
-    LOG.info("Parsing sccmec results")
 
-    result_loa = (
-        pd.read_csv(path, delimiter="\t")
-        .apply(lambda col: col.map(lambda x: None if pd.isna(x) or x == "-" else x))
-        .to_dict(orient="records")
+def _expand_list(field: str | None) -> list[str]:
+    """Expand commad delimited list into a python list."""
+    if field is None:
+        return []
+    return [t.strip() for t in field.split(",")]
+
+
+def _parse_sccmec_results(row: DelimiterRow) -> TypingResultSccmec:
+    """Parase SCCMEC results."""
+    targets: list[str] = _expand_list(row["targets"])
+    regions: list[str] = _expand_list(row["regions"])
+    coverage = [safe_float(c) for c in _expand_list(row["coverage"])]
+    hits: list[str] = _expand_list(row["hits"])
+
+    out = TypingResultSccmec(
+        type=row["type"],
+        subtype=row["subtype"],
+        mecA=row["mecA"],
+        targets=targets,
+        regions=regions,
+        target_schema=row.get("target_schema"),
+        target_schema_version=row.get("target_schema_version"),
+        region_schema=row.get("region_schema"),
+        region_schema_version=row.get("region_schema_version"),
+        camlhmp_version=row.get("camlhmp_version"),
+        coverage=coverage,
+        hits=hits,
+        target_comment=row.get("target_comment"),
+        region_comment=row.get("region_comment"),
+        comment=row.get("comment"),
     )
+    return out
 
-    result = result_loa[0]
 
-    result_obj = TypingResultSccmec(
-        type=result.get("type"),
-        subtype=result.get("subtype"),
-        mecA=result.get("mecA"),
-        targets=list(map(str, targets.split(",")))
-        if (targets := result.get("targets"))
-        else None,
-        regions=list(map(str, regions.split(",")))
-        if (regions := result.get("regions"))
-        else None,
-        target_schema=result.get("target_schema"),
-        target_schema_version=result.get("target_schema_version"),
-        region_schema=result.get("region_schema"),
-        region_schema_version=result.get("region_schema_version"),
-        camlhmp_version=result.get("camlhmp_version"),
-        coverage=list(map(float, str(coverage).split(",")))
-        if (coverage := result.get("coverage"))
-        else None,
-        hits=list(map(int, str(hits).split(",")))
-        if (hits := result.get("hits"))
-        else None,
-        target_comment=result.get("target_comment"),
-        region_comment=result.get("region_comment"),
-        comment=result.get("comment"),
-    )
+@register_parser(SCCMEC_TYPER)
+class SccMecParser(SingleAnalysisParser):
+    """Parse SCC Mec results."""
 
-    return SccmecTypingMethodIndex(
-        type=TypingMethod.SCCMECTYPE, software=Software.SCCMEC, result=result_obj
-    )
+    software = SCCMEC_TYPER
+    parser_name = "SccMecTyper"
+    parser_version = 1
+    schema_version = 1
+    produces = {AnalysisType.SCCMEC}
+    analysis_type = AnalysisType.SCCMEC
+
+    def _parse_one(
+        self, source: ParserInput, strict_columns: bool = True, **_
+    ) -> TypingResultSccmec | dict:
+        """Implementation on how to parse a single result."""
+
+        reader = read_delimited(source, delimiter="\t")
+
+        try:
+            first_row = next(reader)
+        except StopIteration:
+            self.log_info(f"{self.software} input is empty")
+
+        first_row = normalize_nulls(first_row)
+        self.validate_columns(
+            first_row,
+            required=REQUIRED_COLUMNS,
+            optional=OPTIONAL_COLUMNS,
+            strict=strict_columns,
+        )
+
+        rows = [first_row] + [normalize_nulls(r) for r in reader]
+        results = [_parse_sccmec_results(row) for row in rows]
+        return results if results else {}
