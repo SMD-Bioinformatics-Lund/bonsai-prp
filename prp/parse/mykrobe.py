@@ -2,264 +2,344 @@
 
 import logging
 import re
-from pathlib import Path
-from typing import Any, Dict, Union
+from dataclasses import asdict, dataclass
+from typing import Any, TypeAlias
 
-import numpy as np
-import pandas as pd
+from prp.models.analysis import AnalysisType
+from prp.models.species import MykrobeSpeciesPrediction
 
-from prp.models.species import MykrobeSpeciesPrediction, MykrobeSppIndex
-
-from ..models.metadata import SoupType, SoupVersion
-from ..models.phenotype import (
-    AMRMethodIndex,
+from prp.models.metadata import SoupType, SoupVersion
+from prp.models.phenotype import (
     AnnotationType,
     ElementType,
     ElementTypeResult,
     MykrobeVariant,
     PhenotypeInfo,
 )
-from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import VariantSubType, VariantType
-from ..models.sample import MethodIndex
-from ..models.typing import ResultLineageBase, TypingMethod
-from .utils import get_nt_change, is_prediction_result_empty
+from prp.models.phenotype import VariantSubType, VariantType
+from prp.models.typing import ResultLineageBase
+from prp.parse.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.registry import register_parser
+from prp.io.delimited import normalize_nulls, read_delimited, DelimiterRow
+from .utils import get_nt_change, safe_float, safe_int
 
 LOG = logging.getLogger(__name__)
 
+MYKROBE = "mykrobe"
+DELIMITER = ","
 
-def _get_mykrobe_amr_sr_profie(mykrobe_result):
-    """Get mykrobe susceptibility/resistance profile."""
-    susceptible = set()
-    resistant = set()
+# Mykrobe AMR variant format:
+# <gene>_<aa change>-<nt change>:<ref depth>:<alt depth>:<gt confidence>
+VARIANT_RE = re.compile(
+    r"(?P<gene>.+)_(?P<aa_change>.+)-(?P<dna_change>.+):"
+    r"(?P<ref_depth>\d+):(?P<alt_depth>\d+):(?P<conf>\d+)$",
+    re.IGNORECASE,
+)
 
-    if not mykrobe_result:
-        return {}
+REQUIRED_COLUMNS = {
+    "sample",
+    "mykrobe_version",
+    "drug",
+    "susceptibility",
+    "genotype_model",
+    "variants",
+    "species",
+    "species_per_covg",
+    "phylo_group",
+    "phylo_group_per_covg",
+    "lineage",
+}
 
-    for element_type in mykrobe_result:
-        if element_type["susceptibility"].upper() == "R":
-            resistant.add(element_type["drug"])
-        elif element_type["susceptibility"].upper() == "S":
-            susceptible.add(element_type["drug"])
-        else:
-            # skip rows if no resistance predictions were identified
+
+TableRows: TypeAlias = list[DelimiterRow]
+
+
+@dataclass(frozen=True)
+class SRProfile:
+    """Result of validated fields."""
+
+    susceptible: set[str]
+    resistant: set[str]
+
+
+def _sr_profile(rows: TableRows) -> SRProfile:
+    """List antibiotics the sample is susceptible or resistant to."""
+    susceptible: set[str] = set()
+    resistant: set[str] = set()
+
+    for row in rows:
+        sus = (row.get("susceptibility") or "").upper()
+        drug = row.get("drug")
+        if not drug:
             continue
-    return {"susceptible": list(susceptible), "resistant": list(resistant)}
+        if sus == "R":
+            resistant.add(drug)
+        elif sus == "S":
+            susceptible.add(drug)
+
+    return SRProfile(susceptible=sorted(susceptible), resistant=sorted(resistant))
 
 
-def get_mutation_type(var_nom: str) -> tuple[str, Union[VariantSubType, str, int]]:
-    """Extract mutation type from Mykrobe mutation description.
-
-    GCG7569GTG -> mutation type, ref_nt, alt_nt, pos
-
-    :param var_nom: Mykrobe mutation description
-    :type var_nom: str
-    :return: Return variant type, ref_nt, alt_ntt and position
-    :rtype: dict[str, Union[VariantSubType, str, int]]
+def parse_mutation_nom(var_nom: str) -> dict[str, Any] | None:
     """
-    mut_type = None
-    ref_nt = None
-    alt_nt = None
-    position = None
-    try:
-        ref_idx = re.search(r"\d", var_nom, 1).start()
-        alt_idx = re.search(r"\d(?=[^\d]*$)", var_nom).start() + 1
-    except AttributeError:
-        return mut_type, ref_nt, alt_nt, position
+    Parse mutation token like GCG7569GTG -> ref=GCG pos=7569 alt=GTG
+    Returns dict with keys: type, subtype, ref, alt, pos
+    """
+    if not var_nom:
+        return None
 
-    ref_nt = var_nom[:ref_idx]
-    alt_nt = var_nom[alt_idx:]
-    position = int(var_nom[ref_idx:alt_idx])
-    var_len = abs(len(ref_nt) - len(alt_nt))
+    m1 = re.search(r"\d", var_nom)
+    m2 = re.search(r"\d(?=[^\d]*$)", var_nom)
+    if not m1 or not m2:
+        return None
+
+    ref_idx = m1.start()
+    alt_idx = m2.start() + 1
+
+    ref = var_nom[:ref_idx]
+    alt = var_nom[alt_idx:]
+    try:
+        pos = safe_int(var_nom[ref_idx:alt_idx])
+    except ValueError:
+        return None
+
+    var_len = abs(len(ref) - len(alt))
     if var_len >= 50:
         var_type = VariantType.SV
     elif 1 < var_len < 50:
         var_type = VariantType.INDEL
     else:
         var_type = VariantType.SNV
-    if len(ref_nt) > len(alt_nt):
-        var_sub_type = VariantSubType.DELETION
-    elif len(ref_nt) < len(alt_nt):
-        var_sub_type = VariantSubType.INSERTION
+
+    if len(ref) > len(alt):
+        subtype = VariantSubType.DELETION
+    elif len(ref) < len(alt):
+        subtype = VariantSubType.INSERTION
     else:
-        var_sub_type = VariantSubType.SUBSTITUTION
-    return {
-        "type": var_type,
-        "subtype": var_sub_type,
-        "ref": ref_nt,
-        "alt": alt_nt,
-        "pos": position,
-    }
+        subtype = VariantSubType.SUBSTITUTION
+
+    return {"type": var_type, "subtype": subtype, "ref": ref, "alt": alt, "pos": pos}
 
 
-def _parse_mykrobe_amr_variants(mykrobe_result) -> tuple[MykrobeVariant, ...]:
-    """Get resistance genes from mykrobe result."""
-    results = []
+def _parse_amr_variants(rows: TableRows, *, log_warning) -> list[MykrobeVariant]:
+    """Parse resistance variants."""
 
-    for element_type in mykrobe_result:
-        # skip non-resistance yeilding
-        if not element_type["susceptibility"].upper() == "R":
+    out: list[MykrobeVariant] = []
+    for row_no, row in enumerate(rows, start=1):
+        if (row.get("susceptibility") or "").upper() != "R":
             continue
 
-        if element_type["variants"] is None:
+        variants_field = row.get("variants")
+        if not variants_field:
             continue
 
-        # generate phenotype info
+        drug = row.get("drug")
+        if not drug:
+            # A resistant row without a drug label is suspicious
+            log_warning("Mykrobe resistant row missing drug", row=row_no)
+            continue
+
         phenotype = [
             PhenotypeInfo(
-                name=element_type["drug"],
+                name=drug,
                 type=ElementType.AMR,
                 annotation_type=AnnotationType.TOOL,
-                annotation_author=Software.MYKROBE.value,
+                annotation_author=MYKROBE,
             )
         ]
 
-        variants = element_type["variants"].split(";")
-        # Mykrobe CSV variant format
-        # <gene>_<aa change>-<nt change>:<ref depth>:<alt depth>:<gt confidence>
-        # ref: https://github.com/Mykrobe-tools/mykrobe/wiki/AMR-prediction-output
-        pattern = re.compile(
-            r"(?P<gene>.+)_(?P<aa_change>.+)-(?P<dna_change>.+)"
-            r":(?P<ref_depth>\d+):(?P<alt_depth>\d+):(?P<conf>\d+)",
-            re.IGNORECASE,
-        )
-        for var_id, variant in enumerate(variants, start=1):
-            # extract variant info using regex
-            match_obj = re.search(pattern, variant).groupdict()
+        # expand variant info
+        tokens = [t for t in str(variants_field).split(";") if t.strip()]
+        for var_id, token in enumerate(tokens, start=1):
+            match = VARIANT_RE.match(token)
+            if not match:
+                log_warning(
+                    "Bad variant token in Mykrobe result", row=row_no, token=token
+                )
+                continue
 
-            # get type of variant
-            var_aa = get_mutation_type(match_obj["aa_change"])
-            # var_type, var_sub_type, ref_aa, alt_aa, _ = get_mutation_type(aa_change)
+            gd = match.groupdict()
 
-            # reduce codon to nt change for substitutions
-            var_dna = get_mutation_type(match_obj["dna_change"])
-            ref_nt, alt_nt = (var_dna["ref"], var_dna["alt"])
-            if var_aa["subtype"] == VariantSubType.SUBSTITUTION:
+            aa = parse_mutation_nom(gd["aa_change"])
+            dna = parse_mutation_nom(gd["dna_change"])
+            if aa is None or dna is None:
+                log_warning(
+                    "Mykrobe cannot parse mutation nomenclature",
+                    row=row_no,
+                    token=token,
+                )
+                continue
+
+            ref_depth = safe_int(gd["ref_depth"])
+            alt_depth = safe_int(gd["alt_depth"])
+            denom = ref_depth + alt_depth
+            freq = (alt_depth / denom) if denom else None  # avoid zero division
+
+            ref_nt, alt_nt = dna["refe"], dna["alt"]
+            if aa["subtype"] == VariantSubType.SUBSTITUTION:
                 ref_nt, alt_nt = get_nt_change(ref_nt, alt_nt)
 
-            # cast to variant object
-            has_aa_change = all([len(var_aa["ref"]) == 1, len(var_aa["alt"]) == 1])
-            variant = MykrobeVariant(
-                # classification
-                id=var_id,
-                variant_type=var_aa["type"],
-                variant_subtype=var_aa["subtype"],
-                phenotypes=phenotype,
-                # location
-                reference_sequence=match_obj["gene"],
-                start=var_dna["pos"],
-                end=var_dna["pos"] + len(alt_nt),
-                ref_nt=ref_nt,
-                alt_nt=alt_nt,
-                ref_aa=var_aa["ref"] if has_aa_change else None,
-                alt_aa=var_aa["alt"] if has_aa_change else None,
-                # variant info
-                method=element_type["genotype_model"],
-                depth=int(match_obj["ref_depth"]) + int(match_obj["alt_depth"]),
-                frequency=int(match_obj["alt_depth"])
-                / (int(match_obj["ref_depth"]) + int(match_obj["alt_depth"])),
-                confidence=int(match_obj["conf"]),
-                passed_qc=True,
+            has_aa = len(aa["ref"]) == 1 and len(aa["alt"]) == 1
+
+            out.append(
+                MykrobeVariant(
+                    id=var_id,
+                    variant_type=aa["type"],
+                    variant_subtype=aa["subtype"],
+                    phenotypes=phenotype,
+                    reference_sequence=gd["gene"],
+                    start=dna["pos"],
+                    end=dna["pos"] + max(len(alt_nt), 1),
+                    ref_nt=ref_nt,
+                    alt_nt=alt_nt,
+                    ref_aa=aa["ref"] if has_aa else None,
+                    alt_aa=aa["alt"] if has_aa else None,
+                    method=row.get("genotype_model"),
+                    depth=denom,
+                    frequency=freq,
+                    confidence=safe_int(gd["conf"]),
+                    passed_qc=True,
+                )
             )
-            results.append(variant)
-    # sort variants
-    variants = sorted(
-        results, key=lambda entry: (entry.reference_sequence, entry.start)
-    )
-    return variants
+
+    out.sort(key=lambda v: (v.reference_sequence or "", v.start or 0))
+    return out
 
 
-def _read_result(result_path: str) -> Dict[str, Any]:
-    """Read Mykrobe result file."""
-    pred_res = pd.read_csv(result_path, quotechar='"')
-    pred_res = (
-        pred_res.rename(
-            columns={pred_res.columns[3]: "variants", pred_res.columns[4]: "genes"}
-        )
-        .replace(["NA", np.nan], None)
-        .to_dict(orient="records")
-    )
-    return pred_res
+def _parse_species(rows: TableRows) -> list[MykrobeSpeciesPrediction]:
+    """Parse Mykrobe species predictions."""
+    if not rows:
+        return []
 
+    r0 = rows[0]
+    # Split fields; pad to avoid index errors if lists differ in length
+    species = _split_csv_list("species", row=r0)
+    phylo_groups = _split_csv_list("phylo_group", row=r0)
+    phylo_covg = _split_csv_list("phylo_group_per_covg", row=r0)
+    species_covg = _split_csv_list("species_per_covg", row=r0)
 
-def get_version(result_path) -> SoupVersion:
-    """Get version of Mykrobe from result."""
-    LOG.debug("Get Mykrobe version")
-    pred_res = _read_result(result_path)
-    return SoupVersion(
-        name="mykrobe-predictor",
-        version=pred_res[0]["mykrobe_version"],
-        type=SoupType.DB,
-    )
+    out: list[MykrobeSpeciesPrediction] = []
+    for idx, spp in enumerate(species):
+        if not spp.strip():
+            continue
 
-
-def parse_amr_pred(
-    result_path: str | Path, sample_id: str | None = None
-) -> AMRMethodIndex | None:
-    """Parse mykrobe resistance prediction results."""
-    LOG.info("Parsing mykrobe prediction")
-    pred_res = _read_result(result_path)
-    # verify that sample id is in prediction result
-    if sample_id is not None:
-        if not sample_id in pred_res[0]["sample"]:
-            LOG.warning(
-                "Sample id %s is not in Mykrobe result, possible sample mixup",
-                sample_id,
+        phylo = phylo_groups[idx].replace("_", " ") if phylo_groups[idx] else None
+        out.append(
+            MykrobeSpeciesPrediction(
+                scientific_name=spp.replace("_", " "),
+                taxonomy_id=None,
+                phylogenetic_group=phylo,
+                phylogenetic_group_coverage=safe_float(phylo_covg[idx]) or None,
+                species_coverage=safe_float(species_covg[idx]) or None,
             )
-            raise ValueError("Sample id is not in Mykrobe result.")
+        )
+    return out
 
-    resistance = ElementTypeResult(
-        phenotypes=_get_mykrobe_amr_sr_profie(pred_res),
-        genes=[],
-        variants=_parse_mykrobe_amr_variants(pred_res),
+
+def _split_csv_list(field_name: str, *, row: dict[str, Any]) -> list[str]:
+    """Split csv list; pad to avoid index errors in lists differ in length."""
+    return str(row.get(field_name) or "").split(";") if row.get(field_name) else []
+
+
+def _parse_lineage(rows: TableRows) -> ResultLineageBase | None:
+    """Parse Mykrobe lineage predictions."""
+    if not rows:
+        return None
+
+    lineage = rows[0].get("lineage")
+    if not lineage:
+        return None
+
+    lineage = str(lineage)
+    return ResultLineageBase(
+        main_lineage=lineage.split(".", maxsplit=1)[0],
+        sublineage=lineage,
     )
 
-    # verify prediction result
-    if is_prediction_result_empty(resistance):
-        result = None
-    else:
-        result = AMRMethodIndex(
-            type=ElementType.AMR, software=Software.MYKROBE, result=resistance
+
+@register_parser(MYKROBE)
+class MykrobeParser(BaseParser):
+    software = MYKROBE
+    parser_name = "MykrobeParser"
+    parser_version = 1
+    schema_version = 1
+    produces = {AnalysisType.SPECIES, AnalysisType.AMR, AnalysisType.LINEAGE}
+
+    def _parse_impl(
+        self,
+        source: ParserInput,
+        *,
+        want: set[AnalysisType],
+        strict_columns: bool = False,
+        sample_id: str | None = None,
+        **_: Any,
+    ) -> ParseImplOut:
+        """Core parser implementation."""
+
+        # Read rows
+        rows_iter = read_delimited(source, delimiter=DELIMITER)
+
+        try:
+            first = next(rows_iter)
+        except StopIteration:
+            self.log_info("Mykrobe input is empty")
+            out: dict[AnalysisType, Any] = {}
+
+            if AnalysisType.AMR in want:
+                out[AnalysisType.AMR] = ElementTypeResult(
+                    phenotypes={}, genes=[], variants=[]
+                )
+            if AnalysisType.SPECIES in want:
+                out[AnalysisType.SPECIES] = []
+            if AnalysisType.LINEAGE in want:
+                out[AnalysisType.LINEAGE] = None
+            return out
+
+        first = normalize_nulls(first)
+
+        self.validate_columns(first, required=REQUIRED_COLUMNS, strict=strict_columns)
+
+        rows = [first] + [normalize_nulls(r) for r in rows_iter]
+
+        # optional sample id filter
+        if sample_id is not None:
+            rows = [r for r in rows if r.get("sample") == sample_id]
+            if len(rows) == 0:
+                self.log_warning("Sample Id not in Mykrobe result", sample_id=sample_id)
+                raise ValueError("Sample id is not in Mykrobe result.")
+            self.log_info(
+                f"There are {len(rows)} Mykrobe prediction results are filtering",
+                sample_id=sample_id,
+            )
+
+        results: dict[AnalysisType, Any] = {}
+
+        if AnalysisType.AMR in want:
+            phenos = _sr_profile(rows)
+            variants = _parse_amr_variants
+            results[AnalysisType.AMR] = ElementTypeResult(
+                phenotypes=asdict(phenos), genes=[], variants=variants
+            )
+
+        if AnalysisType.SPECIES in want:
+            results[AnalysisType.SPECIES] = _parse_species(rows)
+
+        if AnalysisType.LINEAGE in want:
+            results[AnalysisType.LINEAGE] = _parse_lineage(rows)
+
+        return results
+
+    def get_version(self, source: ParserInput) -> SoupVersion | None:
+        """Get version of Mykrobe from result."""
+        rows_iter = read_delimited(source, delimiter=DELIMITER)
+        try:
+            first = next(rows_iter)
+        except StopIteration:
+            self.log_info("Mykrobe input is empty")
+            return None
+
+        return SoupVersion(
+            name=self.software,
+            version=first[0]["mykrobe_version"],
+            type=SoupType.DB,
         )
-    return result
-
-
-def parse_spp_pred(result_path: str | Path) -> MykrobeSppIndex:
-    """Get species prediction result from Mykrobe."""
-    LOG.info("Parsing Mykrobe spp result.")
-    result = []
-    pred_res = _read_result(result_path)
-
-    # Normalize all fields to strings and split on ";"
-    species = str(pred_res[0].get("species", "")).split(";")
-    phylo_groups = str(pred_res[0].get("phylo_group", "")).split(";")
-    phylo_covg = str(pred_res[0].get("phylo_group_per_covg", "")).split(";")
-    species_covg = str(pred_res[0].get("species_per_covg", "")).split(";")
-
-    for hit_idx in range(len(species)):
-        spp_pred = MykrobeSpeciesPrediction(
-            scientific_name=species[hit_idx].replace("_", " "),
-            taxonomy_id=None,
-            phylogenetic_group=phylo_groups[hit_idx].replace("_", " "),
-            phylogenetic_group_coverage=phylo_covg[hit_idx],
-            species_coverage=species_covg[hit_idx],
-        )
-        result.append(spp_pred)
-    return MykrobeSppIndex(result=result)
-
-
-def parse_lineage_pred(result_path: str | Path) -> MethodIndex | None:
-    """Parse mykrobe results for lineage object."""
-    LOG.info("Parsing lineage results")
-    pred_res = _read_result(result_path)
-    if pred_res:
-        lineage = pred_res[0]["lineage"]
-        # cast to lineage object
-        result_obj = ResultLineageBase(
-            main_lineage=lineage.split(".")[0],
-            sublineage=lineage,
-        )
-        return MethodIndex(
-            type=TypingMethod.LINEAGE, software=Software.MYKROBE, result=result_obj
-        )
-    return None
