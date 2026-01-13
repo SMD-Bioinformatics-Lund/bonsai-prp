@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from logging import Logger, getLogger
 from typing import Any, Mapping, Type, IO, TypeAlias
+from prp.io.delimited import validate_fields
 from prp.models.base import ParserOutput, AnalysisType
 
 
@@ -16,8 +17,8 @@ class BaseParser(ABC):
 
     software: str
     parser_name: str
-    parser_version: str
-    schema_version: str
+    parser_version: int
+    schema_version: int
     produces: set[AnalysisType]
 
     def __init__(self, *, logger: Logger | None = None):
@@ -74,6 +75,31 @@ class BaseParser(ABC):
             parser_version=self.parser_version,
             results={},
         )
+    
+    def validate_columns(
+        self,
+        row: Mapping[str, object],
+        *,
+        required: set[str],
+        optional: set[str] | None = None,
+        strict: bool = False,
+        tool: str | None = None,
+    ) -> None:
+        """Thin wrapper of the validate_fields to setup logging."""
+        try:
+            validate_fields(row, required=required, optional=optional, strict=strict)
+        except ValueError as exc:
+            self.log_error(
+                "Schema validation failed",
+                software=self.software,
+                tool=tool or self.software,
+                required=sorted(required),
+                got=sorted(row.keys()),
+                strict=strict,
+                error=str(exc),
+            )
+            raise
+
 
     @abstractmethod
     def _parse_impl(
@@ -94,12 +120,11 @@ class SingleAnalysisParser(BaseParser):
         if self.analysis_type not in want:
             return {}
         value = self._parse_one(source, **kwargs)
-        return {self.analysis_type.value: value} if value is not None else {}
+        return {self.analysis_type: value} if value is not None else {}
 
     @abstractmethod
     def _parse_one(self, source: ParserInput, **kwargs: Any) -> Any:
         ...
-
 
 
 ParserClass = Type[BaseParser]

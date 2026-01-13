@@ -5,10 +5,11 @@ from typing import Any
 from prp.exceptions import ParserError
 from prp.models.base import AnalysisType
 from prp.models.species import BrackenSpeciesPrediction, TaxLevel
+from prp.io.delimited import read_delimited
 
-from .base import ParseImplOut, ParserInput, SingleAnalysisParser
+from .base import ParserInput, SingleAnalysisParser
 from .registry import register_parser
-from .utils import read_delimited, safe_float, safe_int
+from .utils import safe_float, safe_int
 
 BRACKEN = "bracken"
 REQUIRED_COLUMNS = {
@@ -20,22 +21,6 @@ REQUIRED_COLUMNS = {
     "new_est_reads",
     "fraction_total_reads",
 }
-
-
-def _validate_columns(row: dict[str, object], *, strict: bool = False) -> None:
-    cols = set(row.keys())
-    missing = REQUIRED_COLUMNS - cols
-    if missing:
-        raise ValueError(
-            f"Bracken file missing columns: {sorted(missing)}; got: {sorted(cols)}"
-        )
-
-    if strict:
-        extra = cols - REQUIRED_COLUMNS
-        if extra:
-            raise ValueError(
-                f"Bracken file has unexpected extra columns: {sorted(extra)}"
-            )
 
 
 def to_taxlevel(lvl: str | TaxLevel) -> TaxLevel:
@@ -63,7 +48,7 @@ def to_taxlevel(lvl: str | TaxLevel) -> TaxLevel:
 class BrackenParser(SingleAnalysisParser):
     software = BRACKEN
     parser_name = "BrackenParser"
-    parser_version = "1"
+    parser_version = 1
     schema_version = 1
     produces = {AnalysisType.SPECIES}
     analysis_type = AnalysisType.SPECIES
@@ -85,7 +70,7 @@ class BrackenParser(SingleAnalysisParser):
             return {AnalysisType.SPECIES: []}
 
         # Validate the columns in the first row
-        _validate_columns(first_row, strict=strict_columns)
+        self.validate_columns(first_row, strict=strict_columns)
 
         results: list[BrackenSpeciesPrediction] = []
         # append first row

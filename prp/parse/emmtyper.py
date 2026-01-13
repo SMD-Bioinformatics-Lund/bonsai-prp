@@ -5,13 +5,13 @@ from typing import Any
 
 import pandas as pd
 
-from prp.parse.base import ParseImplOut, ParserInput, SingleAnalysisParser
+from prp.parse.base import ParserInput, SingleAnalysisParser
 from prp.parse.registry import register_parser
 
 from prp.models.base import AnalysisType
 from prp.models.typing import TypingResultEmm
+from prp.io.delimited import read_delimited
 
-from .utils import read_delimited
 
 LOG = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class EmmTyperParser(SingleAnalysisParser):
 
     software = EMMTYPER
     parser_name = "EmmTyperParser"
-    parser_version = "1"
+    parser_version = 1
     schema_version = 1
     produces = {AnalysisType.EMM}
     analysis_type = AnalysisType.EMM

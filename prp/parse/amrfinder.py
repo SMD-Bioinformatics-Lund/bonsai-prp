@@ -3,9 +3,9 @@
 import itertools
 import logging
 import re
-from typing import IO, Any, TypeAlias
+from typing import Any, TypeAlias
 
-from prp.models.base import AnalysisType, ParserOutput
+from prp.models.base import AnalysisType
 from prp.models.phenotype import (
     AmrFinderGene,
     AmrFinderResistanceGene,
@@ -17,9 +17,10 @@ from prp.models.phenotype import (
     PhenotypeInfo,
 )
 
+from prp.io.delimited import read_delimited, normalize_nulls
 from .base import BaseParser, ParseImplOut, ParserInput
 from .registry import register_parser
-from .utils import classify_variant_type, convert_empty_to_none, read_delimited, safe_int, safe_float, safe_stand
+from .utils import classify_variant_type, safe_int, safe_float, safe_stand
 
 LOG = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ def _normalize_row(raw: dict[str, Any]) -> dict[str, Any]:
     raw = {
         col_name: val for col_name, val in raw.items() if col_name not in DROP_COLUMNS
     }
-    raw = convert_empty_to_none(raw)
+    raw = normalize_nulls(raw)
 
     normalized: dict[str, Any] = {}
     for src, dest in COLUMN_MAP.items():
@@ -195,7 +196,7 @@ def _parse_variant(hit: dict[str, Any], variant_no: int) -> AmrFinderVariant:
 
 
 def read_amrfinder_results(
-    source: IO[bytes] | str,
+    source: ParserInput,
 ) -> tuple[AmrFinderGenes, AmrFinderVariants]:
     """Read AMRFinder TSV and return parsed gene hits and point variants.
 
@@ -229,7 +230,7 @@ class AmrFinderParser(BaseParser):
 
     software = AMRFINDER
     parser_name = "AmrFinderParser"
-    parser_version = "1"
+    parser_version = 1
     schema_version = 1
     produces = {AnalysisType.AMR, AnalysisType.VIRULENCE, AnalysisType.STRESS}
 
