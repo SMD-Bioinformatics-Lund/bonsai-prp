@@ -17,7 +17,7 @@ from prp.models.phenotype import (
     PhenotypeInfo,
 )
 
-from .base import BaseParser
+from .base import BaseParser, ParseImplOut, ParserInput
 from .registry import register_parser
 from .utils import classify_variant_type, convert_empty_to_none, read_delimited, safe_int, safe_float, safe_stand
 
@@ -233,34 +233,26 @@ class AmrFinderParser(BaseParser):
     schema_version = 1
     produces = {AnalysisType.AMR, AnalysisType.VIRULENCE, AnalysisType.STRESS}
 
-    def parse(
-        self, stream: IO[bytes], *, want: set[AnalysisType] | None = None
-    ) -> ParserOutput:
+    def _parse_impl(
+        self, source: ParserInput, *, want: set[AnalysisType], **_
+    ) -> ParseImplOut:
         """Parse analysis results."""
-        want = want or self.produces
-
-        genes, variants = read_amrfinder_results(stream)
-
-        out = ParserOutput(
-            software=self.software,
-            parser_name=self.parser_name,
-            parser_version=self.parser_version,
-            results={},
-        )
+        genes, variants = read_amrfinder_results(source)
 
         # AMR & STRESS share the same underlying element type filter in this outpu
+        results: dict[AnalysisType, Any] = {}
         for analysis_type in [AnalysisType.AMR, AnalysisType.STRESS]:
             if analysis_type in want:
-                out.results[analysis_type.value] = self._to_resistance_results(
+                results[analysis_type] = self._to_resistance_results(
                     genes, variants, analysis_type=analysis_type
                 )
 
         if AnalysisType.VIRULENCE in want:
-            out.results[AnalysisType.VIRULENCE.value] = self._to_virulence_results(
+            results[AnalysisType.VIRULENCE] = self._to_virulence_results(
                 genes, variants
             )
 
-        return out
+        return results
 
     def _to_resistance_results(
         self, genes: AmrFinderGenes, variants: AmrFinderVariants, *, analysis_type: AnalysisType

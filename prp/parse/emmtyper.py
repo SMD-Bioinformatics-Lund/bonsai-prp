@@ -1,15 +1,14 @@
 """Functions for parsing emmtyper result."""
 
 import logging
-from pathlib import Path
-from typing import IO, Any
+from typing import Any
 
 import pandas as pd
 
-from prp.parse.base import BaseParser
+from prp.parse.base import ParseImplOut, ParserInput, SingleAnalysisParser
 from prp.parse.registry import register_parser
 
-from prp.models.base import AnalysisType, ParserOutput
+from prp.models.base import AnalysisType
 from prp.models.typing import TypingResultEmm
 
 from .utils import read_delimited
@@ -24,6 +23,7 @@ EMM_FIELDS = [
     "emm_like_alleles",
     "emm_cluster",
 ]
+
 
 def _parse_emmtyper_results(info: dict[str, Any]) -> TypingResultEmm:
     """Parse emm gene prediction results."""
@@ -41,7 +41,7 @@ def _parse_emmtyper_results(info: dict[str, Any]) -> TypingResultEmm:
 
 
 @register_parser(EMMTYPER)
-class EmmTyperParser(BaseParser):
+class EmmTyperParser(SingleAnalysisParser):
     """Parse emmtyper output into a normalized ParserOutput bundle."""
 
     software = EMMTYPER
@@ -49,37 +49,12 @@ class EmmTyperParser(BaseParser):
     parser_version = "1"
     schema_version = 1
     produces = {AnalysisType.EMM}
+    analysis_type = AnalysisType.EMM
 
-
-    def parse(self, source: IO[bytes] | Path, want: set[AnalysisType] | None = None) -> ParserOutput:
-            """
-            Parse emmtyper results from a binary stream.
-
-            Args:
-                stream: Binary stream (e.g. FastAPI UploadFile.file).
-                want: Which analysis blocks to produce. Defaults to all supported.
-
-            Returns:
-                ParserOutput where results include a typing block (emmtype).
-            """
-            want = want or self.produces
-
-            out = ParserOutput(
-                software=self.software,
-                parser_name=self.parser_name,
-                parser_version=self.parser_version,
-                results={},
-            )
-
-            # If caller doesn't want typing, return empty bundle
-            if AnalysisType.EMM not in want:
-                return out
-            
-            self.log_info("Parsing EMMtyper results")
-            reader = read_delimited(source, has_header=False, fieldnames=EMM_FIELDS, none_values=['-', ''])
-            emm_results = [_parse_emmtyper_results(row) for row in reader]
-
-            # append emm results else
-            if emm_results:
-                out.results[AnalysisType.EMM.value] = emm_results[0]
-            return out
+    def _parse_one(self, source: ParserInput, **_) -> TypingResultEmm | dict:
+        """Parse emmtyper results."""
+        reader = read_delimited(
+            source, has_header=False, fieldnames=EMM_FIELDS, none_values=["-", ""]
+        )
+        emm_results = [_parse_emmtyper_results(row) for row in reader]
+        return emm_results[0] if emm_results else {}
