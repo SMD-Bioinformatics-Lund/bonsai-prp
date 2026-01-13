@@ -3,16 +3,19 @@
 import json
 import logging
 from typing import Any, Sequence
+import re
 
 from prp.exceptions import UnsupportedMethod
 from prp.models.analysis import AnalysisType
+from prp.models.base import ParserOutput
 from prp.models.config import SampleConfig
 
 from prp.models.phenotype import AMRMethodIndex, ElementType, PredictionSoftware, StressMethodIndex
 from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
 from prp.models.species import SppMethodIndex, SppPredictionSoftware
 from prp.models.typing import EmmTypingMethodIndex
-from .registry import run_parser
+from prp.parse.base import BaseParser, ParserInput
+from .registry import register_parser, run_parser
 from . import (
     hamronization,
     kleborate,
@@ -38,6 +41,29 @@ from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
 
 LOG = logging.getLogger(__name__)
+
+
+MYKROBE = "mykrobe"
+VARIANT_RE = re.compile(
+    r"(?P<gene>.+)_(?P<aa_change>.+)-(?P<dna_change>.+):"
+    r"(?P<ref_depth>\d+):(?P<alt_depth>\d+):(?P<conf>\d+)$",
+    re.IGNORECASE,
+)
+# Columns to validate against
+REQUIRED_COLUMNS = {
+    "sample",
+    "drug",
+    "susceptibility",
+    "genotype_model",
+    "variants",
+    "species",
+    "species_per_covg",
+    "phylo_group",
+    "phylo_group_per_covg",
+    "lineage",
+    "mykrobe_version",
+}
+
 
 
 def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
@@ -297,3 +323,26 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
     return PipelineResult(
         sample_id=smp_cnf.sample_id, schema_version=SCHEMA_VERSION, **results
     )
+
+
+@register_parser(MYKROBE)
+class MykrobeParser(BaseParser):
+    """Parser for Mykrobe results."""
+
+    software = MYKROBE
+    parser_name = "MykrobeParser"
+    parser_version = "1"
+    schema_version = 1
+    produces = {AnalysisType.SPECIES, AnalysisType.AMR, AnalysisType.LINEAGE}
+
+    def parse(self, data: ParserInput, *, want: set[AnalysisType], strict: bool) -> ParserOutput:
+        """Parse output file."""
+
+        want = want or self.produces
+
+        out = ParserOutput(
+            software=self.software,
+            parser_name=self.parser_name,
+            parser_version=self.parser_version,
+            results={},
+        )

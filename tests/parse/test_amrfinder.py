@@ -54,9 +54,8 @@ def test_amrfinder_parser_results(fixture_name, expected, request):
     filename = request.getfixturevalue(fixture_name)
 
     # parse result
-    with open(filename) as intp:
-        parser = AmrFinderParser()
-        result = parser.parse(stream=intp)
+    parser = AmrFinderParser()
+    result = parser.parse(source=filename)
 
     # test that result is method index
     assert isinstance(result, ParserOutput)
