@@ -46,7 +46,7 @@ class ParserOutput(BaseModel):
     software: str
     software_version: str | None = None
     parser_name: str
-    parser_version: str
+    parser_version: int
     schema_version: int = 1
 
     results: dict[AnalysisType, Any]
