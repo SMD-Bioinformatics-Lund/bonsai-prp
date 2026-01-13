@@ -1,6 +1,7 @@
 """Functions for reading delimited files and validating its content."""
 
 from dataclasses import dataclass
+import re
 from typing import IO, Any, Iterator, Mapping, Sequence, TypeAlias
 from pathlib import Path
 import csv
@@ -8,6 +9,7 @@ import io
 import logging
 
 _NULLISH = {None, "", " ", "NA", "N/A", "na", "n/a", ".", "-"}
+_TRAILING_ANNOT_RE = re.compile(r"\s*(\([^)]*\)|\[[^\]]*\])\s*$")
 
 LOG = logging.getLogger(__name__)
 
@@ -158,3 +160,16 @@ def validate_fields(
         raise ValueError(f"Unexpected extra columns: {sorted(extra)}")
 
     return FieldValidationResult(missing=set(), extra=extra)
+
+
+def canonical_header(header: str) -> str:
+    """
+    Remove trailing comment-like blocks: ' (...)' and/or ' [...]' at end of header.
+    Repeats removal to handle headers with both (...) and [...] suffixes.
+    """
+    h = header.strip()
+    while True:
+        new = _TRAILING_ANNOT_RE.sub("", h).strip()
+        if new == h:
+            return h
+        h = new
