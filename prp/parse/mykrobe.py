@@ -20,7 +20,7 @@ from prp.models.phenotype import VariantSubType, VariantType
 from prp.models.typing import ResultLineageBase
 from prp.parse.base import BaseParser, ParseImplOut, ParserInput
 from prp.parse.registry import register_parser
-from prp.io.delimited import normalize_nulls, read_delimited, DelimiterRow
+from prp.io.delimited import canonical_header, is_nullish, normalize_nulls, read_delimited, DelimiterRow
 from .utils import get_nt_change, safe_float, safe_int
 
 LOG = logging.getLogger(__name__)
@@ -175,7 +175,7 @@ def _parse_amr_variants(rows: TableRows, *, log_warning) -> list[MykrobeVariant]
             denom = ref_depth + alt_depth
             freq = (alt_depth / denom) if denom else None  # avoid zero division
 
-            ref_nt, alt_nt = dna["refe"], dna["alt"]
+            ref_nt, alt_nt = dna["ref"], dna["alt"]
             if aa["subtype"] == VariantSubType.SUBSTITUTION:
                 ref_nt, alt_nt = get_nt_change(ref_nt, alt_nt)
 
@@ -257,6 +257,19 @@ def _parse_lineage(rows: TableRows) -> ResultLineageBase | None:
     )
 
 
+def normalize_row(row: DelimiterRow):
+    """Return a copy of the row with normalized keys and null values."""
+    out: dict[str, Any] = {}
+    for key, val in row.items():
+        if is_nullish(val):
+            nv = None
+        else:
+            nv = val
+        nk = canonical_header(key)
+        out[nk] = nv
+    return out
+
+
 @register_parser(MYKROBE)
 class MykrobeParser(BaseParser):
     software = MYKROBE
@@ -280,7 +293,7 @@ class MykrobeParser(BaseParser):
         rows_iter = read_delimited(source, delimiter=DELIMITER)
 
         try:
-            first = next(rows_iter)
+            first_row = next(rows_iter)
         except StopIteration:
             self.log_info("Mykrobe input is empty")
             out: dict[AnalysisType, Any] = {}
@@ -295,11 +308,11 @@ class MykrobeParser(BaseParser):
                 out[AnalysisType.LINEAGE] = None
             return out
 
-        first = normalize_nulls(first)
 
-        self.validate_columns(first, required=REQUIRED_COLUMNS, strict=strict_columns)
+        first_row = normalize_row(first_row)
+        self.validate_columns(first_row, required=REQUIRED_COLUMNS, strict=strict_columns)
 
-        rows = [first] + [normalize_nulls(r) for r in rows_iter]
+        rows = [first_row] + [normalize_row(r) for r in rows_iter]
 
         # optional sample id filter
         if sample_id is not None:
@@ -316,7 +329,7 @@ class MykrobeParser(BaseParser):
 
         if AnalysisType.AMR in want:
             phenos = _sr_profile(rows)
-            variants = _parse_amr_variants
+            variants = _parse_amr_variants(rows, log_warning=self.log_warning)
             results[AnalysisType.AMR] = ElementTypeResult(
                 phenotypes=asdict(phenos), genes=[], variants=variants
             )
