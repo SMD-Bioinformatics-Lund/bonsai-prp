@@ -33,7 +33,6 @@ class BaseParser(ABC):
     def log_error(self, msg: str, **ctx):
         self.logger.error(msg, extra={"context": ctx})
 
-    @abstractmethod
     def parse(
         self,
         source: ParserInput,
