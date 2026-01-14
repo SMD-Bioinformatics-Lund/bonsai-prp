@@ -99,7 +99,6 @@ class BaseParser(ABC):
             )
             raise
 
-
     @abstractmethod
     def _parse_impl(
         self,

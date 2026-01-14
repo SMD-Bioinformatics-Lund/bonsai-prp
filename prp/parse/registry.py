@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, TypeAlias
 from packaging.version import Version
-from prp.models.analysis import AnalysisType
+from prp.models.enums import AnalysisType
 from prp.models.base import ParserOutput
 from prp.parse.base import BaseParser, ParserInput
 

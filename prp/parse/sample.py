@@ -6,14 +6,14 @@ from typing import Any, Sequence
 import re
 
 from prp.exceptions import UnsupportedMethod
-from prp.models.analysis import AnalysisType
+from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.base import ParserOutput
 from prp.models.config import SampleConfig
 
 from prp.models.phenotype import AMRMethodIndex, ElementType, PredictionSoftware, StressMethodIndex
 from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
 from prp.models.species import SppMethodIndex, SppPredictionSoftware
-from prp.models.typing import SccmecTypingMethodIndex, TypingSoftware
+from prp.models.typing import SccmecTypingMethodIndex, ShigaTypingMethodIndex, TypingSoftware
 from prp.models.typing import EmmTypingMethodIndex
 from prp.parse.base import BaseParser, ParserInput
 from .registry import register_parser, run_parser
@@ -34,7 +34,6 @@ from .qc import (
     parse_quast_results,
     parse_samtools_coverage_results,
 )
-from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
 from .typing import parse_cgmlst_results, parse_mlst_results
 from .virulencefinder import VirulenceMethodIndex
@@ -132,7 +131,7 @@ def _read_typing(
 
     if smp_cnf.emmtyper:
         out = run_parser(
-            software="EMM", 
+            software=AnalysisSoftware.EMMTYPER, 
             version="1.0.0",
             data=smp_cnf.emmtyper
         )
@@ -141,7 +140,15 @@ def _read_typing(
         ))
 
     if smp_cnf.shigapass:
-        typing_result.append(parse_shiga_pred(smp_cnf.shigapass))
+        out = run_parser(
+            software=AnalysisSoftware.SHIGAPASS,
+            version="1.0.0",
+            data=smp_cnf.shigapass
+        )
+        typing_result.append(
+            ShigaTypingMethodIndex(
+                result=out.results
+            ))
 
     if smp_cnf.spatyper:
         typing_result.append(parse_spatyper_results(smp_cnf.spatyper))
