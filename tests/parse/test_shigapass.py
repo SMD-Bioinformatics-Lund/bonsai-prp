@@ -1,8 +1,37 @@
 """Test functions for parsing Shigapass results."""
 
+from typing import Any
 import pytest
 
-from prp.parse.shigapass import _extract_percentage, parse_shiga_pred
+from prp.models.base import ParserOutput
+from prp.parse.shigapass import ShigapassParser, extract_percentage
+
+
+EXPECTED_SHIGA_OUTPUT = [
+    ("ecoli_shigapass_path", {
+            "rfb": None,
+            "rfb_hits": 0.0,
+            "mlst": None,
+            "flic": None,
+            "crispr": None,
+            "ipah": "ipaH-",
+            "predicted_serotype": "Not Shigella/EIEC",
+            "predicted_flex_serotype": None,
+            "comments": None,
+        }),
+    ("shigella_shigapass_path", {
+            "rfb": "C2",
+            "rfb_hits": 48.2,
+            "mlst": "ST145",
+            "flic": "ShH57(ShH3cplx)",
+            "crispr": "A-var2",
+            "ipah": "ipaH+",
+            "predicted_serotype": "SB2",
+            "predicted_flex_serotype": None,
+            "comments": None,
+            },
+     ),
+]
 
 
 @pytest.mark.parametrize(
@@ -15,56 +44,26 @@ from prp.parse.shigapass import _extract_percentage, parse_shiga_pred
         ("NA,(0%)", 0.0),
     ],
 )
-def test_extract_percentage(input, expected):
-    """
-    Test that the percentage can be extracted from rfb_hits.
+def test_extract_percentage(input: str, expected: float):
+    """Test extracting percentages from a string."""
 
-    "foo, (12%)" -> 12%
-    """
-    result = _extract_percentage(input)
-    assert result == expected
+    assert extract_percentage(input) == expected
 
 
-def test_parse_shigapass_results(ecoli_shigapass_path, shigella_shigapass_path):
+@pytest.mark.parametrize("fixture_name,expected_result", EXPECTED_SHIGA_OUTPUT)
+def test_parse_shigapass_results(fixture_name: str, expected_result: dict[str, Any], request):
     """Test parsing of shigapass result files."""
-
+    filename = request.getfixturevalue(fixture_name)
     # test parsing the output of an ecoli.
-    result = parse_shiga_pred(ecoli_shigapass_path)
-    expected_ecoli = {
-        "type": "shigatype",
-        "software": "shigapass",
-        "result": {
-            "rfb": None,
-            "rfb_hits": 0.0,
-            "mlst": None,
-            "flic": None,
-            "crispr": None,
-            "ipah": "ipaH-",
-            "predicted_serotype": "Not Shigella/EIEC",
-            "predicted_flex_serotype": None,
-            "comments": None,
-        },
-    }
-    # check if data matches
-    assert expected_ecoli == result.model_dump()
+    parser = ShigapassParser()
+    result = parser.parse(filename)
 
-    # test parsing the output with a shigella.
-    result = parse_shiga_pred(shigella_shigapass_path)
-    expected_shigella = {
-        "type": "shigatype",
-        "software": "shigapass",
-        "result": {
-            "rfb": "C2",
-            "rfb_hits": 48.2,
-            "mlst": "ST145",
-            "flic": "ShH57(ShH3cplx)",
-            "crispr": "A-var2",
-            "ipah": "ipaH+",
-            "predicted_serotype": "SB2",
-            "predicted_flex_serotype": None,
-            "comments": None,
-        },
-    }
+    # test that result is method index
+    assert isinstance(result, ParserOutput)
+
+    # verify that parser produces what it say it should
+    assert all(at in parser.produces for at in result.results.keys())
 
     # check if data matches
-    assert expected_shigella == result.model_dump()
+    pred = result.results["shigatype"]
+    assert expected_result == pred.model_dump()
