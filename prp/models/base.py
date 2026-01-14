@@ -1,23 +1,10 @@
 """Generic database objects of which several other models are based on."""
 
-from enum import StrEnum
 from pathlib import Path
 from typing import Any, Annotated
 from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
+from .enums import AnalysisType
 
-
-class AnalysisType(StrEnum):
-    """The various types of analysis a parser can produce."""
-
-    AMR = "amr"
-    VIRULENCE = "virulence"
-    STRESS = "stress"
-    TYPING = "typing"
-    SPECIES = "species"
-    QC = "qc"
-    VARIANT = "variant"
-    COVERAGE = "coverage"
-    EMM = "emmtype"
 
 
 def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:

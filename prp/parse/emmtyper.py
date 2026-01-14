@@ -8,14 +8,14 @@ import pandas as pd
 from prp.parse.base import ParserInput, SingleAnalysisParser
 from prp.parse.registry import register_parser
 
-from prp.models.base import AnalysisType
+from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.typing import TypingResultEmm
 from prp.io.delimited import read_delimited
 
 
 LOG = logging.getLogger(__name__)
 
-EMMTYPER = "emmtyper"
+EMMTYPER = AnalysisSoftware.EMMTYPER
 EMM_FIELDS = [
     "sample_name",
     "cluster_count",

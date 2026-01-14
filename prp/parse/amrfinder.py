@@ -5,7 +5,7 @@ import logging
 import re
 from typing import Any, TypeAlias
 
-from prp.models.base import AnalysisType
+from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.phenotype import (
     AmrFinderGene,
     AmrFinderResistanceGene,
@@ -31,7 +31,7 @@ AmrFinderGenes: TypeAlias = list[AmrFinderGeneT]
 AmrFinderVariants: TypeAlias = list[AmrFinderVariant]
 
 
-AMRFINDER = "amrfinder"
+AMRFINDER = AnalysisSoftware.AMRFINDER
 
 
 COLUMN_MAP: dict[str, str] = {

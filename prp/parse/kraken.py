@@ -3,7 +3,7 @@
 from typing import Any
 
 from prp.exceptions import ParserError
-from prp.models.base import AnalysisType
+from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.species import BrackenSpeciesPrediction, TaxLevel
 from prp.io.delimited import read_delimited
 
@@ -11,7 +11,7 @@ from .base import ParserInput, SingleAnalysisParser
 from .registry import register_parser
 from .utils import safe_float, safe_int
 
-BRACKEN = "bracken"
+BRACKEN = AnalysisSoftware.BRACKEN
 REQUIRED_COLUMNS = {
     "name",
     "taxonomy_id",

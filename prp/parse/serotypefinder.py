@@ -8,8 +8,7 @@ from pydantic import ValidationError
 from prp.exceptions import InvalidDataFormat, ParserError
 from prp.io.delimited import is_nullish
 from prp.io.json import read_json
-from prp.models.analysis import AnalysisType
-from prp.models.base import AnalysisSoftware
+from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.phenotype import ElementSerotypeSubtype, ElementType, SerotypeGene
 from prp.parse.base import BaseParser, ParseImplOut, ParserInput
 from prp.parse.registry import register_parser
@@ -88,8 +87,9 @@ def _is_no_hit(value: Any) -> bool:
     return isinstance(value, str) or value is None or value == {}
 
 
-@register_parser(SEROTYPEFINDER.value)
+@register_parser(SEROTYPEFINDER)
 class SerotypeFinderParser(BaseParser):
+
     software = SEROTYPEFINDER
     parser_name = "SerotypeFinderParser"
     parser_version = 1

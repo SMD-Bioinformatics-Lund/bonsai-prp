@@ -3,7 +3,7 @@
 import logging
 
 from prp.io.delimited import DelimiterRow, normalize_nulls, read_delimited
-from prp.models.analysis import AnalysisType
+from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.typing import TypingResultSccmec
 from prp.parse.base import ParserInput, SingleAnalysisParser
 from prp.parse.registry import register_parser
@@ -11,7 +11,7 @@ from prp.parse.utils import safe_float
 
 LOG = logging.getLogger(__name__)
 
-SCCMEC_TYPER = "sccmectyper"
+SCCMEC_TYPER = AnalysisSoftware.SCCMECTYPER
 REQUIRED_COLUMNS = {
     "sample",
     "type",

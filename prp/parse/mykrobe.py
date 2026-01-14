@@ -5,7 +5,7 @@ import re
 from dataclasses import asdict, dataclass
 from typing import Any, TypeAlias
 
-from prp.models.analysis import AnalysisType
+from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.species import MykrobeSpeciesPrediction
 
 from prp.models.metadata import SoupType, SoupVersion
@@ -25,7 +25,7 @@ from .utils import get_nt_change, safe_float, safe_int
 
 LOG = logging.getLogger(__name__)
 
-MYKROBE = "mykrobe"
+MYKROBE = AnalysisSoftware.MYKROBE
 DELIMITER = ","
 
 # Mykrobe AMR variant format:
