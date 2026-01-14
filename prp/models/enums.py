@@ -14,6 +14,8 @@ class AnalysisSoftware(StrEnum):
     SEROTYPEFINDER = "serotypefinder"
     SHIGAPASS = "shigapass"
     SPATYPER = "spatyper"
+    VIRULENCEFINDER = "virulencefinder"
+    RESFINDER = "resfinder"
 
 
 class AnalysisType(StrEnum):

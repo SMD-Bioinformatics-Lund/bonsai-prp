@@ -31,3 +31,7 @@ def read_json(source: ParserInput, *, encoding: str = "utf-8") -> Any:
         return json.loads(data)
 
     raise TypeError(f"Unsupported ParserInput type: {type(source)!r}")
+def require_mapping(obj: Any, *, what: str) -> Mapping[str, Any]:
+    if not isinstance(obj, dict):
+        raise InvalidDataFormat(f"Expected object '{what}' to be a JSON object/dict, got {type(obj)!r}")
+    return obj

@@ -10,7 +10,7 @@ from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.base import ParserOutput
 from prp.models.config import SampleConfig
 
-from prp.models.phenotype import AMRMethodIndex, ElementType, PredictionSoftware, StressMethodIndex
+from prp.models.phenotype import AMRMethodIndex, ElementType, PredictionSoftware, StressMethodIndex, VirulenceMethodIndex
 from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
 from prp.models.species import SppMethodIndex, SppPredictionSoftware
 from prp.models.typing import SccmecTypingMethodIndex, ShigaTypingMethodIndex, SpatyperTypingMethodIndex, TypingSoftware
@@ -21,9 +21,7 @@ from . import (
     hamronization,
     kleborate,
     resfinder,
-    serotypefinder,
     tbprofiler,
-    virulencefinder,
 )
 from .igv import parse_igv_info
 from .metadata import parse_run_info
@@ -35,7 +33,6 @@ from .qc import (
     parse_samtools_coverage_results,
 )
 from .typing import parse_cgmlst_results, parse_mlst_results
-from .virulencefinder import VirulenceMethodIndex
 
 LOG = logging.getLogger(__name__)
 
@@ -171,20 +168,30 @@ def _read_typing(
 
     # stx typing
     if smp_cnf.virulencefinder:
-        tmp_virfinder_res: MethodIndex | None = virulencefinder.parse_stx_typing(
-            smp_cnf.virulencefinder
+        out = run_parser(
+            software=AnalysisSoftware.VIRULENCEFINDER,
+            version="1.0.0",
+            data=smp_cnf.virulencefinder,
+            want=AnalysisType.STX
         )
-        if tmp_virfinder_res is not None:
-            typing_result.append(tmp_virfinder_res)
+        typing_result.append(MethodIndex(
+            software=TypingSoftware.VIRULENCEFINDER,
+            type=AnalysisType.STX,
+            result=out.results[AnalysisType.STX]
+        ))
 
     if smp_cnf.serotypefinder:
-        LOG.info("Parse serotypefinder results")
-        # OH typing
-        tmp_serotype_res: list[MethodIndex] | None = serotypefinder.parse_oh_typing(
-            smp_cnf.serotypefinder
+        out = run_parser(
+            software=AnalysisSoftware.SEROTYPEFINDER,
+            version="1.0.0",
+            data=smp_cnf.serotypefinder,
         )
-        if tmp_serotype_res is not None:
-            typing_result.extend(tmp_serotype_res)
+        for atype in [AnalysisType.O_TYPE, AnalysisType.H_TYPE]:
+            typing_result.extend(MethodIndex(
+                software=AnalysisSoftware.SEROTYPEFINDER,
+                type=atype,
+                result=out.results[atype]
+            ))
 
     if smp_cnf.mykrobe:
         out = run_parser(
@@ -275,11 +282,16 @@ def _read_virulence(smp_cnf) -> Sequence[VirulenceMethodIndex]:
 
     if smp_cnf.virulencefinder:
         # virulence genes
-        raw_res: VirulenceMethodIndex | None = virulencefinder.parse_virulence_pred(
-            smp_cnf.virulencefinder
+        out = run_parser(
+            software=AnalysisSoftware.VIRULENCEFINDER,
+            version="1.0.0",
+            data=smp_cnf.virulencefinder,
+            want=AnalysisType.VIRULENCE
         )
-        if raw_res is not None:
-            virulence.append(raw_res)
+        virulence.append(VirulenceMethodIndex(
+            software=TypingSoftware.VIRULENCEFINDER,
+            result=out.results[AnalysisType.VIRULENCE]
+        ))
     return virulence
 
 

@@ -1,32 +1,29 @@
 """Virulencefinder parser test suite."""
 
+from prp.models.base import ParserOutput
+from prp.models.enums import AnalysisType
 from prp.models.typing import TypingResultGeneAllele
-from prp.parse.virulencefinder import (
-    VirulenceMethodIndex,
-    parse_stx_typing,
-    parse_virulence_pred,
-)
+from prp.parse.virulencefinder import VirulenceFinderParser
 
 
-def test_parse_virulencefinder_output(ecoli_virulencefinder_stx_pred_stx_path):
-    """Test parsing virulencefinder output json file."""
-    result = parse_virulence_pred(ecoli_virulencefinder_stx_pred_stx_path)
-
-    # test that result is method index
-    assert isinstance(result, VirulenceMethodIndex)
-    # test that all genes are identified
-    assert len(result.result.genes) == 29
-
-
-def test_parse_stx_typing(
-    ecoli_virulencefinder_stx_pred_no_stx_path, ecoli_virulencefinder_stx_pred_stx_path
-):
+def test_virulencefinder_parser(ecoli_virulencefinder_stx_pred_stx_path):
     """Test parsing of virulencefinder stx typing prediction."""
 
-    # If stx gene is not found result should be Null
-    res = parse_stx_typing(ecoli_virulencefinder_stx_pred_no_stx_path)
-    assert res is None
+    parser = VirulenceFinderParser()
+    result = parser.parse(ecoli_virulencefinder_stx_pred_stx_path, strict=True)
 
-    # If stx gene is found result should be instance of typingMethod
-    res = parse_stx_typing(ecoli_virulencefinder_stx_pred_stx_path)
-    assert isinstance(res.result, TypingResultGeneAllele)
+    # assert correct ouptut data model
+    assert isinstance(result, ParserOutput)
+
+    # verify that parser produces what it say it should
+    assert all(at in parser.produces for at in result.results.keys())
+
+    # test that all genes are identified
+    vir_res = result.results[AnalysisType.VIRULENCE]
+    assert len(vir_res.genes) == 29
+
+    # test STX prediction returns the expected results
+    stx_res = result.results[AnalysisType.STX]
+    assert isinstance(stx_res, TypingResultGeneAllele)
+
+    assert stx_res.gene_symbol == "stx2"
