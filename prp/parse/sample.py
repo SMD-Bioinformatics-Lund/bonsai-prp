@@ -13,13 +13,13 @@ from prp.models.config import SampleConfig
 from prp.models.phenotype import AMRMethodIndex, ElementType, PredictionSoftware, StressMethodIndex
 from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
 from prp.models.species import SppMethodIndex, SppPredictionSoftware
+from prp.models.typing import SccmecTypingMethodIndex, TypingSoftware
 from prp.models.typing import EmmTypingMethodIndex
 from prp.parse.base import BaseParser, ParserInput
 from .registry import register_parser, run_parser
 from . import (
     hamronization,
     kleborate,
-    mykrobe,
     resfinder,
     serotypefinder,
     tbprofiler,
@@ -34,7 +34,6 @@ from .qc import (
     parse_quast_results,
     parse_samtools_coverage_results,
 )
-from .sccmec import SccmecTypingMethodIndex, parse_sccmec_results
 from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
 from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
 from .typing import parse_cgmlst_results, parse_mlst_results
@@ -101,7 +100,16 @@ def _read_spp_prediction(smp_cnf) -> Sequence[SppMethodIndex]:
         ))
 
     if smp_cnf.mykrobe:
-        spp_results.append(mykrobe.parse_spp_pred(smp_cnf.mykrobe))
+        out = run_parser(
+            software=PredictionSoftware.MYKROBE.value,
+            version="1.0.0",
+            data=smp_cnf.mykrobe
+        )
+        spp_results.append(
+            SppMethodIndex(
+                software=PredictionSoftware.MYKROBE,
+                result=out.results["species"]
+        ))
     return spp_results
 
 
@@ -139,7 +147,13 @@ def _read_typing(
         typing_result.append(parse_spatyper_results(smp_cnf.spatyper))
 
     if smp_cnf.sccmec:
-        typing_result.append(parse_sccmec_results(smp_cnf.sccmec))
+        out = run_parser(
+            software=TypingSoftware.SCCMEC,
+            version="1.0.0",
+            data=smp_cnf.sccmec
+        )
+        first = out.results['sccmec'][0]
+        typing_result.append(SccmecTypingMethodIndex(result=first))
 
     # stx typing
     if smp_cnf.virulencefinder:
@@ -159,9 +173,17 @@ def _read_typing(
             typing_result.extend(tmp_serotype_res)
 
     if smp_cnf.mykrobe:
-        lin_res: MethodIndex | None = mykrobe.parse_lineage_pred(smp_cnf.mykrobe)
-        if lin_res is not None:
-            typing_result.append(lin_res)
+        out = run_parser(
+            software=PredictionSoftware.MYKROBE.value,
+            version="1.0.0",
+            data=smp_cnf.mykrobe
+        )
+        typing_result.append(
+            MethodIndex(
+                software=PredictionSoftware.MYKROBE.value,
+                result=out.results["lineage"]
+            )
+        )
 
     if smp_cnf.tbprofiler:
         typing_result.append(tbprofiler.parse_lineage_pred(smp_cnf.tbprofiler))
@@ -204,9 +226,17 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
             )
 
     if smp_cnf.mykrobe:
-        tmp_res = mykrobe.parse_amr_pred(smp_cnf.mykrobe, smp_cnf.sample_id)
-        if tmp_res is not None:
-            resistance.append(tmp_res)
+        out = run_parser(
+            software=PredictionSoftware.MYKROBE.value,
+            version="1.0.0",
+            data=smp_cnf.mykrobe
+        )
+        resistance.append(
+            AMRMethodIndex(
+                software=PredictionSoftware.MYKROBE.value,
+                result=out.results["amr"]
+            )
+        )
 
     if smp_cnf.tbprofiler:
         # store pipeline version
@@ -277,16 +307,16 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
             filtered_variants["snv_variants"] if filtered_variants else None
         )
     # read versions of softwares
-    if smp_cnf.mykrobe:
-        results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))
-    if smp_cnf.tbprofiler:
-        results["pipeline"].softwares.append(tbprofiler.get_version(smp_cnf.tbprofiler))
-    if smp_cnf.kleborate_hamronization:
-        with smp_cnf.kleborate_hamronization.open() as inpt:
-            if (
-                kleborate_version := hamronization.get_version(inpt)
-            ) or kleborate_version is not None:
-                results["pipeline"].softwares.append(kleborate_version)
+    # if smp_cnf.mykrobe:
+    #     results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))
+    # if smp_cnf.tbprofiler:
+    #     results["pipeline"].softwares.append(tbprofiler.get_version(smp_cnf.tbprofiler))
+    # if smp_cnf.kleborate_hamronization:
+    #     with smp_cnf.kleborate_hamronization.open() as inpt:
+    #         if (
+    #             kleborate_version := hamronization.get_version(inpt)
+    #         ) or kleborate_version is not None:
+    #             results["pipeline"].softwares.append(kleborate_version)
 
     # add amr and virulence
     results["element_type_result"].extend(

@@ -9,6 +9,10 @@ class ParserError(Exception):
         super().__init__(message)
         self.context = context or {}
 
+
+class InvalidDataFormat(ParserError):
+    ...
+
 class UnsupportedMethod(ParserError):
     ...
 
