@@ -28,7 +28,6 @@ from .qc import (
     parse_gambitcore_results,
     parse_nanoplot_results,
     parse_postalignqc_results,
-    parse_quast_results,
     parse_samtools_coverage_results,
 )
 from .typing import parse_cgmlst_results, parse_mlst_results
@@ -63,7 +62,15 @@ def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
     """Read all qc related info"""
     qc_results = []
     if smp_cnf.quast:
-        qc_results.append(parse_quast_results(smp_cnf.quast))
+        out = run_parser(
+            software=AnalysisSoftware.QUAST,
+            version="1.0.0",
+            data=smp_cnf.quast
+        )
+        qc_results.append(QcMethodIndex(
+            software=AnalysisSoftware.QUAST,
+            result=out.results,
+        ))
 
     if smp_cnf.postalnqc:
         qc_results.append(parse_postalignqc_results(smp_cnf.postalnqc))
@@ -85,7 +92,7 @@ def _read_spp_prediction(smp_cnf) -> Sequence[SppMethodIndex]:
     spp_results = []
     if smp_cnf.kraken:
         out = run_parser(
-            software=SppPredictionSoftware.BRACKEN.value, 
+            software=AnalysisSoftware.BRACKEN,
             version="1.0.0",
             data=smp_cnf.kraken
         )

@@ -16,6 +16,7 @@ class AnalysisSoftware(StrEnum):
     SPATYPER = "spatyper"
     VIRULENCEFINDER = "virulencefinder"
     RESFINDER = "resfinder"
+    QUAST = "quast"
 
 
 class AnalysisType(StrEnum):

@@ -29,3 +29,9 @@ def kp_sample_conf_path(data_path: Path) -> Path:
 def kp_analysis_meta_path(data_path: Path) -> Path:
     """Get path for ecoli meta file"""
     return data_path.joinpath("kpneumoniae", "analysis_meta.json")
+
+
+@pytest.fixture()
+def kp_quast_path(data_path: Path) -> Path:
+    """Get path for ecoli meta file"""
+    return data_path.joinpath("kpneumoniae", "quast.tsv")

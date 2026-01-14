@@ -258,34 +258,6 @@ class QC:
         return self.results
 
 
-def parse_quast_results(tsv_fpath: str) -> QcMethodIndex:
-    """Parse quast file and extract relevant metrics.
-
-    Args:
-        sep (str): seperator
-
-    Returns:
-        QuastQcResult: list of key-value pairs
-    """
-    LOG.info("Parsing tsv file: %s", tsv_fpath)
-    with open(tsv_fpath, "r", encoding="utf-8") as tsvfile:
-        creader = csv.reader(tsvfile, delimiter="\t")
-        header = next(creader)
-        raw = [dict(zip(header, row)) for row in creader]
-        qc_res = QuastQcResult(
-            total_length=int(raw[0]["Total length"]),
-            reference_length=raw[0].get("Reference length", None),
-            largest_contig=raw[0]["Largest contig"],
-            n_contigs=raw[0]["# contigs"],
-            n50=raw[0]["N50"],
-            ng50=raw[0].get("NG50", None),
-            assembly_gc=raw[0]["GC (%)"],
-            reference_gc=raw[0].get("Reference GC (%)", None),
-            duplication_ratio=raw[0].get("Duplication ratio", None),
-        )
-    return QcMethodIndex(software=QcSoftware.QUAST, result=qc_res)
-
-
 def parse_postalignqc_results(postalignqc_fpath: str) -> QcMethodIndex:
     """Parse postalignqc json file and extract relevant metrics.
 
