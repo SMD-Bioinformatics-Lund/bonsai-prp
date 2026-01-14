@@ -10,13 +10,14 @@ class AnalysisSoftware(StrEnum):
     BRACKEN = "bracken"
     EMMTYPER = "emmtyper"
     MYKROBE = "mykrobe"
+    POSTALIGNQC = "postalignqc"
+    QUAST = "quast"
+    RESFINDER = "resfinder"
     SCCMECTYPER = "sccmectyper"
     SEROTYPEFINDER = "serotypefinder"
     SHIGAPASS = "shigapass"
     SPATYPER = "spatyper"
     VIRULENCEFINDER = "virulencefinder"
-    RESFINDER = "resfinder"
-    QUAST = "quast"
 
 
 class AnalysisType(StrEnum):

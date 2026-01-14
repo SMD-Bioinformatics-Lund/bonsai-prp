@@ -1,6 +1,5 @@
 """Parse for input config using parsers from this module."""
 
-import json
 import logging
 from typing import Any, Sequence
 import re
@@ -10,9 +9,9 @@ from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.base import ParserOutput
 from prp.models.config import SampleConfig
 
-from prp.models.phenotype import AMRMethodIndex, ElementType, PredictionSoftware, StressMethodIndex, VirulenceMethodIndex
+from prp.models.phenotype import AMRMethodIndex, PredictionSoftware, StressMethodIndex, VirulenceMethodIndex
 from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
-from prp.models.species import SppMethodIndex, SppPredictionSoftware
+from prp.models.species import SppMethodIndex
 from prp.models.typing import SccmecTypingMethodIndex, ShigaTypingMethodIndex, SpatyperTypingMethodIndex, TypingSoftware
 from prp.models.typing import EmmTypingMethodIndex
 from prp.parse.base import BaseParser, ParserInput
@@ -27,7 +26,6 @@ from .metadata import parse_run_info
 from .qc import (
     parse_gambitcore_results,
     parse_nanoplot_results,
-    parse_postalignqc_results,
     parse_samtools_coverage_results,
 )
 from .typing import parse_cgmlst_results, parse_mlst_results
@@ -57,7 +55,6 @@ REQUIRED_COLUMNS = {
 }
 
 
-
 def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
     """Read all qc related info"""
     qc_results = []
@@ -69,11 +66,19 @@ def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
         )
         qc_results.append(QcMethodIndex(
             software=AnalysisSoftware.QUAST,
-            result=out.results,
+            result=out.results[AnalysisType.QC],
         ))
 
     if smp_cnf.postalnqc:
-        qc_results.append(parse_postalignqc_results(smp_cnf.postalnqc))
+        out = run_parser(
+            software=AnalysisSoftware.POSTALIGNQC,
+            version="1.0.0",
+            data=smp_cnf.postalnqc
+        )
+        qc_results.append(QcMethodIndex(
+            software=AnalysisSoftware.POSTALIGNQC,
+            result=out.results[AnalysisType.QC],
+        ))
 
     if smp_cnf.gambitcore:
         qc_results.append(parse_gambitcore_results(smp_cnf.gambitcore))
