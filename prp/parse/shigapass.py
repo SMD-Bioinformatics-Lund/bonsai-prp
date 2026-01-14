@@ -118,14 +118,7 @@ class ShigapassParser(SingleAnalysisParser):
             self.log_info("Shigapass input empty")
             return None
 
-        # validate on raw headers before renaming, because REQUIRED_COLUMNS uses raw header names
-        try:
-            validate_fields(first_raw, required=REQUIRED_COLUMNS, strict=strict_columns)
-        except ValueError as exc:
-            self.log_error("Invalid Shigapass input schema", error=str(exc))
-            if strict:
-                raise
-            return None
+        self.validate_columns(first_raw, required=REQUIRED_COLUMNS, strict=strict_columns)
 
         # Normalize keys
         first = _normalize_shigapass_row(first_raw)
