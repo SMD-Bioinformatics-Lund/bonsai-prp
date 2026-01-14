@@ -20,7 +20,7 @@ from prp.models.phenotype import VariantSubType, VariantType
 from prp.models.typing import ResultLineageBase
 from prp.parse.base import BaseParser, ParseImplOut, ParserInput
 from prp.parse.registry import register_parser
-from prp.io.delimited import canonical_header, is_nullish, normalize_nulls, read_delimited, DelimiterRow
+from prp.io.delimited import canonical_header, is_nullish, normalize_row, read_delimited, DelimiterRow
 from .utils import get_nt_change, safe_float, safe_int
 
 LOG = logging.getLogger(__name__)
@@ -257,17 +257,13 @@ def _parse_lineage(rows: TableRows) -> ResultLineageBase | None:
     )
 
 
-def normalize_row(row: DelimiterRow):
-    """Return a copy of the row with normalized keys and null values."""
-    out: dict[str, Any] = {}
-    for key, val in row.items():
-        if is_nullish(val):
-            nv = None
-        else:
-            nv = val
-        nk = canonical_header(key)
-        out[nk] = nv
-    return out
+def _normalize_mykrobe_row(row: DelimiterRow) -> DelimiterRow:
+    """Wrapper for normalize rows."""
+    return normalize_row(
+        row,
+        key_fn=canonical_header,
+        val_fn=lambda v: None if is_nullish(v) else v,
+    )
 
 
 @register_parser(MYKROBE)
@@ -309,10 +305,10 @@ class MykrobeParser(BaseParser):
             return out
 
 
-        first_row = normalize_row(first_row)
+        first_row = _normalize_mykrobe_row(first_row)
         self.validate_columns(first_row, required=REQUIRED_COLUMNS, strict=strict_columns)
 
-        rows = [first_row] + [normalize_row(r) for r in rows_iter]
+        rows = [first_row] + [_normalize_mykrobe_row(r) for r in rows_iter]
 
         # optional sample id filter
         if sample_id is not None:

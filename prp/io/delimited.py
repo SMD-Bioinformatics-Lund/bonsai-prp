@@ -2,19 +2,22 @@
 
 from dataclasses import dataclass
 import re
-from typing import IO, Any, Iterator, Mapping, Sequence, TypeAlias
+from typing import IO, Any, Callable, Iterator, Mapping, Sequence, TypeAlias
 from pathlib import Path
 import csv
 import io
 import logging
 
-_NULLISH = {None, "", " ", "NA", "N/A", "na", "n/a", ".", "-"}
+_NULLISH = {None, "", " ", "NA", "N/A", "na", "n/a", ".", "-", "ND", "none"}
 _TRAILING_ANNOT_RE = re.compile(r"\s*(\([^)]*\)|\[[^\]]*\])\s*$")
 
 LOG = logging.getLogger(__name__)
 
 DelimiterRow: TypeAlias = dict[str, str | None]
 DelimiterRows: TypeAlias = list[DelimiterRow]
+
+KeyFn = Callable[[str], str]
+ValFn = Callable[[Any], Any]
 
 
 def _as_text_stream(
@@ -112,7 +115,7 @@ def is_nullish(value: Any, null_values: set[str] = _NULLISH) -> bool:
     """Check if value is a null value."""
     if value is None:
         return True
-    if isinstance(value, str) and value.lower().strip() in null_values:
+    if isinstance(value, str) and value.strip() in null_values:
         return True
     return False
 
@@ -173,3 +176,45 @@ def canonical_header(header: str) -> str:
         if new == h:
             return h
         h = new
+
+
+def normalize_row(
+    row: Mapping[str, Any],
+    *,
+    key_fn: KeyFn | None = None,
+    val_fn: ValFn | None = None,
+    column_map: Mapping[str, str] | None = None,
+    drop: set[str] | None = None,
+    keep_unmapped: bool = True,
+    on_collision: str = "last",  # "last" | "raise"
+) -> dict[str, Any]:
+    """
+    Generic row normalization:
+    - drop unwanted columns
+    - normalize keys (canonicalize headers)
+    - normalize values (nullish->None etc.)
+    - optionally rename keys via column_map
+    """
+    key_fn = key_fn or (lambda s: s)
+    val_fn = val_fn or (lambda v: v)
+    column_map = column_map or {}
+    drop = drop or set()
+
+    out: dict[str, Any] = {}
+    for k, v in row.items():
+        if k in drop:
+            continue
+
+        nk = key_fn(k)
+        nk = column_map.get(nk, nk)
+
+        if not keep_unmapped and nk not in column_map.values():
+            continue
+
+        nv = val_fn(v)
+
+        if on_collision == "raise" and nk in out and out[nk] != nv:
+            raise ValueError(f"Key collision after normalization: {k!r} -> {nk!r}")
+        out[nk] = nv
+
+    return out
