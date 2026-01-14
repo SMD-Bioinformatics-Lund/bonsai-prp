@@ -1,6 +1,8 @@
 """Test functions for the resfinder parser."""
 
-from prp.parse.resfinder import get_nt_change
+from prp.models.base import ParserOutput
+from prp.models.enums import AnalysisType
+from prp.parse.resfinder import ResFinderParser, get_nt_change
 
 
 def test_get_nt_changes_from_condons():
@@ -12,3 +14,21 @@ def test_get_nt_changes_from_condons():
     ref_nt, alt_nt = get_nt_change(ref_codon, alt_codon)
 
     assert ref_nt == "C" and alt_nt == "T"
+
+
+def test_resfinder_parser(ecoli_resfinder_path):
+    """Test the resfinder parser."""
+
+    parser = ResFinderParser()
+    result = parser.parse(ecoli_resfinder_path, strict=True)
+
+    # assert correct ouptut data model
+    assert isinstance(result, ParserOutput)
+
+    # verify that parser produces what it say it should
+    assert all(at in parser.produces for at in result.results.keys())
+
+    # test that all genes and varaints are identified
+    amr_res = result.results[AnalysisType.AMR]
+    assert len(amr_res.genes) == 17
+    assert len(amr_res.variants) == 4

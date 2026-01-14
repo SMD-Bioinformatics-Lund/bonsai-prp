@@ -20,7 +20,6 @@ from .registry import register_parser, run_parser
 from . import (
     hamronization,
     kleborate,
-    resfinder,
     tbprofiler,
 )
 from .igv import parse_igv_info
@@ -216,12 +215,17 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
     """Read resistance predictions."""
     resistance = []
     if smp_cnf.resfinder:
-        with smp_cnf.resfinder.open("r", encoding="utf-8") as resfinder_json:
-            pred_res = json.load(resfinder_json)
-            for method in [ElementType.AMR, ElementType.STRESS]:
-                tmp_res = resfinder.parse_amr_pred(pred_res, method)
-                if tmp_res.result.genes:
-                    resistance.append(tmp_res)
+        out = run_parser(software=AnalysisSoftware.RESFINDER, version="1.0.0", data=smp_cnf.resfinder)
+        target = AnalysisType.AMR
+        resistance.append(AMRMethodIndex(
+            software=AnalysisSoftware.RESFINDER,
+            result=out.results[target]
+        ))
+        target = AnalysisType.STRESS
+        resistance.append(StressMethodIndex(
+            software=AnalysisSoftware.RESFINDER,
+            result=out.results[target]
+        ))
 
     if smp_cnf.amrfinder:
         out = run_parser(software="amrfinder", version="1.0.0", data=smp_cnf.amrfinder)
