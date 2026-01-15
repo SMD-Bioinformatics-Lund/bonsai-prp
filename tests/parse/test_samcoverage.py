@@ -1,44 +1,52 @@
 """Test functions for parsing SAMtools coverage results."""
 
-import pytest
+from prp.models.base import ParserOutput
+from prp.models.enums import AnalysisType
+from prp.models.qc import SamtoolsCoverageQcResult
+from prp.parse.samtools import SamtoolsCovParser
 
-from prp.parse.qc import parse_samtools_coverage_results
 
-
-def test_parse_samtools_coverage_results(saureus_samtools_coverage_path):
+def test_samtools_coverage_parser(saureus_samtools_coverage_path):
     """Test parsing of SAMtools coverage result file."""
 
+    parser = SamtoolsCovParser()
+    result = parser.parse(saureus_samtools_coverage_path)
+
+    # test that result is method index
+    assert isinstance(result, ParserOutput)
+
+    # verify that parser produces what it say it should
+    assert all(at in parser.produces for at in result.results.keys())
+
+    res = result.results[AnalysisType.QC]
+    assert isinstance(res, SamtoolsCoverageQcResult)
+
     # test parsing the output
-    result = parse_samtools_coverage_results(saureus_samtools_coverage_path)
     expected_samtools = {
-        "software": "samtools",
-        "version": None,
-        "result": {
-            "contigs": [
-                {
-                    "rname": "NC_002951.2",
-                    "startpos": 1,
-                    "endpos": 2809422,
-                    "numreads": 175210,
-                    "covbases": 2678233,
-                    "coverage": 95.3304,
-                    "meandepth": 186.651,
-                    "meanbaseq": 22.6,
-                    "meanmapq": 57.5,
-                },
-                {
-                    "rname": "NC_006629.2",
-                    "startpos": 1,
-                    "endpos": 4440,
-                    "numreads": 2012,
-                    "covbases": 4406,
-                    "coverage": 99.2342,
-                    "meandepth": 351.234,
-                    "meanbaseq": 24.7,
-                    "meanmapq": 30.7,
-                },
-            ]
-        },
+        "contigs": [
+            {
+                "contig_name": "NC_002951.2",
+                "start_pos": 1,
+                "end_pos": 2809422,
+                "n_reads": 175210,
+                "cov_bases": 2678233,
+                "coverage": 95.3304,
+                "mean_depth": 186.651,
+                "mean_base_quality": 22.6,
+                "mean_map_quality": 57.5,
+            },
+            {
+                "contig_name": "NC_006629.2",
+                "start_pos": 1,
+                "end_pos": 4440,
+                "n_reads": 2012,
+                "cov_bases": 4406,
+                "coverage": 99.2342,
+                "mean_depth": 351.234,
+                "mean_base_quality": 24.7,
+                "mean_map_quality": 30.7,
+            },
+        ]
     }
     # check if data matches
-    assert expected_samtools == result.model_dump()
+    assert expected_samtools == res.model_dump()

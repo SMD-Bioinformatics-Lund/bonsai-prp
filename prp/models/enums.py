@@ -15,6 +15,7 @@ class AnalysisSoftware(StrEnum):
     POSTALIGNQC = "postalignqc"
     QUAST = "quast"
     RESFINDER = "resfinder"
+    SAMTOOLS = "samtools"
     SCCMECTYPER = "sccmectyper"
     SEROTYPEFINDER = "serotypefinder"
     SHIGAPASS = "shigapass"
