@@ -9,6 +9,7 @@ class AnalysisSoftware(StrEnum):
     AMRFINDER = "amrfinder"
     BRACKEN = "bracken"
     EMMTYPER = "emmtyper"
+    GAMBIT = "gambit"
     MYKROBE = "mykrobe"
     POSTALIGNQC = "postalignqc"
     QUAST = "quast"

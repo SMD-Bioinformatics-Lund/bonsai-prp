@@ -64,18 +64,27 @@ class GenomeCompleteness(BaseModel):
     n_missing: int = Field(..., description="Number of missing cgMLST alleles")
 
 
+class GambitQcFlag(StrEnum):
+    """Qc thresholds for Gambit."""
+
+    GREEN = "green"
+    AMBER = "amber"
+    RED = "red"
+
+
 class GambitcoreQcResult(BaseModel):
     """Gambitcore genome completeness QC metrics."""
 
     scientific_name: str
-    completeness: float | None = None
-    assembly_core: str | None = None
+    completeness: float
+    assembly_core: int
+    species_core: int
     closest_accession: str | None = None
     closest_distance: float | None = None
     assembly_kmers: int | None = None
     species_kmers_mean: int | None = None
     species_kmers_std_dev: int | None = None
-    assembly_qc: str | None = None
+    assembly_qc: GambitQcFlag | None = None
 
 
 class NanoPlotQcResult(BaseModel):
