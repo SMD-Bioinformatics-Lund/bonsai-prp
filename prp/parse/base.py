@@ -3,14 +3,15 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 from logging import Logger, getLogger
-from typing import Any, Mapping, Type, IO, TypeAlias
+from typing import Any, Mapping, Type, IO, TypeAlias, TypeVar
 from prp.io.delimited import validate_fields
 from prp.models.base import ParserOutput, AnalysisType
+from collections.abc import Iterator, Callable
 
 
 ParserInput: TypeAlias = IO[bytes] | IO[str] | str | Path
 ParseImplOut: TypeAlias = Mapping[AnalysisType, Any]
-
+T = TypeVar("T")
 
 class BaseParser(ABC):
     """Parser class structure."""
@@ -123,6 +124,33 @@ class SingleAnalysisParser(BaseParser):
     @abstractmethod
     def _parse_one(self, source: ParserInput, **kwargs: Any) -> Any:
         ...
+
+
+def warn_if_extra_rows(
+    rows: Iterator[T],
+    warn: Callable[[str], None],
+    *,
+    context: str = "input",
+    max_consume: int = 10,
+    warn_at: int = 1,
+) -> int:
+    """
+    Consume up to `max_consume` additional rows from an iterator and warn once
+    if there is more than one row.
+
+    Returns number of extra rows consumed (0 if none).
+
+    - `warn_at`: warn when extra_rows reaches this number (default 1)
+    - `max_consume`: hard cap to avoid exhausting huge streams
+    """
+    extra = 0
+    for _ in rows:
+        extra += 1
+        if extra == warn_at:
+            warn(f"{context} has multiple rows; using first row only")
+        if extra >= max_consume:
+            break
+    return extra
 
 
 ParserClass = Type[BaseParser]
