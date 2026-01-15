@@ -122,15 +122,15 @@ class NanoPlotQcResult(BaseModel):
 class ContigCoverage(BaseModel):
     """Coverage information for a single contig."""
 
-    rname: str
-    startpos: int
-    endpos: int
-    numreads: int
-    covbases: int
+    contig_name: str
+    start_pos: int
+    end_pos: int
+    n_reads: int
+    cov_bases: int
     coverage: float
-    meandepth: float
-    meanbaseq: float
-    meanmapq: float
+    mean_depth: float
+    mean_base_quality: float
+    mean_map_quality: float
 
 
 class SamtoolsCoverageQcResult(BaseModel):
