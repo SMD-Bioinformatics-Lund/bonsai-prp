@@ -68,7 +68,7 @@ class GambitCoreParser(SingleAnalysisParser):
     """Gambit core parser."""
 
     software = GAMBIT
-    parser_name = "PostAlignQcParser"
+    parser_name = "GambitCoreParser"
     parser_version = 1
     schema_version = 1
 
