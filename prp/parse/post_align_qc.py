@@ -110,10 +110,7 @@ class PostAlignQcParser(SingleAnalysisParser):
         strict: bool = False,
         **kwargs: Any,
     ) -> PostAlignQcResult | None:
-        """
-        Read JSON and return a QcMethodIndex.
-        SingleAnalysisParser will wrap this into {analysis_type.value: ...}.
-        """
+        """Read JSON and return a PostAlignQcResult."""
 
         try:
             qc_dict = read_json(source)
