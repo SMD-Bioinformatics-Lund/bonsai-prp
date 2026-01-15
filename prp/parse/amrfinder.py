@@ -20,7 +20,7 @@ from prp.models.phenotype import (
 from prp.io.delimited import read_delimited, normalize_nulls
 from .base import BaseParser, ParseImplOut, ParserInput
 from .registry import register_parser
-from .utils import classify_variant_type, safe_int, safe_float, safe_stand
+from .utils import classify_variant_type, safe_int, safe_float, safe_strand
 
 LOG = logging.getLogger(__name__)
 
@@ -137,7 +137,7 @@ def _parse_gene(hit: dict[str, Any]) -> AmrFinderGeneT:
         contig_id=hit["contig_id"],
         query_start_pos=safe_int(hit["Start"]),
         query_end_pos=safe_int(hit["Stop"]),
-        strand=safe_stand(hit["Strand"]),
+        strand=safe_strand(hit["Strand"]),
         ref_gene_length=safe_int(hit["ref_seq_len"]),
         alignment_length=safe_int(hit["align_len"]),
         method=hit["Method"],
@@ -184,7 +184,7 @@ def _parse_variant(hit: dict[str, Any], variant_no: int) -> AmrFinderVariant:
         contig_id=hit["contig_id"],
         query_start_pos=safe_int(hit["Start"]),
         query_end_pos=safe_int(hit["Stop"]),
-        strand=safe_stand(hit["Strand"]),
+        strand=safe_strand(hit["Strand"]),
         ref_gene_length=safe_int(hit["ref_seq_len"]),
         alignment_length=hit["align_len"],
         method=hit["Method"],

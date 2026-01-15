@@ -23,11 +23,6 @@ from . import (
 )
 from .igv import parse_igv_info
 from .metadata import parse_run_info
-from .qc import (
-    parse_gambitcore_results,
-    parse_nanoplot_results,
-    parse_samtools_coverage_results,
-)
 from .typing import parse_cgmlst_results, parse_mlst_results
 
 LOG = logging.getLogger(__name__)
@@ -80,14 +75,14 @@ def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
             result=out.results[AnalysisType.QC],
         ))
 
-    if smp_cnf.gambitcore:
-        qc_results.append(parse_gambitcore_results(smp_cnf.gambitcore))
+    # if smp_cnf.gambitcore:
+    #     qc_results.append(parse_gambitcore_results(smp_cnf.gambitcore))
 
-    if smp_cnf.nanoplot:
-        qc_results.append(parse_nanoplot_results(smp_cnf.nanoplot))
+    # if smp_cnf.nanoplot:
+    #     qc_results.append(parse_nanoplot_results(smp_cnf.nanoplot))
 
-    if smp_cnf.samtools:
-        qc_results.append(parse_samtools_coverage_results(smp_cnf.samtools))
+    # if smp_cnf.samtools:
+    #     qc_results.append(parse_samtools_coverage_results(smp_cnf.samtools))
 
     return qc_results
 

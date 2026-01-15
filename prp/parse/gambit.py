@@ -91,7 +91,7 @@ class GambitCoreParser(SingleAnalysisParser):
             self.log_info(f"{self.software} input empty")
             return None
 
-        required_cols = {col for col in COLUMN_MAP.keys()}
+        required_cols = set(COLUMN_MAP)
         self.validate_columns(
             first_raw, required=required_cols, strict=strict
         )

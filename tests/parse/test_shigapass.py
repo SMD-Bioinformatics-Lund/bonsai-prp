@@ -8,7 +8,9 @@ from prp.parse.shigapass import ShigapassParser, extract_percentage
 
 
 EXPECTED_SHIGA_OUTPUT = [
-    ("ecoli_shigapass_path", {
+    (
+        "ecoli_shigapass_path",
+        {
             "rfb": None,
             "rfb_hits": 0.0,
             "mlst": None,
@@ -18,8 +20,11 @@ EXPECTED_SHIGA_OUTPUT = [
             "predicted_serotype": "Not Shigella/EIEC",
             "predicted_flex_serotype": None,
             "comments": None,
-        }),
-    ("shigella_shigapass_path", {
+        },
+    ),
+    (
+        "shigella_shigapass_path",
+        {
             "rfb": "C2",
             "rfb_hits": 48.2,
             "mlst": "ST145",
@@ -29,8 +34,8 @@ EXPECTED_SHIGA_OUTPUT = [
             "predicted_serotype": "SB2",
             "predicted_flex_serotype": None,
             "comments": None,
-            },
-     ),
+        },
+    ),
 ]
 
 
@@ -51,7 +56,9 @@ def test_extract_percentage(input: str, expected: float):
 
 
 @pytest.mark.parametrize("fixture_name,expected_result", EXPECTED_SHIGA_OUTPUT)
-def test_parse_shigapass_results(fixture_name: str, expected_result: dict[str, Any], request):
+def test_parse_shigapass_results(
+    fixture_name: str, expected_result: dict[str, Any], request
+):
     """Test parsing of shigapass result files."""
     filename = request.getfixturevalue(fixture_name)
     # test parsing the output of an ecoli.
