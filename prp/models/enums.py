@@ -10,6 +10,8 @@ class AnalysisSoftware(StrEnum):
     BRACKEN = "bracken"
     EMMTYPER = "emmtyper"
     GAMBIT = "gambit"
+    HAMRONIZATION = "hAMRonization"
+    KLEBORATE = "kleborate"
     MYKROBE = "mykrobe"
     NANOPLOT = "nanoplot"
     POSTALIGNQC = "postalignqc"
@@ -20,8 +22,8 @@ class AnalysisSoftware(StrEnum):
     SEROTYPEFINDER = "serotypefinder"
     SHIGAPASS = "shigapass"
     SPATYPER = "spatyper"
+    TBPROFILER = "tbprofiler"
     VIRULENCEFINDER = "virulencefinder"
-    HAMRONIZATION = "hAMRonization"
 
 
 class AnalysisType(StrEnum):
