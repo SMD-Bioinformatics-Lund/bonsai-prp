@@ -21,6 +21,7 @@ class AnalysisSoftware(StrEnum):
     SHIGAPASS = "shigapass"
     SPATYPER = "spatyper"
     VIRULENCEFINDER = "virulencefinder"
+    HAMRONIZATION = "hAMRonization"
 
 
 class AnalysisType(StrEnum):

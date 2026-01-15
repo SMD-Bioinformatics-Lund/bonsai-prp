@@ -200,8 +200,10 @@ def safe_percent(value: Any, *, logger: logging.Logger = LOG) -> float | None:
     return safe_float(value, min_value=0.0, max_value=100.0, strict=True, logger=logger)
 
 
-def safe_stand(value: str | int) -> SequenceStrand:
+def safe_strand(value: str | int) -> SequenceStrand:
     """Convert sequence strand. [+, 1, sense] -> SequenceStrand enum."""
+    if is_nullish(value):
+        return None
 
     # Accept common forward/reverse encodings from bioinformatics tools
     forward_tokens = {
@@ -227,7 +229,6 @@ def safe_stand(value: str | int) -> SequenceStrand:
         "neg",
         "negative",
     }
-
     # Normalize input
     if isinstance(value, int):
         token = str(value)  # 1 / -1

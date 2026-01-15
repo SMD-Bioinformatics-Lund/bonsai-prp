@@ -20,7 +20,7 @@ KeyFn = Callable[[str], str]
 ValFn = Callable[[Any], Any]
 
 
-def _as_text_stream(
+def as_text_stream(
     source: IO[bytes] | IO[str],
     *,
     encoding: str = "utf-8",
@@ -78,7 +78,7 @@ def read_delimited(
             )
         return
 
-    text_stream = _as_text_stream(source, encoding=encoding)
+    text_stream = as_text_stream(source, encoding=encoding)
     # If has_header=False, DictReader will treat the first row as data and use provided fieldnames.
     # If has_header=True and fieldnames=None, DictReader reads header from first row.
     reader = csv.DictReader(text_stream, delimiter=delimiter, fieldnames=fieldnames)
