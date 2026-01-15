@@ -11,6 +11,7 @@ class AnalysisSoftware(StrEnum):
     EMMTYPER = "emmtyper"
     GAMBIT = "gambit"
     MYKROBE = "mykrobe"
+    NANOPLOT = "nanoplot"
     POSTALIGNQC = "postalignqc"
     QUAST = "quast"
     RESFINDER = "resfinder"
