@@ -4,7 +4,7 @@ from typing import Any
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
 from prp.models.enums import AnalysisSoftware, AnalysisType
 from prp.models.qc import QuastQcResult
-from prp.parse.base import ParserInput, SingleAnalysisParser
+from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
 from prp.parse.registry import register_parser
 from prp.parse.utils import safe_float, safe_int
 
@@ -88,15 +88,7 @@ class QuastParser(SingleAnalysisParser):
 
         self.validate_columns(first_raw, required=REQUIRED_COLUMNS, strict=strict_columns)
         first = _normalize_quast_row(first_raw)
-
-        # If there are more rows, warn
-        extra_rows = 0
-        for _ in rows:
-            extra_rows += 1
-            if extra_rows == 1:
-                self.log_warning(f"{self.software} file has multiple rows; using first row only")
-            if extra_rows > 10:
-                break  # avoid consuming huge streams unnecessarily
+        warn_if_extra_rows(rows, self.log_warning, context=f"{self.software} file", max_consume=10)
 
         # build qc result
         return _to_qc_result(first)

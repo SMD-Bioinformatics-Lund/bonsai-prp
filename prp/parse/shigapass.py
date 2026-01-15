@@ -7,7 +7,7 @@ from typing import Any, Mapping
 from prp.io.delimited import DelimiterRow, canonical_header, normalize_row, read_delimited, validate_fields, is_nullish
 from prp.models.enums import AnalysisSoftware, AnalysisType
 from prp.models.typing import TypingResultShiga
-from prp.parse.base import ParserInput, SingleAnalysisParser
+from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
 from prp.parse.registry import register_parser
 from prp.parse.utils import safe_float, safe_percent
 
@@ -122,15 +122,7 @@ class ShigapassParser(SingleAnalysisParser):
 
         # Normalize keys
         first = _normalize_shigapass_row(first_raw)
-
-        # If there are more rows, warn
-        extra_rows = 0
-        for _ in rows:
-            extra_rows += 1
-            if extra_rows == 1:
-                self.log_warning("Shigapass file has multiple rows; using first row only")
-            if extra_rows > 10:
-                break  # avoid consuming huge streams unnecessarily
+        warn_if_extra_rows(rows, self.log_warning, context=f"{self.software} file", max_consume=10)
 
         # Build typing result
         shiga = _to_typing_result(first, strict=strict)

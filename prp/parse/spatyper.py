@@ -4,7 +4,7 @@ from typing import Any
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
 from prp.models.enums import AnalysisSoftware, AnalysisType
 from prp.models.typing import TypingResultSpatyper
-from prp.parse.base import ParserInput, SingleAnalysisParser
+from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
 from prp.parse.registry import register_parser
 
 SPATYPER = AnalysisSoftware.SPATYPER
@@ -66,15 +66,7 @@ class SpatyperParser(SingleAnalysisParser):
 
         self.validate_columns(first_raw, required=REQUIRED_COLUMNS, strict=strict_columns)
         first = _normalize_spatyper_row(first_raw)
-
-        # If there are more rows, warn
-        extra_rows = 0
-        for _ in rows:
-            extra_rows += 1
-            if extra_rows == 1:
-                self.log_warning("Shigapass file has multiple rows; using first row only")
-            if extra_rows > 10:
-                break  # avoid consuming huge streams unnecessarily
+        warn_if_extra_rows(rows, self.log_warning, context=f"{self.software} file", max_consume=10)
 
         # Build typing result
         return _to_typing_result(first)
