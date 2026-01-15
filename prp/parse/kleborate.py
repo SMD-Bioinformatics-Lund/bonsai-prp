@@ -4,13 +4,18 @@ Documentation: https://kleborate.readthedocs.io/en/latest/index.html
 """
 
 import csv
+from dataclasses import dataclass
+from itertools import chain
 import logging
 import re
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal, TextIO, TypeAlias
+from typing import Any, Literal, Mapping, TextIO, TypeAlias
 
-from prp.models.base import ParserOutput
+from prp.exceptions import ParserError
+from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
+from prp.models.base import AnalysisType, ParserOutput
+from prp.models.enums import AnalysisSoftware
 from prp.models.hamronization import HamronizationEntries, HamronizationEntry
 from prp.models.kleborate import (
     KleborateEtIndex,
@@ -40,8 +45,75 @@ from prp.models.phenotype import (
 from prp.models.qc import QcMethodIndex, QcSoftware
 from prp.models.species import KleborateSppIndex
 from prp.models.typing import TypingMethod, TypingResultMlst
+from prp.parse.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.registry import register_parser
+from prp.parse.utils import safe_int
+
+from .hamronization import HAmrOnizationParser
 
 LOG = logging.getLogger(__name__)
+
+REQUIRED_COLUMNS = {"strain"}
+COLUMN_MAP = {"strain": "sample_id"}
+
+KLEBORATE = AnalysisSoftware.KLEBORATE
+
+
+_MLST_LIKE_SCHEMAS: dict[str, dict[str, Any]] = {
+    "abst": {"lineage_key": "Aerobactin", "st_key": "AbST", "qc_keys": ["spurious_abst_hits"]},
+    "cbst": {"lineage_key": "Colibactin", "st_key": "CbST", "qc_keys": ["spurious_clb_hits"]},
+    "rmst": {"lineage_key": "RmpADC", "st_key": "RmST", "qc_keys": ["spurious_rmst_hits"]},
+    "smst": {"lineage_key": "Salmochelin", "st_key": "SmST", "qc_keys": ["spurious_smst_hits"]},
+    "ybst": {"lineage_key": "Yersiniabactin", "st_key": "YbST", "qc_keys": ["spurious_ybt_hits"]},
+}
+
+_MLST_TO_ANALYSISTYPE: dict[str, AnalysisType] = {
+    "abst": AnalysisType.ABST,
+    "cbst": AnalysisType.CBST,
+    "rmst": AnalysisType.RMST,
+    "smst": AnalysisType.SMST,
+    "ybst": AnalysisType.YBST,
+}
+
+@dataclass(frozen=True)
+class _VariantPattern:
+    residue: Literal["nucleotide", "protein"]
+    subtype: Any  # VariantSubType in your codebase
+    regex: re.Pattern[str]
+
+
+def _compile(p: str) -> re.Pattern[str]:
+    return re.compile(p, re.IGNORECASE)
+
+_VARIANT_PATTERNS: dict[tuple[str, Any], re.Pattern[str]] = {
+    ("protein", VariantSubType.SUBSTITUTION): _compile(
+        r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)(?P<alt>[A-Z]+)"
+    ),
+    ("protein", VariantSubType.INSERTION): _compile(
+        r"\w\.(?P<start>\d+)_(?P<end>\d+)ins(?P<alt>[A-Z]+)"
+    ),
+    ("protein", VariantSubType.FRAME_SHIFT): _compile(
+        r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)fs"
+    ),
+    ("protein", VariantSubType.DELETION): _compile(
+        r"\w\.(?P<ref>[A-Z]+)(?P<pos>\d+)del"
+    ),
+    ("nucleotide", VariantSubType.SUBSTITUTION): _compile(
+        r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)(?P<alt>[ACGTURYSWKMBDHVN]+)"
+    ),
+    ("nucleotide", VariantSubType.FRAME_SHIFT): _compile(
+        r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)fs"
+    ),
+    ("nucleotide", VariantSubType.DELETION): _compile(
+        r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)del"
+    ),
+    ("nucleotide", VariantSubType.DUPLICATION): _compile(
+        r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)dup"
+    ),
+    ("nucleotide", VariantSubType.INVERSION): _compile(
+        r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)inv"
+    ),
+}
 
 
 class PresetName(StrEnum):
@@ -57,355 +129,332 @@ JSONLike: TypeAlias = None | str | Numeric | list["JSONLike"] | dict[str, "JSONL
 PercentMode: TypeAlias = Literal["fraction", "percent"]
 
 # Regexes
-_PERCENT_RE = re.compile(r"\s*(-?\d+(?:\.\d+)?)\s*%")
-_FLOAT_RE = re.compile(r"\s*-?\d+\.\d+\s*")
-_INT_RE = re.compile(r"\s*-?\d+\s*")
+# _PERCENT_RE = re.compile(r"\s*(-?\d+(?:\.\d+)?)\s*%")
+# _FLOAT_RE = re.compile(r"\s*-?\d+\.\d+\s*")
+# _INT_RE = re.compile(r"\s*-?\d+\s*")
 
 
-def _normalize_scalar(
-    s: str | None,
-    percent_mode: PercentMode = "fraction",
-    null_values: list[str] = ["-"],
-) -> JSONLike:
-    """Normalize stringed value to python type.
+# def _normalize_scalar(
+#     s: str | None,
+#     percent_mode: PercentMode = "fraction",
+#     null_values: list[str] = ["-"],
+# ) -> JSONLike:
+#     """Normalize stringed value to python type.
 
-    percent_mode == "fraction" -> (0-1)
-    percent_mode == "percent" -> (0-100)
-    """
-    if s is None:
-        return None
+#     percent_mode == "fraction" -> (0-1)
+#     percent_mode == "percent" -> (0-100)
+#     """
+#     if s is None:
+#         return None
 
-    s = s.strip()
-    if not s or s in null_values:
-        return None
+#     s = s.strip()
+#     if not s or s in null_values:
+#         return None
 
-    # Convert percentages (numeric + %)
-    match = _PERCENT_RE.fullmatch(s)
-    if match:
-        val = float(match.group(1))
-        return (val / 100) if percent_mode == "fraction" else val
+#     # Convert percentages (numeric + %)
+#     match = _PERCENT_RE.fullmatch(s)
+#     if match:
+#         val = float(match.group(1))
+#         return (val / 100) if percent_mode == "fraction" else val
 
-    if _FLOAT_RE.fullmatch(s):
-        return float(s)
+#     if _FLOAT_RE.fullmatch(s):
+#         return float(s)
 
-    if _INT_RE.fullmatch(s):
-        return int(s)
-    return s
-
-
-def _normalize_cell(
-    raw: str | None,
-    percent_mode: PercentMode = "fraction",
-    null_values: list[str] = ["-"],
-) -> JSONLike:
-    """Normalize one cell:
-    - Split by ';' into a list if present.
-    - Normalize each token via _normalize_scalar.
-    - If splits to one item, return the item (not a list).
-    - If the cell is empty/None or in null_values, return None
-    """
-    if raw is None:
-        return None
-
-    # check if cell is a list of values
-    if ";" in raw:
-        parts = [p.strip() for p in raw.split(";")]
-        normed = [
-            _normalize_scalar(p, percent_mode=percent_mode, null_values=null_values)
-            for p in parts
-        ]
-        if not normed:
-            return None
-
-        return normed
-    else:
-        return _normalize_scalar(
-            raw, percent_mode=percent_mode, null_values=null_values
-        )
+#     if _INT_RE.fullmatch(s):
+#         return int(s)
+#     return s
 
 
-def _set_nested(
-    d: dict[str, Any], path: list[str], value: Any
-) -> dict[str, Any] | None:
-    """Set value in a nested dict according to path."""
-    if not path:
-        return None
+# def _normalize_cell(
+#     raw: str | None,
+#     percent_mode: PercentMode = "fraction",
+#     null_values: list[str] = ["-"],
+# ) -> JSONLike:
+#     """Normalize one cell:
+#     - Split by ';' into a list if present.
+#     - Normalize each token via _normalize_scalar.
+#     - If splits to one item, return the item (not a list).
+#     - If the cell is empty/None or in null_values, return None
+#     """
+#     if raw is None:
+#         return None
 
-    key = path[0]
-    # create new node if node has not yet been added
-    node: dict[str, Any] | None = d.get(key)
-    if not isinstance(node, dict):
-        node = {}
-        d[key] = node
+#     # check if cell is a list of values
+#     if ";" in raw:
+#         parts = [p.strip() for p in raw.split(";")]
+#         normed = [
+#             _normalize_scalar(p, percent_mode=percent_mode, null_values=null_values)
+#             for p in parts
+#         ]
+#         if not normed:
+#             return None
 
-    if len(path) > 1:
-        d[key] = _set_nested(node, path[1:], value)
-    else:
-        d[key] = value
-    return d
-
-
-def parse_kleborate_output(
-    source: TextIO, primary_key: str | None = "strain"
-) -> dict[str, Any]:
-    """Read and serialize kleborate results as a dicitonary."""
-    delimiter = "\t"
-    reader = csv.reader(source, delimiter=delimiter)
-    rows = list(reader)
-    if not rows:
-        return {}
-
-    header = rows[0]
-    # pre-compute header paths
-    header_paths: list[list[str]] = [h.split("__") for h in header]
-
-    result: dict[str, JSONLike] = {}
-    for i, row in enumerate(rows[1:], start=1):
-        # skip empty lines
-        if not any(cell.strip() for cell in row if cell is not None):
-            continue
-
-        # Determine sample id
-        if primary_key and primary_key in header:
-            pk_idx = header.index(primary_key)
-            row_key = row[pk_idx].strip() if pk_idx < len(row) else None or f"row_{i}"
-        else:
-            row_key = f"row_{i}"
-
-        # create nested json-like structure from header
-        # foo__bar__doo -> {'foo': {'bar': {'doo': value}}}
-        nested: dict[str, JSONLike] = {}
-        for col_idx, path in enumerate(header_paths):
-            # Safeguard that row is as long as the header
-            raw_value = row[col_idx] if col_idx < len(row) else None
-            value = _normalize_cell(raw_value)
-            nested = _set_nested(nested, path, value)
-        result[row_key] = nested
-    return result
+#         return normed
+#     else:
+#         return _normalize_scalar(
+#             raw, percent_mode=percent_mode, null_values=null_values
+#         )
 
 
-def _mlst_like_formatter(
-    d: dict[str, Any],
-    lineage_key: str | None,
-    st_key: str,
-    qc_keys: list[str],
-    schema_name: str,
-) -> KleborateMlstLikeResults:
-    """Structure MLST-like typing data.
+# def _set_nested(
+#     d: dict[str, Any], path: list[str], value: Any
+# ) -> dict[str, Any] | None:
+#     """Set value in a nested dict according to path."""
+#     if not path:
+#         return None
 
-    Note: Qc keys are omitted until the data format allows for generic information.
-    """
-    typing_result = d.get(schema_name, {})
-    # sanity check input
-    if not lineage_key:
-        raise RuntimeError("Lineage key must be set, check definition")
+#     key = path[0]
+#     # create new node if node has not yet been added
+#     node: dict[str, Any] | None = d.get(key)
+#     if not isinstance(node, dict):
+#         node = {}
+#         d[key] = node
 
-    if lineage_key not in typing_result:
-        raise ValueError(
-            f"Lineage key: {lineage_key} not found in data, check definition"
-        )
-
-    lineage = (
-        "; ".join(typing_result[lineage_key])
-        if isinstance(typing_result[lineage_key], list)
-        else typing_result[lineage_key]
-    )
-
-    if st_key not in typing_result:
-        raise ValueError(
-            f"Sequence type key: {lineage_key} not in data, check definition"
-        )
-
-    if isinstance(typing_result[st_key], str):
-        try:
-            sequence_type = int(typing_result[st_key])
-        except ValueError:
-            sequence_type = typing_result[st_key]
-    else:
-        sequence_type = typing_result[st_key]
-
-    # buld allele list, skip lineage, st, and qc
-    skip_keys: list[str] = [lineage_key, st_key, *qc_keys]
-    alleles = {key: val for key, val in typing_result.items() if key not in skip_keys}
-
-    # TODO add QC metrics to output
-    return KleborateMlstLikeResults(
-        lineage=lineage, sequenceType=sequence_type, alleles=alleles, scheme=schema_name
-    )
+#     if len(path) > 1:
+#         d[key] = _set_nested(node, path[1:], value)
+#     else:
+#         d[key] = value
+#     return d
 
 
-def _format_mlst_like_typing(
-    result: dict[str, Any], version: str
-) -> list[KleborateMlstLikeIndex]:
-    """Generic MLST-like formatter.
+# def parse_kleborate_output(
+#     source: TextIO, primary_key: str | None = "strain"
+# ) -> dict[str, Any]:
+#     """Read and serialize kleborate results as a dicitonary."""
+#     delimiter = "\t"
+#     reader = csv.reader(source, delimiter=delimiter)
+#     rows = list(reader)
+#     if not rows:
+#         return {}
 
-    lineage_key: str
-    st_key: str
-    qc_keys = []
-    alleles is the rest
-    """
-    mlst_like_typing_schemas: dict[str, Any] = {
-        "abst": {
-            "lineage_key": "Aerobactin",
-            "st_key": "AbST",
-            "qc_keys": ["spurious_abst_hits"],
-        },
-        "cbst": {
-            "lineage_key": "Colibactin",
-            "st_key": "CbST",
-            "qc_keys": ["spurious_clb_hits"],
-        },
-        "rmst": {
-            "lineage_key": "RmpADC",
-            "st_key": "RmST",
-            "qc_keys": ["spurious_rmst_hits"],
-        },
-        "smst": {
-            "lineage_key": "Salmochelin",
-            "st_key": "SmST",
-            "qc_keys": ["spurious_smst_hits"],
-        },
-        "ybst": {
-            "lineage_key": "Yersiniabactin",
-            "st_key": "YbST",
-            "qc_keys": ["spurious_ybt_hits"],
-        },
-    }
+#     header = rows[0]
+#     # pre-compute header paths
+#     header_paths: list[list[str]] = [h.split("__") for h in header]
 
-    typing_result: list[KleborateMlstLikeIndex] = []
-    for name, schema_def in mlst_like_typing_schemas.items():
-        try:
-            res = _mlst_like_formatter(result, schema_name=name, **schema_def)
-            out = KleborateMlstLikeIndex(
-                type=TypingMethod(name), version=version, result=res
-            )
-            typing_result.append(out)
-        except RuntimeError as exc:
-            LOG.error(f"Critial Kleborate parser error; {exc}")
-            raise
-        except ValueError as exc:
-            LOG.error(f"Could not parse {name} typing; skipping... err: {exc}")
-    return typing_result
+#     result: dict[str, JSONLike] = {}
+#     for i, row in enumerate(rows[1:], start=1):
+#         # skip empty lines
+#         if not any(cell.strip() for cell in row if cell is not None):
+#             continue
+
+#         # Determine sample id
+#         if primary_key and primary_key in header:
+#             pk_idx = header.index(primary_key)
+#             row_key = row[pk_idx].strip() if pk_idx < len(row) else None or f"row_{i}"
+#         else:
+#             row_key = f"row_{i}"
+
+#         # create nested json-like structure from header
+#         # foo__bar__doo -> {'foo': {'bar': {'doo': value}}}
+#         nested: dict[str, JSONLike] = {}
+#         for col_idx, path in enumerate(header_paths):
+#             # Safeguard that row is as long as the header
+#             raw_value = row[col_idx] if col_idx < len(row) else None
+#             value = _normalize_cell(raw_value)
+#             nested = _set_nested(nested, path, value)
+#         result[row_key] = nested
+#     return result
 
 
-def _format_mlst_typing(result: dict[str, Any], schema_name: str) -> TypingResultMlst:
-    """Format mlst typing"""
-    alleles = {}
-    return TypingResultMlst(scheme=schema_name, sequenceType=4242, alleles=alleles)
+# def _mlst_like_formatter(
+#     d: dict[str, Any],
+#     lineage_key: str | None,
+#     st_key: str,
+#     qc_keys: list[str],
+#     schema_name: str,
+# ) -> KleborateMlstLikeResults:
+#     """Structure MLST-like typing data.
+
+#     Note: Qc keys are omitted until the data format allows for generic information.
+#     """
+#     typing_result = d.get(schema_name, {})
+#     # sanity check input
+#     if not lineage_key:
+#         raise RuntimeError("Lineage key must be set, check definition")
+
+#     if lineage_key not in typing_result:
+#         raise ValueError(
+#             f"Lineage key: {lineage_key} not found in data, check definition"
+#         )
+
+#     lineage = (
+#         "; ".join(typing_result[lineage_key])
+#         if isinstance(typing_result[lineage_key], list)
+#         else typing_result[lineage_key]
+#     )
+
+#     if st_key not in typing_result:
+#         raise ValueError(
+#             f"Sequence type key: {lineage_key} not in data, check definition"
+#         )
+
+#     if isinstance(typing_result[st_key], str):
+#         try:
+#             sequence_type = int(typing_result[st_key])
+#         except ValueError:
+#             sequence_type = typing_result[st_key]
+#     else:
+#         sequence_type = typing_result[st_key]
+
+#     # buld allele list, skip lineage, st, and qc
+#     skip_keys: list[str] = [lineage_key, st_key, *qc_keys]
+#     alleles = {key: val for key, val in typing_result.items() if key not in skip_keys}
+
+#     # TODO add QC metrics to output
+#     return KleborateMlstLikeResults(
+#         lineage=lineage, sequenceType=sequence_type, alleles=alleles, scheme=schema_name
+#     )
 
 
-def _parse_qc(result: dict[str, JSONLike], version: str) -> QcMethodIndex:
-    contig_stats = result.get("general", {}).get("contig_stats")
-    if contig_stats:
-        res = KleborateQcResult(
-            n_contigs=contig_stats["contig_count"],
-            n50=contig_stats["N50"],
-            largest_contig=contig_stats["largest_contig"],
-            total_length=contig_stats["total_size"],
-            ambigious_bases=True if contig_stats["ambiguous_bases"] == "yes" else "no",
-            qc_warnings=contig_stats["QC_warnings"],
-        )
-        return QcMethodIndex(software=QcSoftware.KLEBORATE, version=version, result=res)
+# def _format_mlst_like_typing(
+#     result: dict[str, Any], version: str
+# ) -> list[KleborateMlstLikeIndex]:
+#     """Generic MLST-like formatter.
+
+#     lineage_key: str
+#     st_key: str
+#     qc_keys = []
+#     alleles is the rest
+#     """
+#     mlst_like_typing_schemas: dict[str, Any] = {
+#         "abst": {
+#             "lineage_key": "Aerobactin",
+#             "st_key": "AbST",
+#             "qc_keys": ["spurious_abst_hits"],
+#         },
+#         "cbst": {
+#             "lineage_key": "Colibactin",
+#             "st_key": "CbST",
+#             "qc_keys": ["spurious_clb_hits"],
+#         },
+#         "rmst": {
+#             "lineage_key": "RmpADC",
+#             "st_key": "RmST",
+#             "qc_keys": ["spurious_rmst_hits"],
+#         },
+#         "smst": {
+#             "lineage_key": "Salmochelin",
+#             "st_key": "SmST",
+#             "qc_keys": ["spurious_smst_hits"],
+#         },
+#         "ybst": {
+#             "lineage_key": "Yersiniabactin",
+#             "st_key": "YbST",
+#             "qc_keys": ["spurious_ybt_hits"],
+#         },
+#     }
+
+#     typing_result: list[KleborateMlstLikeIndex] = []
+#     for name, schema_def in mlst_like_typing_schemas.items():
+#         try:
+#             res = _mlst_like_formatter(result, schema_name=name, **schema_def)
+#             out = KleborateMlstLikeIndex(
+#                 type=TypingMethod(name), version=version, result=res
+#             )
+#             typing_result.append(out)
+#         except RuntimeError as exc:
+#             LOG.error(f"Critial Kleborate parser error; {exc}")
+#             raise
+#         except ValueError as exc:
+#             LOG.error(f"Could not parse {name} typing; skipping... err: {exc}")
+#     return typing_result
 
 
-def _parse_kaptive(d: dict[str, JSONLike], version: str) -> KleborateKtypeIndex:
-    """Parse kaptive results in Kleborate."""
-
-    def _fmt_res(
-        d: dict[str, JSONLike], type: Literal["K", "O"]
-    ) -> KleborateKaptiveLocus:
-        return KleborateKaptiveLocus(
-            locus=d[f"{type}_locus"],
-            type=d[f"{type}_type"],
-            identity=float(d[f"{type}_locus_identity"]),
-            confidence=d[f"{type}_locus_confidence"].lower(),
-            problems=d[f"{type}_locus_problems"],
-            missing_genes=d[f"{type}_Missing_expected_genes"],
-        )
-
-    return KleborateKtypeIndex(
-        version=version,
-        result=KleborateKaptiveTypingResult(
-            k_type=_fmt_res(d, "K"), o_type=_fmt_res(d, "O")
-        ),
-    )
+# def _format_mlst_typing(result: dict[str, Any], schema_name: str) -> TypingResultMlst:
+#     """Format mlst typing"""
+#     alleles = {}
+#     return TypingResultMlst(scheme=schema_name, sequenceType=4242, alleles=alleles)
 
 
-def format_kleborate_output(
-    result: dict[str, JSONLike], version: str
-) -> list[ParserOutput]:
-    """Format raw output to PRP data model.
+# def _parse_qc(result: dict[str, JSONLike], version: str) -> QcMethodIndex:
+#     contig_stats = result.get("general", {}).get("contig_stats")
+#     if contig_stats:
+#         res = KleborateQcResult(
+#             n_contigs=contig_stats["contig_count"],
+#             n50=contig_stats["N50"],
+#             largest_contig=contig_stats["largest_contig"],
+#             total_length=contig_stats["total_size"],
+#             ambigious_bases=True if contig_stats["ambiguous_bases"] == "yes" else "no",
+#             qc_warnings=contig_stats["QC_warnings"],
+#         )
+#         return QcMethodIndex(software=QcSoftware.KLEBORATE, version=version, result=res)
 
-    It takes a nested dictionary as input where the nesting defines the categories.
-    """
-    formatted: list[ParserOutput] = []
-    # parse qc if there are quality metrics
-    if (general_info := result.get("general")) and isinstance(general_info, dict):
-        if "contig_stats" in general_info:
-            formatted.append(
-                ParserOutput(target_field="qc", data=_parse_qc(result, version))
-            )
 
-    if (entb_res := result.get("enterobacterales")) and isinstance(entb_res, dict):
-        # add species prediction
-        raw_spp = entb_res.get("species", {})
-        spp_pred = KleboreateSppResult(
-            scientificName=raw_spp.get("species", "unknown"),
-            match=raw_spp.get("species_match"),
-        )
-        idx = KleborateSppIndex(result=spp_pred)
-        formatted.append(ParserOutput(target_field="species_prediction", data=idx))
+# def format_kleborate_output(
+#     result: dict[str, JSONLike], version: str
+# ) -> list[ParserOutput]:
+#     """Format raw output to PRP data model.
 
-    # parse various typing methods
-    if "klebsiella" in result:
-        formatted.extend(
-            [
-                ParserOutput(target_field="typing_result", data=idx)
-                for idx in _format_mlst_like_typing(
-                    result["klebsiella"], version=version
-                )
-            ]
-        )
-    # Parse preset specific fields
-    if (preset_results := result.get(PresetName.KPSC, {})) and isinstance(
-        preset_results, dict
-    ):
-        # parse mlst
-        # KoSC -> pubmlst
-        # KpSC -> pasteur
-        # if (mlst_res := preset_results.get("mlst", {})) and isinstance(mlst_res, dict):
-        #     idx = _format_mlst_typing(preset_results, schema_name="pasteur")
-        #     formatted.append(ParserOutput(target_field="typing_result", data=idx))
-        # parse virulence
-        if (vir_score := preset_results.get("virulence_score", {})) and isinstance(
-            vir_score, dict
-        ):
-            idx = KleborateScoreIndex(
-                version=version,
-                type=ElementType.VIR,
-                result=KleborateEtScore(
-                    score=int(vir_score["virulence_score"]),
-                    spurious_hits=vir_score["spurious_virulence_hits"],
-                ),
-            )
-            formatted.append(ParserOutput(target_field="element_type_result", data=idx))
-        # parse kapsule typing
-        if (kaptive_res := preset_results.get("kaptive", {})) and isinstance(
-            kaptive_res, dict
-        ):
-            formatted.append(
-                ParserOutput(
-                    target_field="typing_result",
-                    data=_parse_kaptive(kaptive_res, version),
-                )
-            )
-    if (preset_results := result.get(PresetName.EC, {})) and isinstance(
-        preset_results, dict
-    ):
-        if (mlst_res := preset_results.get("mlst", {})) and isinstance(mlst_res, dict):
-            pass
-            # Ecoli -> both
-    return formatted
+#     It takes a nested dictionary as input where the nesting defines the categories.
+#     """
+#     formatted: list[ParserOutput] = []
+#     # parse qc if there are quality metrics
+#     if (general_info := result.get("general")) and isinstance(general_info, dict):
+#         if "contig_stats" in general_info:
+#             formatted.append(
+#                 ParserOutput(target_field="qc", data=_parse_qc(result, version))
+#             )
+
+#     if (entb_res := result.get("enterobacterales")) and isinstance(entb_res, dict):
+#         # add species prediction
+#         raw_spp = entb_res.get("species", {})
+#         spp_pred = KleboreateSppResult(
+#             scientificName=raw_spp.get("species", "unknown"),
+#             match=raw_spp.get("species_match"),
+#         )
+#         idx = KleborateSppIndex(result=spp_pred)
+#         formatted.append(ParserOutput(target_field="species_prediction", data=idx))
+
+#     # parse various typing methods
+#     if "klebsiella" in result:
+#         formatted.extend(
+#             [
+#                 ParserOutput(target_field="typing_result", data=idx)
+#                 for idx in _format_mlst_like_typing(
+#                     result["klebsiella"], version=version
+#                 )
+#             ]
+#         )
+#     # Parse preset specific fields
+#     if (preset_results := result.get(PresetName.KPSC, {})) and isinstance(
+#         preset_results, dict
+#     ):
+#         # parse mlst
+#         # KoSC -> pubmlst
+#         # KpSC -> pasteur
+#         # if (mlst_res := preset_results.get("mlst", {})) and isinstance(mlst_res, dict):
+#         #     idx = _format_mlst_typing(preset_results, schema_name="pasteur")
+#         #     formatted.append(ParserOutput(target_field="typing_result", data=idx))
+#         # parse virulence
+#         if (vir_score := preset_results.get("virulence_score", {})) and isinstance(
+#             vir_score, dict
+#         ):
+#             idx = KleborateScoreIndex(
+#                 version=version,
+#                 type=ElementType.VIR,
+#                 result=KleborateEtScore(
+#                     score=int(vir_score["virulence_score"]),
+#                     spurious_hits=vir_score["spurious_virulence_hits"],
+#                 ),
+#             )
+#             formatted.append(ParserOutput(target_field="element_type_result", data=idx))
+#         # parse kapsule typing
+#         if (kaptive_res := preset_results.get("kaptive", {})) and isinstance(
+#             kaptive_res, dict
+#         ):
+#             formatted.append(
+#                 ParserOutput(
+#                     target_field="typing_result",
+#                     data=_parse_kaptive(kaptive_res, version),
+#                 )
+#             )
+#     if (preset_results := result.get(PresetName.EC, {})) and isinstance(
+#         preset_results, dict
+#     ):
+#         if (mlst_res := preset_results.get("mlst", {})) and isinstance(mlst_res, dict):
+#             pass
+#             # Ecoli -> both
+#     return formatted
 
 
 def _get_hamr_phenotype(record: HamronizationEntry) -> PhenotypeInfo | None:
@@ -596,28 +645,285 @@ def hamronization_to_restance_entry(
     )
 
 
-def parse_kleborate_v3(
-    path: Path,
-    version: str,
-    encoding: str = "utf-8",
-    hamronization_entries: HamronizationEntries | None = None,
-):
-    """Parse Kleborate v3 results to PRP format.
+# def parse_kleborate_v3(
+#     path: Path,
+#     version: str,
+#     encoding: str = "utf-8",
+#     hamronization_entries: HamronizationEntries | None = None,
+# ):
+#     """Parse Kleborate v3 results to PRP format.
 
-    https://kleborate.readthedocs.io/en/latest/index.html#
-    """
-    parser_results: list[ParserOutput] = []
-    with path.open(encoding=encoding) as inpt:
-        results = parse_kleborate_output(inpt)
+#     https://kleborate.readthedocs.io/en/latest/index.html#
+#     """
+#     parser_results: list[ParserOutput] = []
+#     with path.open(encoding=encoding) as inpt:
+#         results = parse_kleborate_output(inpt)
 
-        # structure analysis result to prp format
-        for _, result in results.items():
-            parser_results.extend(format_kleborate_output(result, version))
+#         # structure analysis result to prp format
+#         for _, result in results.items():
+#             parser_results.extend(format_kleborate_output(result, version))
 
-    # optionally add resistance determinants from hAMRonization output
-    if hamronization_entries:
-        idx = hamronization_to_restance_entry(hamronization_entries)
-        parser_results.append(
-            ParserOutput(target_field="element_type_result", data=idx)
+#     # optionally add resistance determinants from hAMRonization output
+#     if hamronization_entries:
+#         idx = hamronization_to_restance_entry(hamronization_entries)
+#         parser_results.append(
+#             ParserOutput(target_field="element_type_result", data=idx)
+#         )
+#     return parser_results
+
+
+def _set_nested_iter(d: dict[str, Any], path: list[str], value: Any) -> None:
+    """Iteratively set nested keys. Creates dict nodes as needed."""
+    cur = d
+    for key in path[:-1]:
+        nxt = cur.get(key)
+        if not isinstance(nxt, dict):
+            nxt = {}
+            cur[key] = nxt
+        cur = nxt
+    cur[path[-1]] = value
+
+
+def _normalize_kleborate_row(row: DelimiterRow) -> DelimiterRow:
+    """Wrapps normalize row."""
+    normed = normalize_row(
+        row,
+        key_fn=lambda r: r.strip(),
+        val_fn=lambda v: None if is_nullish(v) else v,
+        column_map=COLUMN_MAP
+    )
+    # convert flat dict to nested dict.
+    header_paths = {h: h.split("__") for h in normed}
+
+    nested: dict[str, Any] = {}
+    for column, path in header_paths.items():
+        value = normed[column]
+        _set_nested_iter(nested, path, value)
+    return nested
+
+
+def _parse_qc(result: Mapping[str, Any]) -> KleborateQcResult | None:
+    contig_stats = result.get("general", {}).get("contig_stats")
+    if contig_stats:
+        return KleborateQcResult(
+            n_contigs=safe_int(contig_stats["contig_count"]),
+            n50=safe_int(contig_stats["N50"]),
+            largest_contig=safe_int(contig_stats["largest_contig"]),
+            total_length=safe_int(contig_stats["total_size"]),
+            ambigious_bases=True if contig_stats["ambiguous_bases"] == "yes" else "no",
+            qc_warnings=contig_stats["QC_warnings"],
         )
-    return parser_results
+
+def _parse_species(result: Mapping[str, Any]) -> KleboreateSppResult | None:
+    """Parse species prediction results into a KleborateSpp result."""
+    entb = result.get("enterobacterales")
+    if not isinstance(entb, Mapping):
+        return None
+    raw = entb.get("species")
+    if not isinstance(raw, Mapping):
+        return None
+
+    return KleboreateSppResult(
+        scientific_name=raw.get("species", "unknown"),
+        match=raw.get("species_match", "weak")
+    )
+
+
+def _parse_virulence(result: Mapping[str, Any]) -> KleborateEtScore | None:
+    """Get virulence score from result."""
+    preset = result.get("klebsiella_pneumo_complex")
+    if not isinstance(preset, Mapping):
+        return None
+
+    vir = preset.get("virulence_score")
+    if not isinstance(vir, Mapping):
+        return None
+
+    return KleborateEtScore(
+        score=safe_int(vir.get("virulence_score")),
+        spurious_hits=vir.get("spurious_virulence_hits"),
+    )
+
+
+def _parse_kaptive(result: Mapping[str, Any]) -> dict[AnalysisType.K_TYPE, KleborateKaptiveLocus]:
+    """Parse kaptive results in Kleborate and return K/O typing results."""
+
+    def _fmt_res(
+        d: dict[str, Any], type: Literal["K", "O"]
+    ) -> KleborateKaptiveLocus:
+        return KleborateKaptiveLocus(
+            locus=d[f"{type}_locus"],
+            type=d[f"{type}_type"],
+            identity=float(d[f"{type}_locus_identity"]),
+            confidence=d[f"{type}_locus_confidence"].lower(),
+            problems=d[f"{type}_locus_problems"],
+            missing_genes=d[f"{type}_Missing_expected_genes"],
+        )
+
+    return {AnalysisType.K_TYPE: _fmt_res(result, "K"), AnalysisType.O_TYPE: _fmt_res(result, "O")}
+
+
+def _parse_mlst_like(result: Mapping[str, Any]) -> dict[AnalysisType, KleborateMlstLikeResults]:
+    """
+    Parse the MLST-like blocks from result["klebsiella"] using your schema definitions.
+    Returns mapping AnalysisType -> dict result.
+    """
+    out: dict[AnalysisType, dict[str, Any]] = {}
+
+    kleb = result.get("klebsiella")
+    if not isinstance(kleb, Mapping):
+        return out
+
+    for schema_name, schema_def in _MLST_LIKE_SCHEMAS.items():
+        analysis_type = _MLST_TO_ANALYSISTYPE.get(schema_name)
+        if not analysis_type:
+            continue
+
+        typing_result = kleb.get(schema_name)
+        if not isinstance(typing_result, Mapping):
+            continue
+
+        lineage_key: str = schema_def["lineage_key"]
+        st_key: str = schema_def["st_key"]
+        qc_keys: list[str] = schema_def["qc_keys"]
+
+        if lineage_key not in typing_result or st_key not in typing_result:
+            # silently skip; data not present
+            continue
+
+        lineage_val = typing_result.get(lineage_key)
+        lineage = "; ".join(lineage_val) if isinstance(lineage_val, list) else lineage_val
+
+        st_val = typing_result.get(st_key)
+        sequence_type: Any
+        if isinstance(st_val, str):
+            try:
+                sequence_type = int(st_val)
+            except ValueError:
+                sequence_type = st_val
+        else:
+            sequence_type = st_val
+
+        skip = {lineage_key, st_key, *qc_keys}
+        alleles = {k: v for k, v in typing_result.items() if k not in skip}
+
+        out[analysis_type] = KleborateMlstLikeResults(
+            scheme=schema_name, lineage=lineage, sequence_type=sequence_type, alleles=alleles
+        )
+
+    return out
+
+
+def _parse_amr(result: HamronizationEntries) -> ElementTypeResult:
+    """Parse hAMRonization results and return in a standardized format."""
+
+    return ElementTypeResult(variants=res_variants, genes=res_genes)
+
+
+@register_parser(KLEBORATE)
+class KleborateParser(BaseParser):
+    """KleborateParser."""
+
+    software = KLEBORATE
+    parser_name = "KleborateParser"
+    parser_version = 1
+    schema_version = 1
+
+    produces = {
+        AnalysisType.SPECIES,
+        AnalysisType.QC,
+        AnalysisType.K_TYPE,
+        AnalysisType.O_TYPE,
+        AnalysisType.VIRULENCE,
+        AnalysisType.ABST,
+        AnalysisType.CBST,
+        AnalysisType.RMST,
+        AnalysisType.SMST,
+        AnalysisType.YBST,
+        AnalysisType.AMR,
+    }
+
+    def _parse_impl(
+        self,
+        source: ParserInput,
+        *,
+        want: set[AnalysisType],
+        strict: bool = False,
+        hamronization_source: ParserInput | None = None,
+        **kwargs: Any,
+    ) -> ParseImplOut:
+        """Parse Kleborate TSV. Aggregates results per sample_id across all rows."""
+        # Aggregate per analysis type -> sample_id -> payload
+
+        row_iter = read_delimited(source)
+        try:
+            first_row = next(row_iter)
+        except StopIteration:
+            self.log_info(f"{self.software} input empty")
+            return None
+
+        self.validate_columns(first_row, required=REQUIRED_COLUMNS, strict=strict)
+
+        out: dict[AnalysisType, Any] = {atype: {} for atype in want}
+
+        observed_sample_ids: str | None = None
+        for raw_row in chain([first_row], row_iter):
+            nested = _normalize_kleborate_row(raw_row)
+
+            # verify that a sample not been seen before
+            sample_id = nested["sample_id"]
+            if observed_sample_ids is None:
+                observed_sample_ids = sample_id
+
+            if observed_sample_ids != sample_id:
+                self.log_error(
+                    "There are multiple sample ids in file",
+                    sample_ids=[observed_sample_ids, sample_id]
+                )
+                raise ParserError(
+                    f"There are multiple sample ids in file, {observed_sample_ids} != {sample_id}" 
+                )
+
+            if AnalysisType.SPECIES in want:
+                if (spp := _parse_species(nested)) is not None:
+                    out[AnalysisType.SPECIES] = spp
+
+            if AnalysisType.QC in want:
+                if (qc := _parse_qc(nested)) is not None:
+                    out[AnalysisType.QC] = qc
+
+            if AnalysisType.VIRULENCE in want:
+                if (vir := _parse_virulence(nested)) is not None:
+                    out[AnalysisType.VIRULENCE] = vir
+
+            if AnalysisType.K_TYPE in want or AnalysisType.O_TYPE in want:
+                parsed = _parse_kaptive(nested)
+                if parsed is not None:
+                    if AnalysisType.K_TYPE in want:
+                        out[AnalysisType.K_TYPE] = parsed[AnalysisType.K_TYPE]
+                    if AnalysisType.O_TYPE in want:
+                        out[AnalysisType.O_TYPE][sample_id] = parsed[AnalysisType.O_TYPE]
+
+            # MLST-like typing (ABST/CBST/RMST/SMST/YBST)
+            mlst_like = _parse_mlst_like(nested)
+            for atype, payload in mlst_like.items():
+                if atype in want:
+                    out[atype] = payload
+            
+            # Parse AMR predictions
+            if AnalysisType.AMR in want:
+                if hamronization_source is not None:
+                    hparser = HAmrOnizationParser()
+                    # TODO add adapter layer and make HAmrOnizationParser stricter
+
+                    result = hparser.parse(hamronization_source)
+                    res = result.results[AnalysisType.AMR]
+                    if res is not None:
+                        out[AnalysisType.AMR] = hamronization_to_restance_entry(res)
+                    else:
+                        self.log_error(f"Could not parse resistance information from {hamronization_source}")
+                else:
+                    self.log_error("Cant parse AMR since no hAMRonization results was provided.")
+
+        # Drop empty analysis types to keep output clean
+        return {atype: result for atype, result in out.items() if result}
