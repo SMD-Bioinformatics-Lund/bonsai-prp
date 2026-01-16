@@ -5,13 +5,67 @@ from pathlib import Path
 from logging import Logger, getLogger
 from typing import Any, Mapping, Type, IO, TypeAlias, TypeVar
 from prp.io.delimited import validate_fields
-from prp.models.base import ParserOutput, AnalysisType
+from prp.models.base import ParserOutput, AnalysisType, ResultEnvelope
 from collections.abc import Iterator, Callable
+
+from prp.models.enums import ResultStatus
 
 
 ParserInput: TypeAlias = IO[bytes] | IO[str] | str | Path
 ParseImplOut: TypeAlias = Mapping[AnalysisType, Any]
 T = TypeVar("T")
+
+EmptyPredicate = Callable[[Any], bool]
+
+
+def default_empty_predicate(value: Any) -> bool:
+    """Generic tester if result is empty."""
+    if value is None:
+        return True
+    if value == "" or value == [] or value == {}:
+        return True
+    return False
+
+
+def envelope_from_value(
+        value: Any,
+        *,
+        empty_predicate: EmptyPredicate = default_empty_predicate,
+        reason: str | None = None,
+        meta: dict[str, Any] | None = None
+    ) -> ResultEnvelope:
+    """Create a PARSED/ EMPTY envelope based on the provided result."""
+
+    status = ResultStatus.EMPTY if empty_predicate(value) else ResultStatus.PARSED
+    return ResultEnvelope(status=status, value=value, reason=reason, meta=meta or {})
+
+
+def envelope_error(reason: str, *, meta: dict[str, Any] | None = None) -> ResultEnvelope:
+    """Create an envelope that signifies that an error occured."""
+    return ResultEnvelope(status=ResultStatus.ERROR, reason=reason, meta=meta or {})
+
+
+def envelope_absent(reason: str, *, meta: dict[str, Any] | None = None) -> ResultEnvelope:
+    """Create an envelope that signifies that the result was absent in the input file."""
+    return ResultEnvelope(status=ResultStatus.ABSENT, reason=reason, meta=meta or {})
+
+
+def envelope_skipped(reason: str = "Omitted by user", *, meta: dict[str, Any] | None = None) -> ResultEnvelope:
+    """Create an envelope that signifies that the result was skipped by the user."""
+    return ResultEnvelope(status=ResultStatus.SKIPPED, reason=reason, meta=meta or {})
+
+
+def set_parsed(out: dict[AnalysisType, ResultEnvelope], atype: AnalysisType, value: Any, *, empty_predicate=None):
+    out[atype] = envelope_from_value(value, empty_predicate=empty_predicate)
+
+
+def set_error(out: dict[AnalysisType, ResultEnvelope], atype: AnalysisType, reason: str):
+    out[atype] = ResultEnvelope(status=ResultStatus.ERROR, reason=reason)
+
+
+def set_absent(out: dict[AnalysisType, ResultEnvelope], atype: AnalysisType, reason: str | None = None):
+    out[atype] = ResultEnvelope(status=ResultStatus.ABSENT, reason=reason)
+
 
 class BaseParser(ABC):
     """Parser class structure."""
@@ -45,6 +99,13 @@ class BaseParser(ABC):
 
         out = self._new_output()
 
+        # prepopulate with result envelopes for what this parser can produce
+        for atype in self.produces:
+            if want is not None and atype not in want:
+                out.results[atype] = ResultEnvelope(status=ResultStatus.SKIPPED, reason="Omitted by user")
+            else:
+                out.results[atype] = ResultEnvelope(status=ResultStatus.ABSENT)
+
         # exit if the parser cant produce what is requested
         requested = want & self.produces
         if not requested:
@@ -64,15 +125,18 @@ class BaseParser(ABC):
         out.results.update(results)
         return out
 
-    def _normalize_want(self, want: set[AnalysisType] | None) -> set[AnalysisType]:
-        return want or set(self.produces)
+    def _normalize_want(self, want: set[AnalysisType] | AnalysisType | None) -> set[AnalysisType]:
+        want = want or set(self.produces)
+        return { want } if isinstance(want, AnalysisType) else want
 
     def _new_output(self) -> ParserOutput:
         """Create a new output model."""
         return ParserOutput(
             software=self.software,
+            software_version=None,
             parser_name=self.parser_name,
             parser_version=self.parser_version,
+            schema_version=getattr(self, "schema_version", 1),
             results={},
         )
     
@@ -113,13 +177,25 @@ class BaseParser(ABC):
 
 class SingleAnalysisParser(BaseParser):
     """Abtracted parser class for softwares that produces exactly one AnalysisType"""
-    analysis_type: AnalysisType  # subclasses set this
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if not hasattr(cls, "produces") or len(cls.produces) != 1:
+            raise TypeError(f"{cls.__name__}.produces must contain exactly one AnalysisType")
+
+    @property
+    def analysis_type(self) -> AnalysisType:
+        """Get analysis type from what the parser produce."""
+        return next(iter(self.produces))
 
     def _parse_impl(self, source: ParserInput, *, want: set[AnalysisType], **kwargs: Any) -> Mapping[str, Any]:
-        if self.analysis_type not in want:
-            return {}
-        value = self._parse_one(source, **kwargs)
-        return {self.analysis_type: value} if value is not None else {}
+        try:
+            value = self._parse_one(source, **kwargs)
+        except Exception as exc:
+            self.log_error("Parse failed", error=str(exc), analysis_type=self.analysis_type)
+            return {self.analysis_type: envelope_error(str(exc))}
+
+        return {self.analysis_type: envelope_from_value(value)}
 
     @abstractmethod
     def _parse_one(self, source: ParserInput, **kwargs: Any) -> Any:
@@ -154,3 +230,13 @@ def warn_if_extra_rows(
 
 
 ParserClass = Type[BaseParser]
+
+
+def parse_child(parser: BaseParser, source: ParserInput, atype: AnalysisType, *, strict: bool) -> Any:
+    """Utility to call another parser inside a parser."""
+
+    child = parser.parse(source, want={atype}, strict=strict)
+    env = child.results.get(atype)
+    if env and isinstance(env, ResultEnvelope) and env.status == ResultStatus.PARSED:
+        return env.value
+    return None

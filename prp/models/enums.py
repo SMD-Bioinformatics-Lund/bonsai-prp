@@ -55,3 +55,17 @@ class AnalysisType(StrEnum):
     VARIANT = "variant"
     VIRULENCE = "virulence"
     YBST = "ybst"
+
+
+class ResultStatus(StrEnum):
+    """
+    PARSED - Assay exists and was parsed
+    SKIPPED - Assay exists but user didnt request it
+    EMPTY - Assay exists but contains no findings
+    ABSENT - Assay doesnt exist in the input
+    """
+    PARSED = "parsed"
+    SKIPPED = "skipped"
+    EMPTY = "empty"
+    ABSENT = "absent"
+    ERROR = "error"

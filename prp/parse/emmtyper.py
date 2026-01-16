@@ -49,7 +49,6 @@ class EmmTyperParser(SingleAnalysisParser):
     parser_version = 1
     schema_version = 1
     produces = {AnalysisType.EMM}
-    analysis_type = AnalysisType.EMM
 
     def _parse_one(self, source: ParserInput, **_) -> TypingResultEmm | dict:
         """Parse emmtyper results."""
