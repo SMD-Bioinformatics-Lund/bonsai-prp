@@ -1,42 +1,73 @@
 """Parse spaTyper results."""
 
-import logging
+from typing import Any
+from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
+from prp.models.enums import AnalysisSoftware, AnalysisType
+from prp.models.typing import TypingResultSpatyper
+from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
+from prp.parse.registry import register_parser
 
-import pandas as pd
+SPATYPER = AnalysisSoftware.SPATYPER
 
-from ..models.sample import SpatyperTypingMethodIndex
-from ..models.typing import TypingMethod, TypingResultSpatyper
-from ..models.typing import TypingSoftware as Software
+REQUIRED_COLUMNS: set[str] = { "Sequence name", "Repeats", "Type" }
+COLUMN_MAP = {
+    "Sequence name": "sequence_name",
+    "Repeats": "repeats",
+    "Type": "type",
+}
 
-LOG = logging.getLogger(__name__)
-
-
-def parse_spatyper_results(path: str) -> SpatyperTypingMethodIndex:
-    """Read spaTyper output file."""
-    LOG.info("Parsing spatyper results")
-
-    result_loa = (
-        pd.read_csv(path, delimiter="\t")
-        .rename(
-            columns={
-                "Sequence name": "sequence_name",
-                "Repeats": "repeats",
-                "Type": "type",
-            }
-        )
-        .to_dict(orient="records")
+def _normalize_spatyper_row(row: DelimiterRow) -> DelimiterRow: 
+    """Wrapps normalize row."""
+    return normalize_row(
+        row,
+        key_fn=lambda r: r.strip(),
+        val_fn=lambda v: None if is_nullish(v) else v,
+        column_map=COLUMN_MAP,
     )
 
-    result = result_loa[0] if result_loa else {}
 
-    result_obj = TypingResultSpatyper(
-        sequence_name=str(sequence_name)
-        if (sequence_name := result.get("sequence_name"))
-        else None,
-        repeats=str(repeats) if (repeats := result.get("repeats")) else None,
-        type=str(type) if (type := result.get("type")) else None,
+def _to_typing_result(row: dict[str, Any]) -> TypingResultSpatyper:
+    """Convert and validate row into Spatyper result object."""
+    repeats = row.get("repeats")  # possibly split repeats on '-'
+    return TypingResultSpatyper(
+        sequence_name=row['sequence_name'],
+        repeats=repeats,
+        type=row["type"],
     )
 
-    return SpatyperTypingMethodIndex(
-        type=TypingMethod.SPATYPE, software=Software.SPATYPER, result=result_obj
-    )
+@register_parser(SPATYPER)
+class SpatyperParser(SingleAnalysisParser):
+    """Parser for ShigaType results."""
+
+    software = SPATYPER
+    parser_name = "SpatyperParser"
+    parser_version = 1
+    schema_version = 1
+
+    analysis_type = AnalysisType.SPATYPE
+    produces = {analysis_type}
+
+    def _parse_one(
+        self,
+        source: ParserInput,
+        *,
+        strict_columns: bool = False,
+        strict: bool = False,
+        **kwargs: Any,
+    ) -> TypingResultSpatyper | None:
+        """Parse shigapass predictions and return a ShigaTypingMethodIndex."""
+        rows = read_delimited(source)
+
+        try:
+            first_raw = next(rows)
+        except StopIteration:
+            self.log_info(f"{self.software} input empty")
+            return None
+
+        self.validate_columns(first_raw, required=REQUIRED_COLUMNS, strict=strict_columns)
+        first = _normalize_spatyper_row(first_raw)
+        warn_if_extra_rows(rows, self.log_warning, context=f"{self.software} file", max_consume=10)
+
+        # Build typing result
+        return _to_typing_result(first)
+

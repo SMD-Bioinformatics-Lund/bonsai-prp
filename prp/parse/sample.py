@@ -1,61 +1,88 @@
 """Parse for input config using parsers from this module."""
 
-import json
 import logging
 from typing import Any, Sequence
+import re
 
+from prp.exceptions import UnsupportedMethod
+from prp.models.enums import AnalysisType, AnalysisSoftware
+from prp.models.base import ParserOutput
 from prp.models.config import SampleConfig
 
-from ..models.phenotype import AMRMethodIndex, ElementType
-from ..models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
-from ..models.species import SppMethodIndex
+from prp.models.phenotype import AMRMethodIndex, PredictionSoftware, StressMethodIndex, VirulenceMethodIndex
+from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
+from prp.models.species import SppMethodIndex
+from prp.models.typing import SccmecTypingMethodIndex, ShigaTypingMethodIndex, SpatyperTypingMethodIndex, TypingSoftware
+from prp.models.typing import EmmTypingMethodIndex
+from prp.parse.base import BaseParser, ParserInput
+from .registry import register_parser, run_parser
 from . import (
-    amrfinder,
     hamronization,
     kleborate,
-    kraken,
-    mykrobe,
-    resfinder,
-    serotypefinder,
     tbprofiler,
-    virulencefinder,
 )
-from .emmtyper import EmmTypingMethodIndex, parse_emm_pred
 from .igv import parse_igv_info
 from .metadata import parse_run_info
-from .qc import (
-    parse_gambitcore_results,
-    parse_nanoplot_results,
-    parse_postalignqc_results,
-    parse_quast_results,
-    parse_samtools_coverage_results,
-)
-from .sccmec import SccmecTypingMethodIndex, parse_sccmec_results
-from .shigapass import ShigaTypingMethodIndex, parse_shiga_pred
-from .spatyper import SpatyperTypingMethodIndex, parse_spatyper_results
 from .typing import parse_cgmlst_results, parse_mlst_results
-from .virulencefinder import VirulenceMethodIndex
 
 LOG = logging.getLogger(__name__)
+
+
+MYKROBE = "mykrobe"
+VARIANT_RE = re.compile(
+    r"(?P<gene>.+)_(?P<aa_change>.+)-(?P<dna_change>.+):"
+    r"(?P<ref_depth>\d+):(?P<alt_depth>\d+):(?P<conf>\d+)$",
+    re.IGNORECASE,
+)
+# Columns to validate against
+REQUIRED_COLUMNS = {
+    "sample",
+    "drug",
+    "susceptibility",
+    "genotype_model",
+    "variants",
+    "species",
+    "species_per_covg",
+    "phylo_group",
+    "phylo_group_per_covg",
+    "lineage",
+    "mykrobe_version",
+}
 
 
 def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
     """Read all qc related info"""
     qc_results = []
     if smp_cnf.quast:
-        qc_results.append(parse_quast_results(smp_cnf.quast))
+        out = run_parser(
+            software=AnalysisSoftware.QUAST,
+            version="1.0.0",
+            data=smp_cnf.quast
+        )
+        qc_results.append(QcMethodIndex(
+            software=AnalysisSoftware.QUAST,
+            result=out.results[AnalysisType.QC],
+        ))
 
     if smp_cnf.postalnqc:
-        qc_results.append(parse_postalignqc_results(smp_cnf.postalnqc))
+        out = run_parser(
+            software=AnalysisSoftware.POSTALIGNQC,
+            version="1.0.0",
+            data=smp_cnf.postalnqc
+        )
+        qc_results.append(QcMethodIndex(
+            software=AnalysisSoftware.POSTALIGNQC,
+            result=out.results[AnalysisType.QC],
+        ))
 
-    if smp_cnf.gambitcore:
-        qc_results.append(parse_gambitcore_results(smp_cnf.gambitcore))
+    # if smp_cnf.gambitcore:
+    #     qc_results.append(parse_gambitcore_results(smp_cnf.gambitcore))
 
-    if smp_cnf.nanoplot:
-        qc_results.append(parse_nanoplot_results(smp_cnf.nanoplot))
+    # if smp_cnf.nanoplot:
+    #     qc_results.append(parse_nanoplot_results(smp_cnf.nanoplot))
 
-    if smp_cnf.samtools:
-        qc_results.append(parse_samtools_coverage_results(smp_cnf.samtools))
+    # if smp_cnf.samtools:
+    #     qc_results.append(parse_samtools_coverage_results(smp_cnf.samtools))
 
     return qc_results
 
@@ -64,10 +91,26 @@ def _read_spp_prediction(smp_cnf) -> Sequence[SppMethodIndex]:
     """Read all species prediction results."""
     spp_results = []
     if smp_cnf.kraken:
-        spp_results.append(kraken.parse_result(smp_cnf.kraken))
+        out = run_parser(
+            software=AnalysisSoftware.BRACKEN,
+            version="1.0.0",
+            data=smp_cnf.kraken
+        )
+        spp_results.append(SppMethodIndex(
+            result=out.results,
+        ))
 
     if smp_cnf.mykrobe:
-        spp_results.append(mykrobe.parse_spp_pred(smp_cnf.mykrobe))
+        out = run_parser(
+            software=PredictionSoftware.MYKROBE.value,
+            version="1.0.0",
+            data=smp_cnf.mykrobe
+        )
+        spp_results.append(
+            SppMethodIndex(
+                software=PredictionSoftware.MYKROBE,
+                result=out.results["species"]
+        ))
     return spp_results
 
 
@@ -89,38 +132,85 @@ def _read_typing(
         typing_result.append(parse_cgmlst_results(smp_cnf.chewbbaca))
 
     if smp_cnf.emmtyper:
-        typing_result.extend(parse_emm_pred(smp_cnf.emmtyper))
+        out = run_parser(
+            software=AnalysisSoftware.EMMTYPER, 
+            version="1.0.0",
+            data=smp_cnf.emmtyper
+        )
+        typing_result.extend(EmmTypingMethodIndex(
+            result=out.results
+        ))
 
     if smp_cnf.shigapass:
-        typing_result.append(parse_shiga_pred(smp_cnf.shigapass))
+        out = run_parser(
+            software=AnalysisSoftware.SHIGAPASS,
+            version="1.0.0",
+            data=smp_cnf.shigapass
+        )
+        typing_result.append(
+            ShigaTypingMethodIndex(
+                result=out.results
+            ))
 
     if smp_cnf.spatyper:
-        typing_result.append(parse_spatyper_results(smp_cnf.spatyper))
+        out = run_parser(
+            software=AnalysisSoftware.SPATYPER,
+            version="1.0.0",
+            data=smp_cnf.spatyper
+        )
+        typing_result.append(
+            SpatyperTypingMethodIndex(
+                result=out.results
+            ))
 
     if smp_cnf.sccmec:
-        typing_result.append(parse_sccmec_results(smp_cnf.sccmec))
+        out = run_parser(
+            software=TypingSoftware.SCCMEC,
+            version="1.0.0",
+            data=smp_cnf.sccmec
+        )
+        first = out.results['sccmec'][0]
+        typing_result.append(SccmecTypingMethodIndex(result=first))
 
     # stx typing
     if smp_cnf.virulencefinder:
-        tmp_virfinder_res: MethodIndex | None = virulencefinder.parse_stx_typing(
-            smp_cnf.virulencefinder
+        out = run_parser(
+            software=AnalysisSoftware.VIRULENCEFINDER,
+            version="1.0.0",
+            data=smp_cnf.virulencefinder,
+            want=AnalysisType.STX
         )
-        if tmp_virfinder_res is not None:
-            typing_result.append(tmp_virfinder_res)
+        typing_result.append(MethodIndex(
+            software=TypingSoftware.VIRULENCEFINDER,
+            type=AnalysisType.STX,
+            result=out.results[AnalysisType.STX]
+        ))
 
     if smp_cnf.serotypefinder:
-        LOG.info("Parse serotypefinder results")
-        # OH typing
-        tmp_serotype_res: list[MethodIndex] | None = serotypefinder.parse_oh_typing(
-            smp_cnf.serotypefinder
+        out = run_parser(
+            software=AnalysisSoftware.SEROTYPEFINDER,
+            version="1.0.0",
+            data=smp_cnf.serotypefinder,
         )
-        if tmp_serotype_res is not None:
-            typing_result.extend(tmp_serotype_res)
+        for atype in [AnalysisType.O_TYPE, AnalysisType.H_TYPE]:
+            typing_result.extend(MethodIndex(
+                software=AnalysisSoftware.SEROTYPEFINDER,
+                type=atype,
+                result=out.results[atype]
+            ))
 
     if smp_cnf.mykrobe:
-        lin_res: MethodIndex | None = mykrobe.parse_lineage_pred(smp_cnf.mykrobe)
-        if lin_res is not None:
-            typing_result.append(lin_res)
+        out = run_parser(
+            software=PredictionSoftware.MYKROBE.value,
+            version="1.0.0",
+            data=smp_cnf.mykrobe
+        )
+        typing_result.append(
+            MethodIndex(
+                software=PredictionSoftware.MYKROBE.value,
+                result=out.results["lineage"]
+            )
+        )
 
     if smp_cnf.tbprofiler:
         typing_result.append(tbprofiler.parse_lineage_pred(smp_cnf.tbprofiler))
@@ -132,23 +222,53 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
     """Read resistance predictions."""
     resistance = []
     if smp_cnf.resfinder:
-        with smp_cnf.resfinder.open("r", encoding="utf-8") as resfinder_json:
-            pred_res = json.load(resfinder_json)
-            for method in [ElementType.AMR, ElementType.STRESS]:
-                tmp_res = resfinder.parse_amr_pred(pred_res, method)
-                if tmp_res.result.genes:
-                    resistance.append(tmp_res)
+        out = run_parser(software=AnalysisSoftware.RESFINDER, version="1.0.0", data=smp_cnf.resfinder)
+        target = AnalysisType.AMR
+        resistance.append(AMRMethodIndex(
+            software=AnalysisSoftware.RESFINDER,
+            result=out.results[target]
+        ))
+        target = AnalysisType.STRESS
+        resistance.append(StressMethodIndex(
+            software=AnalysisSoftware.RESFINDER,
+            result=out.results[target]
+        ))
 
     if smp_cnf.amrfinder:
-        for method in [ElementType.AMR, ElementType.STRESS]:
-            tmp_res = amrfinder.parse_amr_pred(smp_cnf.amrfinder, method)
-            if tmp_res.result.genes:
-                resistance.append(tmp_res)
+        out = run_parser(software="amrfinder", version="1.0.0", data=smp_cnf.amrfinder)
+
+        target = AnalysisType.AMR
+        if target.value in out.result:
+            # cast as method index and append to resistance results
+            resistance.append(
+                AMRMethodIndex(
+                    software=PredictionSoftware.AMRFINDER,
+                    result=out.result
+                )
+            )
+
+        target = AnalysisType.STRESS
+        if target.value in out.result:
+            # cast as method index and append to resistance results
+            resistance.append(
+                StressMethodIndex(
+                    software=PredictionSoftware.AMRFINDER,
+                    result=out.result
+                )
+            )
 
     if smp_cnf.mykrobe:
-        tmp_res = mykrobe.parse_amr_pred(smp_cnf.mykrobe, smp_cnf.sample_id)
-        if tmp_res is not None:
-            resistance.append(tmp_res)
+        out = run_parser(
+            software=PredictionSoftware.MYKROBE.value,
+            version="1.0.0",
+            data=smp_cnf.mykrobe
+        )
+        resistance.append(
+            AMRMethodIndex(
+                software=PredictionSoftware.MYKROBE.value,
+                result=out.results["amr"]
+            )
+        )
 
     if smp_cnf.tbprofiler:
         # store pipeline version
@@ -160,15 +280,29 @@ def _read_virulence(smp_cnf) -> Sequence[VirulenceMethodIndex]:
     """Read virulence results."""
     virulence = []
     if smp_cnf.amrfinder:
-        virulence.append(amrfinder.parse_vir_pred(smp_cnf.amrfinder))
+        target = AnalysisType.VIRULENCE
+        out = run_parser(software="amrfinder", version="1.0.0", data=smp_cnf.amrfinder, want=[target])
+        if target.value in out.result:
+            # cast as method index and append to resistance results
+            virulence.append(
+                VirulenceMethodIndex(
+                    software=PredictionSoftware.AMRFINDER,
+                    result=out.result
+                )
+            )
 
     if smp_cnf.virulencefinder:
         # virulence genes
-        raw_res: VirulenceMethodIndex | None = virulencefinder.parse_virulence_pred(
-            smp_cnf.virulencefinder
+        out = run_parser(
+            software=AnalysisSoftware.VIRULENCEFINDER,
+            version="1.0.0",
+            data=smp_cnf.virulencefinder,
+            want=AnalysisType.VIRULENCE
         )
-        if raw_res is not None:
-            virulence.append(raw_res)
+        virulence.append(VirulenceMethodIndex(
+            software=TypingSoftware.VIRULENCEFINDER,
+            result=out.results[AnalysisType.VIRULENCE]
+        ))
     return virulence
 
 
@@ -210,16 +344,16 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
             filtered_variants["snv_variants"] if filtered_variants else None
         )
     # read versions of softwares
-    if smp_cnf.mykrobe:
-        results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))
-    if smp_cnf.tbprofiler:
-        results["pipeline"].softwares.append(tbprofiler.get_version(smp_cnf.tbprofiler))
-    if smp_cnf.kleborate_hamronization:
-        with smp_cnf.kleborate_hamronization.open() as inpt:
-            if (
-                kleborate_version := hamronization.get_version(inpt)
-            ) or kleborate_version is not None:
-                results["pipeline"].softwares.append(kleborate_version)
+    # if smp_cnf.mykrobe:
+    #     results["pipeline"].softwares.append(mykrobe.get_version(smp_cnf.mykrobe))
+    # if smp_cnf.tbprofiler:
+    #     results["pipeline"].softwares.append(tbprofiler.get_version(smp_cnf.tbprofiler))
+    # if smp_cnf.kleborate_hamronization:
+    #     with smp_cnf.kleborate_hamronization.open() as inpt:
+    #         if (
+    #             kleborate_version := hamronization.get_version(inpt)
+    #         ) or kleborate_version is not None:
+    #             results["pipeline"].softwares.append(kleborate_version)
 
     # add amr and virulence
     results["element_type_result"].extend(
@@ -256,3 +390,26 @@ def parse_sample(smp_cnf: SampleConfig) -> PipelineResult:
     return PipelineResult(
         sample_id=smp_cnf.sample_id, schema_version=SCHEMA_VERSION, **results
     )
+
+
+@register_parser(MYKROBE)
+class MykrobeParser(BaseParser):
+    """Parser for Mykrobe results."""
+
+    software = MYKROBE
+    parser_name = "MykrobeParser"
+    parser_version = "1"
+    schema_version = 1
+    produces = {AnalysisType.SPECIES, AnalysisType.AMR, AnalysisType.LINEAGE}
+
+    def parse(self, data: ParserInput, *, want: set[AnalysisType], strict: bool) -> ParserOutput:
+        """Parse output file."""
+
+        want = want or self.produces
+
+        out = ParserOutput(
+            software=self.software,
+            parser_name=self.parser_name,
+            parser_version=self.parser_version,
+            results={},
+        )
