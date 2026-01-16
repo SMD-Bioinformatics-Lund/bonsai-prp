@@ -9,63 +9,12 @@ from prp.models.base import ParserOutput, AnalysisType, ResultEnvelope
 from collections.abc import Iterator, Callable
 
 from prp.models.enums import ResultStatus
+from prp.parse.envelope import envelope_error, envelope_from_value, envelope_absent, envelope_skipped
 
 
 ParserInput: TypeAlias = IO[bytes] | IO[str] | str | Path
 ParseImplOut: TypeAlias = Mapping[AnalysisType, Any]
 T = TypeVar("T")
-
-EmptyPredicate = Callable[[Any], bool]
-
-
-def default_empty_predicate(value: Any) -> bool:
-    """Generic tester if result is empty."""
-    if value is None:
-        return True
-    if value == "" or value == [] or value == {}:
-        return True
-    return False
-
-
-def envelope_from_value(
-        value: Any,
-        *,
-        empty_predicate: EmptyPredicate = default_empty_predicate,
-        reason: str | None = None,
-        meta: dict[str, Any] | None = None
-    ) -> ResultEnvelope:
-    """Create a PARSED/ EMPTY envelope based on the provided result."""
-
-    status = ResultStatus.EMPTY if empty_predicate(value) else ResultStatus.PARSED
-    return ResultEnvelope(status=status, value=value, reason=reason, meta=meta or {})
-
-
-def envelope_error(reason: str, *, meta: dict[str, Any] | None = None) -> ResultEnvelope:
-    """Create an envelope that signifies that an error occured."""
-    return ResultEnvelope(status=ResultStatus.ERROR, reason=reason, meta=meta or {})
-
-
-def envelope_absent(reason: str, *, meta: dict[str, Any] | None = None) -> ResultEnvelope:
-    """Create an envelope that signifies that the result was absent in the input file."""
-    return ResultEnvelope(status=ResultStatus.ABSENT, reason=reason, meta=meta or {})
-
-
-def envelope_skipped(reason: str = "Omitted by user", *, meta: dict[str, Any] | None = None) -> ResultEnvelope:
-    """Create an envelope that signifies that the result was skipped by the user."""
-    return ResultEnvelope(status=ResultStatus.SKIPPED, reason=reason, meta=meta or {})
-
-
-def set_parsed(out: dict[AnalysisType, ResultEnvelope], atype: AnalysisType, value: Any, *, empty_predicate=None):
-    out[atype] = envelope_from_value(value, empty_predicate=empty_predicate)
-
-
-def set_error(out: dict[AnalysisType, ResultEnvelope], atype: AnalysisType, reason: str):
-    out[atype] = ResultEnvelope(status=ResultStatus.ERROR, reason=reason)
-
-
-def set_absent(out: dict[AnalysisType, ResultEnvelope], atype: AnalysisType, reason: str | None = None):
-    out[atype] = ResultEnvelope(status=ResultStatus.ABSENT, reason=reason)
-
 
 class BaseParser(ABC):
     """Parser class structure."""
@@ -102,9 +51,9 @@ class BaseParser(ABC):
         # prepopulate with result envelopes for what this parser can produce
         for atype in self.produces:
             if want is not None and atype not in want:
-                out.results[atype] = ResultEnvelope(status=ResultStatus.SKIPPED, reason="Omitted by user")
+                out.results[atype] = envelope_skipped()
             else:
-                out.results[atype] = ResultEnvelope(status=ResultStatus.ABSENT)
+                out.results[atype] = envelope_absent(reason="Placeholder")
 
         # exit if the parser cant produce what is requested
         requested = want & self.produces
