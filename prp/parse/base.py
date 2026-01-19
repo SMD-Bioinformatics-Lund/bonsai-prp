@@ -9,7 +9,7 @@ from prp.models.base import ParserOutput, AnalysisType, ResultEnvelope
 from collections.abc import Iterator, Callable
 
 from prp.models.enums import ResultStatus
-from prp.parse.envelope import envelope_error, envelope_from_value, envelope_absent, envelope_skipped
+from prp.parse.envelope import default_empty_predicate, envelope_absent, envelope_skipped, run_as_envelope
 
 
 ParserInput: TypeAlias = IO[bytes] | IO[str] | str | Path
@@ -53,7 +53,8 @@ class BaseParser(ABC):
             if want is not None and atype not in want:
                 out.results[atype] = envelope_skipped()
             else:
-                out.results[atype] = envelope_absent(reason="Placeholder")
+                # The specific parser implementation will have to clarify why a analysis was absent
+                out.results[atype] = envelope_absent(reason="Prepopulated")
 
         # exit if the parser cant produce what is requested
         requested = want & self.produces
@@ -136,15 +137,27 @@ class SingleAnalysisParser(BaseParser):
     def analysis_type(self) -> AnalysisType:
         """Get analysis type from what the parser produce."""
         return next(iter(self.produces))
+    
+    def empty_predicate(self) -> Callable[[Any], bool]:
+        """Allow subclasses to override how "empty" is determined."""
+        return default_empty_predicate
 
+    def absent_predicate(self) -> Callable[[Any], bool] | None:
+        """Optional hook if a subclass prefers a value-based absent detection instead of raising AbsentResultError."""
+        return None
+    
     def _parse_impl(self, source: ParserInput, *, want: set[AnalysisType], **kwargs: Any) -> Mapping[str, Any]:
-        try:
-            value = self._parse_one(source, **kwargs)
-        except Exception as exc:
-            self.log_error("Parse failed", error=str(exc), analysis_type=self.analysis_type)
-            return {self.analysis_type: envelope_error(str(exc))}
-
-        return {self.analysis_type: envelope_from_value(value)}
+        env = run_as_envelope(
+            analysis_name=self.analysis_type,
+            fn=lambda: self._parse_one(source, **kwargs),
+            empty_predicate=self.empty_predicate(),
+            absent_predicate=self.absent_predicate(),
+            reason_if_absent=f"{self.analysis_type} not present",
+            reason_if_empty="No findings",
+            meta={"parser": self.parser_name, "software": self.software},
+            logger=self.logger
+        )
+        return {self.analysis_type: env}
 
     @abstractmethod
     def _parse_one(self, source: ParserInput, **kwargs: Any) -> Any:
