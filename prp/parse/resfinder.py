@@ -23,6 +23,7 @@ from prp.models.phenotype import (
     VariantType,
 )
 from prp.parse.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.envelope import run_as_envelope
 from prp.parse.registry import register_parser
 
 from .utils import get_nt_change
@@ -434,25 +435,19 @@ class ResFinderParser(BaseParser):
 
         out: dict[AnalysisType, Any] = {}
 
+        base_meta = {"parser": self.parser_name, "software": self.software}
         # AMR
-        if AnalysisType.AMR in want:
-            try:
-                out[AnalysisType.AMR] = build_resfinder_result(pred, ElementType.AMR)
-            except Exception as exc:
-                self.log_error("Failed parsing ResFinder AMR", error=str(exc))
-                if strict:
-                    raise
-
-        # STRESS
-        if AnalysisType.STRESS in want:
-            try:
-                out[AnalysisType.STRESS] = build_resfinder_result(
-                    pred, ElementType.STRESS
+        # AMR & STRESS share the same underlying element type filter in this outpu
+        for analysis_type in [AnalysisType.AMR, AnalysisType.STRESS]:
+            if analysis_type in want:
+                out[analysis_type] = run_as_envelope(
+                    analysis_name=analysis_type,
+                    fn=lambda: build_resfinder_result(pred, analysis_type),
+                    reason_if_absent="No resistance determinants for sample",
+                    reason_if_empty="No findings",
+                    meta=base_meta,
+                    logger=self.logger
                 )
-            except Exception as exc:
-                self.log_error("Failed parsing ResFinder STRESS", error=str(exc))
-                if strict:
-                    raise
 
         # Observability summary
         if AnalysisType.AMR in out:

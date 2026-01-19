@@ -11,6 +11,7 @@ from prp.io.json import read_json
 from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.phenotype import ElementSerotypeSubtype, ElementType, SerotypeGene
 from prp.parse.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.envelope import envelope_absent, run_as_envelope
 from prp.parse.registry import register_parser
 from prp.parse.utils import safe_int
 
@@ -126,6 +127,7 @@ class SerotypeFinderParser(BaseParser):
 
         pred_res = pred_obj["serotypefinder"]["results"]
 
+        base_meta = {"parser": self.parser_name, "software": self.software}
         # parse results
         for analysis_type in sorted(self.produces):
             if analysis_type in want:
@@ -133,7 +135,7 @@ class SerotypeFinderParser(BaseParser):
                 hits = pred_res.get(ANALYSIS_TYPE_FIELDS[analysis_type])
                 # Value might be a string if there is no hit
                 if _is_no_hit(hits):
-                    out[analysis_type] = None
+                    out[analysis_type] = envelope_absent(f"No {analysis_type} hit", meta=base_meta)
                     continue
 
                 # verify data
@@ -148,11 +150,14 @@ class SerotypeFinderParser(BaseParser):
                 # there can be several hits for a given serotype, pick the best
                 hit = pick_best_hit(hits)
                 if hit is None:
-                    continue
+                    out[analysis_type] = envelope_absent(f"No {analysis_type} hit", meta=base_meta)
 
-                try:
-                    out[analysis_type] = parse_serotype_gene(hit)
-                except (ValidationError, ValueError) as exc:
-                    self.log_error("Malformed analysis results.", error=str(exc))
-                    raise ParserError(str(exc)) from exc
+                out[analysis_type] = run_as_envelope(
+                    analysis_name=analysis_type,
+                    fn=lambda: parse_serotype_gene(hit),
+                    reason_if_absent=f"{analysis_type} not present",
+                    reason_if_empty="No findings",
+                    meta=base_meta,
+                    logger=self.logger
+                )
         return out

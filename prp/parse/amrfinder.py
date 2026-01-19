@@ -18,6 +18,7 @@ from prp.models.phenotype import (
 )
 
 from prp.io.delimited import read_delimited, normalize_nulls
+from prp.parse.envelope import run_as_envelope
 from .base import BaseParser, ParseImplOut, ParserInput
 from .registry import register_parser
 from .utils import classify_variant_type, safe_int, safe_float, safe_strand
@@ -224,6 +225,48 @@ def _analysis_to_element_type(analysis_type: AnalysisType) -> ElementType:
     return ElementType.AMR if analysis_type in (AnalysisType.AMR, AnalysisType.STRESS) else ElementType.VIR
 
 
+def _to_resistance_results(
+    genes: AmrFinderGenes, variants: AmrFinderVariants, *, analysis_type: AnalysisType
+) -> ElementTypeResult:
+    """Build AMR/STRES resistance blocks."""
+
+    # filter genes on variants on AMR
+    element_type = _analysis_to_element_type(analysis_type)
+
+    filtered_genes = (gene for gene in genes if gene.element_type == element_type)
+    filtered_genes = sorted(
+        filtered_genes,
+        key=lambda gene: (gene.gene_symbol, gene.coverage),
+    )
+
+    # Only compute phenotype profile for AMR
+    phenotypes = {}
+    if analysis_type == AnalysisType.AMR:
+        resistant = {
+            pheno.name 
+            for elem in itertools.chain(filtered_genes, variants)
+            for pheno in elem.phenotypes
+        }
+        phenotypes = {"susceptible": [], "resistant": sorted(resistant)}
+
+    return ElementTypeResult(
+        phenotypes=phenotypes,
+        genes=filtered_genes,
+        variants=variants,
+    )
+
+def _to_virulence_results(genes) -> ElementTypeResult:
+    """Build virulence result block."""
+
+    filtered_genes = [
+        gene for gene in genes if gene.element_type == ElementType.VIR
+    ]
+    filtered_genes.sort(
+        key=lambda gene: (gene.gene_symbol, gene.coverage)
+    )
+    return ElementTypeResult(phenotypes={}, genes=filtered_genes, variants=[])
+
+
 @register_parser(AMRFINDER)
 class AmrFinderParser(BaseParser):
     """Parse AmrFinder and AmrFinder plus results."""
@@ -240,57 +283,29 @@ class AmrFinderParser(BaseParser):
         """Parse analysis results."""
         genes, variants = read_amrfinder_results(source)
 
+        base_meta = {"parser": self.parser_name, "software": self.software}
+
         # AMR & STRESS share the same underlying element type filter in this outpu
         results: dict[AnalysisType, Any] = {}
         for analysis_type in [AnalysisType.AMR, AnalysisType.STRESS]:
             if analysis_type in want:
-                results[analysis_type] = self._to_resistance_results(
-                    genes, variants, analysis_type=analysis_type
+                results[analysis_type] = run_as_envelope(
+                    analysis_name=analysis_type,
+                    fn=lambda: _to_resistance_results(genes, variants, analysis_type=analysis_type),
+                    reason_if_absent=f"{analysis_type} not present",
+                    reason_if_empty="No findings",
+                    meta=base_meta,
+                    logger=self.logger
                 )
 
         if AnalysisType.VIRULENCE in want:
-            results[AnalysisType.VIRULENCE] = self._to_virulence_results(
-                genes, variants
+            results[AnalysisType.VIRULENCE] = run_as_envelope(
+                analysis_name=analysis_type,
+                fn=lambda: _to_virulence_results(genes),
+                reason_if_absent=f"{analysis_type} not present",
+                reason_if_empty="No findings",
+                meta=base_meta,
+                logger=self.logger
             )
 
         return results
-
-    def _to_resistance_results(
-        self, genes: AmrFinderGenes, variants: AmrFinderVariants, *, analysis_type: AnalysisType
-    ) -> ElementTypeResult:
-        """Build AMR/STRES resistance blocks."""
-
-        # filter genes on variants on AMR
-        element_type = _analysis_to_element_type(analysis_type)
-
-        filtered_genes = (gene for gene in genes if gene.element_type == element_type)
-        filtered_genes = sorted(
-            filtered_genes,
-            key=lambda gene: (gene.gene_symbol, gene.coverage),
-        )
-
-        # Only compute phenotype profile for AMR
-        phenotypes = {}
-        if analysis_type == AnalysisType.AMR:
-            resistant = {
-                pheno.name 
-                for elem in itertools.chain(filtered_genes, variants)
-                for pheno in elem.phenotypes
-            }
-            phenotypes = {"susceptible": [], "resistant": sorted(resistant)}
-
-        return ElementTypeResult(
-            phenotypes=phenotypes,
-            genes=filtered_genes,
-            variants=variants,
-        )
-
-    def _to_virulence_results(self, genes, _) -> ElementTypeResult:
-        """Build virulence result block."""
-        filtered_genes = [
-            gene for gene in genes if gene.element_type == ElementType.VIR
-        ]
-        filtered_genes.sort(
-            key=lambda gene: (gene.gene_symbol, gene.coverage)
-        )
-        return ElementTypeResult(phenotypes={}, genes=filtered_genes, variants=[])

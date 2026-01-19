@@ -2,6 +2,7 @@
 
 from typing import Any, Sequence
 
+from prp.exceptions import AbsentResultError
 from prp.io.json import read_json
 from prp.models.enums import AnalysisSoftware, AnalysisType
 from prp.models.metadata import SoupType, SoupVersion
@@ -15,6 +16,7 @@ from prp.models.phenotype import PredictionSoftware as Software
 from prp.models.phenotype import TbProfilerVariant, VariantSubType, VariantType
 from prp.models.typing import LineageInformation
 from prp.parse.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.envelope import run_as_envelope
 
 from .utils import get_db_version
 
@@ -118,6 +120,9 @@ def _parse_variants(pred: dict[str, Any]) -> Sequence[TbProfilerVariant]:
             )
             var_id += 1  # increment variant id
     # sort variants
+    if len(results) == 0:
+        raise AbsentResultError("No resistance variants in results.")
+
     return sorted(results, key=lambda v: (v.reference_sequence, v.start))
 
 
@@ -161,6 +166,14 @@ def _to_lineage_result(pred: dict[str, Any]) -> list[LineageInformation]:
     ]
 
 
+def _to_amr_result(pred: dict[str, Any]) -> ElementTypeResult:
+    return ElementTypeResult(
+        phenotypes=_get_sr_profie(pred),
+        genes=[],
+        variants=_parse_variants(pred),
+    )
+
+
 class TbProfilerParser(BaseParser):
     """TbProfiler parser."""
 
@@ -180,17 +193,29 @@ class TbProfilerParser(BaseParser):
 
         out: dict[AnalysisType, Any] = {}
 
+        base_meta = {"parser": self.parser_name, "software": self.software}
+
         if AnalysisType.AMR in want:
             self.log_info("Parsing AMR results")
-            out[AnalysisType.AMR] = ElementTypeResult(
-                phenotypes=_get_sr_profie(data),
-                genes=[],
-                variants=_parse_variants(data),
-            )
+            out[AnalysisType.AMR] = run_as_envelope(
+                    analysis_name=AnalysisType.AMR,
+                    fn=lambda: _to_amr_result(data),
+                    reason_if_absent="No resistance determinants identified.",
+                    reason_if_empty="No findings",
+                    meta=base_meta,
+                    logger=self.logger
+                )
 
         if AnalysisType.LINEAGE in want:
             self.log_info("Parsing AMR results")
-            out[AnalysisType.LINEAGE] = _to_lineage_result(data)
+            out[AnalysisType.LINEAGE] = run_as_envelope(
+                    analysis_name=AnalysisType.AMR,
+                    fn=lambda: _to_lineage_result(data),
+                    reason_if_absent="No lineage identification identified.",
+                    reason_if_empty="No findings",
+                    meta=base_meta,
+                    logger=self.logger
+                )
 
         return out
 

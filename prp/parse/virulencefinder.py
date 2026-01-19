@@ -11,10 +11,10 @@ from prp.models.phenotype import (
     VirulenceElementTypeResult,
     VirulenceGene,
 )
-from prp.models.sample import MethodIndex
-from prp.models.typing import TypingMethod, TypingResultGeneAllele
+from prp.models.typing import TypingResultGeneAllele
 from prp.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.envelope import run_as_envelope
 from prp.parse.registry import register_parser
 
 LOG = logging.getLogger(__name__)
@@ -160,11 +160,27 @@ class VirulenceFinderParser(BaseParser):
 
         out: dict[AnalysisType, Any] = {}
 
+        base_meta = {"parser": self.parser_name, "software": self.software}
+
         if AnalysisType.VIRULENCE in want:
-            out[AnalysisType.VIRULENCE] = parse_virulence_block(raw)
+            out[AnalysisType.VIRULENCE] = run_as_envelope(
+                analysis_name=AnalysisType.VIRULENCE,
+                fn=lambda: parse_virulence_block(raw),
+                reason_if_absent="No virulence determinants in file.",
+                reason_if_empty="No findings",
+                meta=base_meta,
+                logger=self.logger
+            )
 
         if AnalysisType.STX in want:
-            out[AnalysisType.STX] = parse_stx_typing(raw)
+            out[AnalysisType.STX] = run_as_envelope(
+                analysis_name=AnalysisType.STX,
+                fn=lambda: parse_stx_typing(raw),
+                reason_if_absent="No STX gene identified.",
+                reason_if_empty="No findings",
+                meta=base_meta,
+                logger=self.logger
+            )
 
         # Summary logging
         if AnalysisType.VIRULENCE in out:
