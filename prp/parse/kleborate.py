@@ -3,30 +3,21 @@
 Documentation: https://kleborate.readthedocs.io/en/latest/index.html
 """
 
-import csv
-from dataclasses import dataclass
-from itertools import chain
-import logging
 import re
 from enum import StrEnum
-from pathlib import Path
-from typing import Any, Literal, Mapping, TextIO, TypeAlias
+from itertools import chain
+from typing import Any, Callable, Literal, Mapping
 
-from prp.exceptions import ParserError
+from prp.exceptions import ParserError, AbsentResultError
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.models.base import AnalysisType, ParserOutput
-from prp.models.enums import AnalysisSoftware
+from prp.models.base import AnalysisType, ResultEnvelope
+from prp.models.enums import AnalysisSoftware, ResultStatus
 from prp.models.hamronization import HamronizationEntries, HamronizationEntry
 from prp.models.kleborate import (
-    KleborateEtIndex,
     KleborateEtScore,
     KleborateKaptiveLocus,
-    KleborateKaptiveTypingResult,
-    KleborateKtypeIndex,
-    KleborateMlstLikeIndex,
     KleborateMlstLikeResults,
     KleborateQcResult,
-    KleborateScoreIndex,
     KleboreateSppResult,
     ParsedVariant,
 )
@@ -38,20 +29,22 @@ from prp.models.phenotype import (
     ElementType,
     ElementTypeResult,
     PhenotypeInfo,
-    SequenceStrand,
     VariantSubType,
     VariantType,
 )
-from prp.models.qc import QcMethodIndex, QcSoftware
-from prp.models.species import KleborateSppIndex
-from prp.models.typing import TypingMethod, TypingResultMlst
-from prp.parse.base import BaseParser, ParseImplOut, ParserInput
-from prp.parse.registry import register_parser
-from prp.parse.utils import safe_int
 
+from .base import BaseParser, ParseImplOut, ParserInput
+from .envelope import (
+    envelope_absent,
+    envelope_error,
+    envelope_from_value,
+    run_as_envelope,
+)
 from .hamronization import HAmrOnizationParser
+from .registry import register_parser
+from .utils import safe_int, safe_strand
 
-LOG = logging.getLogger(__name__)
+WarnFn = Callable[[str], None]
 
 REQUIRED_COLUMNS = {"strain"}
 COLUMN_MAP = {"strain": "sample_id"}
@@ -60,11 +53,31 @@ KLEBORATE = AnalysisSoftware.KLEBORATE
 
 
 _MLST_LIKE_SCHEMAS: dict[str, dict[str, Any]] = {
-    "abst": {"lineage_key": "Aerobactin", "st_key": "AbST", "qc_keys": ["spurious_abst_hits"]},
-    "cbst": {"lineage_key": "Colibactin", "st_key": "CbST", "qc_keys": ["spurious_clb_hits"]},
-    "rmst": {"lineage_key": "RmpADC", "st_key": "RmST", "qc_keys": ["spurious_rmst_hits"]},
-    "smst": {"lineage_key": "Salmochelin", "st_key": "SmST", "qc_keys": ["spurious_smst_hits"]},
-    "ybst": {"lineage_key": "Yersiniabactin", "st_key": "YbST", "qc_keys": ["spurious_ybt_hits"]},
+    "abst": {
+        "lineage_key": "Aerobactin",
+        "st_key": "AbST",
+        "qc_keys": ["spurious_abst_hits"],
+    },
+    "cbst": {
+        "lineage_key": "Colibactin",
+        "st_key": "CbST",
+        "qc_keys": ["spurious_clb_hits"],
+    },
+    "rmst": {
+        "lineage_key": "RmpADC",
+        "st_key": "RmST",
+        "qc_keys": ["spurious_rmst_hits"],
+    },
+    "smst": {
+        "lineage_key": "Salmochelin",
+        "st_key": "SmST",
+        "qc_keys": ["spurious_smst_hits"],
+    },
+    "ybst": {
+        "lineage_key": "Yersiniabactin",
+        "st_key": "YbST",
+        "qc_keys": ["spurious_ybt_hits"],
+    },
 }
 
 _MLST_TO_ANALYSISTYPE: dict[str, AnalysisType] = {
@@ -75,15 +88,10 @@ _MLST_TO_ANALYSISTYPE: dict[str, AnalysisType] = {
     "ybst": AnalysisType.YBST,
 }
 
-@dataclass(frozen=True)
-class _VariantPattern:
-    residue: Literal["nucleotide", "protein"]
-    subtype: Any  # VariantSubType in your codebase
-    regex: re.Pattern[str]
-
 
 def _compile(p: str) -> re.Pattern[str]:
     return re.compile(p, re.IGNORECASE)
+
 
 _VARIANT_PATTERNS: dict[tuple[str, Any], re.Pattern[str]] = {
     ("protein", VariantSubType.SUBSTITUTION): _compile(
@@ -123,555 +131,6 @@ class PresetName(StrEnum):
     EC = "escherichia"
 
 
-# Types
-Numeric: TypeAlias = int | float
-JSONLike: TypeAlias = None | str | Numeric | list["JSONLike"] | dict[str, "JSONLike"]
-PercentMode: TypeAlias = Literal["fraction", "percent"]
-
-# Regexes
-# _PERCENT_RE = re.compile(r"\s*(-?\d+(?:\.\d+)?)\s*%")
-# _FLOAT_RE = re.compile(r"\s*-?\d+\.\d+\s*")
-# _INT_RE = re.compile(r"\s*-?\d+\s*")
-
-
-# def _normalize_scalar(
-#     s: str | None,
-#     percent_mode: PercentMode = "fraction",
-#     null_values: list[str] = ["-"],
-# ) -> JSONLike:
-#     """Normalize stringed value to python type.
-
-#     percent_mode == "fraction" -> (0-1)
-#     percent_mode == "percent" -> (0-100)
-#     """
-#     if s is None:
-#         return None
-
-#     s = s.strip()
-#     if not s or s in null_values:
-#         return None
-
-#     # Convert percentages (numeric + %)
-#     match = _PERCENT_RE.fullmatch(s)
-#     if match:
-#         val = float(match.group(1))
-#         return (val / 100) if percent_mode == "fraction" else val
-
-#     if _FLOAT_RE.fullmatch(s):
-#         return float(s)
-
-#     if _INT_RE.fullmatch(s):
-#         return int(s)
-#     return s
-
-
-# def _normalize_cell(
-#     raw: str | None,
-#     percent_mode: PercentMode = "fraction",
-#     null_values: list[str] = ["-"],
-# ) -> JSONLike:
-#     """Normalize one cell:
-#     - Split by ';' into a list if present.
-#     - Normalize each token via _normalize_scalar.
-#     - If splits to one item, return the item (not a list).
-#     - If the cell is empty/None or in null_values, return None
-#     """
-#     if raw is None:
-#         return None
-
-#     # check if cell is a list of values
-#     if ";" in raw:
-#         parts = [p.strip() for p in raw.split(";")]
-#         normed = [
-#             _normalize_scalar(p, percent_mode=percent_mode, null_values=null_values)
-#             for p in parts
-#         ]
-#         if not normed:
-#             return None
-
-#         return normed
-#     else:
-#         return _normalize_scalar(
-#             raw, percent_mode=percent_mode, null_values=null_values
-#         )
-
-
-# def _set_nested(
-#     d: dict[str, Any], path: list[str], value: Any
-# ) -> dict[str, Any] | None:
-#     """Set value in a nested dict according to path."""
-#     if not path:
-#         return None
-
-#     key = path[0]
-#     # create new node if node has not yet been added
-#     node: dict[str, Any] | None = d.get(key)
-#     if not isinstance(node, dict):
-#         node = {}
-#         d[key] = node
-
-#     if len(path) > 1:
-#         d[key] = _set_nested(node, path[1:], value)
-#     else:
-#         d[key] = value
-#     return d
-
-
-# def parse_kleborate_output(
-#     source: TextIO, primary_key: str | None = "strain"
-# ) -> dict[str, Any]:
-#     """Read and serialize kleborate results as a dicitonary."""
-#     delimiter = "\t"
-#     reader = csv.reader(source, delimiter=delimiter)
-#     rows = list(reader)
-#     if not rows:
-#         return {}
-
-#     header = rows[0]
-#     # pre-compute header paths
-#     header_paths: list[list[str]] = [h.split("__") for h in header]
-
-#     result: dict[str, JSONLike] = {}
-#     for i, row in enumerate(rows[1:], start=1):
-#         # skip empty lines
-#         if not any(cell.strip() for cell in row if cell is not None):
-#             continue
-
-#         # Determine sample id
-#         if primary_key and primary_key in header:
-#             pk_idx = header.index(primary_key)
-#             row_key = row[pk_idx].strip() if pk_idx < len(row) else None or f"row_{i}"
-#         else:
-#             row_key = f"row_{i}"
-
-#         # create nested json-like structure from header
-#         # foo__bar__doo -> {'foo': {'bar': {'doo': value}}}
-#         nested: dict[str, JSONLike] = {}
-#         for col_idx, path in enumerate(header_paths):
-#             # Safeguard that row is as long as the header
-#             raw_value = row[col_idx] if col_idx < len(row) else None
-#             value = _normalize_cell(raw_value)
-#             nested = _set_nested(nested, path, value)
-#         result[row_key] = nested
-#     return result
-
-
-# def _mlst_like_formatter(
-#     d: dict[str, Any],
-#     lineage_key: str | None,
-#     st_key: str,
-#     qc_keys: list[str],
-#     schema_name: str,
-# ) -> KleborateMlstLikeResults:
-#     """Structure MLST-like typing data.
-
-#     Note: Qc keys are omitted until the data format allows for generic information.
-#     """
-#     typing_result = d.get(schema_name, {})
-#     # sanity check input
-#     if not lineage_key:
-#         raise RuntimeError("Lineage key must be set, check definition")
-
-#     if lineage_key not in typing_result:
-#         raise ValueError(
-#             f"Lineage key: {lineage_key} not found in data, check definition"
-#         )
-
-#     lineage = (
-#         "; ".join(typing_result[lineage_key])
-#         if isinstance(typing_result[lineage_key], list)
-#         else typing_result[lineage_key]
-#     )
-
-#     if st_key not in typing_result:
-#         raise ValueError(
-#             f"Sequence type key: {lineage_key} not in data, check definition"
-#         )
-
-#     if isinstance(typing_result[st_key], str):
-#         try:
-#             sequence_type = int(typing_result[st_key])
-#         except ValueError:
-#             sequence_type = typing_result[st_key]
-#     else:
-#         sequence_type = typing_result[st_key]
-
-#     # buld allele list, skip lineage, st, and qc
-#     skip_keys: list[str] = [lineage_key, st_key, *qc_keys]
-#     alleles = {key: val for key, val in typing_result.items() if key not in skip_keys}
-
-#     # TODO add QC metrics to output
-#     return KleborateMlstLikeResults(
-#         lineage=lineage, sequenceType=sequence_type, alleles=alleles, scheme=schema_name
-#     )
-
-
-# def _format_mlst_like_typing(
-#     result: dict[str, Any], version: str
-# ) -> list[KleborateMlstLikeIndex]:
-#     """Generic MLST-like formatter.
-
-#     lineage_key: str
-#     st_key: str
-#     qc_keys = []
-#     alleles is the rest
-#     """
-#     mlst_like_typing_schemas: dict[str, Any] = {
-#         "abst": {
-#             "lineage_key": "Aerobactin",
-#             "st_key": "AbST",
-#             "qc_keys": ["spurious_abst_hits"],
-#         },
-#         "cbst": {
-#             "lineage_key": "Colibactin",
-#             "st_key": "CbST",
-#             "qc_keys": ["spurious_clb_hits"],
-#         },
-#         "rmst": {
-#             "lineage_key": "RmpADC",
-#             "st_key": "RmST",
-#             "qc_keys": ["spurious_rmst_hits"],
-#         },
-#         "smst": {
-#             "lineage_key": "Salmochelin",
-#             "st_key": "SmST",
-#             "qc_keys": ["spurious_smst_hits"],
-#         },
-#         "ybst": {
-#             "lineage_key": "Yersiniabactin",
-#             "st_key": "YbST",
-#             "qc_keys": ["spurious_ybt_hits"],
-#         },
-#     }
-
-#     typing_result: list[KleborateMlstLikeIndex] = []
-#     for name, schema_def in mlst_like_typing_schemas.items():
-#         try:
-#             res = _mlst_like_formatter(result, schema_name=name, **schema_def)
-#             out = KleborateMlstLikeIndex(
-#                 type=TypingMethod(name), version=version, result=res
-#             )
-#             typing_result.append(out)
-#         except RuntimeError as exc:
-#             LOG.error(f"Critial Kleborate parser error; {exc}")
-#             raise
-#         except ValueError as exc:
-#             LOG.error(f"Could not parse {name} typing; skipping... err: {exc}")
-#     return typing_result
-
-
-# def _format_mlst_typing(result: dict[str, Any], schema_name: str) -> TypingResultMlst:
-#     """Format mlst typing"""
-#     alleles = {}
-#     return TypingResultMlst(scheme=schema_name, sequenceType=4242, alleles=alleles)
-
-
-# def _parse_qc(result: dict[str, JSONLike], version: str) -> QcMethodIndex:
-#     contig_stats = result.get("general", {}).get("contig_stats")
-#     if contig_stats:
-#         res = KleborateQcResult(
-#             n_contigs=contig_stats["contig_count"],
-#             n50=contig_stats["N50"],
-#             largest_contig=contig_stats["largest_contig"],
-#             total_length=contig_stats["total_size"],
-#             ambigious_bases=True if contig_stats["ambiguous_bases"] == "yes" else "no",
-#             qc_warnings=contig_stats["QC_warnings"],
-#         )
-#         return QcMethodIndex(software=QcSoftware.KLEBORATE, version=version, result=res)
-
-
-# def format_kleborate_output(
-#     result: dict[str, JSONLike], version: str
-# ) -> list[ParserOutput]:
-#     """Format raw output to PRP data model.
-
-#     It takes a nested dictionary as input where the nesting defines the categories.
-#     """
-#     formatted: list[ParserOutput] = []
-#     # parse qc if there are quality metrics
-#     if (general_info := result.get("general")) and isinstance(general_info, dict):
-#         if "contig_stats" in general_info:
-#             formatted.append(
-#                 ParserOutput(target_field="qc", data=_parse_qc(result, version))
-#             )
-
-#     if (entb_res := result.get("enterobacterales")) and isinstance(entb_res, dict):
-#         # add species prediction
-#         raw_spp = entb_res.get("species", {})
-#         spp_pred = KleboreateSppResult(
-#             scientificName=raw_spp.get("species", "unknown"),
-#             match=raw_spp.get("species_match"),
-#         )
-#         idx = KleborateSppIndex(result=spp_pred)
-#         formatted.append(ParserOutput(target_field="species_prediction", data=idx))
-
-#     # parse various typing methods
-#     if "klebsiella" in result:
-#         formatted.extend(
-#             [
-#                 ParserOutput(target_field="typing_result", data=idx)
-#                 for idx in _format_mlst_like_typing(
-#                     result["klebsiella"], version=version
-#                 )
-#             ]
-#         )
-#     # Parse preset specific fields
-#     if (preset_results := result.get(PresetName.KPSC, {})) and isinstance(
-#         preset_results, dict
-#     ):
-#         # parse mlst
-#         # KoSC -> pubmlst
-#         # KpSC -> pasteur
-#         # if (mlst_res := preset_results.get("mlst", {})) and isinstance(mlst_res, dict):
-#         #     idx = _format_mlst_typing(preset_results, schema_name="pasteur")
-#         #     formatted.append(ParserOutput(target_field="typing_result", data=idx))
-#         # parse virulence
-#         if (vir_score := preset_results.get("virulence_score", {})) and isinstance(
-#             vir_score, dict
-#         ):
-#             idx = KleborateScoreIndex(
-#                 version=version,
-#                 type=ElementType.VIR,
-#                 result=KleborateEtScore(
-#                     score=int(vir_score["virulence_score"]),
-#                     spurious_hits=vir_score["spurious_virulence_hits"],
-#                 ),
-#             )
-#             formatted.append(ParserOutput(target_field="element_type_result", data=idx))
-#         # parse kapsule typing
-#         if (kaptive_res := preset_results.get("kaptive", {})) and isinstance(
-#             kaptive_res, dict
-#         ):
-#             formatted.append(
-#                 ParserOutput(
-#                     target_field="typing_result",
-#                     data=_parse_kaptive(kaptive_res, version),
-#                 )
-#             )
-#     if (preset_results := result.get(PresetName.EC, {})) and isinstance(
-#         preset_results, dict
-#     ):
-#         if (mlst_res := preset_results.get("mlst", {})) and isinstance(mlst_res, dict):
-#             pass
-#             # Ecoli -> both
-#     return formatted
-
-
-def _get_hamr_phenotype(record: HamronizationEntry) -> PhenotypeInfo | None:
-    """Get phenotypic info from hamronization entry."""
-    if record.drug_class is not None:
-        return PhenotypeInfo(
-            type=ElementType.AMR,
-            name=record.drug_class,
-            group=record.drug_class,
-            annotation_type=AnnotationType.TOOL,
-        )
-
-
-def _convert_strand_orientation(orientation: str | None) -> SequenceStrand | None:
-    """Convert hAMRonization strand orientation to a SequenceStrand enum."""
-    forward_notations: list[str] = ["+", "sense"]
-    reverse_notations: list[str] = ["-", "antisense"]
-    if orientation in forward_notations:
-        return SequenceStrand.FORWARD
-    if orientation in reverse_notations:
-        return SequenceStrand.REVERSE
-    return None
-
-
-def _parse_variant_str(variant_str: str | None) -> ParsedVariant | None:
-    """Parse the HGVS-like variant string reported by Kleborate."""
-    if not variant_str:
-        return None
-
-    variant_type = (
-        VariantSubType.INSERTION
-        if "ins" in variant_str
-        else VariantSubType.DELETION
-        if "del" in variant_str
-        else VariantSubType.DUPLICATION
-        if "dup" in variant_str
-        else VariantSubType.INVERSION
-        if "inv" in variant_str
-        else VariantSubType.FRAME_SHIFT
-        if "fs" in variant_str
-        else VariantSubType.SUBSTITUTION
-    )
-
-    nucleotide_prefix = ("c", "g")
-    if variant_str[0] in nucleotide_prefix:
-        residue_type = "nucleotide"
-    elif variant_str.startswith("p."):
-        residue_type = "protein"
-    else:
-        raise ValueError(f"Unknown variant type: {variant_str}")
-
-    def compile(p: str) -> re.Pattern[str]:
-        """Shorthand regex compiler"""
-        return re.compile(p, re.I)
-
-    # define patterns for parsing hgvs-like strings
-    variant_patterns: dict[tuple[str, VariantSubType], re.Pattern[str]] = {
-        ("protein", VariantSubType.SUBSTITUTION): compile(
-            r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)(?P<alt>[A-Z]+)"
-        ),
-        ("protein", VariantSubType.INSERTION): compile(
-            r"\w\.(?P<start>\d+)_(?P<end>\d+)ins(?P<alt>[A-Z]+)"
-        ),
-        ("protein", VariantSubType.FRAME_SHIFT): compile(
-            r"\w\.(?P<ref>[A-Z]+)(?P<start>\d+)fs"
-        ),
-        ("protein", VariantSubType.DELETION): compile(
-            r"\w\.(?P<ref>[A-Z]+)(?P<pos>\d+)del"
-        ),
-        ("nucleotide", VariantSubType.SUBSTITUTION): compile(
-            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)(?P<alt>[ACGTURYSWKMBDHVN]+)"
-        ),
-        ("nucleotide", VariantSubType.FRAME_SHIFT): compile(
-            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)fs"
-        ),
-        ("nucleotide", VariantSubType.DELETION): compile(
-            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)del"
-        ),
-        ("nucleotide", VariantSubType.DUPLICATION): compile(
-            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)dup"
-        ),
-        ("nucleotide", VariantSubType.INVERSION): compile(
-            r"\w\.(?P<ref>[ACGTURYSWKMBDHVN]+)(?P<start>\d+)inv"
-        ),
-    }
-
-    # try get the approproate pattern for matching the string
-    pattern = variant_patterns.get((residue_type, variant_type))
-    if not pattern:
-        LOG.warning(
-            f"Dont know how to parse {residue_type} {variant_type}: {variant_str}"
-        )
-        return None
-
-    # try matching the pattern and return a structured result
-    if (match := re.fullmatch(pattern, variant_str)) and match:
-        return ParsedVariant.model_validate(
-            {"residue": residue_type, "type": variant_type, **match.groupdict()}
-        )
-
-    LOG.warning(
-        f"Could not parse the {variant_str} using the pattern for {residue_type} {variant_type}"
-    )
-    return None
-
-
-def hamronization_to_restance_entry(
-    entries: HamronizationEntries,
-) -> KleborateEtIndex:
-    """Convert hamronization formatted data to a PRP structured record."""
-    res_genes: list[AmrFinderResistanceGene] = []
-    res_variants: list[AmrFinderVariant] = []
-    sw_version: str = entries[0].analysis_software_version
-    entry: HamronizationEntry
-    for row_no, entry in enumerate(entries, start=1):
-        q_start = entry.input.gene_start if entry.input.gene_start else 0
-        q_end = entry.input.gene_stop if entry.input.gene_stop else 0
-        strand = _convert_strand_orientation(entry.strand_orientation)
-        if "gene" in entry.genetic_variation_type.lower():
-            # build gene entry
-            pheno = _get_hamr_phenotype(entry)
-            rec = AmrFinderResistanceGene(
-                gene_symbol=entry.gene_symbol,
-                sequence_name=entry.gene_name,
-                element_type=ElementType.AMR,
-                element_subtype=ElementAmrSubtype.AMR,
-                contig_id=entry.input.sequence_id or entry.input.file_name,
-                query_start_pos=q_start,
-                query_end_pos=q_end,
-                strand=strand,
-                ref_start_pos=entry.reference.gene_start,
-                ref_end_pos=entry.reference.gene_stop,
-                target_length=entry.reference.gene_length,
-                method=entry.analysis_software_name,
-                identity=entry.sequence_identity,
-                coverage=entry.coverage_percentage,
-                phenotypes=[pheno] if pheno else [],
-            )
-            res_genes.append(rec)
-        elif (
-            "variant" in entry.genetic_variation_type.lower()
-            or "mutation" in entry.genetic_variation_type.lower()
-        ):
-            variant_info = _parse_variant_str(
-                entry.protein_mutation or entry.nucleotide_mutation
-            )
-
-            # Prepare optional fields based on variant_info
-            extra_fields = {}
-            if variant_info:
-                if variant_info.residue == "nucleotide":
-                    extra_fields["ref_nt"] = variant_info.ref
-                    extra_fields["alt_nt"] = variant_info.alt
-                elif variant_info.residue == "protein":
-                    extra_fields["ref_aa"] = variant_info.ref
-                    extra_fields["alt_aa"] = variant_info.alt
-
-            rec = AmrFinderVariant(
-                id=row_no,
-                gene_symbol=entry.gene_symbol,
-                variant_type=VariantType.INDEL,
-                variant_subtype=VariantSubType.DELETION,
-                contig_id=entry.input.sequence_id or entry.input.file_name,
-                query_start_pos=q_start,
-                query_end_pos=q_end,
-                start=entry.reference.gene_start or 0,
-                end=entry.reference.gene_stop or 0,
-                identity=entry.sequence_identity or -1,
-                depth=entry.coverage_depth,
-                coverage=entry.coverage_percentage or -1,
-                frequency=entry.variant_frequency,
-                passed_qc=None,
-                confidence=None,
-                method="kleborate",
-                strand=strand,
-                **extra_fields,
-            )
-            res_variants.append(rec)
-        else:
-            LOG.warning(
-                f"Could not determine wether entry {row_no} is a gene or variant",
-                entry.genetic_variation_type,
-            )
-    return KleborateEtIndex(
-        version=sw_version,
-        type=ElementType.AMR,
-        result=ElementTypeResult(variants=res_variants, genes=res_genes),
-    )
-
-
-# def parse_kleborate_v3(
-#     path: Path,
-#     version: str,
-#     encoding: str = "utf-8",
-#     hamronization_entries: HamronizationEntries | None = None,
-# ):
-#     """Parse Kleborate v3 results to PRP format.
-
-#     https://kleborate.readthedocs.io/en/latest/index.html#
-#     """
-#     parser_results: list[ParserOutput] = []
-#     with path.open(encoding=encoding) as inpt:
-#         results = parse_kleborate_output(inpt)
-
-#         # structure analysis result to prp format
-#         for _, result in results.items():
-#             parser_results.extend(format_kleborate_output(result, version))
-
-#     # optionally add resistance determinants from hAMRonization output
-#     if hamronization_entries:
-#         idx = hamronization_to_restance_entry(hamronization_entries)
-#         parser_results.append(
-#             ParserOutput(target_field="element_type_result", data=idx)
-#         )
-#     return parser_results
-
-
 def _set_nested_iter(d: dict[str, Any], path: list[str], value: Any) -> None:
     """Iteratively set nested keys. Creates dict nodes as needed."""
     cur = d
@@ -690,7 +149,7 @@ def _normalize_kleborate_row(row: DelimiterRow) -> DelimiterRow:
         row,
         key_fn=lambda r: r.strip(),
         val_fn=lambda v: None if is_nullish(v) else v,
-        column_map=COLUMN_MAP
+        column_map=COLUMN_MAP,
     )
     # convert flat dict to nested dict.
     header_paths = {h: h.split("__") for h in normed}
@@ -714,6 +173,7 @@ def _parse_qc(result: Mapping[str, Any]) -> KleborateQcResult | None:
             qc_warnings=contig_stats["QC_warnings"],
         )
 
+
 def _parse_species(result: Mapping[str, Any]) -> KleboreateSppResult | None:
     """Parse species prediction results into a KleborateSpp result."""
     entb = result.get("enterobacterales")
@@ -725,7 +185,7 @@ def _parse_species(result: Mapping[str, Any]) -> KleboreateSppResult | None:
 
     return KleboreateSppResult(
         scientific_name=raw.get("species", "unknown"),
-        match=raw.get("species_match", "weak")
+        match=raw.get("species_match", "weak"),
     )
 
 
@@ -733,7 +193,7 @@ def _parse_virulence(result: Mapping[str, Any]) -> KleborateEtScore | None:
     """Get virulence score from result."""
     preset = result.get("klebsiella_pneumo_complex")
     if not isinstance(preset, Mapping):
-        return None
+        raise AbsentResultError("'klebsiella_pneumo_complex' specific analysis not in result.")
 
     vir = preset.get("virulence_score")
     if not isinstance(vir, Mapping):
@@ -745,25 +205,34 @@ def _parse_virulence(result: Mapping[str, Any]) -> KleborateEtScore | None:
     )
 
 
-def _parse_kaptive(result: Mapping[str, Any]) -> dict[AnalysisType.K_TYPE, KleborateKaptiveLocus]:
+def _parse_kaptive(
+    result: Mapping[str, Any]
+) -> dict[AnalysisType.K_TYPE, KleborateKaptiveLocus]:
     """Parse kaptive results in Kleborate and return K/O typing results."""
 
-    def _fmt_res(
-        d: dict[str, Any], type: Literal["K", "O"]
-    ) -> KleborateKaptiveLocus:
+    # Only available for KPSC
+    if (data := result.get(PresetName.KPSC)) is None:
+        raise AbsentResultError("'klebsiella_pneumo_complex' specific analysis not in result.")
+
+    def _fmt_res(d: dict[str, Any], method: Literal["K", "O"]) -> KleborateKaptiveLocus:
         return KleborateKaptiveLocus(
-            locus=d[f"{type}_locus"],
-            type=d[f"{type}_type"],
-            identity=float(d[f"{type}_locus_identity"]),
-            confidence=d[f"{type}_locus_confidence"].lower(),
-            problems=d[f"{type}_locus_problems"],
-            missing_genes=d[f"{type}_Missing_expected_genes"],
+            locus=d[f"{method}_locus"],
+            type=d[f"{method}_type"],
+            identity=float(d[f"{method}_locus_identity"]),
+            confidence=d[f"{method}_locus_confidence"].lower(),
+            problems=d[f"{method}_locus_problems"],
+            missing_genes=d[f"{method}_Missing_expected_genes"],
         )
 
-    return {AnalysisType.K_TYPE: _fmt_res(result, "K"), AnalysisType.O_TYPE: _fmt_res(result, "O")}
+    return {
+        AnalysisType.K_TYPE: _fmt_res(data, "K"),
+        AnalysisType.O_TYPE: _fmt_res(data, "O"),
+    }
 
 
-def _parse_mlst_like(result: Mapping[str, Any]) -> dict[AnalysisType, KleborateMlstLikeResults]:
+def _parse_mlst_like(
+    result: Mapping[str, Any]
+) -> dict[AnalysisType, KleborateMlstLikeResults]:
     """
     Parse the MLST-like blocks from result["klebsiella"] using your schema definitions.
     Returns mapping AnalysisType -> dict result.
@@ -772,7 +241,7 @@ def _parse_mlst_like(result: Mapping[str, Any]) -> dict[AnalysisType, KleborateM
 
     kleb = result.get("klebsiella")
     if not isinstance(kleb, Mapping):
-        return out
+        raise AbsentResultError("'klebsiella_pneumo_complex' specific analysis not in result.")
 
     for schema_name, schema_def in _MLST_LIKE_SCHEMAS.items():
         analysis_type = _MLST_TO_ANALYSISTYPE.get(schema_name)
@@ -792,7 +261,9 @@ def _parse_mlst_like(result: Mapping[str, Any]) -> dict[AnalysisType, KleborateM
             continue
 
         lineage_val = typing_result.get(lineage_key)
-        lineage = "; ".join(lineage_val) if isinstance(lineage_val, list) else lineage_val
+        lineage = (
+            "; ".join(lineage_val) if isinstance(lineage_val, list) else lineage_val
+        )
 
         st_val = typing_result.get(st_key)
         sequence_type: Any
@@ -808,16 +279,195 @@ def _parse_mlst_like(result: Mapping[str, Any]) -> dict[AnalysisType, KleborateM
         alleles = {k: v for k, v in typing_result.items() if k not in skip}
 
         out[analysis_type] = KleborateMlstLikeResults(
-            scheme=schema_name, lineage=lineage, sequence_type=sequence_type, alleles=alleles
+            scheme=schema_name,
+            lineage=lineage,
+            sequence_type=sequence_type,
+            alleles=alleles,
         )
 
     return out
 
 
-def _parse_amr(result: HamronizationEntries) -> ElementTypeResult:
-    """Parse hAMRonization results and return in a standardized format."""
+def _is_gene_entry(entry: HamronizationEntry) -> bool:
+    """Return true if entry is a gene."""
+    t = (entry.genetic_variation_type or "").lower()
+    return "gene" in t
 
-    return ElementTypeResult(variants=res_variants, genes=res_genes)
+
+def _is_variant_entry(entry: HamronizationEntry) -> bool:
+    """Return true if entry is a variant."""
+    t = (entry.genetic_variation_type or "").lower()
+    return ("variant" in t) or ("mutation" in t)
+
+
+def _infer_variant_subtype(variant_str: str) -> VariantSubType:
+    """Infer variant subtype from substring markers."""
+    s = variant_str.lower()
+    if "ins" in s:
+        return VariantSubType.INSERTION
+    if "del" in s:
+        return VariantSubType.DELETION
+    if "dup" in s:
+        return VariantSubType.DUPLICATION
+    if "inv" in s:
+        return VariantSubType.INVERSION
+    if "fs" in s:
+        return VariantSubType.FRAME_SHIFT
+    return VariantSubType.SUBSTITUTION
+
+
+def _parse_variant_str(
+    variant_str: str | None,
+    *,
+    warn: WarnFn | None = None,
+    strict: bool = False,
+) -> ParsedVariant | None:
+    """
+    Parse the HGVS-like variant string reported by Kleborate/hAMRonization.
+
+    - Returns ParsedVariant or None if unparsable.
+    - Uses `warn()` for warnings; does not depend on global LOG.
+    - If strict=True, raises ValueError on unknown format.
+    """
+    if not variant_str:
+        return None
+
+    v = variant_str.strip()
+    subtype = _infer_variant_subtype(v)
+
+    # Determine residue type (nucleotide/protein)
+    residue_type: Literal["nucleotide", "protein"]
+    if v.startswith(("c.", "g.", "n.")) or (v and v[0] in ("c", "g", "n")):
+        residue_type = "nucleotide"
+    elif v.startswith("p."):
+        residue_type = "protein"
+    else:
+        msg = f"Unknown variant string prefix: {variant_str!r}"
+        if warn:
+            warn(msg)
+        if strict:
+            raise ValueError(msg)
+        return None
+
+    pattern = _VARIANT_PATTERNS.get((residue_type, subtype))
+    if not pattern:
+        msg = f"Unsupported {residue_type} {subtype} variant: {variant_str!r}"
+        if warn:
+            warn(msg)
+        if strict:
+            raise ValueError(msg)
+        return None
+
+    m = pattern.fullmatch(v)
+    if not m:
+        msg = f"Could not parse variant string {variant_str!r} with pattern for {residue_type} {subtype}"
+        if warn:
+            warn(msg)
+        if strict:
+            raise ValueError(msg)
+        return None
+
+    return ParsedVariant.model_validate(
+        {"residue": residue_type, "type": subtype,**m.groupdict()}
+    )
+
+
+def _hamr_phenotype(record: HamronizationEntry) -> PhenotypeInfo | None:
+    """Get phenotypic info from hamronization entry."""
+    if record.drug_class is not None:
+        return PhenotypeInfo(
+            type=ElementType.AMR,
+            name=record.drug_class,
+            group=record.drug_class,
+            annotation_type=AnnotationType.TOOL,
+        )
+
+
+def _parse_amr(entries: HamronizationEntries, *, warn: WarnFn) -> ElementTypeResult:
+    """Convert hAMRonization results and return in a standardized format."""
+    genes: list[AmrFinderResistanceGene] = []
+    variants: list[AmrFinderVariant] = []
+
+    if not entries:
+        return ElementTypeResult(variants=[], genes=[])
+
+    for row_no, entry in enumerate(entries, start=1):
+        q_start = entry.input.gene_start or 0
+        q_end = entry.input.gene_stop or 0
+        contig = entry.input.sequence_id or entry.input.file_name
+        strand = safe_strand(entry.strand_orientation)
+
+        if _is_gene_entry(entry):
+            pheno = _hamr_phenotype(entry)
+            genes.append(
+                AmrFinderResistanceGene(
+                    gene_symbol=entry.gene_symbol,
+                    sequence_name=entry.gene_name,
+                    element_type=ElementType.AMR,
+                    element_subtype=ElementAmrSubtype.AMR,
+                    contig_id=contig,
+                    query_start_pos=q_start,
+                    query_end_pos=q_end,
+                    strand=strand,
+                    ref_start_pos=entry.reference.gene_start,
+                    ref_end_pos=entry.reference.gene_stop,
+                    target_length=entry.reference.gene_length,
+                    method=entry.analysis_software_name or None,
+                    identity=entry.sequence_identity,
+                    coverage=entry.coverage_percentage,
+                    phenotypes=[pheno] if pheno else [],
+                )
+            )
+            continue
+
+        if _is_variant_entry(entry):
+            # Determine subtype/type from the HGVS-like string, if present
+            pv = _parse_variant_str(
+                entry.protein_mutation or entry.nucleotide_mutation,
+                warn=warn,
+                strict=False,  # don’t hard fail just due to variant string formatting
+            )
+
+            extra_fields: dict[str, Any] = {}
+            variant_subtype = pv.type if pv else VariantType.SNV
+
+            if pv:
+                if pv.residue == "nucleotide":
+                    extra_fields["ref_nt"] = getattr(pv, "ref", None)
+                    extra_fields["alt_nt"] = getattr(pv, "alt", None)
+                else:
+                    extra_fields["ref_aa"] = getattr(pv, "ref", None)
+                    extra_fields["alt_aa"] = getattr(pv, "alt", None)
+
+            variants.append(
+                AmrFinderVariant(
+                    id=row_no,
+                    gene_symbol=entry.gene_symbol,
+                    variant_type=VariantType.INDEL,
+                    variant_subtype=variant_subtype,
+                    contig_id=contig,
+                    query_start_pos=q_start,
+                    query_end_pos=q_end,
+                    start=entry.reference.gene_start or 0,
+                    end=entry.reference.gene_stop or 0,
+                    identity=entry.sequence_identity
+                    if entry.sequence_identity is not None
+                    else -1,
+                    depth=entry.coverage_depth,
+                    coverage=entry.coverage_percentage
+                    if entry.coverage_percentage is not None
+                    else -1,
+                    frequency=getattr(entry, "variant_frequency", None),
+                    passed_qc=None,
+                    confidence=None,
+                    method=entry.analysis_software_name or None,
+                    strand=strand,
+                    **extra_fields,
+                )
+            )
+            continue
+
+    return ElementTypeResult(variants=variants, genes=genes)
 
 
 @register_parser(KLEBORATE)
@@ -843,6 +493,14 @@ class KleborateParser(BaseParser):
         AnalysisType.AMR,
     }
 
+    mlst_family = {
+        AnalysisType.ABST,
+        AnalysisType.CBST,
+        AnalysisType.RMST,
+        AnalysisType.SMST,
+        AnalysisType.YBST,
+    }
+
     def _parse_impl(
         self,
         source: ParserInput,
@@ -860,12 +518,13 @@ class KleborateParser(BaseParser):
             first_row = next(row_iter)
         except StopIteration:
             self.log_info(f"{self.software} input empty")
-            return None
+            return {atype: envelope_absent("Empty input") for atype in want}
 
         self.validate_columns(first_row, required=REQUIRED_COLUMNS, strict=strict)
 
-        out: dict[AnalysisType, Any] = {atype: {} for atype in want}
+        out: dict[AnalysisType, Any] = {}
 
+        # convert result as nested dict
         observed_sample_ids: str | None = None
         for raw_row in chain([first_row], row_iter):
             nested = _normalize_kleborate_row(raw_row)
@@ -878,52 +537,137 @@ class KleborateParser(BaseParser):
             if observed_sample_ids != sample_id:
                 self.log_error(
                     "There are multiple sample ids in file",
-                    sample_ids=[observed_sample_ids, sample_id]
+                    sample_ids=[observed_sample_ids, sample_id],
                 )
                 raise ParserError(
-                    f"There are multiple sample ids in file, {observed_sample_ids} != {sample_id}" 
+                    f"There are multiple sample ids in file, {observed_sample_ids} != {sample_id}"
                 )
 
+            base_meta = {
+                "parser": self.parser_name,
+                "software": self.software,
+                "sample_id": sample_id,
+            }
+            # Species
             if AnalysisType.SPECIES in want:
-                if (spp := _parse_species(nested)) is not None:
-                    out[AnalysisType.SPECIES] = spp
+                out[AnalysisType.SPECIES] = run_as_envelope(
+                    analysis_name=AnalysisType.SPECIES,
+                    fn=lambda: _parse_species(nested),
+                    reason_if_absent="Spp results not present",
+                    reason_if_empty="No species prediction",
+                    meta=base_meta,
+                    logger=self.logger,
+                )
 
             if AnalysisType.QC in want:
-                if (qc := _parse_qc(nested)) is not None:
-                    out[AnalysisType.QC] = qc
+                out[AnalysisType.QC] = run_as_envelope(
+                    analysis_name=AnalysisType.QC,
+                    fn=lambda: _parse_qc(nested),
+                    reason_if_absent=f"No QC results present",
+                    reason_if_empty="No QC result",
+                    meta=base_meta,
+                    logger=self.logger,
+                )
 
             if AnalysisType.VIRULENCE in want:
-                if (vir := _parse_virulence(nested)) is not None:
-                    out[AnalysisType.VIRULENCE] = vir
+                out[AnalysisType.VIRULENCE] = run_as_envelope(
+                    analysis_name=AnalysisType.VIRULENCE,
+                    fn=lambda: _parse_virulence(nested),
+                    reason_if_absent=f"No virulence prediction in result",
+                    reason_if_empty="No virulence genes",
+                    meta=base_meta,
+                    logger=self.logger,
+                )
 
+            # K/O types (Kaptive)
             if AnalysisType.K_TYPE in want or AnalysisType.O_TYPE in want:
-                parsed = _parse_kaptive(nested)
-                if parsed is not None:
+                kaptive_env = run_as_envelope(
+                    analysis_name="Kaptive",
+                    fn=lambda: _parse_kaptive(nested),
+                    reason_if_absent=f"Kaptive not present",
+                    reason_if_empty="Kaptive result",
+                    meta=base_meta,
+                    logger=self.logger,
+                )
+                if kaptive_env.status == ResultStatus.PARSED:
+                    kaptive_value: dict[AnalysisType, Any] = kaptive_env.value or {}
                     if AnalysisType.K_TYPE in want:
-                        out[AnalysisType.K_TYPE] = parsed[AnalysisType.K_TYPE]
+                        payload = kaptive_value.get(AnalysisType.K_TYPE)
+                        out[AnalysisType.K_TYPE] = envelope_from_value(
+                            payload, meta={**base_meta, "step": "kaptive.k_type"}
+                        )
                     if AnalysisType.O_TYPE in want:
-                        out[AnalysisType.O_TYPE][sample_id] = parsed[AnalysisType.O_TYPE]
+                        payload = kaptive_value.get(AnalysisType.O_TYPE)
+                        out[AnalysisType.O_TYPE] = envelope_from_value(
+                            payload, meta={**base_meta, "step": "kaptive.o_type"}
+                        )
+                else:
+                    # Propagate non-PARSED status (ABSENT/EMPTY/ERROR) to requested sub-types
+                    if AnalysisType.K_TYPE in want:
+                        out[AnalysisType.K_TYPE] = ResultEnvelope(
+                            status=kaptive_env.status,
+                            reason=kaptive_env.reason,
+                            meta={**kaptive_env.meta, "step": "kaptive.k_type"},
+                        )
+                    if AnalysisType.O_TYPE in want:
+                        out[AnalysisType.O_TYPE] = ResultEnvelope(
+                            status=kaptive_env.status,
+                            reason=kaptive_env.reason,
+                            meta={**kaptive_env.meta, "step": "kaptive.o_type"},
+                        )
 
             # MLST-like typing (ABST/CBST/RMST/SMST/YBST)
-            mlst_like = _parse_mlst_like(nested)
-            for atype, payload in mlst_like.items():
-                if atype in want:
-                    out[atype] = payload
-            
+            if self.mlst_family & want:
+                mlst_env = run_as_envelope(
+                    analysis_name="mlst_like",
+                    fn=lambda: _parse_mlst_like(nested),
+                    reason_if_absent="mlst-like block not present",
+                    reason_if_empty="No predictions",
+                    meta=base_meta,
+                    logger=self.logger,
+                )
+                if mlst_env.status == ResultStatus.PARSED:
+                    values: dict[AnalysisType, Any] = mlst_env.value or {}
+                    for atype in self.mlst_family & want:
+                        out[atype] = envelope_from_value(
+                            values.get(atype),
+                            meta={**base_meta, "step": f"mlst_like.{atype.value}"},
+                        )
+                else:
+                    # Propagate shared status to the requested MLST-like outputs
+                    for atype in self.mlst_family & want:
+                        out[atype] = ResultEnvelope(
+                            status=mlst_env.status,
+                            reason=mlst_env.reason,
+                            meta={**mlst_env.meta, "step": f"mlst_like.{atype.value}"},
+                        )
+
             # Parse AMR predictions
             if AnalysisType.AMR in want:
-                if hamronization_source is not None:
-                    hparser = HAmrOnizationParser()
-                    # TODO add adapter layer and make HAmrOnizationParser stricter
-
-                    result = hparser.parse(hamronization_source)
-                    res = result.results[AnalysisType.AMR]
-                    if res is not None:
-                        out[AnalysisType.AMR] = hamronization_to_restance_entry(res)
-                    else:
-                        self.log_error(f"Could not parse resistance information from {hamronization_source}")
+                if hamronization_source is None:
+                    m = "Cannot parse AMR since no hAMRonization results were provided."
+                    self.log_error(m)
+                    out[AnalysisType.AMR] = envelope_error(
+                        m, meta={**base_meta, "step": "amr"}
+                    )
                 else:
-                    self.log_error("Cant parse AMR since no hAMRonization results was provided.")
+                    hparser = HAmrOnizationParser()
+                    hres = hparser.parse(hamronization_source)
 
-        # Drop empty analysis types to keep output clean
-        return {atype: result for atype, result in out.items() if result}
+                    res = hres.results.get(AnalysisType.AMR)
+                    if res.status != "parsed":
+                        # Should not happen if prepopulated by that parser; treat as ABSENT
+                        out[AnalysisType.AMR] = envelope_absent(
+                            "hAMRonization AMR not present",
+                            meta={**base_meta, "step": "amr"},
+                        )
+                    else:
+                        out[AnalysisType.AMR] = run_as_envelope(
+                            analysis_name="amr_from_hamronization",
+                            fn=lambda: _parse_amr(res.value, warn=self.log_warning),
+                            reason_if_absent="AMR not present",
+                            reason_if_empty="No AMR findings",
+                            meta=base_meta,
+                            logger=self.logger,
+                        )
+        return out
