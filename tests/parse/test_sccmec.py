@@ -1,6 +1,6 @@
 """Test functions for parsing SCCmec results."""
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.typing import TypingResultSccmec
 from prp.parse.sccmec import SccMecParser
 
@@ -15,7 +15,9 @@ def test_parse_sccmec_results(saureus_sccmec_path):
     # assert correct ouptut data model
     assert isinstance(result, ParserOutput)
 
-    assert isinstance(result.results["sccmec"][0], TypingResultSccmec)
+    res = result.results["sccmec"]
+    assert isinstance(res, ResultEnvelope)
+    assert isinstance(res.value[0], TypingResultSccmec)
 
     expected_sccmec = {
         "camlhmp_version": "1.1.0",
@@ -45,4 +47,4 @@ def test_parse_sccmec_results(saureus_sccmec_path):
     }
 
     # check if data matches
-    assert expected_sccmec == result.results['sccmec'][0].model_dump()
+    assert expected_sccmec == res.value[0].model_dump()

@@ -181,11 +181,4 @@ class VirulenceFinderParser(BaseParser):
                 meta=base_meta,
                 logger=self.logger
             )
-
-        # Summary logging
-        if AnalysisType.VIRULENCE in out:
-            self.log_info("VirulenceFinder parsed virulence", genes=len(out[AnalysisType.VIRULENCE].genes))
-        if AnalysisType.STX in out:
-            self.log_info("VirulenceFinder parsed stx", has_hit=out[AnalysisType.STX] is not None)
-
         return out

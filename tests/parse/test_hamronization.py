@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.enums import AnalysisType
 from prp.models.hamronization import HamronizationEntry
 from prp.parse.hamronization import HAmrOnizationParser
@@ -21,4 +21,5 @@ def test_parse_hamronization(kp_kleborate_hamronization_path: Path):
     assert all(at in parser.produces for at in result.results.keys())
 
     res = result.results[AnalysisType.AMR]
-    assert isinstance(res, list) and isinstance(res[0], HamronizationEntry)
+    assert isinstance(res, ResultEnvelope)
+    assert isinstance(res.value, list) and isinstance(res.value[0], HamronizationEntry)

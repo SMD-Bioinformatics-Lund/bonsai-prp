@@ -1,8 +1,10 @@
 """Test Serotypefinder parser."""
 import pytest
-from prp.models.base import ParserOutput
+
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.phenotype import SerotypeGene
 from prp.parse.serotypefinder import SerotypeFinderParser, _is_no_hit
+
 
 def test_serotypefinder_parser(ecoli_serotypefinder_path):
     """Test parsing of serotypefinder result file."""
@@ -18,14 +20,21 @@ def test_serotypefinder_parser(ecoli_serotypefinder_path):
     assert all(at in parser.produces for at in result.results.keys())
 
     # verify that h_type hit was parsed.
-    assert isinstance(result.results["h_type"], SerotypeGene)
+    hres = result.results["h_type"]
+    assert isinstance(hres, ResultEnvelope)
+    assert hres.status == "parsed"
+    assert isinstance(hres.value, SerotypeGene)
 
     # verify that the expected no o_type hit was correctly handled.
-    assert isinstance(result.results["o_type"], None)
+    ores = result.results["o_type"]
+    assert isinstance(ores, ResultEnvelope)
+    assert ores.status == "absent"
 
 
-@pytest.mark.parametrize("value,expected", [
-    ("No hit!", True), ("", True), (None, True), ({}, True), ({"GENE": {}}, False)])
+@pytest.mark.parametrize(
+    "value,expected",
+    [("No hit!", True), ("", True), (None, True), ({}, True), ({"GENE": {}}, False)],
+)
 def test_is_no_hit(value, expected):
     """Test function that checks wether it was a serotypefinder hit."""
     assert _is_no_hit(value) == expected

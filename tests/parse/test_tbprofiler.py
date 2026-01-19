@@ -1,7 +1,7 @@
 """Test parsing of TbProfiler results."""
 
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.enums import AnalysisType
 from prp.models.phenotype import ElementTypeResult
 from prp.models.typing import LineageInformation
@@ -21,8 +21,15 @@ def test_tbprofier_parser_results(mtuberculosis_tbprofiler_path):
     assert all(at in parser.produces for at in result.results.keys())
 
     res = result.results[AnalysisType.AMR]
-    assert isinstance(res, ElementTypeResult)
+    assert isinstance(res, ResultEnvelope)
+    assert res.status == "parsed"
+
+    # test parser results
+    assert isinstance(res.value, ElementTypeResult)
 
     res = result.results[AnalysisType.LINEAGE]
-    assert isinstance(res, list)
-    assert isinstance(res[0], LineageInformation)
+    assert isinstance(res, ResultEnvelope)
+    assert res.status == "parsed"
+
+    assert isinstance(res.value, list)
+    assert isinstance(res.value[0], LineageInformation)

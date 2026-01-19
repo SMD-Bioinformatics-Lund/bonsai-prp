@@ -1,7 +1,8 @@
 """Virulencefinder parser test suite."""
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.enums import AnalysisType
+from prp.models.phenotype import VirulenceElementTypeResult
 from prp.models.typing import TypingResultGeneAllele
 from prp.parse.virulencefinder import VirulenceFinderParser
 
@@ -20,10 +21,16 @@ def test_virulencefinder_parser(ecoli_virulencefinder_stx_pred_stx_path):
 
     # test that all genes are identified
     vir_res = result.results[AnalysisType.VIRULENCE]
-    assert len(vir_res.genes) == 29
+    assert isinstance(vir_res, ResultEnvelope)
+    assert vir_res.status == "parsed"
+
+    assert isinstance(vir_res.value, VirulenceElementTypeResult)
+    assert len(vir_res.value.genes) == 29
 
     # test STX prediction returns the expected results
     stx_res = result.results[AnalysisType.STX]
-    assert isinstance(stx_res, TypingResultGeneAllele)
+    assert isinstance(stx_res, ResultEnvelope)
+    assert stx_res.status == "parsed"
 
-    assert stx_res.gene_symbol == "stx2"
+    assert isinstance(stx_res.value, TypingResultGeneAllele)
+    assert stx_res.value.gene_symbol == "stx2"

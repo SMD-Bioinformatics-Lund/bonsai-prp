@@ -70,7 +70,7 @@ class BrackenParser(SingleAnalysisParser):
             return {AnalysisType.SPECIES: []}
 
         # Validate the columns in the first row
-        self.validate_columns(first_row, strict=strict_columns)
+        self.validate_columns(first_row, required=REQUIRED_COLUMNS, strict=strict_columns)
 
         results: list[BrackenSpeciesPrediction] = []
         # append first row

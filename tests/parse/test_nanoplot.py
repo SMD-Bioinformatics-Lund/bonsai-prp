@@ -1,6 +1,6 @@
 """Test functions for parsing NanoPlot results."""
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.enums import AnalysisType
 from prp.models.qc import NanoPlotQcResult
 from prp.parse.nanoplot import NanoplotParser
@@ -19,7 +19,11 @@ def test_parse_nanoplot_results(saureus_nanoplot_path):
     assert all(at in parser.produces for at in result.results.keys())
 
     res = result.results[AnalysisType.QC]
-    assert isinstance(res, NanoPlotQcResult)
+    assert isinstance(res, ResultEnvelope)
+    assert res.status == "parsed"
+
+    # test parser result
+    assert isinstance(res.value, NanoPlotQcResult)
 
     # Test parsing the output
     expected_summary = {
@@ -34,6 +38,6 @@ def test_parse_nanoplot_results(saureus_nanoplot_path):
     }
 
     # Check if data matches
-    assert expected_summary == res.summary.model_dump()
-    assert len(res.top_longest) == 5
-    assert len(res.top_quality) == 5
+    assert expected_summary == res.value.summary.model_dump()
+    assert len(res.value.top_longest) == 5
+    assert len(res.value.top_quality) == 5

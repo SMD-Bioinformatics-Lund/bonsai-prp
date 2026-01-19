@@ -1,6 +1,6 @@
 """Test functions for the resfinder parser."""
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.enums import AnalysisType
 from prp.parse.resfinder import ResFinderParser, get_nt_change
 
@@ -30,5 +30,8 @@ def test_resfinder_parser(ecoli_resfinder_path):
 
     # test that all genes and varaints are identified
     amr_res = result.results[AnalysisType.AMR]
-    assert len(amr_res.genes) == 17
-    assert len(amr_res.variants) == 4
+    assert isinstance(amr_res, ResultEnvelope)
+    assert amr_res.status == "parsed"
+
+    assert len(amr_res.value.genes) == 17
+    assert len(amr_res.value.variants) == 4

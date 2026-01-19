@@ -6,7 +6,6 @@ from prp.models.typing import TypingResultEmm
 from prp.parse.emmtyper import EmmTyperParser
 
 
-
 def test_emmtype_parser_results(streptococcus_emmtyper_path):
     parser = EmmTyperParser()
     result = parser.parse(streptococcus_emmtyper_path)

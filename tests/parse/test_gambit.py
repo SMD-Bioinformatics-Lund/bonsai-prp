@@ -1,14 +1,14 @@
 """Test gambit parsing."""
 
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.enums import AnalysisType
 from prp.models.qc import GambitcoreQcResult
 from prp.parse.gambit import GambitCoreParser
 
 
 def test_gambit_parser(ecoli_gambitcore_path):
-    """Test quast parser."""
+    """Test gambit parser."""
     parser = GambitCoreParser()
     result = parser.parse(ecoli_gambitcore_path)
 
@@ -18,7 +18,11 @@ def test_gambit_parser(ecoli_gambitcore_path):
     # verify that parser produces what it say it should
     assert all(at in parser.produces for at in result.results.keys())
 
-    assert isinstance(result.results[AnalysisType.QC], GambitcoreQcResult)
+    qc = result.results[AnalysisType.QC]
+    assert isinstance(qc, ResultEnvelope)
+    assert qc.status == "parsed"
 
-    assert result.results[AnalysisType.QC].assembly_core == 2852
-    assert result.results[AnalysisType.QC].species_core == 2864
+    assert isinstance(qc.value, GambitcoreQcResult)
+
+    assert qc.value.assembly_core == 2852
+    assert qc.value.species_core == 2864

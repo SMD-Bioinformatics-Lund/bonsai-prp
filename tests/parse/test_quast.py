@@ -2,13 +2,21 @@
 
 import pytest
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.enums import AnalysisType
 from prp.models.qc import QuastQcResult
 from prp.parse.quast import QuastParser
 
 
-@pytest.mark.parametrize("fixture_name", [("saureus_quast_path"), ("mtuberculosis_quast_path"), ("kp_quast_path"), ("ecoli_quast_path")])
+@pytest.mark.parametrize(
+    "fixture_name",
+    [
+        ("saureus_quast_path"),
+        ("mtuberculosis_quast_path"),
+        ("kp_quast_path"),
+        ("ecoli_quast_path"),
+    ],
+)
 def test_quast_parser(fixture_name: str, request):
     """Test quast parser."""
     filename = request.getfixturevalue(fixture_name)
@@ -23,4 +31,6 @@ def test_quast_parser(fixture_name: str, request):
     # verify that parser produces what it say it should
     assert all(at in parser.produces for at in result.results.keys())
 
-    assert isinstance(result.results[AnalysisType.QC], QuastQcResult)
+    qc = result.results[AnalysisType.QC]
+    assert isinstance(qc, ResultEnvelope)
+    assert isinstance(qc.value, QuastQcResult)

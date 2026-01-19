@@ -393,8 +393,8 @@ def build_resfinder_result(
     # keys used in filtering are phenotype["key"] values
     predicted_keys = list(all_phenos.keys())
     categories = {
-        ElementType.STRESS: stress_factors,
-        ElementType.AMR: list(set(predicted_keys) - set(stress_factors)),
+        AnalysisType.STRESS: stress_factors,
+        AnalysisType.AMR: list(set(predicted_keys) - set(stress_factors)),
     }
 
     limit = categories[resistance_category]
@@ -448,19 +448,4 @@ class ResFinderParser(BaseParser):
                     meta=base_meta,
                     logger=self.logger
                 )
-
-        # Observability summary
-        if AnalysisType.AMR in out:
-            self.log_info(
-                "ResFinder parsed AMR",
-                genes=len(out[AnalysisType.AMR].genes),
-                variants=len(out[AnalysisType.AMR].variants),
-            )
-        if AnalysisType.STRESS in out:
-            self.log_info(
-                "ResFinder parsed STRESS",
-                genes=len(out[AnalysisType.STRESS].genes),
-                variants=len(out[AnalysisType.STRESS].variants),
-            )
-
         return out

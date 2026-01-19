@@ -1,11 +1,11 @@
 """Test functions for parsing Shigapass results."""
 
 from typing import Any
+
 import pytest
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.parse.shigapass import ShigapassParser, extract_percentage
-
 
 EXPECTED_SHIGA_OUTPUT = [
     (
@@ -73,4 +73,7 @@ def test_parse_shigapass_results(
 
     # check if data matches
     pred = result.results["shigatype"]
-    assert expected_result == pred.model_dump()
+    assert isinstance(pred, ResultEnvelope)
+    assert pred.status == "parsed"
+
+    assert expected_result == pred.value.model_dump()

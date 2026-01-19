@@ -1,6 +1,6 @@
 """Test functions for parsing SAMtools coverage results."""
 
-from prp.models.base import ParserOutput
+from prp.models.base import ParserOutput, ResultEnvelope
 from prp.models.enums import AnalysisType
 from prp.models.qc import SamtoolsCoverageQcResult
 from prp.parse.samtools import SamtoolsCovParser
@@ -18,8 +18,11 @@ def test_samtools_coverage_parser(saureus_samtools_coverage_path):
     # verify that parser produces what it say it should
     assert all(at in parser.produces for at in result.results.keys())
 
-    res = result.results[AnalysisType.QC]
-    assert isinstance(res, SamtoolsCoverageQcResult)
+    qc = result.results[AnalysisType.QC]
+    assert isinstance(qc, ResultEnvelope)
+    assert qc.status == "parsed"
+
+    assert isinstance(qc.value, SamtoolsCoverageQcResult)
 
     # test parsing the output
     expected_samtools = {
@@ -49,4 +52,4 @@ def test_samtools_coverage_parser(saureus_samtools_coverage_path):
         ]
     }
     # check if data matches
-    assert expected_samtools == res.model_dump()
+    assert expected_samtools == qc.value.model_dump()
