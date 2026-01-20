@@ -8,11 +8,13 @@ class AnalysisSoftware(StrEnum):
 
     AMRFINDER = "amrfinder"
     BRACKEN = "bracken"
+    CHEWBBACA = "chewbbaca"
     EMMTYPER = "emmtyper"
     GAMBIT = "gambit"
     HAMRONIZATION = "hAMRonization"
     KLEBORATE = "kleborate"
     MYKROBE = "mykrobe"
+    MLST = "mlst"
     NANOPLOT = "nanoplot"
     POSTALIGNQC = "postalignqc"
     QUAST = "quast"
