@@ -5,11 +5,11 @@ from pathlib import Path
 from logging import Logger, getLogger
 from typing import Any, Mapping, Type, IO, TypeAlias, TypeVar
 from prp.io.delimited import validate_fields
-from prp.models.base import ParserOutput, AnalysisType, ResultEnvelope
 from collections.abc import Iterator, Callable
 
-from prp.models.enums import ResultStatus
-from prp.parse.envelope import default_empty_predicate, envelope_absent, envelope_skipped, run_as_envelope
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import ResultStatus, AnalysisType
+from prp.parse.core.envelope import default_empty_predicate, envelope_absent, envelope_skipped, run_as_envelope
 
 
 ParserInput: TypeAlias = IO[bytes] | IO[str] | str | Path

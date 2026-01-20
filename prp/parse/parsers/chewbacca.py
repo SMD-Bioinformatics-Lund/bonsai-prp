@@ -1,12 +1,12 @@
 """Parse chewbacca cgMLST result."""
 
 from typing import Any, Mapping
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.typing import ChewbbacaErrors, TypingResultCgMlst
-from prp.parse.base import SingleAnalysisParser, warn_if_extra_rows
-from prp.parse.registry import register_parser
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.typing import ChewbbacaErrors, TypingResultCgMlst
+from prp.parse.core.base import SingleAnalysisParser, warn_if_extra_rows
+from prp.parse.core.registry import register_parser
 from prp.io.delimited import DelimiterRow, canonical_header, is_nullish, normalize_row, read_delimited
-from prp.parse.utils import safe_int
+from .utils import safe_int
 
 
 CHEWBBACA = AnalysisSoftware.CHEWBBACA

@@ -9,7 +9,7 @@ from prp.models.enums import AnalysisSoftware, AnalysisType
 from prp.models.typing import TypingResultShiga
 from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
 from prp.parse.registry import register_parser
-from prp.parse.utils import safe_float, safe_percent
+from prp.parse.parsers.utils import safe_float, safe_percent
 
 LOG = logging.getLogger(__name__)
 

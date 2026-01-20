@@ -5,11 +5,11 @@ from typing import Any
 import re
 
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.qc import GambitQcFlag, GambitcoreQcResult
-from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
-from prp.parse.registry import register_parser
-from prp.parse.utils import safe_int, safe_percent
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType, GambitQcFlag
+from prp.parse.models.qc import GambitcoreQcResult
+from prp.parse.core.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
+from prp.parse.core.registry import register_parser
+from .utils import safe_int, safe_percent
 
 GAMBIT = AnalysisSoftware.GAMBIT
 

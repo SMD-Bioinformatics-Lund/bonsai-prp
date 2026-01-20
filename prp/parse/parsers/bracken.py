@@ -2,13 +2,13 @@
 
 from typing import Any
 
-from prp.exceptions import ParserError
-from prp.models.enums import AnalysisType, AnalysisSoftware
-from prp.models.species import BrackenSpeciesPrediction, TaxLevel
+from prp.parse.exceptions import ParserError
+from prp.parse.models.enums import AnalysisType, AnalysisSoftware, TaxLevel
+from prp.parse.models.bracken import BrackenSpeciesPrediction
 from prp.io.delimited import read_delimited
 
-from .base import ParserInput, SingleAnalysisParser
-from .registry import register_parser
+from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.registry import register_parser
 from .utils import safe_float, safe_int
 
 BRACKEN = AnalysisSoftware.BRACKEN

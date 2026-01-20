@@ -3,9 +3,9 @@
 from logging import Logger
 from typing import Any, Callable, TypeVar
 
-from prp.exceptions import AbsentResultError, ParserError
-from prp.models.base import ResultEnvelope
-from prp.models.enums import ResultStatus
+from prp.parse.exceptions import AbsentResultError, ParserError
+from prp.parse.models.base import ResultEnvelope
+from prp.parse.models.enums import ResultStatus
 
 PredicateFn = Callable[[Any], bool]
 

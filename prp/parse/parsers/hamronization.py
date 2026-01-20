@@ -13,17 +13,18 @@ from prp.io.delimited import (
     normalize_row,
     read_delimited,
 )
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.hamronization import (
+from prp.parse.models.hamronization import (
     BaseSequenceRecord,
     HamronizationEntry,
     InputSequence,
     ReferenceSequence,
 )
-from prp.models.metadata import SoupType, SoupVersion
-from prp.parse.base import ParserInput, SingleAnalysisParser
-from prp.parse.registry import register_parser
-from prp.parse.utils import safe_float, safe_int, safe_percent, safe_strand
+from prp.parse.models.enums import SoupType, AnalysisSoftware, AnalysisType
+from prp.parse.models.base import SoupVersion
+
+from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.registry import register_parser
+from .utils import safe_float, safe_int, safe_percent, safe_strand
 
 LOG = logging.getLogger(__name__)
 

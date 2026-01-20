@@ -8,40 +8,33 @@ from enum import StrEnum
 from itertools import chain
 from typing import Any, Callable, Literal, Mapping
 
-from prp.exceptions import ParserError, AbsentResultError
+from prp.parse.exceptions import ParserError, AbsentResultError
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.models.base import AnalysisType, ResultEnvelope
-from prp.models.enums import AnalysisSoftware, ResultStatus
-from prp.models.hamronization import HamronizationEntries, HamronizationEntry
-from prp.models.kleborate import (
-    KleborateEtScore,
+from prp.parse.models.base import ResultEnvelope, ElementTypeResult, PhenotypeInfo 
+from prp.parse.models.enums import AnalysisSoftware, ResultStatus, AnalysisType, AnnotationType, ElementAmrSubtype, ElementType, VariantSubType, VariantType
+from prp.parse.models.hamronization import HamronizationEntries, HamronizationEntry
+from prp.parse.models.kleborate import (
     KleborateKaptiveLocus,
     KleborateMlstLikeResults,
     KleborateQcResult,
     KleboreateSppResult,
+    KleborateEtScore,
     ParsedVariant,
 )
-from prp.models.phenotype import (
+from prp.parse.models.amrfinder import (
     AmrFinderResistanceGene,
     AmrFinderVariant,
-    AnnotationType,
-    ElementAmrSubtype,
-    ElementType,
-    ElementTypeResult,
-    PhenotypeInfo,
-    VariantSubType,
-    VariantType,
 )
 
-from .base import BaseParser, ParseImplOut, ParserInput
-from .envelope import (
+from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.envelope import (
     envelope_absent,
     envelope_error,
     envelope_from_value,
     run_as_envelope,
 )
-from .hamronization import HAmrOnizationParser
-from .registry import register_parser
+from prp.parse.parsers.hamronization import HAmrOnizationParser
+from prp.parse.core.registry import register_parser
 from .utils import safe_int, safe_strand
 
 WarnFn = Callable[[str], None]

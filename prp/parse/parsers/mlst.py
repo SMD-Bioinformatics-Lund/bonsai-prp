@@ -2,15 +2,14 @@
 
 
 from typing import Any
-from prp.exceptions import AbsentResultError
+from prp.parse.exceptions import AbsentResultError
 from prp.io.delimited import is_nullish
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.typing import TypingResultMlst
-from prp.parse.base import SingleAnalysisParser
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.typing import TypingResultMlst
+from prp.parse.core.base import SingleAnalysisParser
 from prp.io.json import read_json
-from prp.parse.envelope import run_as_envelope
-from prp.parse.registry import register_parser
-from prp.parse.utils import safe_int
+from prp.parse.core.registry import register_parser
+from .utils import safe_int
 
 MLST = AnalysisSoftware.MLST
 REQUIRED_FIELDS = {

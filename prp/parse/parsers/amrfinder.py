@@ -5,22 +5,19 @@ import logging
 import re
 from typing import Any, TypeAlias
 
-from prp.models.enums import AnalysisType, AnalysisSoftware
-from prp.models.phenotype import (
+from prp.parse.models.enums import AnalysisType, AnalysisSoftware, AnnotationType, ElementType
+from prp.parse.models.amrfinder import (
     AmrFinderGene,
     AmrFinderResistanceGene,
-    AmrFinderVariant,
     AmrFinderVirulenceGene,
-    AnnotationType,
-    ElementType,
-    ElementTypeResult,
-    PhenotypeInfo,
+    AmrFinderVariant
 )
+from prp.parse.models.base import ElementTypeResult, PhenotypeInfo
 
 from prp.io.delimited import read_delimited, normalize_nulls
-from prp.parse.envelope import run_as_envelope
-from .base import BaseParser, ParseImplOut, ParserInput
-from .registry import register_parser
+from prp.parse.core.envelope import run_as_envelope
+from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.registry import register_parser
 from .utils import classify_variant_type, safe_int, safe_float, safe_strand
 
 LOG = logging.getLogger(__name__)

@@ -3,14 +3,13 @@
 from dataclasses import dataclass
 from typing import Any, Callable, TypeAlias
 from packaging.version import Version
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.base import ParserOutput
-from prp.parse.base import BaseParser, ParserInput
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.base import ParserOutput
+from prp.parse.core.base import BaseParser, ParserInput
 
 
-ParserFn: TypeAlias = Callable[..., ParserOutput]
 ParserClass: TypeAlias = type[BaseParser]
-RegistryEntry: TypeAlias = ParserFn | ParserClass
+RegistryEntry: TypeAlias = ParserClass
 
 
 @dataclass(order=True, slots=True)

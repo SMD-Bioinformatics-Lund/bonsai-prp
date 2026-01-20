@@ -2,25 +2,22 @@
 
 import logging
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from typing import Any, Callable, TypeAlias
 
-from prp.models.enums import AnalysisType, AnalysisSoftware
-from prp.models.species import MykrobeSpeciesPrediction
+from prp.parse.models.enums import AnalysisType, AnalysisSoftware, SoupType, VariantSubType, VariantType, AnnotationType, ElementType
+from prp.parse.models.mykrobe import MykrobeSpeciesPrediction, SRProfile
+from prp.parse.models.base import SoupVersion
 
-from prp.models.metadata import SoupType, SoupVersion
-from prp.models.phenotype import (
-    AnnotationType,
-    ElementType,
+from prp.parse.models.phenotype import (
     ElementTypeResult,
     MykrobeVariant,
     PhenotypeInfo,
 )
-from prp.models.phenotype import VariantSubType, VariantType
-from prp.models.typing import ResultLineageBase
-from prp.parse.base import BaseParser, ParseImplOut, ParserInput
-from prp.parse.envelope import run_as_envelope
-from prp.parse.registry import register_parser
+from prp.parse.models.typing import ResultLineageBase
+from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.envelope import run_as_envelope
+from prp.parse.core.registry import register_parser
 from prp.io.delimited import canonical_header, is_nullish, normalize_row, read_delimited, DelimiterRow
 from .utils import get_nt_change, safe_float, safe_int
 
@@ -53,14 +50,6 @@ REQUIRED_COLUMNS = {
 
 
 TableRows: TypeAlias = list[DelimiterRow]
-
-
-@dataclass(frozen=True)
-class SRProfile:
-    """Result of validated fields."""
-
-    susceptible: set[str]
-    resistant: set[str]
 
 
 def _sr_profile(rows: TableRows) -> SRProfile:

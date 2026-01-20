@@ -5,8 +5,8 @@ from pathlib import Path
 
 from prp.models.config import IgvAnnotation
 from prp.models.phenotype import VariantBase
+from prp.models.sample import IgvAnnotationTrack, ReferenceGenome
 
-from ..models.sample import IgvAnnotationTrack, ReferenceGenome
 from .variant import load_variants
 
 LOG = logging.getLogger(__name__)

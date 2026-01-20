@@ -1,9 +1,23 @@
-"""Generic database objects of which several other models are based on."""
+"""Shared data models"""
 
-from pathlib import Path
 from typing import Annotated
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationInfo
+from pathlib import Path
+from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
 
+
+class AllowExtraModelMixin(BaseModel):
+    """Mixin to allow extra fields in pydantic model."""
+
+    model_config = ConfigDict(extra="allow")
+
+
+class RWModel(BaseModel):  # pylint: disable=too-few-public-methods
+    """Base model for read/ write operations"""
+
+    model_config = ConfigDict(
+        populate_by_name=True,
+        use_enum_values=True,
+    )
 
 def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
     """Validate that file exist and resolve realtive directories.
@@ -24,18 +38,4 @@ def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
     assert upd_path.is_file(), f"Invalid path: {upd_path}"
     return upd_path
 
-
 FilePath = Annotated[Path, BeforeValidator(convert_rel_to_abs_path)]
-
-class AllowExtraModelMixin(BaseModel):
-    """Mixin to allow extra fields in pydantic model."""
-
-    model_config = ConfigDict(extra="allow")
-
-class RWModel(BaseModel):  # pylint: disable=too-few-public-methods
-    """Base model for read/ write operations"""
-
-    model_config = ConfigDict(
-        populate_by_name=True,
-        use_enum_values=True,
-    )
