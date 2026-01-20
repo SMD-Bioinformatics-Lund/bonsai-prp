@@ -30,7 +30,7 @@ def _validate_keys(qc_dict: Mapping[str, Any], *, strict: bool = False) -> None:
         if strict:
             raise ValueError(msg)
 
-def _to_postalignqc_result(qc_dict: Mapping[str, Any], *, strict: bool = False) -> PostAlignQcResult:
+def _to_postalignqc_result(qc_dict: Mapping[str, Any], *, strict: bool = False, logger: Any | None = None) -> PostAlignQcResult:
     """Convert raw dict to PostAlignQcResult."""
 
     # optional fields
@@ -38,7 +38,7 @@ def _to_postalignqc_result(qc_dict: Mapping[str, Any], *, strict: bool = False) 
     if qc_dict.get("ins_size") is not None:
         # preserve old behavior: int(float(x)) handles "123.0"
         try:
-            ins_size = safe_int(qc_dict["ins_size"])
+            ins_size = safe_float(qc_dict["ins_size"], logger=logger)
         except (TypeError, ValueError) as exc:
             if strict:
                 raise ValueError(f"Invalid ins_size={qc_dict.get('ins_size')!r}") from exc
@@ -46,7 +46,7 @@ def _to_postalignqc_result(qc_dict: Mapping[str, Any], *, strict: bool = False) 
     ins_size_dev = None
     if qc_dict.get("ins_size_dev") is not None:
         try:
-            ins_size_dev = safe_int(qc_dict["ins_size_dev"])
+            ins_size_dev = safe_float(qc_dict["ins_size_dev"], logger=logger)
         except (TypeError, ValueError) as exc:
             if strict:
                 raise ValueError(f"Invalid ins_size_dev={qc_dict.get('ins_size_dev')!r}") from exc
@@ -54,7 +54,7 @@ def _to_postalignqc_result(qc_dict: Mapping[str, Any], *, strict: bool = False) 
     coverage_uniformity = None
     if qc_dict.get("coverage_uniformity") is not None:
         try:
-            coverage_uniformity = safe_float(qc_dict["coverage_uniformity"])
+            coverage_uniformity = safe_float(qc_dict["coverage_uniformity"], logger=logger)
         except (TypeError, ValueError) as exc:
             if strict:
                 raise ValueError(
@@ -63,7 +63,7 @@ def _to_postalignqc_result(qc_dict: Mapping[str, Any], *, strict: bool = False) 
 
     # required fields
     try:
-        mean_cov = safe_int(qc_dict["mean_cov"])
+        mean_cov = safe_float(qc_dict["mean_cov"])
         n_reads = safe_int(qc_dict["n_reads"])
         n_mapped_reads = safe_int(qc_dict["n_mapped_reads"])
         n_read_pairs = safe_int(qc_dict["n_read_pairs"])

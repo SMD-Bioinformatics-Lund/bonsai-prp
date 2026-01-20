@@ -4,9 +4,9 @@
       "software": "postalignqc",
       "version": null,
       "result": {
-         "ins_size": 391,
-         "ins_size_dev": 124,
-         "mean_cov": 210,
+         "ins_size": 391.940128,
+         "ins_size_dev": 124.07526,
+         "mean_cov": 210.04315187574855,
          "pct_above_x": {
             "1": 99.89083353724237,
             "10": 99.86645030843925,
@@ -48,7 +48,8 @@
      "result": {
        "scientific_name": "Escherichia coli",
        "completeness": 99.58,
-       "assembly_core": "(2852/2864)",
+       "assembly_core": 2852,
+       "species_core": 2864,
        "closest_accession": "GCF_000303815.2",
        "closest_distance": 0.0128,
        "assembly_kmers": 11153,
