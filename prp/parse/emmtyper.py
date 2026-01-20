@@ -1,40 +1,28 @@
 """Functions for parsing emmtyper result."""
 
 import logging
-from typing import Any, Iterable
+from typing import Any
 
 import pandas as pd
 
-from ..models.typing import EmmTypingMethodIndex, TypingMethod, TypingResultEmm
-from ..models.typing import TypingSoftware as Software
+from prp.parse.base import ParserInput, SingleAnalysisParser
+from prp.parse.registry import register_parser
+
+from prp.models.enums import AnalysisType, AnalysisSoftware
+from prp.models.typing import TypingResultEmm
+from prp.io.delimited import read_delimited
+
 
 LOG = logging.getLogger(__name__)
 
-
-def parse_emm_pred(path: str) -> Iterable[EmmTypingMethodIndex]:
-    """Parse emmtyper's output re emm-typing"""
-    LOG.info("Parsing emmtyper results")
-    pred_result = []
-    df = pd.read_csv(path, sep="\t", header=None)
-    df.columns = [
-        "sample_name",
-        "cluster_count",
-        "emmtype",
-        "emm_like_alleles",
-        "emm_cluster",
-    ]
-    df.replace(["-", ""], None, inplace=True)
-    df_loa = df.to_dict(orient="records")
-    for emmtype_array in df_loa:
-        emmtype_results = _parse_emmtyper_results(emmtype_array)
-        pred_result.append(
-            EmmTypingMethodIndex(
-                type=TypingMethod.EMMTYPE,
-                result=emmtype_results,
-                software=Software.EMMTYPER,
-            )
-        )
-    return pred_result
+EMMTYPER = AnalysisSoftware.EMMTYPER
+EMM_FIELDS = [
+    "sample_name",
+    "cluster_count",
+    "emmtype",
+    "emm_like_alleles",
+    "emm_cluster",
+]
 
 
 def _parse_emmtyper_results(info: dict[str, Any]) -> TypingResultEmm:
@@ -50,3 +38,22 @@ def _parse_emmtyper_results(info: dict[str, Any]) -> TypingResultEmm:
         emm_like_alleles=emm_like_alleles,
         emm_cluster=info["emm_cluster"],
     )
+
+
+@register_parser(EMMTYPER)
+class EmmTyperParser(SingleAnalysisParser):
+    """Parse emmtyper output into a normalized ParserOutput bundle."""
+
+    software = EMMTYPER
+    parser_name = "EmmTyperParser"
+    parser_version = 1
+    schema_version = 1
+    produces = {AnalysisType.EMM}
+
+    def _parse_one(self, source: ParserInput, **_) -> TypingResultEmm | dict:
+        """Parse emmtyper results."""
+        reader = read_delimited(
+            source, has_header=False, fieldnames=EMM_FIELDS, none_values=["-", ""]
+        )
+        emm_results = [_parse_emmtyper_results(row) for row in reader]
+        return emm_results[0] if emm_results else {}

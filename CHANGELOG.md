@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+### Added
+
+- Added parser registry with support for version based parser selection.
+
 ## [1.5.0]
 
 ### Added

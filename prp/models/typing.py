@@ -169,8 +169,8 @@ class TypingResultSpatyper(RWModel):
 class SpatyperTypingMethodIndex(RWModel):
     """Method Index Spatyper."""
 
-    type: Literal[TypingMethod.SPATYPE]
-    software: Literal[TypingSoftware.SPATYPER]
+    type: Literal[TypingMethod.SPATYPE] = TypingMethod.SPATYPE
+    software: Literal[TypingSoftware.SPATYPER] = TypingSoftware.SPATYPER
     result: TypingResultSpatyper
 
 
@@ -197,8 +197,8 @@ class TypingResultSccmec(RWModel):
 class SccmecTypingMethodIndex(RWModel):
     """Method Index Sccmec."""
 
-    type: Literal[TypingMethod.SCCMECTYPE]
-    software: Literal[TypingSoftware.SCCMEC]
+    type: Literal[TypingMethod.SCCMECTYPE] = TypingMethod.SCCMECTYPE
+    software: Literal[TypingSoftware.SCCMEC] = TypingSoftware.SCCMEC
     result: TypingResultSccmec
 
 

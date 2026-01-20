@@ -4,17 +4,26 @@ import json
 import logging
 from typing import Any
 
-from ..models.phenotype import ElementType, ElementVirulenceSubtype
-from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import (
+from prp.exceptions import InvalidDataFormat
+from prp.io.json import read_json, require_mapping
+from prp.models.phenotype import ElementType, ElementVirulenceSubtype
+from prp.models.phenotype import (
     VirulenceElementTypeResult,
     VirulenceGene,
-    VirulenceMethodIndex,
 )
-from ..models.sample import MethodIndex
-from ..models.typing import TypingMethod, TypingResultGeneAllele
+from prp.models.typing import TypingResultGeneAllele
+from prp.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.envelope import run_as_envelope
+from prp.parse.registry import register_parser
 
 LOG = logging.getLogger(__name__)
+
+VIRFINDER = AnalysisSoftware.VIRULENCEFINDER
+
+REQUIRED_FIELDS = {
+    "databases", "seq_regions", "software_executions"
+}
 
 
 def parse_vir_gene(
@@ -45,89 +54,131 @@ def parse_vir_gene(
     )
 
 
-def _parse_vir_results(pred: dict[str, Any]) -> VirulenceElementTypeResult:
-    """Parse virulence prediction results from virulencefinder."""
-    vir_genes = []
+def pick_best_region(regions: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Pick the region with highest coverage and identity."""
 
-    phenotypes = pred.get("phenotypes", {})
-    seq_regions = pred.get("seq_regions", {})
+    if not regions:
+        return None
+    return max(regions, key=lambda region: (region["coverage"], region["identity"]))
 
-    for key, pheno in phenotypes.items():
-        function = pheno.get("function")
-        ref_dbs = pheno.get("ref_database", [])
+def parse_stx_typing(pred: dict[str, Any]) -> TypingResultGeneAllele | None:
+    """Parse STX typing from virulencefinder's output."""
 
-        # skip stx typing result
-        if any("stx" in db for db in ref_dbs):
+    phenotypes = pred.get("phenotypes", {}) or {}
+    seq_regions = pred.get("seq_regions", {}) or {}
+
+    stx_keys = [k for k in phenotypes.keys() if str(k).lower().startswith("stx")]
+    if not stx_keys:
+        return None
+
+    best_gene: TypingResultGeneAllele | None = None
+    best_score: tuple[float, float] = (0.0, 0.0)
+
+    for stx_key in stx_keys:
+        pheno = phenotypes.get(stx_key) or {}
+        function = pheno.get("function") or ""
+        region_keys = pheno.get("seq_regions") or []
+        regions = [seq_regions.get(k) for k in region_keys if seq_regions.get(k)]
+        best_region = pick_best_region(regions)
+        if not best_region:
             continue
 
-        # assign element subtype
+        gene = parse_vir_gene(best_region, function=function)
+        score = (float(gene.identity or 0.0), float(gene.coverage or 0.0))
+        if score > best_score:
+            best_score = score
+            best_gene = TypingResultGeneAllele(**gene.model_dump())
+
+    return best_gene
+
+
+def parse_virulence_block(pred: dict[str, Any]) -> VirulenceElementTypeResult:
+    """Parse virulencefinder virulence prediction results."""
+
+    vir_genes: list[VirulenceGene] = []
+    phenotypes = pred.get("phenotypes", {}) or {}
+    seq_regions = pred.get("seq_regions", {}) or {}
+
+    for _, pheno in phenotypes.items():
+        function = pheno.get("function") or ""
+        ref_dbs = pheno.get("ref_database") or []
+
+        # skip stx typing results
+        if any("stx" in str(db).lower() for db in ref_dbs):
+            continue
+
         subtype = ElementVirulenceSubtype.VIR
-        if any("toxin" in db for db in ref_dbs):
+        if any("toxin" in str(db).lower() for db in ref_dbs):
             subtype = ElementVirulenceSubtype.TOXIN
 
-        # parse genes
-        for region_key in pheno.get("seq_regions", []):
-            seq_info = seq_regions.get(region_key)
-            if not seq_info:
-                continue
-            vir_genes.append(
-                parse_vir_gene(seq_info, subtype=subtype, function=function)
+        region_keys = pheno.get("seq_regions") or []
+        regions = [seq_regions.get(k) for k in region_keys if seq_regions.get(k)]
+        for info in regions:
+            vir_genes.append(parse_vir_gene(info, function=function, subtype=subtype))
+
+    # stable sort, handle None safely if coverage can be None
+    vir_genes.sort(key=lambda g: (g.gene_symbol or "", g.coverage if g.coverage is not None else -1.0))
+
+    return VirulenceElementTypeResult(genes=vir_genes, variants=[], phenotypes={})
+
+
+@register_parser(VIRFINDER)
+class VirulenceFinderParser(BaseParser):
+    """VirulenceFinder parser."""
+
+    software = VIRFINDER
+    parser_name = "VirulenceFinderParser"
+    parser_version = "1"
+    schema_version = "1"
+    produces = {AnalysisType.VIRULENCE, AnalysisType.STX}
+
+    def _parse_impl(
+        self,
+        source: ParserInput,
+        *,
+        want: set[AnalysisType],
+        strict: bool = False,
+        **kwargs: Any,
+    ) -> ParseImplOut:
+        """Parse virulence finder resuls."""
+        try:
+            raw = read_json(source)
+            raw = require_mapping(raw, what="<root>")
+            for field in REQUIRED_FIELDS:
+                require_mapping(raw.get(field), what=field)
+
+        except TypeError as exc:
+            self.log_error("Failed to read SerotypeFinder JSON", error=str(exc))
+            if strict:
+                raise
+            return {}
+        except InvalidDataFormat as exc:
+            self.log_error("Failed to read/validate VirulenceFinder JSON", error=str(exc))
+            if strict:
+                raise
+            return {}
+
+        out: dict[AnalysisType, Any] = {}
+
+        base_meta = {"parser": self.parser_name, "software": self.software}
+
+        if AnalysisType.VIRULENCE in want:
+            out[AnalysisType.VIRULENCE] = run_as_envelope(
+                analysis_name=AnalysisType.VIRULENCE,
+                fn=lambda: parse_virulence_block(raw),
+                reason_if_absent="No virulence determinants in file.",
+                reason_if_empty="No findings",
+                meta=base_meta,
+                logger=self.logger
             )
-    # sort genes
-    genes = sorted(vir_genes, key=lambda entry: (entry.gene_symbol, entry.coverage))
-    return VirulenceElementTypeResult(genes=genes, phenotypes={}, variants=[])
 
-
-def parse_virulence_pred(path: str) -> VirulenceMethodIndex | None:
-    """Parse virulencefinder virulence prediction results.
-
-    :param file: File name
-    :type file: str
-    :return: Return element type if virulence was predicted else null
-    :rtype: ElementTypeResult | None
-    """
-    LOG.info("Parsing virulencefinder virulence prediction")
-    with open(path, "rb") as inpt:
-        pred = json.load(inpt)
-        if (
-            "seq_regions" in pred and "phenotypes" in pred
-        ):  # Aim: check if file is empty or if it comes from the right tool?
-            results: VirulenceElementTypeResult = _parse_vir_results(pred)
-            result = VirulenceMethodIndex(
-                type=ElementType.VIR, software=Software.VIRFINDER, result=results
+        if AnalysisType.STX in want:
+            out[AnalysisType.STX] = run_as_envelope(
+                analysis_name=AnalysisType.STX,
+                fn=lambda: parse_stx_typing(raw),
+                reason_if_absent="No STX gene identified.",
+                reason_if_empty="No findings",
+                meta=base_meta,
+                logger=self.logger
             )
-        else:
-            result = None
-    return result
-
-
-def parse_stx_typing(path: str) -> MethodIndex | None:
-    """Parse virulencefinder's output re stx typing"""
-    LOG.info("Parsing virulencefinder stx results")
-    with open(path, "rb") as inpt:
-        pred_obj = json.load(inpt)
-        # if has valid results
-        pred_result = None
-        if "seq_regions" in pred_obj and "phenotypes" in pred_obj:
-            phenotypes = pred_obj.get("phenotypes", {})
-            seq_regions = pred_obj.get("seq_regions", {})
-
-            stx_keys = [key for key in phenotypes if key.startswith("stx")]
-            if not stx_keys:
-                return None
-
-            for stx_key in stx_keys:
-                pheno = phenotypes[stx_key]
-                function = pheno.get("function", "")
-                for region_key in pheno.get("seq_regions", []):
-                    region_info = seq_regions.get(region_key)
-                    if region_info:
-                        vir_gene = parse_vir_gene(region_info, function=function)
-                        # TODO cleanup data models. They are too inherited which makes it difficult to know what fields they contain
-                        gene = TypingResultGeneAllele(**vir_gene.model_dump())
-                        return MethodIndex(
-                            type=TypingMethod.STX,
-                            software=Software.VIRFINDER,
-                            result=gene,
-                        )
-    return pred_result
+        return out

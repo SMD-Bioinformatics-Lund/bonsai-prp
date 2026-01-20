@@ -4,8 +4,10 @@ import logging
 from itertools import chain
 from typing import Any
 
-from ..models.phenotype import (
-    AMRMethodIndex,
+from prp.exceptions import InvalidDataFormat
+from prp.io.json import read_json, require_mapping
+from prp.models.enums import AnalysisSoftware, AnalysisType
+from prp.models.phenotype import (
     AnnotationType,
     ElementAmrSubtype,
     ElementStressSubtype,
@@ -13,17 +15,22 @@ from ..models.phenotype import (
     ElementTypeResult,
     PhenotypeInfo,
 )
-from ..models.phenotype import PredictionSoftware as Software
-from ..models.phenotype import (
+from prp.models.phenotype import PredictionSoftware as Software
+from prp.models.phenotype import (
     ResfinderGene,
     ResfinderVariant,
-    StressMethodIndex,
     VariantSubType,
     VariantType,
 )
+from prp.parse.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.envelope import run_as_envelope
+from prp.parse.registry import register_parser
+
 from .utils import get_nt_change
 
 LOG = logging.getLogger(__name__)
+
+RESFINDER = AnalysisSoftware.RESFINDER
 
 STRESS_FACTORS = {
     ElementStressSubtype.BIOCIDE: [
@@ -186,25 +193,178 @@ def lookup_antibiotic_class(antibiotic: str) -> str:
     return lookup_table.get(antibiotic, "unknown")
 
 
-def _assign_res_subtype(
-    prediction: dict[str, Any], element_type: ElementType
-) -> ElementStressSubtype | None:
-    """Assign element subtype from resfindere prediction."""
-    assigned_subtype = None
+def assign_res_subtype(prediction: dict[str, Any], element_type: ElementType) -> Any:
     if element_type == ElementType.STRESS:
-        for sub_type, phenotypes in STRESS_FACTORS.items():
-            # get intersection of subtype phenotypes and predicted phenos
-            intersect = set(phenotypes) & set(prediction["phenotypes"])
-            if len(intersect) > 0:
-                assigned_subtype = sub_type
-    elif element_type == ElementType.AMR:
-        assigned_subtype = ElementAmrSubtype.AMR
-    else:
-        LOG.warning("Dont know how to assign subtype for %s", element_type)
-    return assigned_subtype
+        predicted = set(prediction.get("phenotypes") or [])
+        for sub_type, phenos in STRESS_FACTORS.items():
+            if set(phenos) & predicted:
+                return sub_type
+        return None
+    if element_type == ElementType.AMR:
+        return ElementAmrSubtype.AMR
+    return None
 
 
-def _get_resfinder_amr_sr_profie(resfinder_result, limit_to_phenotypes=None):
+def get_resfinder_sr_profile(
+    resfinder_result: dict[str, Any], limit_to: list[str] | None = None
+) -> dict[str, list[str]]:
+    susceptible: set[str] = set()
+    resistant: set[str] = set()
+
+    for pheno in (resfinder_result.get("phenotypes") or {}).values():
+        key = pheno.get("key")
+        if limit_to is not None and key not in limit_to:
+            continue
+
+        if pheno.get("amr_resistant") is True:
+            resistant.add(pheno.get("amr_resistance"))
+        elif pheno.get("amr_resistant") is False:
+            susceptible.add(pheno.get("amr_resistance"))
+
+    return {
+        "susceptible": sorted(x for x in susceptible if x),
+        "resistant": sorted(x for x in resistant if x),
+    }
+
+
+def parse_resfinder_genes(
+    resfinder_result: dict[str, Any], limit_to: list[str] | None = None
+) -> list[ResfinderGene]:
+    results: list[ResfinderGene] = []
+    phenotypes = resfinder_result.get("phenotypes") or {}
+    for info in (resfinder_result.get("seq_regions") or {}).values():
+        ref_db = (info.get("ref_database") or [""])[0]
+        if not str(ref_db).startswith("Res"):
+            continue
+
+        if limit_to is not None:
+            if not (set(info.get("phenotypes") or []) & set(limit_to)):
+                continue
+
+        # infer category from first phenotype
+        phenolist = info.get("phenotypes") or []
+        if not phenolist:
+            continue
+
+        first_key = phenolist[0]
+        cat = phenotypes.get(first_key, {}).get("category")
+        if not cat:
+            continue
+
+        res_category = ElementType(str(cat).upper())
+        subtype = assign_res_subtype(info, res_category)
+
+        phenotype_objs = [
+            PhenotypeInfo(
+                type=res_category,
+                name=phe,
+                group=lookup_antibiotic_class(phe),
+                annotation_type=AnnotationType.TOOL,
+                annotation_author=Software.RESFINDER.value,
+                reference=info.get("pmids"),
+            )
+            for phe in phenolist
+        ]
+
+        results.append(
+            ResfinderGene(
+                gene_symbol=info["name"],
+                accession=info.get("ref_acc"),
+                element_type=res_category,
+                element_subtype=subtype,
+                phenotypes=phenotype_objs,
+                ref_start_pos=info["ref_start_pos"],
+                ref_end_pos=info["ref_end_pos"],
+                ref_gene_length=info["ref_seq_length"],
+                alignment_length=info["alignment_length"],
+                depth=info.get("depth"),
+                identity=info["identity"],
+                coverage=info["coverage"],
+            )
+        )
+
+    results.sort(
+        key=lambda g: (
+            g.gene_symbol or "",
+            g.coverage if g.coverage is not None else -1.0,
+        )
+    )
+    return results
+
+
+def parse_resfinder_variants(
+    resfinder_result: dict[str, Any], limit_to: list[str] | None = None
+) -> list[ResfinderVariant]:
+    # prediction method
+    prediction_method = None
+    for exec_info in (resfinder_result.get("software_executions") or {}).values():
+        prediction_method = exec_info.get("parameters", {}).get("method")
+
+    seq_regions = resfinder_result.get("seq_regions") or {}
+    results: list[ResfinderVariant] = []
+
+    for var_id, info in enumerate(
+        (resfinder_result.get("seq_variations") or {}).values(), start=1
+    ):
+        phenos = info.get("phenotypes") or []
+        if limit_to is not None and not (set(phenos) & set(limit_to)):
+            continue
+
+        # compute depth without mutating info
+        depth = 0
+        sr_keys = info.get("seq_regions") or []
+        if sr_keys and sr_keys[0] in seq_regions:
+            depth = seq_regions[sr_keys[0]].get("depth", 0)
+
+        # subtype classifier
+        if info.get("substitution"):
+            var_sub_type = VariantSubType.SUBSTITUTION
+        elif info.get("insertion"):
+            var_sub_type = VariantSubType.INSERTION
+        elif info.get("deletion"):
+            var_sub_type = VariantSubType.DELETION
+        else:
+            raise ValueError("ResFinder output has no known mutation type")
+
+        # seq_regions[0] format: gene;;something;;acc
+        gene_symbol, _, gene_accnr = sr_keys[0].split(";;")
+
+        ref_nt, alt_nt = get_nt_change(info["ref_codon"], info["var_codon"])
+        phenotype_objs = [
+            PhenotypeInfo(
+                type=ElementType.AMR,
+                group=lookup_antibiotic_class(phe),
+                name=phe,
+                annotation_type=AnnotationType.TOOL,
+            )
+            for phe in phenos
+        ]
+
+        results.append(
+            ResfinderVariant(
+                id=var_id,
+                variant_type=VariantType.SNV,
+                variant_subtype=var_sub_type,
+                phenotypes=phenotype_objs,
+                reference_sequence=gene_symbol,
+                accession=gene_accnr,
+                start=info["ref_start_pos"],
+                end=info["ref_end_pos"],
+                ref_nt=ref_nt,
+                alt_nt=alt_nt,
+                ref_aa=info.get("ref_aa"),
+                alt_aa=info.get("var_aa"),
+                depth=depth,
+                method=prediction_method,
+                passed_qc=True,
+            )
+        )
+
+    results.sort(key=lambda v: (v.reference_sequence or "", v.start or 0))
+    return results
+
+
+def get_resfinder_amr_sr_profie(resfinder_result, limit_to_phenotypes=None):
     """Get resfinder susceptibility/resistance profile."""
     susceptible = set()
     resistant = set()
@@ -224,165 +384,68 @@ def _get_resfinder_amr_sr_profie(resfinder_result, limit_to_phenotypes=None):
     return {"susceptible": list(susceptible), "resistant": list(resistant)}
 
 
-def _parse_resfinder_amr_genes(
-    resfinder_result, limit_to_phenotypes=None
-) -> list[ResfinderGene]:
-    """Get resistance genes from resfinder result."""
-    results = []
-    for info in resfinder_result["seq_regions"].values():
-        # Get only acquired resistance genes
-        if not info["ref_database"][0].startswith("Res"):
-            continue
-
-        # Get only genes of desired phenotype
-        if limit_to_phenotypes is not None:
-            intersect = set(info["phenotypes"]) & set(limit_to_phenotypes)
-            if len(intersect) == 0:
-                continue
-
-        # get element type by peeking at first phenotype
-        first_pheno = info["phenotypes"][0]
-        res_category = ElementType(
-            resfinder_result["phenotypes"][first_pheno]["category"].upper()
-        )
-        element_subtype = _assign_res_subtype(info, res_category)
-
-        # format phenotypes
-        phenotype = [
-            PhenotypeInfo(
-                type=res_category,
-                name=phe,
-                group=lookup_antibiotic_class(phe),
-                annotation_type=AnnotationType.TOOL,
-                annotation_author=Software.RESFINDER.value,
-                reference=info["pmids"],
-            )
-            for phe in info["phenotypes"]
-        ]
-
-        # store results
-        gene = ResfinderGene(
-            # info
-            gene_symbol=info["name"],
-            accession=info["ref_acc"],
-            element_type=res_category,
-            element_subtype=element_subtype,
-            phenotypes=phenotype,
-            # position
-            ref_start_pos=info["ref_start_pos"],
-            ref_end_pos=info["ref_end_pos"],
-            ref_gene_length=info["ref_seq_length"],
-            alignment_length=info["alignment_length"],
-            # prediction
-            depth=info["depth"],
-            identity=info["identity"],
-            coverage=info["coverage"],
-        )
-        results.append(gene)
-    # sort genes
-    genes = sorted(results, key=lambda entry: (entry.gene_symbol, entry.coverage))
-    return genes
-
-
-def _parse_resfinder_amr_variants(
-    resfinder_result, limit_to_phenotypes=None
-) -> tuple[ResfinderVariant, ...]:
-    """Get resistance genes from resfinder result."""
-    # get prediction method
-    prediction_method = None
-    for exec_info in resfinder_result["software_executions"].values():
-        prediction_method = exec_info["parameters"]["method"]
-
-    # parse prediction result
-    results = []
-    for var_id, info in enumerate(resfinder_result["seq_variations"].values(), start=1):
-        # Get only variants from desired phenotypes
-        if limit_to_phenotypes is not None:
-            if len(set(info["phenotypes"]) & set(limit_to_phenotypes)) == 0:
-                continue
-        # get gene depth
-        if "seq_regions" in resfinder_result:
-            info["depth"] = resfinder_result["seq_regions"][info["seq_regions"][0]][
-                "depth"
-            ]
-        else:
-            info["depth"] = 0
-        # translate variation type bools into classifier
-        if info["substitution"]:
-            var_sub_type = VariantSubType.SUBSTITUTION
-        elif info["insertion"]:
-            var_sub_type = VariantSubType.INSERTION
-        elif info["deletion"]:
-            var_sub_type = VariantSubType.DELETION
-        else:
-            raise ValueError("Output has no known mutation type")
-
-        # get gene symbol and accession nr
-        gene_symbol, _, gene_accnr = info["seq_regions"][0].split(";;")
-
-        ref_nt, alt_nt = get_nt_change(info["ref_codon"], info["var_codon"])
-        phenotype = [
-            PhenotypeInfo(
-                type=ElementType.AMR,
-                group=lookup_antibiotic_class(phe),
-                name=phe,
-                annotation_type=AnnotationType.TOOL,
-            )
-            for phe in info["phenotypes"]
-        ]
-        variant = ResfinderVariant(
-            id=var_id,
-            variant_type=VariantType.SNV,
-            variant_subtype=var_sub_type,
-            phenotypes=phenotype,
-            # position
-            reference_sequence=gene_symbol,
-            accession=gene_accnr,
-            start=info["ref_start_pos"],
-            end=info["ref_end_pos"],
-            ref_nt=ref_nt,
-            alt_nt=alt_nt,
-            ref_aa=info["ref_aa"],
-            alt_aa=info["var_aa"],
-            # consequense
-            depth=info["depth"],
-            method=prediction_method,
-            passed_qc=True,  # resfinder only presents variants passing qc
-        )
-        results.append(variant)
-    # sort variants
-    variants = sorted(
-        results, key=lambda entry: (entry.reference_sequence, entry.start)
-    )
-    return variants
-
-
-def parse_amr_pred(
-    prediction: dict[str, Any], resistance_category: ElementType
-) -> AMRMethodIndex:
-    """Parse resfinder resistance prediction results."""
-    # resfinder missclassifies resistance the param amr_category by setting all to amr
-    LOG.info("Parsing resistance prediction")
-    # parse resistance based on the category
+def build_resfinder_result(
+    pred: dict[str, Any], resistance_category: ElementType
+) -> ElementTypeResult:
     stress_factors = list(chain(*STRESS_FACTORS.values()))
-    categories = {
-        ElementType.STRESS: stress_factors,
-        ElementType.AMR: list(set(prediction["phenotypes"]) - set(stress_factors)),
-    }
-    # parse resistance
-    sr_profile = _get_resfinder_amr_sr_profie(
-        prediction, categories[resistance_category]
-    )
-    res_genes = _parse_resfinder_amr_genes(prediction, categories[resistance_category])
-    res_mut = _parse_resfinder_amr_variants(prediction, categories[resistance_category])
-    resistance = ElementTypeResult(
-        phenotypes=sr_profile, genes=res_genes, variants=res_mut
-    )
-    if resistance_category == ElementType.AMR:
-        return AMRMethodIndex(
-            type=resistance_category, software=Software.RESFINDER, result=resistance
-        )
+    all_phenos = pred.get("phenotypes") or {}
 
-    return StressMethodIndex(
-        type=resistance_category, software=Software.RESFINDER, result=resistance
-    )
+    # keys used in filtering are phenotype["key"] values
+    predicted_keys = list(all_phenos.keys())
+    categories = {
+        AnalysisType.STRESS: stress_factors,
+        AnalysisType.AMR: list(set(predicted_keys) - set(stress_factors)),
+    }
+
+    limit = categories[resistance_category]
+    sr_profile = get_resfinder_sr_profile(pred, limit_to=limit)
+    genes = parse_resfinder_genes(pred, limit_to=limit)
+    variants = parse_resfinder_variants(pred, limit_to=limit)
+
+    return ElementTypeResult(phenotypes=sr_profile, genes=genes, variants=variants)
+
+
+@register_parser(RESFINDER)
+class ResFinderParser(BaseParser):
+    software = RESFINDER
+    parser_name = "ResFinderParser"
+    parser_version = "1"
+    schema_version = "1"
+    produces = {AnalysisType.AMR, AnalysisType.STRESS}
+
+    def _parse_impl(
+        self,
+        source: ParserInput,
+        *,
+        want: set[AnalysisType],
+        strict: bool = False,
+        **kwargs: Any,
+    ) -> ParseImplOut:
+        try:
+            pred = read_json(source)
+            pred = require_mapping(pred, what="<root>")
+            # Basic structure check: phenotypes + at least one of seq_regions/seq_variations
+            if "phenotypes" not in pred:
+                raise InvalidDataFormat("ResFinder JSON missing 'phenotypes'")
+        except Exception as exc:
+            self.log_error("Failed to read/validate ResFinder JSON", error=str(exc))
+            if strict:
+                raise
+            return {}
+
+        out: dict[AnalysisType, Any] = {}
+
+        base_meta = {"parser": self.parser_name, "software": self.software}
+        # AMR
+        # AMR & STRESS share the same underlying element type filter in this outpu
+        for analysis_type in [AnalysisType.AMR, AnalysisType.STRESS]:
+            if analysis_type in want:
+                out[analysis_type] = run_as_envelope(
+                    analysis_name=analysis_type,
+                    fn=lambda: build_resfinder_result(pred, analysis_type),
+                    reason_if_absent="No resistance determinants for sample",
+                    reason_if_empty="No findings",
+                    meta=base_meta,
+                    logger=self.logger
+                )
+        return out

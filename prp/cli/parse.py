@@ -4,19 +4,14 @@ import logging
 from pathlib import Path
 
 import click
+from prp.parse.qc import parse_alignment_results
+from prp.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.registry import run_parser
+from prp.parse.sample import parse_sample
 from pydantic import TypeAdapter, ValidationError
 
 from prp.models.config import SampleConfig
 from prp.models.qc import CdmQcMethodIndex, QcMethodIndex, QcSoftware
-from prp.models.sample import MethodIndex
-from prp.parse import (
-    parse_alignment_results,
-    parse_cgmlst_results,
-    parse_gambitcore_results,
-    parse_postalignqc_results,
-    parse_quast_results,
-    parse_sample,
-)
 
 from .utils import OptionalFile, SampleConfigFile
 
@@ -77,32 +72,45 @@ def format_cdm(sample_cnf: SampleConfigFile, output: OptionalFile) -> None:
     results: list[QcMethodIndex] = []
     if sample_cnf.postalnqc:
         LOG.info("Parse quality results")
-        postalignqc_results = parse_postalignqc_results(sample_cnf.postalnqc)
-        results.append(
-            CdmQcMethodIndex(id="postalignqc", **postalignqc_results.model_dump())
-        )
+        
+        out = run_parser(AnalysisSoftware.POSTALIGNQC, version="1.0.0", data=sample_cnf.postalnqc)
+        res = out.results[AnalysisType.QC]
+        if res.status != "parsed":
+            LOG.warning(res.reason)
+        else:
+            results.append(
+                CdmQcMethodIndex(id="postalignqc", software="postalignqc", result=res.value.model_dump())
+            )
 
     if sample_cnf.quast:
-        LOG.info("Parse quast results")
-        quast_results = parse_quast_results(sample_cnf.quast)
-        results.append(CdmQcMethodIndex(id="quast", **quast_results.model_dump()))
+        out = run_parser(AnalysisSoftware.QUAST, version="1.0.0", data=sample_cnf.quast)
+        res = out.results[AnalysisType.QC]
+        if res.status != "parsed":
+            LOG.warning(res.reason)
+        else:
+            results.append(CdmQcMethodIndex(id="quast", software="quast", result=res.value.model_dump()))
 
     if sample_cnf.gambitcore:
-        LOG.info("Parse gambitcore results")
-        gambitcore_results = parse_gambitcore_results(sample_cnf.gambitcore)
-        results.append(
-            CdmQcMethodIndex(id="gambitcore", **gambitcore_results.model_dump())
-        )
+        out = run_parser(AnalysisSoftware.GAMBIT, version="1.0.0", data=sample_cnf.gambitcore)
+        res = out.results[AnalysisType.QC]
+        if res.status != "parsed":
+            LOG.warning(res.reason)
+        else:
+            results.append(CdmQcMethodIndex(id="gambitcore", software="gambitcore", result=res.value.model_dump()))
 
     if sample_cnf.chewbbaca:
-        LOG.info("Parse cgmlst results")
-        res: MethodIndex = parse_cgmlst_results(sample_cnf.chewbbaca)
-        n_missing_loci = QcMethodIndex(
-            software=QcSoftware.CHEWBBACA, result={"n_missing": res.result.n_missing}
-        )
-        results.append(
-            CdmQcMethodIndex(id="chewbbaca_missing_loci", **n_missing_loci.model_dump())
-        )
+        out = run_parser(AnalysisSoftware.CHEWBBACA, version="1.0.0", data=sample_cnf.chewbbaca)
+        res = out.results[AnalysisType.CGMLST]
+        if res.status != "parsed":
+            LOG.warning(res.reason)
+        else:
+            missing_loci = res.value.n_missing
+            n_missing_loci = QcMethodIndex(
+                software=QcSoftware.CHEWBBACA, result={"n_missing": missing_loci}
+            )
+            results.append(
+                CdmQcMethodIndex(id="chewbbaca_missing_loci", **n_missing_loci.model_dump())
+            )
 
     # cast output as pydantic type for easy serialization
     qc_data = TypeAdapter(list[CdmQcMethodIndex])

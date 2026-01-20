@@ -1,11 +1,10 @@
 """Generic database objects of which several other models are based on."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Annotated
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationInfo
+from .enums import AnalysisType, ResultStatus
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
-from pysam import Callable
-from typing_extensions import Annotated
 
 
 def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
@@ -28,14 +27,33 @@ def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
     return upd_path
 
 
+class ResultEnvelope(BaseModel):
+    """Describe if a analysis result was successfully generated.
+
+    status describe how a result was generated.
+    
+    PARSED - Assay exists and was parsed
+    SKIPPED - Assay exists but user didnt request it
+    EMPTY - Assay exists but contains no findings
+    ABSENT - Assay doesnt exist in the input
+    """
+
+    status: ResultStatus
+    value: Any | None = None
+    reason: str | None = None
+    meta: dict[str, Any] = Field(default_factory=dict)
+
+
 class ParserOutput(BaseModel):
     """Common output data structure for all parsers."""
 
-    target_field: str
-    data: Any
+    software: str
+    software_version: str | None = None
+    parser_name: str
+    parser_version: int
+    schema_version: int = 1
 
-
-ParserFunc = Callable[[Any], ParserOutput]
+    results: dict[AnalysisType, ResultEnvelope]
 
 
 FilePath = Annotated[Path, BeforeValidator(convert_rel_to_abs_path)]

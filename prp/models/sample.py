@@ -49,7 +49,7 @@ class MethodIndex(RWModel):
 class SampleBase(RWModel):
     """Base datamodel for sample data structure"""
 
-    sample_id: str = Field(..., alias="sampleId", min_length=3, max_length=100)
+    sample_id: str = Field(..., min_length=3, max_length=100)
     sample_name: str
     lims_id: str
 
@@ -58,10 +58,10 @@ class SampleBase(RWModel):
     pipeline: PipelineInfo
 
     # quality
-    qc: list[QcMethodIndex | KleborateQcIndex] = Field(...)
+    qc: list[QcMethodIndex | KleborateQcIndex] = Field(..., default_factory=list)
 
     # species identification
-    species_prediction: list[SppMethodIndex] = Field(..., alias="speciesPrediction")
+    species_prediction: list[SppMethodIndex] = Field(..., default_factory=list)
 
 
 class ReferenceGenome(RWModel):
@@ -95,7 +95,7 @@ class PipelineResult(SampleBase):
             KleborateTypeIndex,
             MethodIndex,
         ]
-    ] = Field(..., alias="typingResult")
+    ] = Field(..., default_factory=list)
     # optional phenotype prediction
     element_type_result: list[
         Union[
@@ -106,7 +106,7 @@ class PipelineResult(SampleBase):
             KleborateScoreIndex,
             MethodIndex,
         ]
-    ] = Field(..., alias="elementTypeResult")
+    ] = Field(..., default_factory=list)
     # optional variant info
     snv_variants: Optional[list[VariantBase]] = None
     sv_variants: Optional[list[VariantBase]] = None

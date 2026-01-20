@@ -9,7 +9,7 @@ from requests import HTTPError
 from prp import VERSION as __version__
 from prp import bonsai
 from prp.models.config import SampleConfig
-from prp.parse import parse_sample
+from prp.parse.sample import parse_sample
 
 from .utils import SampleConfigFile
 

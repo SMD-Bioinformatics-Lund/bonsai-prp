@@ -2,63 +2,128 @@
 
 import logging
 import re
+from typing import Any, Mapping
 
-import numpy as np
-import pandas as pd
-
-from ..models.typing import ShigaTypingMethodIndex, TypingMethod, TypingResultShiga
-from ..models.typing import TypingSoftware as Software
+from prp.io.delimited import DelimiterRow, canonical_header, normalize_row, read_delimited, validate_fields, is_nullish
+from prp.models.enums import AnalysisSoftware, AnalysisType
+from prp.models.typing import TypingResultShiga
+from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
+from prp.parse.registry import register_parser
+from prp.parse.utils import safe_float, safe_percent
 
 LOG = logging.getLogger(__name__)
 
 
-def parse_shiga_pred(path: str) -> ShigaTypingMethodIndex:
-    """Parse shigapass prediction results."""
-    LOG.info("Parsing shigapass prediction")
-    cols = {
-        "Name": "sample_name",
-        "rfb_hits,(%)": "rfb_hits",
-        "MLST": "mlst",
-        "fliC": "flic",
-        "CRISPR": "crispr",
-        "ipaH": "ipah",
-        "Predicted_Serotype": "predicted_serotype",
-        "Predicted_FlexSerotype": "predicted_flex_serotype",
-        "Comments": "comments",
-    }
-    # read as dataframe and process data structure
-    hits = (
-        pd.read_csv(path, delimiter=";", na_values=["ND", "none"])
-        .rename(columns=cols)
-        .replace(np.nan, None)
-    )
-    shigatype_results = _parse_shigapass_results(hits, 0)
-    return ShigaTypingMethodIndex(
-        type=TypingMethod.SHIGATYPE,
-        result=shigatype_results,
-        software=Software.SHIGAPASS,
+SHIGAPASS = AnalysisSoftware.SHIGAPASS
+DELIMITER = ";"
+_PERCENT_RE = re.compile(r"([0-9]+(?:\.[0-9]+)?)\s*%")
+
+COLUMN_MAP: dict[str, str] = {
+    "Name": "sample_name",
+    "rfb_hits,": "rfb_hits",
+    "MLST": "mlst",
+    "fliC": "flic",
+    "CRISPR": "crispr",
+    "ipaH": "ipah",
+    "Predicted_Serotype": "predicted_serotype",
+    "Predicted_FlexSerotype": "predicted_flex_serotype",
+    "Comments": "comments",
+    # If your file actually has rfb as a separate column, add it here:
+    # "rfb": "rfb",
+}
+
+REQUIRED_COLUMNS: set[str] = {
+    "Name",
+    "rfb_hits,(%)",
+    "MLST",
+    "fliC",
+    "CRISPR",
+    "ipaH",
+    "Predicted_Serotype",
+    "Predicted_FlexSerotype",
+    "Comments",
+}
+
+def _normalize_shigapass_row(row: DelimiterRow) -> DelimiterRow: 
+    """Wrapps normalize row."""
+    return normalize_row(
+        row,
+        key_fn=lambda r: canonical_header(r).lstrip(','),
+        val_fn=lambda v: None if is_nullish(v) else v,
+        column_map=COLUMN_MAP,
     )
 
 
-def _extract_percentage(rfb_hits: str) -> float:
-    pattern = r"([0-9\.]+)%"
-    match = re.search(pattern, rfb_hits)
+def extract_percentage(value: Any) -> float | None:
+    """Return float percent from strings like '12.3%' or numeric values."""
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    s = str(value).strip()
+    match = _PERCENT_RE.search(s)
     if match:
-        percentile_value = float(match.group(1))
-    else:
-        percentile_value = 0.0
-    return percentile_value
+        return safe_float(match.group(1))
+    return safe_float(s)
 
 
-def _parse_shigapass_results(predictions: pd.DataFrame, row: int) -> TypingResultShiga:
+def _to_typing_result(row: Mapping[str, Any], *, strict: bool) -> TypingResultShiga:
+    """Cast result to TypingResultShiga."""
+
+    rfb = row["rfb"]  # if you map it
+    rfb_hits = extract_percentage(row["rfb_hits"])
+
+    if strict and rfb_hits is None:
+        raise ValueError(f"Invalid rfb_hits value: {row.get('rfb_hits')!r}")
+
     return TypingResultShiga(
-        rfb=predictions.loc[row, "rfb"],
-        rfb_hits=_extract_percentage(str(predictions.loc[row, "rfb_hits"])),
-        mlst=predictions.loc[row, "mlst"],
-        flic=predictions.loc[row, "flic"],
-        crispr=predictions.loc[row, "crispr"],
-        ipah=str(predictions.loc[row, "ipah"]),
-        predicted_serotype=str(predictions.loc[row, "predicted_serotype"]),
-        predicted_flex_serotype=predictions.loc[row, "predicted_flex_serotype"],
-        comments=predictions.loc[row, "comments"],
+        rfb=rfb,
+        rfb_hits=rfb_hits or 0.0,
+        mlst=row.get("mlst"),
+        flic=row.get("flic"),
+        crispr=row.get("crispr"),
+        ipah=str(row.get("ipah") or ""),
+        predicted_serotype=str(row.get("predicted_serotype") or ""),
+        predicted_flex_serotype=row.get("predicted_flex_serotype"),
+        comments=row.get("comments"),
     )
+
+@register_parser(SHIGAPASS)
+class ShigapassParser(SingleAnalysisParser):
+    """Parser for ShigaType results."""
+
+    software = SHIGAPASS
+    parser_name = "ShigapassParser"
+    parser_version = 1
+    schema_version = 1
+
+    analysis_type = AnalysisType.SHIGATYPE
+    produces = {analysis_type}
+
+    def _parse_one(
+        self,
+        source: ParserInput,
+        *,
+        strict_columns: bool = False,
+        strict: bool = False,
+        **kwargs: Any,
+    ) -> TypingResultShiga | None:
+        """Parse shigapass predictions and return a ShigaTypingMethodIndex."""
+        rows = read_delimited(source, delimiter=DELIMITER)
+
+        try:
+            first_raw = next(rows)
+        except StopIteration:
+            self.log_info("Shigapass input empty")
+            return None
+
+        self.validate_columns(first_raw, required=REQUIRED_COLUMNS, strict=strict_columns)
+
+        # Normalize keys
+        first = _normalize_shigapass_row(first_raw)
+        warn_if_extra_rows(rows, self.log_warning, context=f"{self.software} file", max_consume=10)
+
+        # Build typing result
+        shiga = _to_typing_result(first, strict=strict)
+        return shiga

@@ -1,29 +1,43 @@
 """Test functions for parsing NanoPlot results."""
 
-import pytest
-
-from prp.parse.qc import parse_nanoplot_results
+from prp.models.base import ParserOutput, ResultEnvelope
+from prp.models.enums import AnalysisType
+from prp.models.qc import NanoPlotQcResult
+from prp.parse.nanoplot import NanoplotParser
 
 
 def test_parse_nanoplot_results(saureus_nanoplot_path):
     """Test parsing of NanoPlot result file."""
 
+    parser = NanoplotParser()
+    result = parser.parse(saureus_nanoplot_path)
+
+    # test that result is method index
+    assert isinstance(result, ParserOutput)
+
+    # verify that parser produces what it say it should
+    assert all(at in parser.produces for at in result.results.keys())
+
+    res = result.results[AnalysisType.QC]
+    assert isinstance(res, ResultEnvelope)
+    assert res.status == "parsed"
+
+    # test parser result
+    assert isinstance(res.value, NanoPlotQcResult)
+
     # Test parsing the output
-    result = parse_nanoplot_results(saureus_nanoplot_path)
-    expected_nanoplot = {
-        "software": "nanoplot",
-        "version": None,
-        "result": {
-            "mean_read_length": 4697.8,
-            "mean_read_quality": 13.2,
-            "median_read_length": 2814.0,
-            "median_read_quality": 15.2,
-            "number_of_reads": 1000.0,
-            "read_length_n50": 6893.0,
-            "stdev_read_length": 5845.6,
-            "total_bases": 4697845.0,
-        },
+    expected_summary = {
+        "mean_read_length": 4697.8,
+        "mean_read_quality": 13.2,
+        "median_read_length": 2814.0,
+        "median_read_quality": 15.2,
+        "n_reads": 1000.0,
+        "read_length_n50": 6893.0,
+        "stdev_read_length": 5845.6,
+        "total_bases": 4697845.0,
     }
 
     # Check if data matches
-    assert expected_nanoplot == result.model_dump()
+    assert expected_summary == res.value.summary.model_dump()
+    assert len(res.value.top_longest) == 5
+    assert len(res.value.top_quality) == 5
