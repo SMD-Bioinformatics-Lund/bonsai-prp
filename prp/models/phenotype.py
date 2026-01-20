@@ -345,4 +345,4 @@ class VirulenceMethodIndex(RWModel):
 
     type: Literal[ElementType.VIR] = ElementType.VIR
     software: PredictionSoftware
-    result: VirulenceElementTypeResult
+    result: VirulenceElementTypeResult | ElementTypeResult

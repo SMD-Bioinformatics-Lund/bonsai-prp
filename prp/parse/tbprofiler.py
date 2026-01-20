@@ -17,8 +17,11 @@ from prp.models.phenotype import TbProfilerVariant, VariantSubType, VariantType
 from prp.models.typing import LineageInformation
 from prp.parse.base import BaseParser, ParseImplOut, ParserInput
 from prp.parse.envelope import run_as_envelope
+from prp.parse.registry import register_parser
 
 from .utils import get_db_version
+
+TBPROFILER = AnalysisSoftware.TBPROFILER
 
 
 def _get_sr_profie(pred: dict[str, Any]) -> dict[str, list[str]]:
@@ -174,10 +177,11 @@ def _to_amr_result(pred: dict[str, Any]) -> ElementTypeResult:
     )
 
 
+@register_parser(TBPROFILER)
 class TbProfilerParser(BaseParser):
     """TbProfiler parser."""
 
-    software = AnalysisSoftware.TBPROFILER
+    software = TBPROFILER
     parser_name = "TbProfilerParser"
     parser_version = 1
     schema_version = 1

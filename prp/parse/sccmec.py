@@ -78,7 +78,6 @@ class SccMecParser(SingleAnalysisParser):
     parser_version = 1
     schema_version = 1
     produces = {AnalysisType.SCCMEC}
-    analysis_type = AnalysisType.SCCMEC
 
     def _parse_one(
         self, source: ParserInput, strict_columns: bool = True, **_
