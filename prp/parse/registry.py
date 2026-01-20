@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Any, Callable, TypeAlias
 from packaging.version import Version
-from prp.models.enums import AnalysisType
+from prp.models.enums import AnalysisSoftware, AnalysisType
 from prp.models.base import ParserOutput
 from prp.parse.base import BaseParser, ParserInput
 
@@ -77,7 +77,7 @@ def resolve_parser(entry, **init_kwargs) -> Callable[..., ParserOutput]:
 
 
 def run_parser(
-    software: str,
+    software: str | AnalysisSoftware,
     *,
     version: str,
     data: ParserInput,
@@ -85,6 +85,9 @@ def run_parser(
     parser_init: dict[str, Any] | None = None,
     **parse_kwargs: Any,
 ) -> ParserOutput:
+    if not isinstance(software, (AnalysisSoftware, str)):
+        raise ValueError(f"Invalid input for 'run_parser', got {type(software)}")
+    
     entry = get_parser(software, version=version)
     parse_fn = resolve_parser(entry, **(parser_init or {}))
     return parse_fn(data, want=want, **parse_kwargs)
