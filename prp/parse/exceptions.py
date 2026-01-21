@@ -1,9 +1,10 @@
 """Common errors"""
 
 from typing import Any
+from prp.exceptions import PrpError
 
 
-class ParserError(Exception):
+class ParserError(PrpError):
     """Base exception for parsers of analysis results."""
 
     def __init__(self, message: str, *, context: dict[str, Any] | None = None):
