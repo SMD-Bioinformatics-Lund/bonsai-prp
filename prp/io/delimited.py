@@ -1,20 +1,17 @@
 """Functions for reading delimited files and validating its content."""
 
-from dataclasses import dataclass
 import re
-from typing import IO, Any, Callable, Iterator, Mapping, Sequence, TypeAlias
+from typing import IO, Any, Callable, Iterator, Mapping, Sequence
 from pathlib import Path
 import csv
 import io
 import logging
+from .types import DelimiterRow, FieldValidationResult, StreamOrPath
 
 _NULLISH = {None, "", " ", "NA", "N/A", "na", "n/a", ".", "-", "ND", "none"}
 _TRAILING_ANNOT_RE = re.compile(r"\s*(\([^)]*\)|\[[^\]]*\])\s*$")
 
 LOG = logging.getLogger(__name__)
-
-DelimiterRow: TypeAlias = dict[str, str | None]
-DelimiterRows: TypeAlias = list[DelimiterRow]
 
 KeyFn = Callable[[str], str]
 ValFn = Callable[[Any], Any]
@@ -43,7 +40,7 @@ def as_text_stream(
 
 
 def read_delimited(
-    source: IO[bytes] | IO[str] | str | Path,
+    source: StreamOrPath,
     *,
     delimiter: str = "\t",
     encoding: str = "utf-8",
@@ -129,15 +126,6 @@ def normalize_nulls(row: Mapping[str, Any]) -> dict[str, Any]:
         else:
             out[key] = val
     return out
-
-
-@dataclass(frozen=True)
-class FieldValidationResult:
-    """Result of validated fields."""
-
-    missing: set[str]
-    extra: set[str]
-    resolved: dict[str, str] | None = None
 
 
 def validate_fields(
