@@ -1,13 +1,13 @@
 """Base data models."""
 
-from typing import Any, Self
+from typing import Any, Mapping, Self, TypeAlias
 
 from pydantic import BaseModel, Field, model_validator
 
 from prp.models.base import RWModel
-from prp.models.enums import AnalysisType
 
 from .enums import (
+    AnalysisType,
     AnnotationType,
     ElementAmrSubtype,
     ElementSerotypeSubtype,
@@ -19,6 +19,8 @@ from .enums import (
     VariantSubType,
     VariantType,
 )
+
+ParseImplOut: TypeAlias = Mapping[AnalysisType, Any]
 
 
 class ResultEnvelope(BaseModel):

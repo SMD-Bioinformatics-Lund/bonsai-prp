@@ -3,7 +3,7 @@
 from typing import Any, Sequence
 
 from prp.io.json import read_json
-from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.base import BaseParser, ParseImplOut, StreamOrPath
 from prp.parse.core.envelope import run_as_envelope
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import AbsentResultError
@@ -190,7 +190,7 @@ class TbProfilerParser(BaseParser):
     produces = {AnalysisType.AMR, AnalysisType.LINEAGE}
 
     def _parse_impl(
-        self, source: ParserInput, *, want: set[AnalysisType], **kwargs: Any
+        self, source: StreamOrPath, *, want: set[AnalysisType], **kwargs: Any
     ) -> ParseImplOut:
         """Perform the bulk parsing."""
 
@@ -224,7 +224,7 @@ class TbProfilerParser(BaseParser):
 
         return out
 
-    def get_version(self, source: ParserInput) -> SoupVersion | None:
+    def get_version(self, source: StreamOrPath) -> SoupVersion | None:
         """
         Optional helper: extract db version info (if present).
         Not part of BaseParser, but consistent with your pattern elsewhere.

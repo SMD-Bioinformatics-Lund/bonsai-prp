@@ -6,7 +6,8 @@ import re
 from typing import Any, TypeAlias
 
 from prp.io.delimited import normalize_nulls, read_delimited
-from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.io.types import StreamOrPath
+from prp.parse.core.base import BaseParser, ParseImplOut
 from prp.parse.core.envelope import run_as_envelope
 from prp.parse.core.registry import register_parser
 from prp.parse.models.phenotype import (
@@ -199,7 +200,7 @@ def _parse_variant(hit: dict[str, Any], variant_no: int) -> AmrFinderVariant:
 
 
 def read_amrfinder_results(
-    source: ParserInput,
+    source: StreamOrPath,
 ) -> tuple[AmrFinderGenes, AmrFinderVariants]:
     """Read AMRFinder TSV and return parsed gene hits and point variants.
 
@@ -281,7 +282,7 @@ class AmrFinderParser(BaseParser):
     produces = {AnalysisType.AMR, AnalysisType.VIRULENCE, AnalysisType.STRESS}
 
     def _parse_impl(
-        self, source: ParserInput, *, want: set[AnalysisType], **_
+        self, source: StreamOrPath, *, want: set[AnalysisType], **_
     ) -> ParseImplOut:
         """Parse analysis results."""
         genes, variants = read_amrfinder_results(source)

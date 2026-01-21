@@ -1,7 +1,7 @@
 from typing import Any, Mapping
 
 from prp.io.json import read_json
-from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.qc import PostAlignQcResult
@@ -115,7 +115,7 @@ class PostAlignQcParser(SingleAnalysisParser):
 
     def _parse_one(
         self,
-        source: ParserInput,
+        source: StreamOrPath,
         *,
         strict: bool = False,
         **kwargs: Any,

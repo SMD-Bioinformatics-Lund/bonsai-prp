@@ -12,7 +12,7 @@ from prp.io.delimited import (
     normalize_row,
     read_delimited,
 )
-from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.base import BaseParser, ParseImplOut, StreamOrPath
 from prp.parse.core.envelope import run_as_envelope
 from prp.parse.core.registry import register_parser
 from prp.parse.models.base import SoupVersion, ElementTypeResult, PhenotypeInfo, VariantBase
@@ -285,7 +285,7 @@ class MykrobeParser(BaseParser):
 
     def _parse_impl(
         self,
-        source: ParserInput,
+        source: StreamOrPath,
         *,
         want: set[AnalysisType],
         strict_columns: bool = False,
@@ -363,7 +363,7 @@ class MykrobeParser(BaseParser):
 
         return results
 
-    def get_version(self, source: ParserInput) -> SoupVersion | None:
+    def get_version(self, source: StreamOrPath) -> SoupVersion | None:
         """Get version of Mykrobe from result."""
         rows_iter = read_delimited(source, delimiter=DELIMITER)
         try:

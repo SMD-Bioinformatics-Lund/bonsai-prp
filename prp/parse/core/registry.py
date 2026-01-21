@@ -5,7 +5,7 @@ from typing import Any, Callable, TypeAlias
 
 from packaging.version import Version
 
-from prp.parse.core.base import BaseParser, ParserInput
+from prp.parse.core.base import BaseParser, StreamOrPath
 from prp.parse.models.base import ParserOutput
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 
@@ -85,7 +85,7 @@ def run_parser(
     software: str | AnalysisSoftware,
     *,
     version: str,
-    data: ParserInput,
+    data: StreamOrPath,
     want: set[AnalysisType] | None = None,
     parser_init: dict[str, Any] | None = None,
     **parse_kwargs: Any,

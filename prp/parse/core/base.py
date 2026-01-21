@@ -3,21 +3,19 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
 from logging import Logger, getLogger
-from pathlib import Path
-from typing import IO, Any, Mapping, Type, TypeAlias, TypeVar
+from typing import Any, Mapping, Type, TypeVar
 
 from prp.io.delimited import validate_fields
+from prp.io.types import StreamOrPath
 from prp.parse.core.envelope import (
     default_empty_predicate,
     envelope_absent,
     envelope_skipped,
     run_as_envelope,
 )
-from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.base import ParserOutput, ResultEnvelope, ParseImplOut
 from prp.parse.models.enums import AnalysisType, ResultStatus
 
-ParserInput: TypeAlias = IO[bytes] | IO[str] | str | Path
-ParseImplOut: TypeAlias = Mapping[AnalysisType, Any]
 T = TypeVar("T")
 
 
@@ -44,7 +42,7 @@ class BaseParser(ABC):
 
     def parse(
         self,
-        source: ParserInput,
+        source: StreamOrPath,
         *,
         want: set[AnalysisType] | AnalysisType | None = None,
         **kwargs: Any,
@@ -124,7 +122,7 @@ class BaseParser(ABC):
     @abstractmethod
     def _parse_impl(
         self,
-        source: ParserInput,
+        source: StreamOrPath,
         *,
         want: set[AnalysisType],
         **kwargs: Any,
@@ -156,7 +154,7 @@ class SingleAnalysisParser(BaseParser):
         return None
 
     def _parse_impl(
-        self, source: ParserInput, *, want: set[AnalysisType], **kwargs: Any
+        self, source: StreamOrPath, *, want: set[AnalysisType], **kwargs: Any
     ) -> Mapping[str, Any]:
         env = run_as_envelope(
             analysis_name=self.analysis_type,
@@ -171,7 +169,7 @@ class SingleAnalysisParser(BaseParser):
         return {self.analysis_type: env}
 
     @abstractmethod
-    def _parse_one(self, source: ParserInput, **kwargs: Any) -> Any:
+    def _parse_one(self, source: StreamOrPath, **kwargs: Any) -> Any:
         ...
 
 
@@ -206,7 +204,7 @@ ParserClass = Type[BaseParser]
 
 
 def parse_child(
-    parser: BaseParser, source: ParserInput, atype: AnalysisType, *, strict: bool
+    parser: BaseParser, source: StreamOrPath, atype: AnalysisType, *, strict: bool
 ) -> Any:
     """Utility to call another parser inside a parser."""
 

@@ -6,7 +6,7 @@ from typing import Any
 import pandas as pd
 
 from prp.io.delimited import read_delimited
-from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.typing import TypingResultEmm
@@ -48,7 +48,7 @@ class EmmTyperParser(SingleAnalysisParser):
     schema_version = 1
     produces = {AnalysisType.EMM}
 
-    def _parse_one(self, source: ParserInput, **_) -> TypingResultEmm | dict:
+    def _parse_one(self, source: StreamOrPath, **_) -> TypingResultEmm | dict:
         """Parse emmtyper results."""
         reader = read_delimited(
             source, has_header=False, fieldnames=EMM_FIELDS, none_values=["-", ""]

@@ -4,7 +4,7 @@ from typing import Any
 
 from prp.io.delimited import is_nullish
 from prp.io.json import read_json
-from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.base import BaseParser, ParseImplOut, StreamOrPath
 from prp.parse.core.envelope import envelope_absent, run_as_envelope
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import InvalidDataFormat, ParserError
@@ -101,7 +101,7 @@ class SerotypeFinderParser(BaseParser):
 
     def _parse_impl(
         self,
-        source: ParserInput,
+        source: StreamOrPath,
         *,
         want: set[AnalysisType],
         strict: bool = False,

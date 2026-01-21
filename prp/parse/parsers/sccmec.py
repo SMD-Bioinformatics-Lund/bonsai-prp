@@ -3,7 +3,7 @@
 import logging
 
 from prp.io.delimited import DelimiterRow, normalize_nulls, read_delimited
-from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.typing import TypingResultSccmec
@@ -81,7 +81,7 @@ class SccMecParser(SingleAnalysisParser):
     produces = {AnalysisType.SCCMEC}
 
     def _parse_one(
-        self, source: ParserInput, strict_columns: bool = True, **_
+        self, source: StreamOrPath, strict_columns: bool = True, **_
     ) -> TypingResultSccmec | dict:
         """Implementation on how to parse a single result."""
 

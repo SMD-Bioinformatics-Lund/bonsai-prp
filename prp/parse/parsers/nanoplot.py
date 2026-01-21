@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 from prp.io.delimited import as_text_stream
-from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.qc import NanoPlotQcCutoff, NanoPlotQcResult, NanoPlotSummary
@@ -60,7 +60,7 @@ def _process_line(line: str, *, mode: Mode) -> tuple[str, str | float]:
     return label, value
 
 
-def _read_nanoplot(source: ParserInput, *, encoding: str = "utf-8") -> dict[str, Any]:
+def _read_nanoplot(source: StreamOrPath, *, encoding: str = "utf-8") -> dict[str, Any]:
     """Read nanoplot file."""
     if isinstance(source, (str, Path)):
         with open(source, "r", encoding=encoding, newline="") as fp:
@@ -146,7 +146,7 @@ class NanoplotParser(SingleAnalysisParser):
 
     def _parse_one(
         self,
-        source: ParserInput,
+        source: StreamOrPath,
         **kwargs: Any,
     ) -> NanoPlotQcResult | None:
         """Parse Gambit core csv and return GambitcoreQcResult."""

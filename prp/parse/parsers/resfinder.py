@@ -5,7 +5,7 @@ from itertools import chain
 from typing import Any
 
 from prp.io.json import read_json, require_mapping
-from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.base import BaseParser, ParseImplOut, StreamOrPath
 from prp.parse.core.envelope import run_as_envelope
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import InvalidDataFormat
@@ -417,7 +417,7 @@ class ResFinderParser(BaseParser):
 
     def _parse_impl(
         self,
-        source: ParserInput,
+        source: StreamOrPath,
         *,
         want: set[AnalysisType],
         strict: bool = False,

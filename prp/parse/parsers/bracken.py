@@ -3,7 +3,7 @@
 from typing import Any
 
 from prp.io.delimited import read_delimited
-from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import ParserError
 from prp.parse.models.bracken import BrackenSpeciesPrediction
@@ -55,7 +55,7 @@ class BrackenParser(SingleAnalysisParser):
 
     def _parse_one(
         self,
-        source: ParserInput,
+        source: StreamOrPath,
         *,
         cutoff: float | None = None,
         strict_columns: bool = False,

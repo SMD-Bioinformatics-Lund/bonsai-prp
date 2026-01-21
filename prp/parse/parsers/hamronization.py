@@ -8,7 +8,7 @@ from itertools import chain
 from typing import Any, Literal, TypeAlias
 
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
 from prp.parse.models.base import SoupVersion
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType, SoupType
@@ -151,7 +151,7 @@ class HAmrOnizationParser(SingleAnalysisParser):
 
     def _parse_one(
         self,
-        source: ParserInput,
+        source: StreamOrPath,
         *,
         strict: bool = True,
         **kwargs: Any,
@@ -186,7 +186,7 @@ class HAmrOnizationParser(SingleAnalysisParser):
 
         return entries
 
-    def get_version(self, source: ParserInput) -> SoupVersion | None:
+    def get_version(self, source: StreamOrPath) -> SoupVersion | None:
         """Get version of Mykrobe from result."""
         rows_iter = read_delimited(source)
         try:
