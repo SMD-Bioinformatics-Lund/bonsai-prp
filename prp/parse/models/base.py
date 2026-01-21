@@ -1,10 +1,11 @@
 """Base data models."""
 
-from typing import Any, Mapping, Self, TypeAlias
+from typing import Any, Collection, Mapping, Self, TypeAlias
 
 from pydantic import BaseModel, Field, model_validator
 
 from prp.models.base import RWModel
+from prp.parse.exceptions import AbsentResultError, ParserError
 
 from .enums import (
     AnalysisType,
@@ -38,6 +39,56 @@ class ResultEnvelope(BaseModel):
     value: Any | None = None
     reason: str | None = None
     meta: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def ok(self) -> bool:
+        """True if this envelope is not an error condition."""
+        return self.status in {ResultStatus.PARSED, ResultStatus.EMPTY}
+
+    def raise_for_status(
+        self,
+        *,
+        error_on: Collection[ResultStatus] = (ResultStatus.ERROR,),
+    ) -> None:
+        """Raise if `status` is in `error_on`.
+
+        Defaults to raising only for ERROR. Clients can opt-in to stricter policies, e.g.:
+            env.raise_for_status(error_on={ResultStatus.ERROR, ResultStatus.ABSENT})
+
+        Args:
+            error_on: Statuses that should be considered exceptional for this call.
+
+        Raises:
+            ParserError (or subclass) if status is considered exceptional.
+        """
+        if self.status not in error_on:
+            return
+
+        # Provide sensible defaults by status
+        if self.status == ResultStatus.ABSENT:
+            raise AbsentResultError(
+                self.reason or "Result absent",
+                context={"status": self.status.value, **self.meta},
+            )
+        if self.status == ResultStatus.SKIPPED:
+            raise ParserError(
+                self.reason or "Result skipped",
+                context={"status": self.status.value, **self.meta},
+            )
+        if self.status == ResultStatus.EMPTY:
+            raise ParserError(
+                self.reason or "Result empty",
+                context={"status": self.status.value, **self.meta},
+            )
+        # ERROR and any other unhandled status
+        raise ParserError(
+            self.reason or "Parser error",
+            context={"status": self.status.value, **self.meta},
+        )
+
+    def raise_for_error(self) -> None:
+        """Raise only if status == ERROR."""
+        self.raise_for_status(error_on=(ResultStatus.ERROR,))
 
 
 class ParserOutput(BaseModel):
