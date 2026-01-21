@@ -7,7 +7,7 @@ authors = [
 ]
 description = "Pipline result processing program for the JASEN pipeline and Bonsai tool."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Natural Language :: English",
@@ -18,17 +18,8 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "setuptools",
-    "wheel",
-    "click==8.1.7",
-    "pydantic",
-    "pandas==2.1.3",
-    "numpy==1.26.3",
-    "Biopython==1.83",
-    "cyvcf2==0.31.1",
-    "pysam==0.22.1",
-    "pyyaml==6.0.2",
-    "requests==2.32.3"
+    "pydantic>=2.4,<3",
+    "pyyaml>=6,<7",
 ]
 
 [project.urls]
@@ -37,17 +28,49 @@ Issues = "https://github.com/Clinical-Genomics-Lund/bonsai-prp/issues"
 Changelog = "https://github.com/Clinical-Genomics-Lund/CHANGELOG.md"
 
 [project.scripts]
-prp = "prp.cli:cli"
+prp = "prp.__main__:main"
 
 [project.optional-dependencies]
-dev = [
-    "pylint ~=3.0.2",
-    "black ~=23.11.0",
-    "isort ~=5.12.0",
+
+
+# upload = cli + requests
+upload = [
+    "click>=8.1",
+    "requests>=2.31",
 ]
+
+# analysis = cli + all heavy tools
+analysis = [
+    "click>=8.1",
+    "numpy>=1.26,<2.0",
+    "pandas>=2.1,<2.3",
+    "biopython>=1.83,<1.86",
+    "cyvcf2>=0.31,<0.32",
+    "pysam>=0.22,<0.23",
+]
+
+all = [
+    "click>=8.1",
+    "requests>=2.31,<3",
+    "numpy>=1.26,<2.0",
+    "pandas>=2.1,<2.3",
+    "biopython>=1.83,<1.86",
+    "cyvcf2>=0.31,<0.32",
+    "pysam>=0.22,<0.23",
+]
+
+# dev-only tools (not installed with 'all')
+dev = [
+    "pylint>=3.0",
+    "black>=23.11",
+    "isort>=5.12",
+]
+
+# test-only tools (not installed with 'all')
 test = [
-    "pytest-cov ~=4.1.0",
-    "mypy == 1.13.0"
+    "pytest-cov>=4.1",
+    "mypy==1.13.0",
+    "pydantic[mypy]>=2.4",
 ]
 
 [build-system]
