@@ -8,24 +8,7 @@ from enum import StrEnum
 from itertools import chain
 from typing import Any, Callable, Literal, Mapping
 
-from prp.parse.exceptions import ParserError, AbsentResultError
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.parse.models.base import ResultEnvelope, ElementTypeResult, PhenotypeInfo 
-from prp.parse.models.enums import AnalysisSoftware, ResultStatus, AnalysisType, AnnotationType, ElementAmrSubtype, ElementType, VariantSubType, VariantType
-from prp.parse.models.hamronization import HamronizationEntries, HamronizationEntry
-from prp.parse.models.kleborate import (
-    KleborateKaptiveLocus,
-    KleborateMlstLikeResults,
-    KleborateQcResult,
-    KleboreateSppResult,
-    KleborateEtScore,
-    ParsedVariant,
-)
-from prp.parse.models.amrfinder import (
-    AmrFinderResistanceGene,
-    AmrFinderVariant,
-)
-
 from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
 from prp.parse.core.envelope import (
     envelope_absent,
@@ -33,8 +16,31 @@ from prp.parse.core.envelope import (
     envelope_from_value,
     run_as_envelope,
 )
-from prp.parse.parsers.hamronization import HAmrOnizationParser
 from prp.parse.core.registry import register_parser
+from prp.parse.exceptions import AbsentResultError, ParserError
+from prp.parse.models.amrfinder import AmrFinderResistanceGene, AmrFinderVariant
+from prp.parse.models.base import ElementTypeResult, PhenotypeInfo, ResultEnvelope
+from prp.parse.models.enums import (
+    AnalysisSoftware,
+    AnalysisType,
+    AnnotationType,
+    ElementAmrSubtype,
+    ElementType,
+    ResultStatus,
+    VariantSubType,
+    VariantType,
+)
+from prp.parse.models.hamronization import HamronizationEntries, HamronizationEntry
+from prp.parse.models.kleborate import (
+    KleborateEtScore,
+    KleborateKaptiveLocus,
+    KleborateMlstLikeResults,
+    KleborateQcResult,
+    KleboreateSppResult,
+    ParsedVariant,
+)
+from prp.parse.parsers.hamronization import HAmrOnizationParser
+
 from .utils import safe_int, safe_strand
 
 WarnFn = Callable[[str], None]
@@ -186,7 +192,9 @@ def _parse_virulence(result: Mapping[str, Any]) -> KleborateEtScore | None:
     """Get virulence score from result."""
     preset = result.get("klebsiella_pneumo_complex")
     if not isinstance(preset, Mapping):
-        raise AbsentResultError("'klebsiella_pneumo_complex' specific analysis not in result.")
+        raise AbsentResultError(
+            "'klebsiella_pneumo_complex' specific analysis not in result."
+        )
 
     vir = preset.get("virulence_score")
     if not isinstance(vir, Mapping):
@@ -205,7 +213,9 @@ def _parse_kaptive(
 
     # Only available for KPSC
     if (data := result.get(PresetName.KPSC)) is None:
-        raise AbsentResultError("'klebsiella_pneumo_complex' specific analysis not in result.")
+        raise AbsentResultError(
+            "'klebsiella_pneumo_complex' specific analysis not in result."
+        )
 
     def _fmt_res(d: dict[str, Any], method: Literal["K", "O"]) -> KleborateKaptiveLocus:
         return KleborateKaptiveLocus(
@@ -234,7 +244,9 @@ def _parse_mlst_like(
 
     kleb = result.get("klebsiella")
     if not isinstance(kleb, Mapping):
-        raise AbsentResultError("'klebsiella_pneumo_complex' specific analysis not in result.")
+        raise AbsentResultError(
+            "'klebsiella_pneumo_complex' specific analysis not in result."
+        )
 
     for schema_name, schema_def in _MLST_LIKE_SCHEMAS.items():
         analysis_type = _MLST_TO_ANALYSISTYPE.get(schema_name)
@@ -361,7 +373,7 @@ def _parse_variant_str(
         return None
 
     return ParsedVariant.model_validate(
-        {"residue": residue_type, "type": subtype,**m.groupdict()}
+        {"residue": residue_type, "type": subtype, **m.groupdict()}
     )
 
 

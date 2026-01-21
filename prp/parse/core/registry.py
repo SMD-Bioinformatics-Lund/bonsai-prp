@@ -2,11 +2,12 @@
 
 from dataclasses import dataclass
 from typing import Any, Callable, TypeAlias
-from packaging.version import Version
-from prp.parse.models.enums import AnalysisSoftware, AnalysisType
-from prp.parse.models.base import ParserOutput
-from prp.parse.core.base import BaseParser, ParserInput
 
+from packaging.version import Version
+
+from prp.parse.core.base import BaseParser, ParserInput
+from prp.parse.models.base import ParserOutput
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 
 ParserClass: TypeAlias = type[BaseParser]
 RegistryEntry: TypeAlias = ParserClass
@@ -24,9 +25,11 @@ class VersionRange:
 _REGISTRY: dict[str, list[VersionRange]] = {}
 
 
-def register_parser(software: str, min_version: str | None = None, max_version: str | None = None):
+def register_parser(
+    software: str, min_version: str | None = None, max_version: str | None = None
+):
     """Decorator to register a parser for a range of versions.
-    
+
     Null values means either undefined or no upper range.
     """
     min_version = min_version or "0.0.0"
@@ -34,10 +37,13 @@ def register_parser(software: str, min_version: str | None = None, max_version: 
 
     def wrapper(cls: RegistryEntry):
         range = VersionRange(
-            min_version=Version(min_version), max_version=Version(max_version), parser=cls
+            min_version=Version(min_version),
+            max_version=Version(max_version),
+            parser=cls,
         )
         _REGISTRY.setdefault(software, []).append(range)
         return cls
+
     return wrapper
 
 
@@ -47,11 +53,11 @@ def get_parser(software: str, *, version: str) -> RegistryEntry:
 
     if software not in registered_softwares():
         raise ValueError(f"No parser registered for software: {software}")
-    
+
     for span in sorted(_REGISTRY[software]):
         if span.min_version <= version <= span.max_version:
             return span.parser
-        
+
     raise ValueError(f"No parser available for software '{software}' version {version}")
 
 
@@ -86,7 +92,7 @@ def run_parser(
 ) -> ParserOutput:
     if not isinstance(software, (AnalysisSoftware, str)):
         raise ValueError(f"Invalid input for 'run_parser', got {type(software)}")
-    
+
     entry = get_parser(software, version=version)
     parse_fn = resolve_parser(entry, **(parser_init or {}))
     return parse_fn(data, want=want, **parse_kwargs)

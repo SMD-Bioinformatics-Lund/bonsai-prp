@@ -2,10 +2,10 @@
 
 import pytest
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.qc import QuastQcResult
-from prp.parse.quast import QuastParser
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.models.qc import QuastQcResult
+from prp.parse.parsers.quast import QuastParser
 
 
 @pytest.mark.parametrize(

@@ -1,7 +1,7 @@
 """Test various utility functions."""
 import pytest
 
-from prp.parse.utils import safe_float, safe_percent
+from prp.parse.utils import safe_percent
 
 
 @pytest.mark.parametrize(

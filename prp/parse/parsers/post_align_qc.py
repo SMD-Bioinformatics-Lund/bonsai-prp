@@ -1,12 +1,12 @@
-
 from typing import Any, Mapping
 
 from prp.io.json import read_json
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.qc import PostAlignQcResult
-from prp.parse.base import ParserInput, SingleAnalysisParser
-from prp.parse.registry import register_parser
-from prp.parse.utils import safe_float, safe_int
+from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.registry import register_parser
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.qc import PostAlignQcResult
+
+from .utils import safe_float, safe_int
 
 POSTALIGNQC = AnalysisSoftware.POSTALIGNQC
 
@@ -23,6 +23,7 @@ REQUIRED_KEYS = {
     # ins_size, ins_size_dev, coverage_uniformity are optional in your original code
 }
 
+
 def _validate_keys(qc_dict: Mapping[str, Any], *, strict: bool = False) -> None:
     missing = [k for k in REQUIRED_KEYS if k not in qc_dict]
     if missing:
@@ -30,7 +31,10 @@ def _validate_keys(qc_dict: Mapping[str, Any], *, strict: bool = False) -> None:
         if strict:
             raise ValueError(msg)
 
-def _to_postalignqc_result(qc_dict: Mapping[str, Any], *, strict: bool = False, logger: Any | None = None) -> PostAlignQcResult:
+
+def _to_postalignqc_result(
+    qc_dict: Mapping[str, Any], *, strict: bool = False, logger: Any | None = None
+) -> PostAlignQcResult:
     """Convert raw dict to PostAlignQcResult."""
 
     # optional fields
@@ -41,7 +45,9 @@ def _to_postalignqc_result(qc_dict: Mapping[str, Any], *, strict: bool = False, 
             ins_size = safe_float(qc_dict["ins_size"], logger=logger)
         except (TypeError, ValueError) as exc:
             if strict:
-                raise ValueError(f"Invalid ins_size={qc_dict.get('ins_size')!r}") from exc
+                raise ValueError(
+                    f"Invalid ins_size={qc_dict.get('ins_size')!r}"
+                ) from exc
 
     ins_size_dev = None
     if qc_dict.get("ins_size_dev") is not None:
@@ -49,12 +55,16 @@ def _to_postalignqc_result(qc_dict: Mapping[str, Any], *, strict: bool = False, 
             ins_size_dev = safe_float(qc_dict["ins_size_dev"], logger=logger)
         except (TypeError, ValueError) as exc:
             if strict:
-                raise ValueError(f"Invalid ins_size_dev={qc_dict.get('ins_size_dev')!r}") from exc
+                raise ValueError(
+                    f"Invalid ins_size_dev={qc_dict.get('ins_size_dev')!r}"
+                ) from exc
 
     coverage_uniformity = None
     if qc_dict.get("coverage_uniformity") is not None:
         try:
-            coverage_uniformity = safe_float(qc_dict["coverage_uniformity"], logger=logger)
+            coverage_uniformity = safe_float(
+                qc_dict["coverage_uniformity"], logger=logger
+            )
         except (TypeError, ValueError) as exc:
             if strict:
                 raise ValueError(

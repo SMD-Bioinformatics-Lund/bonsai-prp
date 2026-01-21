@@ -1,9 +1,9 @@
 """Test functions for parsing SAMtools coverage results."""
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.qc import SamtoolsCoverageQcResult
-from prp.parse.samtools import SamtoolsCovParser
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.models.qc import SamtoolsCoverageQcResult
+from prp.parse.parsers.samtools import SamtoolsCovParser
 
 
 def test_samtools_coverage_parser(saureus_samtools_coverage_path):

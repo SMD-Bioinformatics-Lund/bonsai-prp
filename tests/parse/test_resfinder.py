@@ -1,8 +1,8 @@
 """Test functions for the resfinder parser."""
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.parse.resfinder import ResFinderParser, get_nt_change
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.parsers.resfinder import ResFinderParser, get_nt_change
 
 
 def test_get_nt_changes_from_condons():

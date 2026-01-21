@@ -5,6 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
 from prp.models.base import RWModel
+
 from .enums import VariantSubType
 from .typing import LineageMixin, TypingResultMlst
 
@@ -49,11 +50,6 @@ class KleborateKaptiveLocus(RWModel):
     confidence: Literal["typeable", "untypeable"]
     problems: Any
     missing_genes: Any
-
-
-class KleborateKaptiveTypingResult(RWModel):
-    k_type: KleborateKaptiveLocus
-    o_type: KleborateKaptiveLocus
 
 
 class KleborateAmrPrediction(RWModel):

@@ -1,9 +1,9 @@
 """Test functions for parsing spaTyper results."""
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.typing import TypingResultSpatyper
-from prp.parse.spatyper import SpatyperParser
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.models.typing import TypingResultSpatyper
+from prp.parse.parsers.spatyper import SpatyperParser
 
 
 def test_parse_spatyper_results(saureus_spatyper_path):

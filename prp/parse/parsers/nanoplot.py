@@ -2,15 +2,16 @@
 
 
 import re
-from typing import Any, Literal
-from prp.io.delimited import as_text_stream
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.qc import NanoPlotQcCutoff, NanoPlotQcResult, NanoPlotSummary
-from prp.parse.base import ParserInput, SingleAnalysisParser
-from prp.parse.registry import register_parser
 from pathlib import Path
+from typing import Any, Literal
 
-from prp.parse.utils import safe_float, safe_int, safe_percent
+from prp.io.delimited import as_text_stream
+from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.registry import register_parser
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.qc import NanoPlotQcCutoff, NanoPlotQcResult, NanoPlotSummary
+
+from .utils import safe_float, safe_int, safe_percent
 
 NANOPLOT = AnalysisSoftware.NANOPLOT
 PERCENTAGE_PATTERN = re.compile(r"\(([0-9\.%]+)\)")
@@ -27,6 +28,7 @@ SUMMARY_KEY_MAP = {
 }
 
 Mode = Literal["summary", "qc_cutoff", "top_quality", "top_longest"]
+
 
 def _process_line(line: str, *, mode: Mode) -> tuple[str, str | float]:
     """Process row depending on the mode."""
@@ -91,7 +93,7 @@ def _read_nanoplot(source: ParserInput, *, encoding: str = "utf-8") -> dict[str,
         if line.lower().startswith("top 5 longest reads"):
             mode = "top_longest"
             continue
-        
+
         # Parse based on mode
         label, value = _process_line(line, mode=mode)
         results[mode][label] = value
@@ -126,7 +128,7 @@ def _to_qc_result(data: dict[str, Any]) -> NanoPlotQcResult:
         summary=summary,
         qc_cutoff=qc_cutoff,
         top_longest=top_longest,
-        top_quality=top_quality
+        top_quality=top_quality,
     )
 
 

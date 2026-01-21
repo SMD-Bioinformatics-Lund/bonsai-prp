@@ -5,15 +5,21 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from prp.exceptions import InvalidDataFormat, ParserError
 from prp.io.delimited import is_nullish
 from prp.io.json import read_json
-from prp.models.enums import AnalysisType, AnalysisSoftware
-from prp.models.phenotype import ElementSerotypeSubtype, ElementType, SerotypeGene
-from prp.parse.base import BaseParser, ParseImplOut, ParserInput
-from prp.parse.envelope import envelope_absent, run_as_envelope
-from prp.parse.registry import register_parser
-from prp.parse.utils import safe_int
+from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.envelope import envelope_absent, run_as_envelope
+from prp.parse.core.registry import register_parser
+from prp.parse.exceptions import InvalidDataFormat, ParserError
+from prp.parse.models.base import GeneBase
+from prp.parse.models.enums import (
+    AnalysisSoftware,
+    AnalysisType,
+    ElementSerotypeSubtype,
+    ElementType,
+)
+
+from .utils import safe_int
 
 LOG = logging.getLogger(__name__)
 
@@ -27,12 +33,12 @@ ANALYSIS_TYPE_FIELDS = {
 def parse_serotype_gene(
     info: dict[str, Any],
     subtype: ElementSerotypeSubtype = ElementSerotypeSubtype.ANTIGEN,
-) -> SerotypeGene:
+) -> GeneBase:
     """Parse serotype gene prediction results."""
     start_pos, end_pos = [safe_int(pos) for pos in info["position_in_ref"].split("..")]
     # Some genes doesnt have accession numbers
     accnr = None if is_nullish(info["accession"]) else info["accession"]
-    return SerotypeGene(
+    return GeneBase(
         # info
         gene_symbol=info["gene"],
         accession=accnr,
@@ -90,7 +96,6 @@ def _is_no_hit(value: Any) -> bool:
 
 @register_parser(SEROTYPEFINDER)
 class SerotypeFinderParser(BaseParser):
-
     software = SEROTYPEFINDER
     parser_name = "SerotypeFinderParser"
     parser_version = 1
@@ -135,7 +140,9 @@ class SerotypeFinderParser(BaseParser):
                 hits = pred_res.get(ANALYSIS_TYPE_FIELDS[analysis_type])
                 # Value might be a string if there is no hit
                 if _is_no_hit(hits):
-                    out[analysis_type] = envelope_absent(f"No {analysis_type} hit", meta=base_meta)
+                    out[analysis_type] = envelope_absent(
+                        f"No {analysis_type} hit", meta=base_meta
+                    )
                     continue
 
                 # verify data
@@ -150,7 +157,9 @@ class SerotypeFinderParser(BaseParser):
                 # there can be several hits for a given serotype, pick the best
                 hit = pick_best_hit(hits)
                 if hit is None:
-                    out[analysis_type] = envelope_absent(f"No {analysis_type} hit", meta=base_meta)
+                    out[analysis_type] = envelope_absent(
+                        f"No {analysis_type} hit", meta=base_meta
+                    )
 
                 out[analysis_type] = run_as_envelope(
                     analysis_name=analysis_type,
@@ -158,6 +167,6 @@ class SerotypeFinderParser(BaseParser):
                     reason_if_absent=f"{analysis_type} not present",
                     reason_if_empty="No findings",
                     meta=base_meta,
-                    logger=self.logger
+                    logger=self.logger,
                 )
         return out

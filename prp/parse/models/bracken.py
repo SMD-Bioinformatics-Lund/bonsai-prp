@@ -1,6 +1,7 @@
 """Bracken specific data models."""
 
 from pydantic import Field
+
 from .base import BaseSpeciesPrediction
 from .enums import TaxLevel
 

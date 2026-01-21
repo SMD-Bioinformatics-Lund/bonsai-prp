@@ -5,20 +5,25 @@ import logging
 import re
 from typing import Any, TypeAlias
 
-from prp.parse.models.enums import AnalysisType, AnalysisSoftware, AnnotationType, ElementType
+from prp.io.delimited import normalize_nulls, read_delimited
+from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.envelope import run_as_envelope
+from prp.parse.core.registry import register_parser
 from prp.parse.models.amrfinder import (
     AmrFinderGene,
     AmrFinderResistanceGene,
+    AmrFinderVariant,
     AmrFinderVirulenceGene,
-    AmrFinderVariant
 )
 from prp.parse.models.base import ElementTypeResult, PhenotypeInfo
+from prp.parse.models.enums import (
+    AnalysisSoftware,
+    AnalysisType,
+    AnnotationType,
+    ElementType,
+)
 
-from prp.io.delimited import read_delimited, normalize_nulls
-from prp.parse.core.envelope import run_as_envelope
-from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
-from prp.parse.core.registry import register_parser
-from .utils import classify_variant_type, safe_int, safe_float, safe_strand
+from .utils import classify_variant_type, safe_float, safe_int, safe_strand
 
 LOG = logging.getLogger(__name__)
 
@@ -219,7 +224,11 @@ def _analysis_to_element_type(analysis_type: AnalysisType) -> ElementType:
     Map analysis types to ElementType categories for filtering genes.
     AMR and STRESS are treated as AMR element type in the underlying AMRFinder output.
     """
-    return ElementType.AMR if analysis_type in (AnalysisType.AMR, AnalysisType.STRESS) else ElementType.VIR
+    return (
+        ElementType.AMR
+        if analysis_type in (AnalysisType.AMR, AnalysisType.STRESS)
+        else ElementType.VIR
+    )
 
 
 def _to_resistance_results(
@@ -240,7 +249,7 @@ def _to_resistance_results(
     phenotypes = {}
     if analysis_type == AnalysisType.AMR:
         resistant = {
-            pheno.name 
+            pheno.name
             for elem in itertools.chain(filtered_genes, variants)
             for pheno in elem.phenotypes
         }
@@ -252,15 +261,12 @@ def _to_resistance_results(
         variants=variants,
     )
 
+
 def _to_virulence_results(genes) -> ElementTypeResult:
     """Build virulence result block."""
 
-    filtered_genes = [
-        gene for gene in genes if gene.element_type == ElementType.VIR
-    ]
-    filtered_genes.sort(
-        key=lambda gene: (gene.gene_symbol, gene.coverage)
-    )
+    filtered_genes = [gene for gene in genes if gene.element_type == ElementType.VIR]
+    filtered_genes.sort(key=lambda gene: (gene.gene_symbol, gene.coverage))
     return ElementTypeResult(phenotypes={}, genes=filtered_genes, variants=[])
 
 
@@ -288,11 +294,13 @@ class AmrFinderParser(BaseParser):
             if analysis_type in want:
                 results[analysis_type] = run_as_envelope(
                     analysis_name=analysis_type,
-                    fn=lambda: _to_resistance_results(genes, variants, analysis_type=analysis_type),
+                    fn=lambda: _to_resistance_results(
+                        genes, variants, analysis_type=analysis_type
+                    ),
                     reason_if_absent=f"{analysis_type} not present",
                     reason_if_empty="No findings",
                     meta=base_meta,
-                    logger=self.logger
+                    logger=self.logger,
                 )
 
         if AnalysisType.VIRULENCE in want:
@@ -302,7 +310,7 @@ class AmrFinderParser(BaseParser):
                 reason_if_absent=f"{analysis_type} not present",
                 reason_if_empty="No findings",
                 meta=base_meta,
-                logger=self.logger
+                logger=self.logger,
             )
 
         return results

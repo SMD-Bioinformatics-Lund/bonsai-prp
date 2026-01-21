@@ -1,25 +1,10 @@
 """Chewbacca specific models."""
 
-from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel
 
 from prp.models.base import RWModel
-
-
-class ChewbbacaErrors(StrEnum):
-    """Chewbbaca error codes."""
-
-    PLOT5 = "PLOT5"
-    PLOT3 = "PLOT3"
-    LOTSC = "LOTSC"
-    NIPH = "NIPH"
-    NIPHEM = "NIPHEM"
-    ALM = "ALM"
-    ASM = "ASM"
-    LNF = "LNF"
-    EXC = "EXC"
-    PAMA = "PAMA"
 
 
 class ResultMlstBase(BaseModel):
@@ -57,9 +42,47 @@ class LineageMixin(BaseModel):
     lineage: str | None
 
 
+class LineageInformation(RWModel):
+    """Base class for storing lineage information typing results"""
+
+    lineage: str | None
+    family: str | None
+    rd: str | None
+    fraction: float | None
+    support: list[dict[str, Any]] | None = None
+
+
 class ResultLineageBase(RWModel):
     """Lineage results"""
 
     lineage_depth: float | None = None
     main_lineage: str
     sublineage: str
+
+
+class TypingResultSccmec(RWModel):
+    """Sccmec results"""
+
+    type: str | None = None
+    subtype: str | None = None
+    mecA: str | None = None
+    targets: list[str] | None = None
+    regions: list[str] | None = None
+    target_schema: str
+    target_schema_version: str
+    region_schema: str
+    region_schema_version: str
+    camlhmp_version: str
+    coverage: list[float] | None = None
+    hits: list[int] | None = None
+    target_comment: str | None = None
+    region_comment: str | None = None
+    comment: str | None = None
+
+
+class TypingResultSpatyper(RWModel):
+    """Spatyper results"""
+
+    sequence_name: str | None
+    repeats: str | None
+    type: str | None

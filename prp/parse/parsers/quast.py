@@ -1,13 +1,14 @@
 """Parse Quast results."""
 
 from typing import Any
-from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.qc import QuastQcResult
-from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
-from prp.parse.registry import register_parser
-from prp.parse.utils import safe_float, safe_int
 
+from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
+from prp.parse.core.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
+from prp.parse.core.registry import register_parser
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.qc import QuastQcResult
+
+from .utils import safe_float, safe_int
 
 QUAST = AnalysisSoftware.QUAST
 
@@ -50,7 +51,7 @@ def _to_qc_result(row: dict[str, Any]) -> QuastQcResult:
     )
 
 
-def _normalize_quast_row(row: DelimiterRow) -> DelimiterRow: 
+def _normalize_quast_row(row: DelimiterRow) -> DelimiterRow:
     """Wrapps normalize row."""
     return normalize_row(
         row,
@@ -58,6 +59,7 @@ def _normalize_quast_row(row: DelimiterRow) -> DelimiterRow:
         val_fn=lambda v: None if is_nullish(v) else v,
         column_map=COLUMN_MAP,
     )
+
 
 @register_parser(QUAST)
 class QuastParser(SingleAnalysisParser):
@@ -86,9 +88,13 @@ class QuastParser(SingleAnalysisParser):
             self.log_info(f"{self.software} input empty")
             return None
 
-        self.validate_columns(first_raw, required=REQUIRED_COLUMNS, strict=strict_columns)
+        self.validate_columns(
+            first_raw, required=REQUIRED_COLUMNS, strict=strict_columns
+        )
         first = _normalize_quast_row(first_raw)
-        warn_if_extra_rows(rows, self.log_warning, context=f"{self.software} file", max_consume=10)
+        warn_if_extra_rows(
+            rows, self.log_warning, context=f"{self.software} file", max_consume=10
+        )
 
         # build qc result
         return _to_qc_result(first)

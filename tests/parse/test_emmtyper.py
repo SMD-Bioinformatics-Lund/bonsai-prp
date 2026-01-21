@@ -1,9 +1,9 @@
 """Test functions for parsing Emmtyper results."""
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.typing import TypingResultEmm
-from prp.parse.emmtyper import EmmTyperParser
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.models.typing import TypingResultEmm
+from prp.parse.parsers.emmtyper import EmmTyperParser
 
 
 def test_emmtype_parser_results(streptococcus_emmtyper_path):

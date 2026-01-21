@@ -2,6 +2,7 @@
 
 
 from pydantic import BaseModel, Field
+
 from .enums import GambitQcFlag
 
 
@@ -54,3 +55,55 @@ class GambitcoreQcResult(BaseModel):
     species_kmers_mean: int | None = None
     species_kmers_std_dev: int | None = None
     assembly_qc: GambitQcFlag | None = None
+
+
+class NanoPlotSummary(BaseModel):
+    """Summary of NanoPlot results."""
+
+    mean_read_length: float
+    mean_read_quality: float
+    median_read_length: float
+    median_read_quality: float
+    n_reads: float
+    read_length_n50: float
+    stdev_read_length: float
+    total_bases: float
+
+
+class NanoPlotQcCutoff(BaseModel):
+    """Percentage of reads above quality cutoffs."""
+
+    q10: float
+    q15: float
+    q20: float
+    q25: float
+    q30: float
+
+
+class NanoPlotQcResult(BaseModel):
+    """Nanopore sequencing QC metrics from NanoPlot."""
+
+    summary: NanoPlotSummary
+    qc_cutoff: NanoPlotQcCutoff
+    top_quality: list[float] = Field(default_factory=list)
+    top_longest: list[int] = Field(default_factory=list)
+
+
+class ContigCoverage(BaseModel):
+    """Coverage information for a single contig."""
+
+    contig_name: str
+    start_pos: int
+    end_pos: int
+    n_reads: int
+    cov_bases: int
+    coverage: float
+    mean_depth: float
+    mean_base_quality: float
+    mean_map_quality: float
+
+
+class SamtoolsCoverageQcResult(BaseModel):
+    """SAMtools coverage QC result model."""
+
+    contigs: list[ContigCoverage]

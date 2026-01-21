@@ -2,9 +2,13 @@
 
 import pytest
 
-from prp.models.base import AnalysisType, ParserOutput, ResultEnvelope
-from prp.models.phenotype import ElementTypeResult
-from prp.parse.amrfinder import AmrFinderParser
+from prp.parse.models.base import (
+    AnalysisType,
+    ElementTypeResult,
+    ParserOutput,
+    ResultEnvelope,
+)
+from prp.parse.parsers.amrfinder import AmrFinderParser
 
 EXPECTED_RESULT = [
     (

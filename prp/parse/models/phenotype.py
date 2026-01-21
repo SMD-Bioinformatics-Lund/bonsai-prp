@@ -1,6 +1,7 @@
 """AMRfinder specific models."""
 
 from pydantic import Field
+
 from .base import DatabaseReferenceMixin, GeneBase, PhenotypeModelMixin, VariantBase
 from .enums import SequenceStrand
 
@@ -12,9 +13,7 @@ class AmrFinderGene(GeneBase):
     query_start_pos: int | None = Field(
         None, description="Start position on the assembly"
     )
-    query_end_pos: int | None = Field(
-        None, description="End position on the assembly"
-    )
+    query_end_pos: int | None = Field(None, description="End position on the assembly")
     strand: SequenceStrand | None
 
 
@@ -40,3 +39,15 @@ class AmrFinderVariant(VariantBase):
     strand: SequenceStrand | None = None
     coverage: float
     identity: float
+
+
+class TbProfilerVariant(VariantBase):
+    """Container for TbProfiler variant information"""
+
+    variant_effect: str | None = None
+    hgvs_nt_change: str | None = Field(
+        default=None, description="DNA change in HGVS format"
+    )
+    hgvs_aa_change: str | None = Field(
+        default=None, description="Protein change in HGVS format"
+    )

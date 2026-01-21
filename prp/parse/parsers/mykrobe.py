@@ -5,20 +5,30 @@ import re
 from dataclasses import asdict
 from typing import Any, Callable, TypeAlias
 
-from prp.parse.models.enums import AnalysisType, AnalysisSoftware, SoupType, VariantSubType, VariantType, AnnotationType, ElementType
-from prp.parse.models.mykrobe import MykrobeSpeciesPrediction, SRProfile
-from prp.parse.models.base import SoupVersion
-
-from prp.parse.models.phenotype import (
-    ElementTypeResult,
-    MykrobeVariant,
-    PhenotypeInfo,
+from prp.io.delimited import (
+    DelimiterRow,
+    canonical_header,
+    is_nullish,
+    normalize_row,
+    read_delimited,
 )
-from prp.parse.models.typing import ResultLineageBase
 from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
 from prp.parse.core.envelope import run_as_envelope
 from prp.parse.core.registry import register_parser
-from prp.io.delimited import canonical_header, is_nullish, normalize_row, read_delimited, DelimiterRow
+from prp.parse.models.base import SoupVersion
+from prp.parse.models.enums import (
+    AnalysisSoftware,
+    AnalysisType,
+    AnnotationType,
+    ElementType,
+    SoupType,
+    VariantSubType,
+    VariantType,
+)
+from prp.parse.models.mykrobe import MykrobeSpeciesPrediction, SRProfile
+from prp.parse.models.phenotype import ElementTypeResult, MykrobeVariant, PhenotypeInfo
+from prp.parse.models.typing import ResultLineageBase
+
 from .utils import get_nt_change, safe_float, safe_int
 
 LOG = logging.getLogger(__name__)
@@ -256,14 +266,14 @@ def _normalize_mykrobe_row(row: DelimiterRow) -> DelimiterRow:
     )
 
 
-def _parse_amr_result(rows: list[DelimiterRow], *, log_fn: Callable[[Any], None]) -> ElementTypeResult:
+def _parse_amr_result(
+    rows: list[DelimiterRow], *, log_fn: Callable[[Any], None]
+) -> ElementTypeResult:
     """Parse AMR result."""
 
     phenos = _sr_profile(rows)
     variants = _parse_amr_variants(rows, log_warning=log_fn)
-    return ElementTypeResult(
-        phenotypes=asdict(phenos), genes=[], variants=variants
-    )
+    return ElementTypeResult(phenotypes=asdict(phenos), genes=[], variants=variants)
 
 
 @register_parser(MYKROBE)
@@ -294,7 +304,9 @@ class MykrobeParser(BaseParser):
             self.log_info("Mykrobe input is empty")
 
         first_row = _normalize_mykrobe_row(first_row)
-        self.validate_columns(first_row, required=REQUIRED_COLUMNS, strict=strict_columns)
+        self.validate_columns(
+            first_row, required=REQUIRED_COLUMNS, strict=strict_columns
+        )
 
         rows = [first_row] + [_normalize_mykrobe_row(r) for r in rows_iter]
 
@@ -311,7 +323,11 @@ class MykrobeParser(BaseParser):
 
         results: dict[AnalysisType, Any] = {}
 
-        base_meta = {"parser": self.parser_name, "software": self.software, "sample_id": sample_id}
+        base_meta = {
+            "parser": self.parser_name,
+            "software": self.software,
+            "sample_id": sample_id,
+        }
         if AnalysisType.AMR in want:
             at = AnalysisType.AMR
             env = run_as_envelope(
@@ -320,7 +336,7 @@ class MykrobeParser(BaseParser):
                 reason_if_absent=f"{at} not present",
                 reason_if_empty="No findings",
                 meta=base_meta,
-                logger=self.logger
+                logger=self.logger,
             )
             results[at] = env
 
@@ -331,7 +347,7 @@ class MykrobeParser(BaseParser):
                 reason_if_absent=f"{at} not present",
                 reason_if_empty="No findings",
                 meta=base_meta,
-                logger=self.logger
+                logger=self.logger,
             )
             results[AnalysisType.SPECIES] = env
 
@@ -342,7 +358,7 @@ class MykrobeParser(BaseParser):
                 reason_if_absent=f"{at} not present",
                 reason_if_empty="No findings",
                 meta=base_meta,
-                logger=self.logger
+                logger=self.logger,
             )
             results[AnalysisType.LINEAGE] = env
 

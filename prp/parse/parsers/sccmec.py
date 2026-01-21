@@ -3,11 +3,12 @@
 import logging
 
 from prp.io.delimited import DelimiterRow, normalize_nulls, read_delimited
-from prp.models.enums import AnalysisType, AnalysisSoftware
-from prp.models.typing import TypingResultSccmec
-from prp.parse.base import ParserInput, SingleAnalysisParser
-from prp.parse.registry import register_parser
-from prp.parse.utils import safe_float
+from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.registry import register_parser
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.typing import TypingResultSccmec
+
+from .utils import safe_float
 
 LOG = logging.getLogger(__name__)
 

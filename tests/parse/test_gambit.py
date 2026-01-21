@@ -1,10 +1,10 @@
 """Test gambit parsing."""
 
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.qc import GambitcoreQcResult
-from prp.parse.gambit import GambitCoreParser
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.models.qc import GambitcoreQcResult
+from prp.parse.parsers.gambit import GambitCoreParser
 
 
 def test_gambit_parser(ecoli_gambitcore_path):

@@ -5,13 +5,11 @@ from typing import Any
 
 import pandas as pd
 
+from prp.io.delimited import read_delimited
 from prp.parse.core.base import ParserInput, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
-
-from prp.parse.models.enums import AnalysisType, AnalysisSoftware
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.typing import TypingResultEmm
-from prp.io.delimited import read_delimited
-
 
 LOG = logging.getLogger(__name__)
 

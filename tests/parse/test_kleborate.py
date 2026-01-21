@@ -5,18 +5,21 @@ from pathlib import Path
 
 import pytest
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.hamronization import HamronizationEntry
-from prp.models.kleborate import ParsedVariant
-from prp.models.phenotype import (
-    ElementType,
+from prp.parse.models.base import (
     ElementTypeResult,
+    ParserOutput,
     PhenotypeInfo,
-    VariantSubType,
+    ResultEnvelope,
 )
-from prp.parse import kleborate
-from prp.parse.kleborate import _hamr_phenotype, _parse_amr, _parse_variant_str
+from prp.parse.models.enums import AnalysisType, ElementType, VariantSubType
+from prp.parse.models.hamronization import HamronizationEntry
+from prp.parse.models.kleborate import ParsedVariant
+from prp.parse.parsers.kleborate import (
+    KleborateParser,
+    _hamr_phenotype,
+    _parse_amr,
+    _parse_variant_str,
+)
 
 
 def test_convert_hamronization_to_amr_record(hamronization_entry: HamronizationEntry):
@@ -139,7 +142,7 @@ def test_parse_kleborate_output_wo_hamronization(
 
     filename = request.getfixturevalue(fixture_name)
 
-    parser = kleborate.KleborateParser()
+    parser = KleborateParser()
     result = parser.parse(filename)
 
     # test that result is method index
@@ -159,7 +162,7 @@ def test_kleborate_parser_results_w_hamronization(
 ):
     """Test that the KleborateParser produces the expected result and data types."""
 
-    parser = kleborate.KleborateParser()
+    parser = KleborateParser()
     result = parser.parse(
         kp_kleborate_path, hamronization_source=kp_kleborate_hamronization_path
     )

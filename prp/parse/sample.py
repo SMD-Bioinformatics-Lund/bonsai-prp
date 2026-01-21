@@ -1,22 +1,33 @@
 """Parse for input config using parsers from this module."""
 
 import logging
-from typing import Any, Sequence
 import re
+from typing import Any, Sequence
 
 from prp.exceptions import UnsupportedMethod
-from prp.models.enums import AnalysisType, AnalysisSoftware
 from prp.models.config import SampleConfig
-
-from prp.models.phenotype import AMRMethodIndex, PredictionSoftware, StressMethodIndex, VirulenceMethodIndex
+from prp.models.enums import AnalysisSoftware, AnalysisType
+from prp.models.phenotype import (
+    AMRMethodIndex,
+    PredictionSoftware,
+    StressMethodIndex,
+    VirulenceMethodIndex,
+)
 from prp.models.qc import QcSoftware
 from prp.models.sample import SCHEMA_VERSION, MethodIndex, PipelineResult, QcMethodIndex
 from prp.models.species import BrackenSppIndex, MykrobeSppIndex, SppMethodIndex
-from prp.models.typing import SccmecTypingMethodIndex, ShigaTypingMethodIndex, SpatyperTypingMethodIndex, TypingMethod, TypingSoftware
-from prp.models.typing import EmmTypingMethodIndex
-from .registry import run_parser
+from prp.models.typing import (
+    EmmTypingMethodIndex,
+    SccmecTypingMethodIndex,
+    ShigaTypingMethodIndex,
+    SpatyperTypingMethodIndex,
+    TypingMethod,
+    TypingSoftware,
+)
+
 from .igv import parse_igv_info
 from .metadata import parse_run_info
+from .registry import run_parser
 
 LOG = logging.getLogger(__name__)
 
@@ -48,25 +59,27 @@ def _read_qc(smp_cnf) -> Sequence[QcMethodIndex]:
     qc_results = []
     if smp_cnf.quast:
         out = run_parser(
-            software=AnalysisSoftware.QUAST,
-            version="1.0.0",
-            data=smp_cnf.quast
+            software=AnalysisSoftware.QUAST, version="1.0.0", data=smp_cnf.quast
         )
-        qc_results.append(QcMethodIndex(
-            software=AnalysisSoftware.QUAST,
-            result=out.results[AnalysisType.QC].value,
-        ))
+        qc_results.append(
+            QcMethodIndex(
+                software=AnalysisSoftware.QUAST,
+                result=out.results[AnalysisType.QC].value,
+            )
+        )
 
     if smp_cnf.postalnqc:
         out = run_parser(
             software=AnalysisSoftware.POSTALIGNQC,
             version="1.0.0",
-            data=smp_cnf.postalnqc
+            data=smp_cnf.postalnqc,
         )
-        qc_results.append(QcMethodIndex(
-            software=AnalysisSoftware.POSTALIGNQC,
-            result=out.results[AnalysisType.QC].value,
-        ))
+        qc_results.append(
+            QcMethodIndex(
+                software=AnalysisSoftware.POSTALIGNQC,
+                result=out.results[AnalysisType.QC].value,
+            )
+        )
 
     # if smp_cnf.gambitcore:
     #     qc_results.append(parse_gambitcore_results(smp_cnf.gambitcore))
@@ -85,24 +98,21 @@ def _read_spp_prediction(smp_cnf) -> Sequence[SppMethodIndex]:
     spp_results = []
     if smp_cnf.kraken:
         out = run_parser(
-            software=AnalysisSoftware.BRACKEN,
-            version="1.0.0",
-            data=smp_cnf.kraken
+            software=AnalysisSoftware.BRACKEN, version="1.0.0", data=smp_cnf.kraken
         )
-        spp_results.append(BrackenSppIndex(
-            result=out.results["species"].value,
-        ))
+        spp_results.append(
+            BrackenSppIndex(
+                result=out.results["species"].value,
+            )
+        )
 
     if smp_cnf.mykrobe:
         out = run_parser(
             software=PredictionSoftware.MYKROBE.value,
             version="1.0.0",
-            data=smp_cnf.mykrobe
+            data=smp_cnf.mykrobe,
         )
-        spp_results.append(
-            MykrobeSppIndex(
-                result=out.results["species"].value
-        ))
+        spp_results.append(MykrobeSppIndex(result=out.results["species"].value))
     return spp_results
 
 
@@ -119,67 +129,55 @@ def _read_typing(
     typing_result = []
     if smp_cnf.mlst:
         out = run_parser(
-            software=AnalysisSoftware.MLST, 
-            version="1.0.0",
-            data=smp_cnf.mlst
+            software=AnalysisSoftware.MLST, version="1.0.0", data=smp_cnf.mlst
         )
         if out.results["mlst"].status == "parsed":
             typing_result.extend(
                 MethodIndex(
-                    type=TypingMethod.MLST, software=QcSoftware.MLST, result=out.results['mlst'].value
+                    type=TypingMethod.MLST,
+                    software=QcSoftware.MLST,
+                    result=out.results["mlst"].value,
                 )
             )
 
     if smp_cnf.chewbbaca:
         out = run_parser(
-            software=AnalysisSoftware.CHEWBBACA, 
-            version="1.0.0",
-            data=smp_cnf.mlst
+            software=AnalysisSoftware.CHEWBBACA, version="1.0.0", data=smp_cnf.mlst
         )
         if out.results["cgmlst"].status == "parsed":
             typing_result.extend(
                 MethodIndex(
-                    type=TypingMethod.CGMLST, software=QcSoftware.CHEWBBACA, result=out.results['cgmlst'].value
+                    type=TypingMethod.CGMLST,
+                    software=QcSoftware.CHEWBBACA,
+                    result=out.results["cgmlst"].value,
                 )
             )
 
     if smp_cnf.emmtyper:
         out = run_parser(
-            software=AnalysisSoftware.EMMTYPER, 
-            version="1.0.0",
-            data=smp_cnf.emmtyper
+            software=AnalysisSoftware.EMMTYPER, version="1.0.0", data=smp_cnf.emmtyper
         )
-        typing_result.extend(EmmTypingMethodIndex(
-            result=out.results["emm"].value
-        ))
+        typing_result.extend(EmmTypingMethodIndex(result=out.results["emm"].value))
 
     if smp_cnf.shigapass:
         out = run_parser(
-            software=AnalysisSoftware.SHIGAPASS,
-            version="1.0.0",
-            data=smp_cnf.shigapass
+            software=AnalysisSoftware.SHIGAPASS, version="1.0.0", data=smp_cnf.shigapass
         )
         typing_result.append(
-            ShigaTypingMethodIndex(
-                result=out.results[AnalysisType.SHIGATYPE].value
-            ))
+            ShigaTypingMethodIndex(result=out.results[AnalysisType.SHIGATYPE].value)
+        )
 
     if smp_cnf.spatyper:
         out = run_parser(
-            software=AnalysisSoftware.SPATYPER,
-            version="1.0.0",
-            data=smp_cnf.spatyper
+            software=AnalysisSoftware.SPATYPER, version="1.0.0", data=smp_cnf.spatyper
         )
         typing_result.append(
-            SpatyperTypingMethodIndex(
-                result=out.results[AnalysisType.SPATYPE].value
-            ))
+            SpatyperTypingMethodIndex(result=out.results[AnalysisType.SPATYPE].value)
+        )
 
     if smp_cnf.sccmec:
         out = run_parser(
-            software=AnalysisSoftware.SCCMECTYPER,
-            version="1.0.0",
-            data=smp_cnf.sccmec
+            software=AnalysisSoftware.SCCMECTYPER, version="1.0.0", data=smp_cnf.sccmec
         )
         first = out.results[AnalysisType.SCCMEC].value[0]
         typing_result.append(SccmecTypingMethodIndex(result=first))
@@ -190,13 +188,15 @@ def _read_typing(
             software=AnalysisSoftware.VIRULENCEFINDER,
             version="1.0.0",
             data=smp_cnf.virulencefinder,
-            want=AnalysisType.STX
+            want=AnalysisType.STX,
         )
-        typing_result.append(MethodIndex(
-            software=TypingSoftware.VIRULENCEFINDER,
-            type=AnalysisType.STX,
-            result=out.results[AnalysisType.STX].value
-        ))
+        typing_result.append(
+            MethodIndex(
+                software=TypingSoftware.VIRULENCEFINDER,
+                type=AnalysisType.STX,
+                result=out.results[AnalysisType.STX].value,
+            )
+        )
 
     if smp_cnf.serotypefinder:
         out = run_parser(
@@ -205,22 +205,24 @@ def _read_typing(
             data=smp_cnf.serotypefinder,
         )
         for atype in [AnalysisType.O_TYPE, AnalysisType.H_TYPE]:
-            typing_result.extend(MethodIndex(
-                software=AnalysisSoftware.SEROTYPEFINDER,
-                type=atype,
-                result=out.results[atype].value
-            ))
+            typing_result.extend(
+                MethodIndex(
+                    software=AnalysisSoftware.SEROTYPEFINDER,
+                    type=atype,
+                    result=out.results[atype].value,
+                )
+            )
 
     if smp_cnf.mykrobe:
         out = run_parser(
             software=PredictionSoftware.MYKROBE.value,
             version="1.0.0",
-            data=smp_cnf.mykrobe
+            data=smp_cnf.mykrobe,
         )
         typing_result.append(
             MethodIndex(
                 software=PredictionSoftware.MYKROBE.value,
-                result=out.results["lineage"].value
+                result=out.results["lineage"].value,
             )
         )
 
@@ -228,12 +230,12 @@ def _read_typing(
         out = run_parser(
             software=PredictionSoftware.TBPROFILER.value,
             version="1.0.0",
-            data=smp_cnf.tbprofiler
+            data=smp_cnf.tbprofiler,
         )
         typing_result.append(
             MethodIndex(
                 software=PredictionSoftware.TBPROFILER.value,
-                result=out.results["lineage"].value
+                result=out.results["lineage"].value,
             )
         )
 
@@ -244,17 +246,21 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
     """Read resistance predictions."""
     resistance = []
     if smp_cnf.resfinder:
-        out = run_parser(software=AnalysisSoftware.RESFINDER, version="1.0.0", data=smp_cnf.resfinder)
+        out = run_parser(
+            software=AnalysisSoftware.RESFINDER, version="1.0.0", data=smp_cnf.resfinder
+        )
         target = AnalysisType.AMR
-        resistance.append(AMRMethodIndex(
-            software=AnalysisSoftware.RESFINDER,
-            result=out.results[target].value
-        ))
+        resistance.append(
+            AMRMethodIndex(
+                software=AnalysisSoftware.RESFINDER, result=out.results[target].value
+            )
+        )
         target = AnalysisType.STRESS
-        resistance.append(StressMethodIndex(
-            software=AnalysisSoftware.RESFINDER,
-            result=out.results[target].value
-        ))
+        resistance.append(
+            StressMethodIndex(
+                software=AnalysisSoftware.RESFINDER, result=out.results[target].value
+            )
+        )
 
     if smp_cnf.amrfinder:
         out = run_parser(software="amrfinder", version="1.0.0", data=smp_cnf.amrfinder)
@@ -265,7 +271,7 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
             resistance.append(
                 AMRMethodIndex(
                     software=PredictionSoftware.AMRFINDER,
-                    result=out.results[AnalysisType.AMR].value
+                    result=out.results[AnalysisType.AMR].value,
                 )
             )
 
@@ -275,7 +281,7 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
             resistance.append(
                 StressMethodIndex(
                     software=PredictionSoftware.AMRFINDER,
-                    result=out.results[AnalysisType.STRESS].value
+                    result=out.results[AnalysisType.STRESS].value,
                 )
             )
 
@@ -283,12 +289,12 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
         out = run_parser(
             software=PredictionSoftware.MYKROBE.value,
             version="1.0.0",
-            data=smp_cnf.mykrobe
+            data=smp_cnf.mykrobe,
         )
         resistance.append(
             AMRMethodIndex(
                 software=PredictionSoftware.MYKROBE.value,
-                result=out.results[AnalysisType.AMR].value
+                result=out.results[AnalysisType.AMR].value,
             )
         )
 
@@ -296,12 +302,12 @@ def _read_resistance(smp_cnf) -> Sequence[AMRMethodIndex]:
         out = run_parser(
             software=PredictionSoftware.TBPROFILER.value,
             version="1.0.0",
-            data=smp_cnf.tbprofiler
+            data=smp_cnf.tbprofiler,
         )
         resistance.append(
             AMRMethodIndex(
                 software=PredictionSoftware.TBPROFILER.value,
-                result=out.results[AnalysisType.AMR].value
+                result=out.results[AnalysisType.AMR].value,
             )
         )
     return resistance
@@ -312,13 +318,15 @@ def _read_virulence(smp_cnf) -> Sequence[VirulenceMethodIndex]:
     virulence = []
     if smp_cnf.amrfinder:
         target = AnalysisType.VIRULENCE
-        out = run_parser(software="amrfinder", version="1.0.0", data=smp_cnf.amrfinder, want=target)
+        out = run_parser(
+            software="amrfinder", version="1.0.0", data=smp_cnf.amrfinder, want=target
+        )
         if target in out.results:
             # cast as method index and append to resistance results
             virulence.append(
                 VirulenceMethodIndex(
                     software=PredictionSoftware.AMRFINDER,
-                    result=out.results[AnalysisType.VIRULENCE].value
+                    result=out.results[AnalysisType.VIRULENCE].value,
                 )
             )
 
@@ -328,12 +336,14 @@ def _read_virulence(smp_cnf) -> Sequence[VirulenceMethodIndex]:
             software=AnalysisSoftware.VIRULENCEFINDER,
             version="1.0.0",
             data=smp_cnf.virulencefinder,
-            want=AnalysisType.VIRULENCE
+            want=AnalysisType.VIRULENCE,
         )
-        virulence.append(VirulenceMethodIndex(
-            software=TypingSoftware.VIRULENCEFINDER,
-            result=out.results[AnalysisType.VIRULENCE].value
-        ))
+        virulence.append(
+            VirulenceMethodIndex(
+                software=TypingSoftware.VIRULENCEFINDER,
+                result=out.results[AnalysisType.VIRULENCE].value,
+            )
+        )
     return virulence
 
 

@@ -1,20 +1,25 @@
 """Base parser functionality."""
 
 from abc import ABC, abstractmethod
-from pathlib import Path
+from collections.abc import Callable, Iterator
 from logging import Logger, getLogger
-from typing import Any, Mapping, Type, IO, TypeAlias, TypeVar
+from pathlib import Path
+from typing import IO, Any, Mapping, Type, TypeAlias, TypeVar
+
 from prp.io.delimited import validate_fields
-from collections.abc import Iterator, Callable
-
+from prp.parse.core.envelope import (
+    default_empty_predicate,
+    envelope_absent,
+    envelope_skipped,
+    run_as_envelope,
+)
 from prp.parse.models.base import ParserOutput, ResultEnvelope
-from prp.parse.models.enums import ResultStatus, AnalysisType
-from prp.parse.core.envelope import default_empty_predicate, envelope_absent, envelope_skipped, run_as_envelope
-
+from prp.parse.models.enums import AnalysisType, ResultStatus
 
 ParserInput: TypeAlias = IO[bytes] | IO[str] | str | Path
 ParseImplOut: TypeAlias = Mapping[AnalysisType, Any]
 T = TypeVar("T")
+
 
 class BaseParser(ABC):
     """Parser class structure."""
@@ -75,9 +80,11 @@ class BaseParser(ABC):
         out.results.update(results)
         return out
 
-    def _normalize_want(self, want: set[AnalysisType] | AnalysisType | None) -> set[AnalysisType]:
+    def _normalize_want(
+        self, want: set[AnalysisType] | AnalysisType | None
+    ) -> set[AnalysisType]:
         want = want or set(self.produces)
-        return { want } if isinstance(want, AnalysisType) else want
+        return {want} if isinstance(want, AnalysisType) else want
 
     def _new_output(self) -> ParserOutput:
         """Create a new output model."""
@@ -89,7 +96,7 @@ class BaseParser(ABC):
             schema_version=getattr(self, "schema_version", 1),
             results={},
         )
-    
+
     def validate_columns(
         self,
         row: Mapping[str, object],
@@ -123,7 +130,7 @@ class BaseParser(ABC):
         **kwargs: Any,
     ) -> ParseImplOut:
         """Return results keyed by analysis_type."""
-    
+
 
 class SingleAnalysisParser(BaseParser):
     """Abtracted parser class for softwares that produces exactly one AnalysisType"""
@@ -131,13 +138,15 @@ class SingleAnalysisParser(BaseParser):
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, "produces") or len(cls.produces) != 1:
-            raise TypeError(f"{cls.__name__}.produces must contain exactly one AnalysisType")
+            raise TypeError(
+                f"{cls.__name__}.produces must contain exactly one AnalysisType"
+            )
 
     @property
     def analysis_type(self) -> AnalysisType:
         """Get analysis type from what the parser produce."""
         return next(iter(self.produces))
-    
+
     def empty_predicate(self) -> Callable[[Any], bool]:
         """Allow subclasses to override how "empty" is determined."""
         return default_empty_predicate
@@ -145,8 +154,10 @@ class SingleAnalysisParser(BaseParser):
     def absent_predicate(self) -> Callable[[Any], bool] | None:
         """Optional hook if a subclass prefers a value-based absent detection instead of raising AbsentResultError."""
         return None
-    
-    def _parse_impl(self, source: ParserInput, *, want: set[AnalysisType], **kwargs: Any) -> Mapping[str, Any]:
+
+    def _parse_impl(
+        self, source: ParserInput, *, want: set[AnalysisType], **kwargs: Any
+    ) -> Mapping[str, Any]:
         env = run_as_envelope(
             analysis_name=self.analysis_type,
             fn=lambda: self._parse_one(source, **kwargs),
@@ -155,7 +166,7 @@ class SingleAnalysisParser(BaseParser):
             reason_if_absent=f"{self.analysis_type} not present",
             reason_if_empty="No findings",
             meta={"parser": self.parser_name, "software": self.software},
-            logger=self.logger
+            logger=self.logger,
         )
         return {self.analysis_type: env}
 
@@ -194,7 +205,9 @@ def warn_if_extra_rows(
 ParserClass = Type[BaseParser]
 
 
-def parse_child(parser: BaseParser, source: ParserInput, atype: AnalysisType, *, strict: bool) -> Any:
+def parse_child(
+    parser: BaseParser, source: ParserInput, atype: AnalysisType, *, strict: bool
+) -> Any:
     """Utility to call another parser inside a parser."""
 
     child = parser.parse(source, want={atype}, strict=strict)

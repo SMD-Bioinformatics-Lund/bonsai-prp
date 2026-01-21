@@ -2,13 +2,13 @@
 
 from typing import Any
 
-from prp.parse.exceptions import ParserError
-from prp.parse.models.enums import AnalysisType, AnalysisSoftware, TaxLevel
-from prp.parse.models.bracken import BrackenSpeciesPrediction
 from prp.io.delimited import read_delimited
-
 from prp.parse.core.base import ParserInput, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
+from prp.parse.exceptions import ParserError
+from prp.parse.models.bracken import BrackenSpeciesPrediction
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType, TaxLevel
+
 from .utils import safe_float, safe_int
 
 BRACKEN = AnalysisSoftware.BRACKEN
@@ -70,7 +70,9 @@ class BrackenParser(SingleAnalysisParser):
             return {AnalysisType.SPECIES: []}
 
         # Validate the columns in the first row
-        self.validate_columns(first_row, required=REQUIRED_COLUMNS, strict=strict_columns)
+        self.validate_columns(
+            first_row, required=REQUIRED_COLUMNS, strict=strict_columns
+        )
 
         results: list[BrackenSpeciesPrediction] = []
         # append first row

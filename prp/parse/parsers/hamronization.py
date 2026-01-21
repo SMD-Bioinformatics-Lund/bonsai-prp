@@ -3,27 +3,22 @@
 Kleborate implementation: https://kleborate.readthedocs.io/en/stable/kpsc_modules.html#hamronization-report-for-kleborate
 """
 
-from itertools import chain
 import logging
+from itertools import chain
 from typing import Any, Literal, TypeAlias
 
-from prp.io.delimited import (
-    DelimiterRow,
-    is_nullish,
-    normalize_row,
-    read_delimited,
-)
+from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
+from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.registry import register_parser
+from prp.parse.models.base import SoupVersion
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType, SoupType
 from prp.parse.models.hamronization import (
     BaseSequenceRecord,
     HamronizationEntry,
     InputSequence,
     ReferenceSequence,
 )
-from prp.parse.models.enums import SoupType, AnalysisSoftware, AnalysisType
-from prp.parse.models.base import SoupVersion
 
-from prp.parse.core.base import ParserInput, SingleAnalysisParser
-from prp.parse.core.registry import register_parser
 from .utils import safe_float, safe_int, safe_percent, safe_strand
 
 LOG = logging.getLogger(__name__)

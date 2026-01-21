@@ -1,41 +1,38 @@
 """Functions for parsing virulencefinder result."""
 
-import json
 import logging
 from typing import Any
 
-from prp.exceptions import InvalidDataFormat
 from prp.io.json import read_json, require_mapping
-from prp.models.phenotype import ElementType, ElementVirulenceSubtype
-from prp.models.phenotype import (
-    VirulenceElementTypeResult,
-    VirulenceGene,
+from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.envelope import run_as_envelope
+from prp.parse.core.registry import register_parser
+from prp.parse.exceptions import InvalidDataFormat
+from prp.parse.models.base import ElementTypeResult, GeneWithReference
+from prp.parse.models.enums import (
+    AnalysisSoftware,
+    AnalysisType,
+    ElementType,
+    ElementVirulenceSubtype,
 )
-from prp.models.typing import TypingResultGeneAllele
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.parse.base import BaseParser, ParseImplOut, ParserInput
-from prp.parse.envelope import run_as_envelope
-from prp.parse.registry import register_parser
 
 LOG = logging.getLogger(__name__)
 
 VIRFINDER = AnalysisSoftware.VIRULENCEFINDER
 
-REQUIRED_FIELDS = {
-    "databases", "seq_regions", "software_executions"
-}
+REQUIRED_FIELDS = {"databases", "seq_regions", "software_executions"}
 
 
 def parse_vir_gene(
     info: dict[str, Any],
     function: str,
     subtype: ElementVirulenceSubtype = ElementVirulenceSubtype.VIR,
-) -> VirulenceGene:
+) -> GeneWithReference:
     """Parse virulence gene prediction results."""
     accnr = info.get("ref_acc", None)
     if accnr == "NA":
         accnr = None
-    return VirulenceGene(
+    return GeneWithReference(
         # info
         gene_symbol=info["name"],
         accession=accnr,
@@ -61,7 +58,8 @@ def pick_best_region(regions: list[dict[str, Any]]) -> dict[str, Any] | None:
         return None
     return max(regions, key=lambda region: (region["coverage"], region["identity"]))
 
-def parse_stx_typing(pred: dict[str, Any]) -> TypingResultGeneAllele | None:
+
+def parse_stx_typing(pred: dict[str, Any]) -> GeneWithReference | None:
     """Parse STX typing from virulencefinder's output."""
 
     phenotypes = pred.get("phenotypes", {}) or {}
@@ -71,7 +69,7 @@ def parse_stx_typing(pred: dict[str, Any]) -> TypingResultGeneAllele | None:
     if not stx_keys:
         return None
 
-    best_gene: TypingResultGeneAllele | None = None
+    best_gene: GeneWithReference | None = None
     best_score: tuple[float, float] = (0.0, 0.0)
 
     for stx_key in stx_keys:
@@ -87,15 +85,15 @@ def parse_stx_typing(pred: dict[str, Any]) -> TypingResultGeneAllele | None:
         score = (float(gene.identity or 0.0), float(gene.coverage or 0.0))
         if score > best_score:
             best_score = score
-            best_gene = TypingResultGeneAllele(**gene.model_dump())
+            best_gene = GeneWithReference(**gene.model_dump())
 
     return best_gene
 
 
-def parse_virulence_block(pred: dict[str, Any]) -> VirulenceElementTypeResult:
+def parse_virulence_block(pred: dict[str, Any]) -> ElementTypeResult:
     """Parse virulencefinder virulence prediction results."""
 
-    vir_genes: list[VirulenceGene] = []
+    vir_genes: list[GeneWithReference] = []
     phenotypes = pred.get("phenotypes", {}) or {}
     seq_regions = pred.get("seq_regions", {}) or {}
 
@@ -117,9 +115,14 @@ def parse_virulence_block(pred: dict[str, Any]) -> VirulenceElementTypeResult:
             vir_genes.append(parse_vir_gene(info, function=function, subtype=subtype))
 
     # stable sort, handle None safely if coverage can be None
-    vir_genes.sort(key=lambda g: (g.gene_symbol or "", g.coverage if g.coverage is not None else -1.0))
+    vir_genes.sort(
+        key=lambda g: (
+            g.gene_symbol or "",
+            g.coverage if g.coverage is not None else -1.0,
+        )
+    )
 
-    return VirulenceElementTypeResult(genes=vir_genes, variants=[], phenotypes={})
+    return ElementTypeResult(genes=vir_genes, variants=[], phenotypes={})
 
 
 @register_parser(VIRFINDER)
@@ -153,7 +156,9 @@ class VirulenceFinderParser(BaseParser):
                 raise
             return {}
         except InvalidDataFormat as exc:
-            self.log_error("Failed to read/validate VirulenceFinder JSON", error=str(exc))
+            self.log_error(
+                "Failed to read/validate VirulenceFinder JSON", error=str(exc)
+            )
             if strict:
                 raise
             return {}
@@ -169,7 +174,7 @@ class VirulenceFinderParser(BaseParser):
                 reason_if_absent="No virulence determinants in file.",
                 reason_if_empty="No findings",
                 meta=base_meta,
-                logger=self.logger
+                logger=self.logger,
             )
 
         if AnalysisType.STX in want:
@@ -179,6 +184,6 @@ class VirulenceFinderParser(BaseParser):
                 reason_if_absent="No STX gene identified.",
                 reason_if_empty="No findings",
                 meta=base_meta,
-                logger=self.logger
+                logger=self.logger,
             )
         return out

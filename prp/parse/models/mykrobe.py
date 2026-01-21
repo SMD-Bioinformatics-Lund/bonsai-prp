@@ -1,7 +1,9 @@
 """Mykrobe specific data models."""
 
 from dataclasses import dataclass
+
 from pydantic import Field
+
 from .base import BaseSpeciesPrediction
 
 

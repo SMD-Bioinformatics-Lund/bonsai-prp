@@ -2,19 +2,20 @@
 
 
 from typing import Any
-from prp.parse.exceptions import AbsentResultError
+
 from prp.io.delimited import is_nullish
+from prp.io.json import read_json
+from prp.parse.core.base import SingleAnalysisParser
+from prp.parse.core.registry import register_parser
+from prp.parse.exceptions import AbsentResultError
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.typing import TypingResultMlst
-from prp.parse.core.base import SingleAnalysisParser
-from prp.io.json import read_json
-from prp.parse.core.registry import register_parser
+
 from .utils import safe_int
 
 MLST = AnalysisSoftware.MLST
-REQUIRED_FIELDS = {
-    "alleles", "scheme", "sequence_type"
-}
+REQUIRED_FIELDS = {"alleles", "scheme", "sequence_type"}
+
 
 def _process_allele_call(allele: str) -> str | list[str] | None:
     if allele.isdigit():
@@ -41,8 +42,10 @@ def _to_typing_result(data: dict[str, Any]) -> TypingResultMlst:
     if raw_alleles is None:
         raise AbsentResultError("No MLST typing result in file.")
 
-    alleles = {gene: _process_allele_call(allele) for gene, allele in raw_alleles.items()}
-    
+    alleles = {
+        gene: _process_allele_call(allele) for gene, allele in raw_alleles.items()
+    }
+
     return TypingResultMlst(scheme=data["scheme"], sequence_type=st, alleles=alleles)
 
 
@@ -50,7 +53,7 @@ def _validate_result(data: Any) -> bool:
     """Validate MLST.py results."""
     if not isinstance(data, (list, tuple)):
         return False
-    
+
     if len(data) != 1:
         return False
     return True

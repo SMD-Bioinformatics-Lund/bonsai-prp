@@ -1,13 +1,20 @@
 """Parse chewbacca cgMLST result."""
 
 from typing import Any, Mapping
-from prp.parse.models.enums import AnalysisSoftware, AnalysisType
-from prp.parse.models.typing import ChewbbacaErrors, TypingResultCgMlst
+
+from prp.io.delimited import (
+    DelimiterRow,
+    canonical_header,
+    is_nullish,
+    normalize_row,
+    read_delimited,
+)
 from prp.parse.core.base import SingleAnalysisParser, warn_if_extra_rows
 from prp.parse.core.registry import register_parser
-from prp.io.delimited import DelimiterRow, canonical_header, is_nullish, normalize_row, read_delimited
-from .utils import safe_int
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.typing import ChewbbacaErrors, TypingResultCgMlst
 
+from .utils import safe_int
 
 CHEWBBACA = AnalysisSoftware.CHEWBBACA
 
@@ -29,18 +36,21 @@ ALT_ALLELE_CALLS = [
 ]
 
 
-def _normalize_row(row: DelimiterRow) -> DelimiterRow: 
+def _normalize_row(row: DelimiterRow) -> DelimiterRow:
     """Wrapps normalize row."""
     return normalize_row(
         row,
-        key_fn=lambda r: canonical_header(r).lstrip(','),
+        key_fn=lambda r: canonical_header(r).lstrip(","),
         val_fn=lambda v: None if is_nullish(v) else v,
     )
 
 
 def replace_cgmlst_errors(
-    allele: str, *, include_novel_alleles: bool = True, correct_alleles: bool = False,
-    log_warn: Any | None = None
+    allele: str,
+    *,
+    include_novel_alleles: bool = True,
+    correct_alleles: bool = False,
+    log_warn: Any | None = None,
 ) -> int | str | None:
     """Replace errors and novel allele calls with null values."""
     errors = [err.value for err in ChewbbacaErrors]
@@ -80,7 +90,9 @@ def replace_cgmlst_errors(
     return allele
 
 
-def _to_typing_result(row: Mapping[str, Any], *, strict: bool, log_warn: Any | None = None) -> TypingResultCgMlst:
+def _to_typing_result(
+    row: Mapping[str, Any], *, strict: bool, log_warn: Any | None = None
+) -> TypingResultCgMlst:
     """Cast result to TypingResultShiga."""
 
     # remove file column
@@ -132,7 +144,9 @@ class ChewbbacaParser(SingleAnalysisParser):
 
         # Normalize keys
         first = _normalize_row(first_raw)
-        warn_if_extra_rows(rows, self.log_warning, context=f"{self.software} file", max_consume=11)
+        warn_if_extra_rows(
+            rows, self.log_warning, context=f"{self.software} file", max_consume=11
+        )
 
         # to envelope
         return _to_typing_result(first, strict=strict)

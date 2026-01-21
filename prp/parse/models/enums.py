@@ -66,6 +66,7 @@ class ResultStatus(StrEnum):
     EMPTY - Assay exists but contains no findings
     ABSENT - Assay doesnt exist in the input
     """
+
     PARSED = "parsed"
     SKIPPED = "skipped"
     EMPTY = "empty"
@@ -180,3 +181,18 @@ class SoupType(StrEnum):
 
     DB = "database"
     SW = "software"
+
+
+class ChewbbacaErrors(StrEnum):
+    """Chewbbaca error codes."""
+
+    PLOT5 = "PLOT5"
+    PLOT3 = "PLOT3"
+    LOTSC = "LOTSC"
+    NIPH = "NIPH"
+    NIPHEM = "NIPHEM"
+    ALM = "ALM"
+    ASM = "ASM"
+    LNF = "LNF"
+    EXC = "EXC"
+    PAMA = "PAMA"

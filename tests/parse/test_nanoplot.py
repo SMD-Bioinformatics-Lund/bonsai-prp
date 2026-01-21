@@ -1,9 +1,9 @@
 """Test functions for parsing NanoPlot results."""
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.qc import NanoPlotQcResult
-from prp.parse.nanoplot import NanoplotParser
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.models.qc import NanoPlotQcResult
+from prp.parse.parsers.nanoplot import NanoplotParser
 
 
 def test_parse_nanoplot_results(saureus_nanoplot_path):

@@ -2,13 +2,14 @@
 
 from itertools import chain
 from typing import Any
-from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.qc import ContigCoverage, SamtoolsCoverageQcResult
-from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
-from prp.parse.registry import register_parser
-from prp.parse.utils import safe_float, safe_int
 
+from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
+from prp.parse.core.base import ParserInput, SingleAnalysisParser
+from prp.parse.core.registry import register_parser
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.qc import ContigCoverage, SamtoolsCoverageQcResult
+
+from .utils import safe_float, safe_int
 
 SAMTOOLS = AnalysisSoftware.SAMTOOLS
 
@@ -17,11 +18,11 @@ COLUMN_MAP = {
     "startpos": "start_pos",
     "endpos": "end_pos",
     "numreads": "n_reads",
-    "covbases": "cov_bases",	
+    "covbases": "cov_bases",
     "coverage": "coverage",
     "meandepth": "mean_depth",
     "meanbaseq": "mean_base_quality",
-    "meanmapq": "mean_map_quality"
+    "meanmapq": "mean_map_quality",
 }
 
 
@@ -80,9 +81,7 @@ class SamtoolsCovParser(SingleAnalysisParser):
             return None
 
         required_cols = set(COLUMN_MAP)
-        self.validate_columns(
-            first_raw, required=required_cols, strict=strict
-        )
+        self.validate_columns(first_raw, required=required_cols, strict=strict)
 
         contigs: list[ContigCoverage] = []
         for raw_row in chain([first_raw], rows_iter):

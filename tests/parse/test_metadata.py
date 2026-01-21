@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml
 
 from prp.models.config import SampleConfig
-from prp.parse.metadata import parse_date_from_run_id, process_custom_metadata
+from prp.pipeline.metadata import parse_date_from_run_id, process_custom_metadata
 
 
 def test_parse_sequence_date_from_run_id():

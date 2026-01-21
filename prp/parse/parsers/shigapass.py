@@ -4,12 +4,19 @@ import logging
 import re
 from typing import Any, Mapping
 
-from prp.io.delimited import DelimiterRow, canonical_header, normalize_row, read_delimited, validate_fields, is_nullish
+from prp.io.delimited import (
+    DelimiterRow,
+    canonical_header,
+    is_nullish,
+    normalize_row,
+    read_delimited,
+    validate_fields,
+)
 from prp.models.enums import AnalysisSoftware, AnalysisType
 from prp.models.typing import TypingResultShiga
 from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
-from prp.parse.registry import register_parser
 from prp.parse.parsers.utils import safe_float, safe_percent
+from prp.parse.registry import register_parser
 
 LOG = logging.getLogger(__name__)
 
@@ -44,11 +51,12 @@ REQUIRED_COLUMNS: set[str] = {
     "Comments",
 }
 
-def _normalize_shigapass_row(row: DelimiterRow) -> DelimiterRow: 
+
+def _normalize_shigapass_row(row: DelimiterRow) -> DelimiterRow:
     """Wrapps normalize row."""
     return normalize_row(
         row,
-        key_fn=lambda r: canonical_header(r).lstrip(','),
+        key_fn=lambda r: canonical_header(r).lstrip(","),
         val_fn=lambda v: None if is_nullish(v) else v,
         column_map=COLUMN_MAP,
     )
@@ -89,6 +97,7 @@ def _to_typing_result(row: Mapping[str, Any], *, strict: bool) -> TypingResultSh
         comments=row.get("comments"),
     )
 
+
 @register_parser(SHIGAPASS)
 class ShigapassParser(SingleAnalysisParser):
     """Parser for ShigaType results."""
@@ -118,11 +127,15 @@ class ShigapassParser(SingleAnalysisParser):
             self.log_info("Shigapass input empty")
             return None
 
-        self.validate_columns(first_raw, required=REQUIRED_COLUMNS, strict=strict_columns)
+        self.validate_columns(
+            first_raw, required=REQUIRED_COLUMNS, strict=strict_columns
+        )
 
         # Normalize keys
         first = _normalize_shigapass_row(first_raw)
-        warn_if_extra_rows(rows, self.log_warning, context=f"{self.software} file", max_consume=10)
+        warn_if_extra_rows(
+            rows, self.log_warning, context=f"{self.software} file", max_consume=10
+        )
 
         # Build typing result
         shiga = _to_typing_result(first, strict=strict)

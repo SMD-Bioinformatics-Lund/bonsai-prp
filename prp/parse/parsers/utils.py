@@ -5,9 +5,12 @@ from datetime import datetime
 from typing import Any
 
 from prp.io.delimited import is_nullish
-from prp.models.phenotype import ElementTypeResult, VariantSubType, VariantType
-from prp.models.phenotype import SequenceStrand
-
+from prp.models.phenotype import (
+    ElementTypeResult,
+    SequenceStrand,
+    VariantSubType,
+    VariantType,
+)
 
 LOG = logging.getLogger(__name__)
 

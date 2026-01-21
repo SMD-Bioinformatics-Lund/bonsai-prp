@@ -1,17 +1,31 @@
 """Base data models."""
 
 from typing import Any, Self
-from prp.models.enums import AnalysisType
+
 from pydantic import BaseModel, Field, model_validator
 
 from prp.models.base import RWModel
-from .enums import AnnotationType, ElementAmrSubtype, ElementSerotypeSubtype, ElementStressSubtype, ElementType, ElementVirulenceSubtype, ResultStatus, SoupType, VariantSubType, VariantType
+from prp.models.enums import AnalysisType
+
+from .enums import (
+    AnnotationType,
+    ElementAmrSubtype,
+    ElementSerotypeSubtype,
+    ElementStressSubtype,
+    ElementType,
+    ElementVirulenceSubtype,
+    ResultStatus,
+    SoupType,
+    VariantSubType,
+    VariantType,
+)
+
 
 class ResultEnvelope(BaseModel):
     """Describe if a analysis result was successfully generated.
 
     status describe how a result was generated.
-    
+
     PARSED - Assay exists and was parsed
     SKIPPED - Assay exists but user didnt request it
     EMPTY - Assay exists but contains no findings
@@ -50,7 +64,9 @@ class PhenotypeInfo(RWModel):
     annotation_type: AnnotationType = Field(..., description="Annotation type")
     annotation_author: str | None = Field(None, description="Annotation author")
     # what information substansiate the annotation
-    reference: list[str] = Field(default_factory=list, description="References supporting trait")
+    reference: list[str] = Field(
+        default_factory=list, description="References supporting trait"
+    )
     note: str | None = Field(None, description="Note, can be used for confidence score")
     source: str | None = Field(None, description="Source of variant")
 
@@ -68,9 +84,7 @@ class GeneBase(RWModel):
     # basic info
     gene_symbol: str | None = None
     accession: str | None = None
-    sequence_name: str | None = Field(
-        None, description="Reference sequence name"
-    )
+    sequence_name: str | None = Field(None, description="Reference sequence name")
     element_type: ElementType = Field(
         description="The predominant function of the gene."
     )
@@ -81,9 +95,7 @@ class GeneBase(RWModel):
         | ElementSerotypeSubtype
     ) = Field(description="Further functional categorization of the genes.")
     # position
-    ref_start_pos: int | None = Field(
-        None, description="Alignment start in reference"
-    )
+    ref_start_pos: int | None = Field(None, description="Alignment start in reference")
     ref_end_pos: int | None = Field(None, description="Alignment end in reference")
     ref_gene_length: int | None = Field(
         None,
@@ -92,15 +104,16 @@ class GeneBase(RWModel):
 
     # prediction
     method: str | None = Field(None, description="Method used to predict gene")
-    identity: float | None = Field(
-        None, description="Identity to reference sequence"
-    )
-    coverage: float | None = Field(
-        None, description="Ratio reference sequence covered"
-    )
+    identity: float | None = Field(None, description="Identity to reference sequence")
+    coverage: float | None = Field(None, description="Ratio reference sequence covered")
     depth: float | None = Field(
         None, description="Amount of sequence data supporting the gene."
     )
+
+
+class GeneWithReference(GeneBase, DatabaseReferenceMixin):
+    """Container for virulence gene information"""
+
 
 class PhenotypeModelMixin(BaseModel):
     """Mix in phenotype field into data model."""

@@ -4,27 +4,27 @@ import logging
 from itertools import chain
 from typing import Any
 
-from prp.exceptions import InvalidDataFormat
 from prp.io.json import read_json, require_mapping
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.phenotype import (
+from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
+from prp.parse.core.envelope import run_as_envelope
+from prp.parse.core.registry import register_parser
+from prp.parse.exceptions import InvalidDataFormat
+from prp.parse.models.base import (
+    ElementTypeResult,
+    GeneBase,
+    PhenotypeInfo,
+    VariantBase,
+)
+from prp.parse.models.enums import (
+    AnalysisSoftware,
+    AnalysisType,
     AnnotationType,
     ElementAmrSubtype,
     ElementStressSubtype,
     ElementType,
-    ElementTypeResult,
-    PhenotypeInfo,
-)
-from prp.models.phenotype import PredictionSoftware as Software
-from prp.models.phenotype import (
-    ResfinderGene,
-    ResfinderVariant,
     VariantSubType,
     VariantType,
 )
-from prp.parse.base import BaseParser, ParseImplOut, ParserInput
-from prp.parse.envelope import run_as_envelope
-from prp.parse.registry import register_parser
 
 from .utils import get_nt_change
 
@@ -229,8 +229,8 @@ def get_resfinder_sr_profile(
 
 def parse_resfinder_genes(
     resfinder_result: dict[str, Any], limit_to: list[str] | None = None
-) -> list[ResfinderGene]:
-    results: list[ResfinderGene] = []
+) -> list[GeneBase]:
+    results: list[GeneBase] = []
     phenotypes = resfinder_result.get("phenotypes") or {}
     for info in (resfinder_result.get("seq_regions") or {}).values():
         ref_db = (info.get("ref_database") or [""])[0]
@@ -260,14 +260,14 @@ def parse_resfinder_genes(
                 name=phe,
                 group=lookup_antibiotic_class(phe),
                 annotation_type=AnnotationType.TOOL,
-                annotation_author=Software.RESFINDER.value,
+                annotation_author=AnalysisSoftware.RESFINDER,
                 reference=info.get("pmids"),
             )
             for phe in phenolist
         ]
 
         results.append(
-            ResfinderGene(
+            GeneBase(
                 gene_symbol=info["name"],
                 accession=info.get("ref_acc"),
                 element_type=res_category,
@@ -294,14 +294,14 @@ def parse_resfinder_genes(
 
 def parse_resfinder_variants(
     resfinder_result: dict[str, Any], limit_to: list[str] | None = None
-) -> list[ResfinderVariant]:
+) -> list[VariantBase]:
     # prediction method
     prediction_method = None
     for exec_info in (resfinder_result.get("software_executions") or {}).values():
         prediction_method = exec_info.get("parameters", {}).get("method")
 
     seq_regions = resfinder_result.get("seq_regions") or {}
-    results: list[ResfinderVariant] = []
+    results: list[VariantBase] = []
 
     for var_id, info in enumerate(
         (resfinder_result.get("seq_variations") or {}).values(), start=1
@@ -341,7 +341,7 @@ def parse_resfinder_variants(
         ]
 
         results.append(
-            ResfinderVariant(
+            VariantBase(
                 id=var_id,
                 variant_type=VariantType.SNV,
                 variant_subtype=var_sub_type,
@@ -407,10 +407,12 @@ def build_resfinder_result(
 
 @register_parser(RESFINDER)
 class ResFinderParser(BaseParser):
+    """Parse resfinder results."""
+
     software = RESFINDER
     parser_name = "ResFinderParser"
-    parser_version = "1"
-    schema_version = "1"
+    parser_version = 1
+    schema_version = 1
     produces = {AnalysisType.AMR, AnalysisType.STRESS}
 
     def _parse_impl(
@@ -446,6 +448,6 @@ class ResFinderParser(BaseParser):
                     reason_if_absent="No resistance determinants for sample",
                     reason_if_empty="No findings",
                     meta=base_meta,
-                    logger=self.logger
+                    logger=self.logger,
                 )
         return out

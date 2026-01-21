@@ -1,14 +1,15 @@
 """Parse gambit results."""
 
 
-from typing import Any
 import re
+from typing import Any
 
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.parse.models.enums import AnalysisSoftware, AnalysisType, GambitQcFlag
-from prp.parse.models.qc import GambitcoreQcResult
 from prp.parse.core.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
 from prp.parse.core.registry import register_parser
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType, GambitQcFlag
+from prp.parse.models.qc import GambitcoreQcResult
+
 from .utils import safe_int, safe_percent
 
 GAMBIT = AnalysisSoftware.GAMBIT
@@ -45,7 +46,7 @@ def _to_qc_result(row: dict[str, Any]) -> GambitcoreQcResult:
     qc_flag = GambitQcFlag(row.get("assembly_qc", "red"))
 
     assembly_core = spp_core = None
-    if (m := CORE_PATTERN.search(row.get("assembly_core", "") or "")):
+    if m := CORE_PATTERN.search(row.get("assembly_core", "") or ""):
         assembly_core = safe_int(m.group("assembly"))
         spp_core = safe_int(m.group("reference"))
 
@@ -92,9 +93,7 @@ class GambitCoreParser(SingleAnalysisParser):
             return None
 
         required_cols = set(COLUMN_MAP)
-        self.validate_columns(
-            first_raw, required=required_cols, strict=strict
-        )
+        self.validate_columns(first_raw, required=required_cols, strict=strict)
         first = _normalize_gambit_row(first_raw)
         warn_if_extra_rows(
             rows, self.log_warning, context=f"{self.software} file", max_consume=10
