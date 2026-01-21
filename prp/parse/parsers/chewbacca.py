@@ -11,8 +11,8 @@ from prp.io.delimited import (
 )
 from prp.parse.core.base import SingleAnalysisParser, warn_if_extra_rows
 from prp.parse.core.registry import register_parser
-from prp.parse.models.enums import AnalysisSoftware, AnalysisType
-from prp.parse.models.typing import ChewbbacaErrors, TypingResultCgMlst
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType, ChewbbacaErrors
+from prp.parse.models.typing import TypingResultCgMlst
 
 from .utils import safe_int
 

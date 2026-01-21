@@ -10,13 +10,12 @@ from prp.io.delimited import (
     is_nullish,
     normalize_row,
     read_delimited,
-    validate_fields,
 )
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.models.typing import TypingResultShiga
-from prp.parse.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
-from prp.parse.parsers.utils import safe_float, safe_percent
-from prp.parse.registry import register_parser
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.models.typing import TypingResultShiga
+from prp.parse.core.base import ParserInput, SingleAnalysisParser, warn_if_extra_rows
+from prp.parse.core.registry import register_parser
+from .utils import safe_float
 
 LOG = logging.getLogger(__name__)
 

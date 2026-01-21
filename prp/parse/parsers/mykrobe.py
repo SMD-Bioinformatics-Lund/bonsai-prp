@@ -15,7 +15,7 @@ from prp.io.delimited import (
 from prp.parse.core.base import BaseParser, ParseImplOut, ParserInput
 from prp.parse.core.envelope import run_as_envelope
 from prp.parse.core.registry import register_parser
-from prp.parse.models.base import SoupVersion
+from prp.parse.models.base import SoupVersion, ElementTypeResult, PhenotypeInfo, VariantBase
 from prp.parse.models.enums import (
     AnalysisSoftware,
     AnalysisType,
@@ -26,7 +26,6 @@ from prp.parse.models.enums import (
     VariantType,
 )
 from prp.parse.models.mykrobe import MykrobeSpeciesPrediction, SRProfile
-from prp.parse.models.phenotype import ElementTypeResult, MykrobeVariant, PhenotypeInfo
 from prp.parse.models.typing import ResultLineageBase
 
 from .utils import get_nt_change, safe_float, safe_int
@@ -121,10 +120,10 @@ def parse_mutation_nom(var_nom: str) -> dict[str, Any] | None:
     return {"type": var_type, "subtype": subtype, "ref": ref, "alt": alt, "pos": pos}
 
 
-def _parse_amr_variants(rows: TableRows, *, log_warning) -> list[MykrobeVariant]:
+def _parse_amr_variants(rows: TableRows, *, log_warning) -> list[VariantBase]:
     """Parse resistance variants."""
 
-    out: list[MykrobeVariant] = []
+    out: list[VariantBase] = []
     for row_no, row in enumerate(rows, start=1):
         if (row.get("susceptibility") or "").upper() != "R":
             continue
@@ -182,7 +181,7 @@ def _parse_amr_variants(rows: TableRows, *, log_warning) -> list[MykrobeVariant]
             has_aa = len(aa["ref"]) == 1 and len(aa["alt"]) == 1
 
             out.append(
-                MykrobeVariant(
+                VariantBase(
                     id=var_id,
                     variant_type=aa["type"],
                     variant_subtype=aa["subtype"],

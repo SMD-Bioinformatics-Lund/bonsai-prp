@@ -18,7 +18,7 @@ from prp.parse.core.envelope import (
 )
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import AbsentResultError, ParserError
-from prp.parse.models.amrfinder import AmrFinderResistanceGene, AmrFinderVariant
+from prp.parse.models.phenotype import AmrFinderResistanceGene, AmrFinderVariant
 from prp.parse.models.base import ElementTypeResult, PhenotypeInfo, ResultEnvelope
 from prp.parse.models.enums import (
     AnalysisSoftware,

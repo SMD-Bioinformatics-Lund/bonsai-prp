@@ -3,11 +3,11 @@
 import pytest
 
 from prp.parse.models.base import (
-    AnalysisType,
     ElementTypeResult,
     ParserOutput,
     ResultEnvelope,
 )
+from prp.parse.models.enums import AnalysisType
 from prp.parse.parsers.amrfinder import AmrFinderParser
 
 EXPECTED_RESULT = [

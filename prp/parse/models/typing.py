@@ -86,3 +86,16 @@ class TypingResultSpatyper(RWModel):
     sequence_name: str | None
     repeats: str | None
     type: str | None
+
+class TypingResultShiga(RWModel):
+    """Container for shigatype gene information"""
+
+    rfb: str | None = None
+    rfb_hits: float | None = None
+    mlst: str | None = None
+    flic: str | None = None
+    crispr: str | None = None
+    ipah: str
+    predicted_serotype: str
+    predicted_flex_serotype: str | None = None
+    comments: str | None = None

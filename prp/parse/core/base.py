@@ -46,10 +46,10 @@ class BaseParser(ABC):
         self,
         source: ParserInput,
         *,
-        want: set[AnalysisType] | None = None,
+        want: set[AnalysisType] | AnalysisType | None = None,
         **kwargs: Any,
     ) -> ParserOutput:
-        want = self._normalize_want(want)
+        want: set[AnalysisType] = self._normalize_want(want)
 
         out = self._new_output()
 

@@ -1,9 +1,6 @@
 """Functions for parsing serotypefinder result."""
 
-import logging
 from typing import Any
-
-from pydantic import ValidationError
 
 from prp.io.delimited import is_nullish
 from prp.io.json import read_json
@@ -20,8 +17,6 @@ from prp.parse.models.enums import (
 )
 
 from .utils import safe_int
-
-LOG = logging.getLogger(__name__)
 
 SEROTYPEFINDER = AnalysisSoftware.SEROTYPEFINDER
 ANALYSIS_TYPE_FIELDS = {
@@ -96,6 +91,8 @@ def _is_no_hit(value: Any) -> bool:
 
 @register_parser(SEROTYPEFINDER)
 class SerotypeFinderParser(BaseParser):
+    """Parses SerotypeFinder results."""
+
     software = SEROTYPEFINDER
     parser_name = "SerotypeFinderParser"
     parser_version = 1
