@@ -4,8 +4,8 @@ import io
 import json
 from typing import Any, Mapping
 from pathlib import Path
-from prp.exceptions import InvalidDataFormat
-from prp.parse.base import ParserInput
+from prp.parse.exceptions import InvalidDataFormat
+from prp.parse.core.base import ParserInput
 
 
 def read_json(source: ParserInput, *, encoding: str = "utf-8") -> Any:

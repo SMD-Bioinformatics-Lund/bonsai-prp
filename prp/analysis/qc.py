@@ -6,25 +6,21 @@ import os
 import subprocess
 from typing import Any, TextIO
 
-import numpy as np
-import pandas as pd
-import pysam
+try:
+    import pandas as pd
+    import pysam
+except ImportError as e:
+    raise RuntimeError(
+        "This feature requires the 'analysis' extra: pip install bonsai-prp[analysis]"
+    ) from e
 
-from prp.models.qc import (
-    ContigCoverage,
-    GambitcoreQcResult,
-    NanoPlotQcResult,
-    QcMethodIndex,
-    QcSoftware,
-    SamtoolsCoverageQcResult,
-)
 
 OptionalFile = TextIO | None
 
 LOG = logging.getLogger(__name__)
 
 
-class QC:
+class ComputePostAlnQc:
     """Class for retrieving qc results"""
 
     def __init__(
@@ -266,7 +262,7 @@ def parse_alignment_results(
 ) -> None:
     """Parse bam file and extract relevant metrics"""
     LOG.info("Parsing bam file: %s", bam.name)
-    qc = QC(
+    qc = ComputePostAlnQc(
         sample_id,
         bam.name,
         reference.name,
@@ -277,131 +273,3 @@ def parse_alignment_results(
     qc_dict = qc.run()
     LOG.info("Storing results to: %s", output.name)
     qc.write_json_result(qc_dict, output.name)
-
-
-def parse_gambitcore_results(gambitcore_fpath: str) -> QcMethodIndex:
-    """Parse assembly completion prediction result.
-
-    Args:
-        sep (str): seperator
-
-    Returns:
-        GambitcoreQcResult: list of key-value pairs
-    """
-    LOG.info("Parsing tsv file: %s", gambitcore_fpath)
-    columns = {
-        "Species": "scientific_name",
-        "Completeness (%)": "completeness",
-        "Assembly Core/species Core": "assembly_core",
-        "Closest accession": "closest_accession",
-        "Closest distance": "closest_distance",
-        "Assembly Kmers": "assembly_kmers",
-        "Species Kmers Mean": "species_kmers_mean",
-        "Species Kmers Std Dev": "species_kmers_std_dev",
-        "Assembly QC": "assembly_qc",
-    }
-
-    gambitcore_loa = (
-        pd.read_csv(gambitcore_fpath, sep="\t", na_values=["NA"])
-        .replace(np.nan, None)
-        .rename(columns=columns)
-        .to_dict(orient="records")
-    )
-    gambitcore_hit = gambitcore_loa[0] if gambitcore_loa else {}
-
-    completeness = gambitcore_hit.get("completeness")
-
-    gambitcore_result = GambitcoreQcResult(
-        scientific_name=gambitcore_hit.get("scientific_name"),
-        completeness=float(completeness.rstrip("%")) if completeness else None,
-        assembly_core=gambitcore_hit.get("assembly_core"),
-        closest_accession=gambitcore_hit.get("closest_accession"),
-        closest_distance=gambitcore_hit.get("closest_distance"),
-        assembly_kmers=gambitcore_hit.get("assembly_kmers"),
-        species_kmers_mean=gambitcore_hit.get("species_kmers_mean"),
-        species_kmers_std_dev=gambitcore_hit.get("species_kmers_std_dev"),
-        assembly_qc=gambitcore_hit.get("assembly_qc", "red"),
-    )
-
-    return QcMethodIndex(
-        software=QcSoftware.GAMBITCORE,
-        result=gambitcore_result,
-    )
-
-
-def parse_nanoplot_results(nanoplot_fpath: str) -> QcMethodIndex:
-    """Parse NanoPlot QC results.
-
-    Args:
-        nanoplot_fpath: Path to NanoStats.txt file
-
-    Returns:
-        QcMethodIndex with NanoPlot results
-    """
-    LOG.info("Parsing NanoPlot results")
-
-    with open(nanoplot_fpath) as fh:
-        # Skip the first line (header)
-        next(fh)
-        nanoplot_dict = {}
-
-        # Parse only first set of metrics
-        for _ in range(8):
-            line = next(fh).strip()
-            key, value = line.split(":", 1)
-            value = float(value.strip().replace(",", ""))
-            key = key.lower().strip().replace(" ", "_")
-            nanoplot_dict[key] = value
-
-    result = NanoPlotQcResult(
-        mean_read_length=nanoplot_dict["mean_read_length"],
-        mean_read_quality=nanoplot_dict["mean_read_quality"],
-        median_read_length=nanoplot_dict["median_read_length"],
-        median_read_quality=nanoplot_dict["median_read_quality"],
-        number_of_reads=nanoplot_dict["number_of_reads"],
-        read_length_n50=nanoplot_dict["read_length_n50"],
-        stdev_read_length=nanoplot_dict["stdev_read_length"],
-        total_bases=nanoplot_dict["total_bases"],
-    )
-
-    return QcMethodIndex(software=QcSoftware.NANOPLOT, result=result)
-
-
-def parse_samtools_coverage_results(coverage_fpath: str) -> QcMethodIndex:
-    """Parse SAMtools coverage output file and extract relevant metrics.
-
-    Args:
-        coverage_fpath (str): Path to the SAMtools coverage .txt output file
-
-    Returns:
-        QcMethodIndex: QC method index containing SAMtools coverage results
-    """
-    LOG.info("Parsing SAMtools coverage")
-
-    contigs = []
-
-    with open(coverage_fpath, "r", encoding="utf-8") as covfile:
-        # Skip header line
-        header = covfile.readline().strip("#").strip().split("\t")
-
-        # Process each line (contig)
-        for line in covfile:
-            data = dict(zip(header, line.strip().split("\t")))
-
-            # Convert types appropriately
-            contig = ContigCoverage(
-                rname=data["rname"],
-                startpos=int(data["startpos"]),
-                endpos=int(data["endpos"]),
-                numreads=int(data["numreads"]),
-                covbases=int(data["covbases"]),
-                coverage=float(data["coverage"]),
-                meandepth=float(data["meandepth"]),
-                meanbaseq=float(data["meanbaseq"]),
-                meanmapq=float(data["meanmapq"]),
-            )
-            contigs.append(contig)
-
-    samcov_result = SamtoolsCoverageQcResult(contigs=contigs)
-
-    return QcMethodIndex(software=QcSoftware.SAMTOOLS, result=samcov_result)
