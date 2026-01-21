@@ -1,6 +1,6 @@
 """Fixtures"""
 
-from prp.models.hamronization import (
+from prp.parse.models.hamronization import (
     HamronizationEntry,
     InputSequence,
     ReferenceSequence,

@@ -6,7 +6,7 @@ from itertools import chain
 from typing import Any, Callable
 
 from prp.migration import config
-from prp.models import PipelineResult
+from prp.pipeline.types import PipelineResult
 
 LOG = logging.getLogger(__name__)
 

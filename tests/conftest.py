@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from prp.models import PipelineResult
+from prp.models.sample import PipelineResult
 from prp.models.metadata import PipelineInfo, SequencingInfo
 
 from .fixtures import *

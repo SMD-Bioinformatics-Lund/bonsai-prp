@@ -6,7 +6,8 @@ import re
 
 from cyvcf2 import VCF, Variant
 
-from prp.models.phenotype import VariantBase, VariantType
+from prp.parse.models.base import VariantBase
+from prp.parse.models.enums import VariantType
 
 LOG = logging.getLogger(__name__)
 SOURCE_PATTERN = r"##source=(.+)\n"

@@ -9,10 +9,10 @@ from requests.exceptions import HTTPError
 from requests.structures import CaseInsensitiveDict
 
 from prp.models.metadata import MetaEntry
-from prp.parse.metadata import process_custom_metadata
+from prp.pipeline.metadata import process_custom_metadata
 
-from ..models.config import SampleConfig
-from ..models.sample import PipelineResult
+from prp.models.manifest import SampleManifest
+from prp.pipeline.types import PipelineResult
 
 from .auth import ConnectionInfo, api_authentication, TIMEOUT
 
@@ -38,14 +38,14 @@ def upload_sample_result(
 def upload_signature(
     headers: CaseInsensitiveDict[Any],
     api_url: str,
-    sample_cnf: SampleConfig,
+    manifest: SampleManifest,
 ) -> str | None:
     """Upload a genome signature to sample."""
-    if sample_cnf.sourmash_signature is not None:
+    if manifest.sourmash_signature is not None:
         resp = requests.post(
-            f"{api_url}/samples/{sample_cnf.sample_id}/signature",
+            f"{api_url}/samples/{manifest.sample_id}/signature",
             headers=headers,
-            files={"signature": Path(sample_cnf.sourmash_signature).open()},
+            files={"signature": Path(manifest.sourmash_signature).open()},
             timeout=TIMEOUT,
         )
 
@@ -58,12 +58,12 @@ def upload_signature(
 def add_ska_index(
     headers: CaseInsensitiveDict[Any],
     api_url: str,
-    sample_cnf: SampleConfig,
+    manifest: SampleManifest,
 ) -> str:
     """Upload a genome signature to sample."""
-    params: dict[str, str] = {"index": str(sample_cnf.ska_index)}
+    params: dict[str, str] = {"index": str(manifest.ska_index)}
     resp = requests.post(
-        f"{api_url}/samples/{sample_cnf.sample_id}/ska_index",
+        f"{api_url}/samples/{manifest.sample_id}/ska_index",
         headers=headers,
         params=params,
         timeout=TIMEOUT,
@@ -124,7 +124,7 @@ def _process_generic_status_codes(error: HTTPError, sample_id: str) -> tuple[str
 
 
 def upload_sample(
-    conn: ConnectionInfo, results: PipelineResult, cnf: SampleConfig
+    conn: ConnectionInfo, results: PipelineResult, manifest: SampleManifest
 ) -> str:
     """Upload a sample with files for clustring."""
     try:
@@ -138,46 +138,46 @@ def upload_sample(
             msg, _ = _process_generic_status_codes(error, "")
             raise click.UsageError(msg) from error
     # upload minhash signature to sample
-    if cnf.sourmash_signature is not None:
+    if manifest.sourmash_signature is not None:
         try:
             upload_signature(  # pylint: disable=no-value-for-parameter
-                token_obj=conn.token, api_url=conn.api_url, sample_cnf=cnf
+                token_obj=conn.token, api_url=conn.api_url, sample_cnf=manifest
             )
         except HTTPError as error:
             if error.response.status_code == 409:
                 click.secho(
-                    f"Sample {cnf.sample_id} has already a signature file, skipping",
+                    f"Sample {manifest.sample_id} has already a signature file, skipping",
                     fg="yellow",
                 )
             else:
-                msg, _ = _process_generic_status_codes(error, cnf.sample_id)
+                msg, _ = _process_generic_status_codes(error, manifest.sample_id)
                 raise click.UsageError(msg) from error
     # add ska index path to sample
-    if cnf.ska_index is not None:
+    if manifest.ska_index is not None:
         try:
             add_ska_index(  # pylint: disable=no-value-for-parameter
-                token_obj=conn.token, api_url=conn.api_url, sample_cnf=cnf
+                token_obj=conn.token, api_url=conn.api_url, sample_cnf=manifest
             )
         except HTTPError as error:
             if error.response.status_code == 409:
                 click.secho(
                     (
-                        f"Sample {cnf.sample_id} is already associated "
+                        f"Sample {manifest.sample_id} is already associated "
                         "with a ska index file, skipping"
                     ),
                     fg="yellow",
                 )
             else:
-                msg, _ = _process_generic_status_codes(error, cnf.sample_id)
+                msg, _ = _process_generic_status_codes(error, manifest.sample_id)
                 raise click.UsageError(msg) from error
     # add metadata to an existing sample
-    if len(cnf.metadata) > 0:
-        records = process_custom_metadata(cnf.metadata)
+    if len(manifest.metadata) > 0:
+        records = process_custom_metadata(manifest.metadata)
         try:
             add_metadata_to_sample(
                 token_obj=conn.token,
                 api_url=conn.api_url,
-                sample_id=cnf.sample_id,
+                sample_id=manifest.sample_id,
                 metadata=records,
             )
         except HTTPError as error:
@@ -185,6 +185,6 @@ def upload_sample(
                 fmt_records = [rec.model_dump_json() for rec in records]
                 click.secho(f"Bad formatting of input data, {fmt_records}", fg="yellow")
             else:
-                msg, _ = _process_generic_status_codes(error, cnf.sample_id)
+                msg, _ = _process_generic_status_codes(error, manifest.sample_id)
                 raise click.UsageError(msg) from error
-    return cnf.sample_id
+    return manifest.sample_id

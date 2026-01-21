@@ -10,7 +10,7 @@ from cyvcf2 import VCF, Writer
 
 from prp import VERSION as __version__
 from prp.models.sample import IgvAnnotationTrack, PipelineResult
-from prp.parse.variant import annotate_delly_variants
+from prp.pipeline.variant import annotate_delly_variants
 
 LOG = logging.getLogger(__name__)
 

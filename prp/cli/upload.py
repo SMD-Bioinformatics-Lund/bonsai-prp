@@ -7,9 +7,10 @@ from pydantic import ValidationError
 from requests import HTTPError
 
 from prp import VERSION as __version__
-from prp import bonsai
-from prp.models.config import SampleConfig
-from prp.parse.sample import parse_sample
+from prp.bonsai_api.auth import authenticate
+from prp.bonsai_api import bonsai
+from prp.models.manifest import SampleManifest
+from prp.pipeline.sample import parse_sample
 
 from .utils import SampleConfigFile
 
@@ -38,11 +39,11 @@ def upload():
     "sample_cnf",
     type=SampleConfigFile(),
 )
-def bonsai_upload(sample_cnf: SampleConfig, username: str, password: str, api_url: str):
+def bonsai_upload(manifest: SampleManifest, username: str, password: str, api_url: str):
     """Upload a sample to Bonsai using either a sample config or json dump."""
     # Parse sample config
     try:
-        sample_obj = parse_sample(sample_cnf)
+        sample_obj = parse_sample(manifest)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)
@@ -50,21 +51,21 @@ def bonsai_upload(sample_cnf: SampleConfig, username: str, password: str, api_ur
 
     # Authenticate to Bonsai API
     try:
-        conn = bonsai.authenticate(api_url, username, password)
+        conn = authenticate(api_url, username, password)
     except ValueError as error:
         raise click.UsageError(str(error)) from error
 
     # Upload sample
-    bonsai.upload_sample(conn, sample_obj, sample_cnf)
+    bonsai.upload_sample(conn, sample_obj, manifest)
 
     # add sample to group if it was assigned one.
-    for group_id in sample_cnf.groups:
+    for group_id in manifest.groups:
         try:
             bonsai.add_sample_to_group(  # pylint: disable=no-value-for-parameter
                 token_obj=conn.token,
                 api_url=conn.api_url,
                 group_id=group_id,
-                sample_id=sample_cnf.sample_id,
+                sample_id=manifest.sample_id,
             )
         except HTTPError as error:
             match error.response.status_code:

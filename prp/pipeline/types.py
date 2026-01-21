@@ -1,12 +1,11 @@
-"""Data model definition of input/ output data"""
+"""Types for generating pipeline results."""
 
 from typing import Any, Literal
 
 from pydantic import Field
 
 from prp.parse.models.base import VariantBase
-
-from .base import RWModel
+from prp.models.base import RWModel
 from .metadata import PipelineInfo, SequencingInfo
 
 SCHEMA_VERSION: int = 2
@@ -71,3 +70,21 @@ class PipelineResult(SampleBase):
     reference_genome: ReferenceGenome | None = None
     read_mapping: str | None = None
     genome_annotation: list[IgvAnnotationTrack] | None = None
+
+
+class QcMethodIndex(RWModel):
+    """QC results container.
+
+    Based on Mongo db Attribute pattern.
+    Reference: https://www.mongodb.com/developer/products/mongodb/attribute-pattern/
+    """
+
+    software: str
+    version: str | None = None
+    result: Any
+
+
+class CdmQcMethodIndex(QcMethodIndex):
+    """Qc results container for CDM"""
+
+    id: str
