@@ -1,8 +1,8 @@
 """Test functions for parsing SCCmec results."""
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.typing import TypingResultSccmec
-from prp.parse.sccmec import SccMecParser
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.typing import TypingResultSccmec
+from prp.parse.parsers.sccmec import SccMecParser
 
 
 def test_parse_sccmec_results(saureus_sccmec_path):

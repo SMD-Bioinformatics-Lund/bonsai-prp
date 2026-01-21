@@ -1,9 +1,9 @@
 """Test parsing of MSLT results."""
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.typing import TypingResultMlst
-from prp.parse.mlst import MlstParser
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.models.typing import TypingResultMlst
+from prp.parse.parsers.mlst import MlstParser
 
 
 def test_parse_mlst_result(ecoli_mlst_path):

@@ -1,33 +1,13 @@
 """Data model definition of input/ output data"""
 
-from typing import Literal, Optional, Union
+from typing import Any, Literal
 
 from pydantic import Field
 
+from prp.parse.models.base import VariantBase
+
 from .base import RWModel
-from .kleborate import KleborateEtIndex, KleborateScoreIndex, KleborateTypeIndex
 from .metadata import PipelineInfo, SequencingInfo
-from .phenotype import (
-    AMRMethodIndex,
-    StressMethodIndex,
-    VariantBase,
-    VirulenceMethodIndex,
-)
-from .qc import KleborateQcIndex, QcMethodIndex
-from .species import SppMethodIndex
-from .typing import (
-    EmmTypingMethodIndex,
-    ResultLineageBase,
-    SccmecTypingMethodIndex,
-    ShigaTypingMethodIndex,
-    SpatyperTypingMethodIndex,
-    TbProfilerLineage,
-    TypingMethod,
-    TypingResultCgMlst,
-    TypingResultGeneAllele,
-    TypingResultMlst,
-    TypingSoftware,
-)
 
 SCHEMA_VERSION: int = 2
 
@@ -35,15 +15,9 @@ SCHEMA_VERSION: int = 2
 class MethodIndex(RWModel):
     """Container for key-value lookup of analytical results."""
 
-    type: TypingMethod
-    software: TypingSoftware | None
-    result: Union[
-        TypingResultMlst,
-        TypingResultCgMlst,
-        TypingResultGeneAllele,
-        TbProfilerLineage,
-        ResultLineageBase,
-    ]
+    type: str
+    software: str
+    result: Any
 
 
 class SampleBase(RWModel):
@@ -58,10 +32,10 @@ class SampleBase(RWModel):
     pipeline: PipelineInfo
 
     # quality
-    qc: list[QcMethodIndex | KleborateQcIndex] = Field(..., default_factory=list)
+    qc: list[Any] = Field(..., default_factory=list)
 
     # species identification
-    species_prediction: list[SppMethodIndex] = Field(..., default_factory=list)
+    species_prediction: list[Any] = Field(..., default_factory=list)
 
 
 class ReferenceGenome(RWModel):
@@ -86,32 +60,14 @@ class PipelineResult(SampleBase):
 
     schema_version: Literal[2] = SCHEMA_VERSION
     # optional typing
-    typing_result: list[
-        Union[
-            ShigaTypingMethodIndex,
-            EmmTypingMethodIndex,
-            SccmecTypingMethodIndex,
-            SpatyperTypingMethodIndex,
-            KleborateTypeIndex,
-            MethodIndex,
-        ]
-    ] = Field(..., default_factory=list)
+    typing_result: list[MethodIndex] = Field(..., default_factory=list)
     # optional phenotype prediction
-    element_type_result: list[
-        Union[
-            VirulenceMethodIndex,
-            AMRMethodIndex,
-            StressMethodIndex,
-            KleborateEtIndex,
-            KleborateScoreIndex,
-            MethodIndex,
-        ]
-    ] = Field(..., default_factory=list)
+    element_type_result: list[MethodIndex] = Field(..., default_factory=list)
     # optional variant info
-    snv_variants: Optional[list[VariantBase]] = None
-    sv_variants: Optional[list[VariantBase]] = None
-    indel_variants: Optional[list[VariantBase]] = None
+    snv_variants: list[VariantBase] | None = None
+    sv_variants: list[VariantBase] | None = None
+    indel_variants: list[VariantBase] | None = None
     # optional alignment info
-    reference_genome: Optional[ReferenceGenome] = None
-    read_mapping: Optional[str] = None
-    genome_annotation: Optional[list[IgvAnnotationTrack]] = None
+    reference_genome: ReferenceGenome | None = None
+    read_mapping: str | None = None
+    genome_annotation: list[IgvAnnotationTrack] | None = None

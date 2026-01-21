@@ -1,3 +1,1 @@
-"""Data models"""
-
-from .sample import PipelineResult
+"""Shared data models"""

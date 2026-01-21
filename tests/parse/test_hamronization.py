@@ -2,10 +2,10 @@
 
 from pathlib import Path
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.hamronization import HamronizationEntry
-from prp.parse.hamronization import HAmrOnizationParser
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.models.hamronization import HamronizationEntry
+from prp.parse.parsers.hamronization import HAmrOnizationParser
 
 
 def test_parse_hamronization(kp_kleborate_hamronization_path: Path):

@@ -4,8 +4,8 @@ from typing import Any
 
 import pytest
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.parse.shigapass import ShigapassParser, extract_percentage
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.parsers.shigapass import ShigapassParser, extract_percentage
 
 EXPECTED_SHIGA_OUTPUT = [
     (

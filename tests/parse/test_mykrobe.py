@@ -1,10 +1,9 @@
 """Test Mykrobe parser."""
 
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.phenotype import ElementTypeResult
-from prp.models.typing import ResultLineageBase
-from prp.parse.mykrobe import MykrobeParser
+from prp.parse.models.base import ElementTypeResult, ParserOutput, ResultEnvelope
+from prp.parse.models.typing import ResultLineageBase
+from prp.parse.parsers.mykrobe import MykrobeParser
 
 
 def test_mykrobe_parser_results(mtuberculosis_mykrobe_path):

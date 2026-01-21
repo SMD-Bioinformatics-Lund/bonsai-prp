@@ -3,9 +3,10 @@
 
 import pytest
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.species import BrackenSpeciesPrediction, TaxLevel
-from prp.parse.kraken import BrackenParser, to_taxlevel
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.bracken import BrackenSpeciesPrediction
+from prp.parse.models.enums import TaxLevel
+from prp.parse.parsers.bracken import BrackenParser, to_taxlevel
 
 EXPECTED_PARSER_RESULT = [
     ("saureus_bracken_path", (None, 55)),

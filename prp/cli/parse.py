@@ -4,14 +4,15 @@ import logging
 from pathlib import Path
 
 import click
-from prp.parse.qc import parse_alignment_results
-from prp.models.enums import AnalysisSoftware, AnalysisType
-from prp.parse.registry import run_parser
-from prp.parse.sample import parse_sample
+from prp.analysis.qc import parse_alignment_results
+from prp.parse.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.core.registry import run_parser
+from prp.pipeline.sample import parse_sample
 from pydantic import TypeAdapter, ValidationError
 
-from prp.models.config import SampleConfig
-from prp.models.qc import CdmQcMethodIndex, QcMethodIndex, QcSoftware
+from prp.models.manifest import SampleManifest
+from prp.parse.models.enums import AnalysisSoftware
+from prp.pipeline.types import CdmQcMethodIndex, QcMethodIndex
 
 from .utils import OptionalFile, SampleConfigFile
 
@@ -32,11 +33,11 @@ def parse_gr():
     help="Sample configuration with results.",
 )
 @click.option("-o", "--output", type=click.Path(), help="Path to result.")
-def format_jasen(sample_cnf: SampleConfig, output: Path | None):
+def format_jasen(manifest: SampleManifest, output: Path | None):
     """Parse JASEN results and write as concatenated file in json format."""
     LOG.info("Start generating pipeline result json")
     try:
-        sample_obj = parse_sample(sample_cnf)
+        sample_obj = parse_sample(manifest)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)
@@ -106,7 +107,7 @@ def format_cdm(sample_cnf: SampleConfigFile, output: OptionalFile) -> None:
         else:
             missing_loci = res.value.n_missing
             n_missing_loci = QcMethodIndex(
-                software=QcSoftware.CHEWBBACA, result={"n_missing": missing_loci}
+                software=AnalysisSoftware.CHEWBBACA, result={"n_missing": missing_loci}
             )
             results.append(
                 CdmQcMethodIndex(id="chewbbaca_missing_loci", **n_missing_loci.model_dump())

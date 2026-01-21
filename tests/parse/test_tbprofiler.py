@@ -1,11 +1,10 @@
 """Test parsing of TbProfiler results."""
 
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.phenotype import ElementTypeResult
-from prp.models.typing import LineageInformation
-from prp.parse.tbprofiler import TbProfilerParser
+from prp.parse.models.base import ElementTypeResult, ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType
+from prp.parse.models.typing import LineageInformation
+from prp.parse.parsers.tbprofiler import TbProfilerParser
 
 
 def test_tbprofier_parser_results(mtuberculosis_tbprofiler_path):

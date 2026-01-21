@@ -1,10 +1,13 @@
 """Virulencefinder parser test suite."""
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
-from prp.models.phenotype import VirulenceElementTypeResult
-from prp.models.typing import TypingResultGeneAllele
-from prp.parse.virulencefinder import VirulenceFinderParser
+from prp.parse.models.base import (
+    ElementTypeResult,
+    GeneWithReference,
+    ParserOutput,
+    ResultEnvelope,
+)
+from prp.parse.models.enums import AnalysisType
+from prp.parse.parsers.virulencefinder import VirulenceFinderParser
 
 
 def test_virulencefinder_parser(ecoli_virulencefinder_stx_pred_stx_path):
@@ -24,7 +27,7 @@ def test_virulencefinder_parser(ecoli_virulencefinder_stx_pred_stx_path):
     assert isinstance(vir_res, ResultEnvelope)
     assert vir_res.status == "parsed"
 
-    assert isinstance(vir_res.value, VirulenceElementTypeResult)
+    assert isinstance(vir_res.value, ElementTypeResult)
     assert len(vir_res.value.genes) == 29
 
     # test STX prediction returns the expected results
@@ -32,5 +35,5 @@ def test_virulencefinder_parser(ecoli_virulencefinder_stx_pred_stx_path):
     assert isinstance(stx_res, ResultEnvelope)
     assert stx_res.status == "parsed"
 
-    assert isinstance(stx_res.value, TypingResultGeneAllele)
+    assert isinstance(stx_res.value, GeneWithReference)
     assert stx_res.value.gene_symbol == "stx2"

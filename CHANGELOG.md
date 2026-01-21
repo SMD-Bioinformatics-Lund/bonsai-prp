@@ -2,7 +2,15 @@
 
 ### Added
 
+- Added APIs for registering and excecuting parses from the input software name and version.
 - Added parser registry with support for version based parser selection.
+- Added added tests for several existing parsers
+
+### Changed
+
+- Simplified repo structure and data models to increase code legibility.
+- All parsers of analysis tools now share the same structure and helper functions.
+- Reworked and simplified data models
 
 ## [1.5.0]
 

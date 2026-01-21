@@ -1,9 +1,8 @@
 """Test Serotypefinder parser."""
 import pytest
 
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.phenotype import SerotypeGene
-from prp.parse.serotypefinder import SerotypeFinderParser, _is_no_hit
+from prp.parse.models.base import GeneBase, ParserOutput, ResultEnvelope
+from prp.parse.parsers.serotypefinder import SerotypeFinderParser, _is_no_hit
 
 
 def test_serotypefinder_parser(ecoli_serotypefinder_path):
@@ -23,7 +22,7 @@ def test_serotypefinder_parser(ecoli_serotypefinder_path):
     hres = result.results["h_type"]
     assert isinstance(hres, ResultEnvelope)
     assert hres.status == "parsed"
-    assert isinstance(hres.value, SerotypeGene)
+    assert isinstance(hres.value, GeneBase)
 
     # verify that the expected no o_type hit was correctly handled.
     ores = result.results["o_type"]

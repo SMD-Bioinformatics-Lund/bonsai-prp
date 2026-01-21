@@ -1,13 +1,11 @@
 """Test typing method parsing."""
 
-import logging
-
-from prp.models.base import ParserOutput, ResultEnvelope
-from prp.models.enums import AnalysisType
 import pytest
 
-from prp.models.typing import ChewbbacaErrors, TypingResultCgMlst
-from prp.parse.chewbacca import ChewbbacaParser, replace_cgmlst_errors
+from prp.parse.models.base import ParserOutput, ResultEnvelope
+from prp.parse.models.enums import AnalysisType, ChewbbacaErrors
+from prp.parse.models.typing import TypingResultCgMlst
+from prp.parse.parsers.chewbacca import ChewbbacaParser, replace_cgmlst_errors
 
 # build test cases for handeling chewbacca allele caller errors and annotations
 # reference, https://chewbbaca.readthedocs.io/en/latest/user/modules/AlleleCall.html
@@ -42,8 +40,8 @@ def test_replace_cgmlst_errors_not_include_novel(called_allele, expected):
     """Test function that process Chewbbaca allele calling."""
 
     res = replace_cgmlst_errors(
-            called_allele, include_novel_alleles=False, correct_alleles=False
-        )
+        called_allele, include_novel_alleles=False, correct_alleles=False
+    )
     assert res == expected
 
 
@@ -70,7 +68,7 @@ def test_replace_cgmlst_errors_include_novel_and_correct_allels(
     """Test function that process Chewbbaca allele calling."""
 
     res = replace_cgmlst_errors(
-            called_allele, include_novel_alleles=True, correct_alleles=True
+        called_allele, include_novel_alleles=True, correct_alleles=True
     )
     assert res == expected
 

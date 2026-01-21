@@ -4,11 +4,12 @@ import io
 import json
 from typing import Any, Mapping
 from pathlib import Path
-from prp.exceptions import InvalidDataFormat
-from prp.parse.base import ParserInput
+from prp.exceptions import DataFormatError
+
+from .types import StreamOrPath
 
 
-def read_json(source: ParserInput, *, encoding: str = "utf-8") -> Any:
+def read_json(source: StreamOrPath, *, encoding: str = "utf-8") -> Any:
     """
     Read JSON from a path, string path, or file-like object (text or bytes).
 
@@ -31,10 +32,10 @@ def read_json(source: ParserInput, *, encoding: str = "utf-8") -> Any:
             data = data.decode(encoding, errors="replace")
         return json.loads(data)
 
-    raise TypeError(f"Unsupported ParserInput type: {type(source)!r}")
+    raise TypeError(f"Unsupported StreamOrPath type: {type(source)!r}")
 
 
 def require_mapping(obj: Any, *, what: str) -> Mapping[str, Any]:
     if not isinstance(obj, dict):
-        raise InvalidDataFormat(f"Expected object '{what}' to be a JSON object/dict, got {type(obj)!r}")
+        raise DataFormatError(f"Expected object '{what}' to be a JSON object/dict, got {type(obj)!r}")
     return obj
