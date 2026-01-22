@@ -16,7 +16,7 @@ class InvalidDataFormat(ParserError):
     """Fatal: content present but corrupted/ill-formed -> ERROR."""
 
 
-class UnsupportedMethod(ParserError):
+class UnsupportedAnalysisTypeError(ParserError):
     """Usually not thrown if 'produces' is configured; if thrown, treat as ERROR or SKIPPED policy-wise."""
 
 
