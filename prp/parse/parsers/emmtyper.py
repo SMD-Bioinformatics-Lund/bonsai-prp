@@ -3,13 +3,12 @@
 import logging
 from typing import Any
 
-import pandas as pd
-
 from prp.io.delimited import read_delimited
 from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.typing import TypingResultEmm
+from .utils import is_nullish
 
 LOG = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ def _parse_emmtyper_results(info: dict[str, Any]) -> TypingResultEmm:
     """Parse emm gene prediction results."""
     emm_like_alleles = (
         info["emm_like_alleles"].split(";")
-        if not pd.isna(info["emm_like_alleles"])
+        if not is_nullish(info["emm_like_alleles"])
         else None
     )
     return TypingResultEmm(
