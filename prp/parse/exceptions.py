@@ -24,6 +24,10 @@ class SchemaMismatchError(ParserError):
     """Fatal: required schema/columns do not match -> ERROR."""
 
 
+class UnsupportedSoftwareError(ParserError):
+    """No parser registered for software -> ERROR."""
+
+
 class UnsupportedVersionError(ParserError):
     """Fatal (or map to SKIPPED at a higher level if you prefer) -> ERROR by default."""
 

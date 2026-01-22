@@ -13,6 +13,7 @@ from prp.parse.core.envelope import (
     envelope_skipped,
     run_as_envelope,
 )
+from prp.parse.exceptions import UnsupportedMethod
 from prp.parse.models.base import ParserOutput, ResultEnvelope, ParseImplOut
 from prp.parse.models.enums import AnalysisType, ResultStatus
 
@@ -67,7 +68,14 @@ class BaseParser(ABC):
                 requested=[w.value for w in want],
                 produces=[p.value for p in self.produces],
             )
-            return out
+            raise UnsupportedMethod(
+                "Skipping parse; parser cant produce requested output",
+                context={
+                    "requested": [w.value for w in want],
+                    "produces": [p.value for p in self.produces],
+                },
+            )
+                
 
         self.log_info("Parsing", software=self.software, parser=self.parser_name)
 
