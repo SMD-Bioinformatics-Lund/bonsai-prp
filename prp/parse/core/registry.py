@@ -120,4 +120,4 @@ def run_parser(
 
     entry = get_parser(software, version=version)
     parse_fn = resolve_parser(entry, **(parser_init or {}))
-    return parse_fn(data, want=want, **parse_kwargs)
+    return parse_fn(data, software_version=version, want=want, **parse_kwargs)
