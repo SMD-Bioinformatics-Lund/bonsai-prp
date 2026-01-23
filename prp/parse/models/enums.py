@@ -37,7 +37,6 @@ class AnalysisType(StrEnum):
     CGMLST = "cgmlst"
     COVERAGE = "coverage"
     EMM = "emm"
-    EMMTYPE = "emmtype"
     H_TYPE = "h_type"
     K_TYPE = "k_type"
     LINEAGE = "lineage"
@@ -46,7 +45,6 @@ class AnalysisType(StrEnum):
     QC = "qc"
     RMST = "rmst"
     SCCMEC = "sccmec"
-    SCCMECTYPE = "sccmectype"
     SHIGATYPE = "shigatype"
     SMST = "smst"
     SPATYPE = "spatype"
@@ -54,7 +52,6 @@ class AnalysisType(StrEnum):
     STRESS = "stress"
     STX = "stx"
     TYPING = "typing"
-    VARIANT = "variant"
     VIRULENCE = "virulence"
     YBST = "ybst"
 
