@@ -39,7 +39,7 @@ class AnalysisType(StrEnum):
     EMM = "emm"
     EMMTYPE = "emmtype"
     H_TYPE = "h_type"
-    K_TYPE = "K_type"
+    K_TYPE = "k_type"
     LINEAGE = "lineage"
     MLST = "mlst"
     O_TYPE = "o_type"
