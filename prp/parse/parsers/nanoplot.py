@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any, Literal
 
-from prp.io.delimited import as_text_stream
+from prp.io.utils import ensure_text_stream
 from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
@@ -66,7 +66,7 @@ def _read_nanoplot(source: StreamOrPath, *, encoding: str = "utf-8") -> dict[str
         with open(source, "r", encoding=encoding, newline="") as fp:
             return _read_nanoplot(fp, encoding=encoding)
 
-    text_stream = as_text_stream(source, encoding=encoding)
+    text_stream = ensure_text_stream(source, encoding=encoding)
 
     results: dict[Mode, Any] = {
         "summary": {},
