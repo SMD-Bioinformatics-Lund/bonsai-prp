@@ -12,7 +12,7 @@ from prp.bonsai_api import bonsai
 from prp.models.manifest import SampleManifest
 from prp.pipeline.sample import parse_sample
 
-from .utils import SampleConfigFile
+from .utils import SampleManifestFile
 
 LOG = logging.getLogger(__name__)
 
@@ -36,50 +36,51 @@ def upload():
     "-p", "--password", required=True, envvar=PASSWD_ENV, type=str, help="Password"
 )
 @click.argument(
-    "sample_cnf",
-    type=SampleConfigFile(),
+    "manifest",
+    type=SampleManifestFile(),
 )
 def bonsai_upload(manifest: SampleManifest, username: str, password: str, api_url: str):
     """Upload a sample to Bonsai using either a sample config or json dump."""
     # Parse sample config
     try:
-        sample_obj = parse_sample(manifest)
+        manifest_obj = parse_sample(manifest)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)
         click.Abort("Upload aborted")
+    print(manifest_obj)
 
     # Authenticate to Bonsai API
-    try:
-        conn = authenticate(api_url, username, password)
-    except ValueError as error:
-        raise click.UsageError(str(error)) from error
+    # try:
+    #     conn = authenticate(api_url, username, password)
+    # except ValueError as error:
+    #     raise click.UsageError(str(error)) from error
 
-    # Upload sample
-    bonsai.upload_sample(conn, sample_obj, manifest)
+    # # Upload sample
+    # bonsai.upload_sample(conn, sample_obj, manifest)
 
-    # add sample to group if it was assigned one.
-    for group_id in manifest.groups:
-        try:
-            bonsai.add_sample_to_group(  # pylint: disable=no-value-for-parameter
-                token_obj=conn.token,
-                api_url=conn.api_url,
-                group_id=group_id,
-                sample_id=manifest.sample_id,
-            )
-        except HTTPError as error:
-            match error.response.status_code:
-                case 404:
-                    msg = f"Group with id {group_id} is not in Bonsai"
-                case 500:
-                    msg = (
-                        "Please ensure that you have added the respective sample's group as a group in Bonsai. "
-                        "Otherwise, an unexpected error occured in Bonsai, check bonsai api logs by running:\n"
-                        "(sudo) docker logs api"
-                    )
-                case _:
-                    msg = f"An unknown error occurred; {str(error)}"
-            # raise error and abort execution
-            raise click.UsageError(msg) from error
+    # # add sample to group if it was assigned one.
+    # for group_id in manifest.groups:
+    #     try:
+    #         bonsai.add_sample_to_group(  # pylint: disable=no-value-for-parameter
+    #             token_obj=conn.token,
+    #             api_url=conn.api_url,
+    #             group_id=group_id,
+    #             sample_id=manifest.sample_id,
+    #         )
+    #     except HTTPError as error:
+    #         match error.response.status_code:
+    #             case 404:
+    #                 msg = f"Group with id {group_id} is not in Bonsai"
+    #             case 500:
+    #                 msg = (
+    #                     "Please ensure that you have added the respective sample's group as a group in Bonsai. "
+    #                     "Otherwise, an unexpected error occured in Bonsai, check bonsai api logs by running:\n"
+    #                     "(sudo) docker logs api"
+    #                 )
+    #             case _:
+    #                 msg = f"An unknown error occurred; {str(error)}"
+    #         # raise error and abort execution
+    #         raise click.UsageError(msg) from error
     # exit script
     click.secho("Sample uploaded", fg="green")

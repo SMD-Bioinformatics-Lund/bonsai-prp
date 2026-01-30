@@ -12,7 +12,7 @@ from prp.models.manifest import SampleManifest
 OptionalFile = TextIO | None
 
 
-class SampleConfigFile(click.ParamType):
+class SampleManifestFile(click.ParamType):
     """CLI option for sample files."""
 
     name = "config"
