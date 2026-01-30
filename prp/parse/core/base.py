@@ -13,6 +13,7 @@ from prp.parse.core.envelope import (
     envelope_skipped,
     run_as_envelope,
 )
+from prp.parse.exceptions import UnsupportedAnalysisTypeError
 from prp.parse.models.base import ParserOutput, ResultEnvelope, ParseImplOut
 from prp.parse.models.enums import AnalysisType, ResultStatus
 
@@ -45,11 +46,12 @@ class BaseParser(ABC):
         source: StreamOrPath,
         *,
         want: set[AnalysisType] | AnalysisType | None = None,
+        software_version: str | None = None,
         **kwargs: Any,
     ) -> ParserOutput:
         want: set[AnalysisType] = self._normalize_want(want)
 
-        out = self._new_output()
+        out = self._new_output(software_version)
 
         # prepopulate with result envelopes for what this parser can produce
         for atype in self.produces:
@@ -67,7 +69,14 @@ class BaseParser(ABC):
                 requested=[w.value for w in want],
                 produces=[p.value for p in self.produces],
             )
-            return out
+            raise UnsupportedAnalysisTypeError(
+                "Skipping parse; parser cant produce requested output",
+                context={
+                    "requested": [w.value for w in want],
+                    "produces": [p.value for p in self.produces],
+                },
+            )
+                
 
         self.log_info("Parsing", software=self.software, parser=self.parser_name)
 
@@ -84,11 +93,11 @@ class BaseParser(ABC):
         want = want or set(self.produces)
         return {want} if isinstance(want, AnalysisType) else want
 
-    def _new_output(self) -> ParserOutput:
+    def _new_output(self, software_version: str | None) -> ParserOutput:
         """Create a new output model."""
         return ParserOutput(
             software=self.software,
-            software_version=None,
+            software_version=software_version,
             parser_name=self.parser_name,
             parser_version=self.parser_version,
             schema_version=getattr(self, "schema_version", 1),

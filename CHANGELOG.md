@@ -12,6 +12,10 @@
 - All parsers of analysis tools now share the same structure and helper functions.
 - Reworked and simplified data models
 
+### Fixed
+
+- Improved error handling and unified some names.
+
 ## [1.5.0]
 
 ### Added

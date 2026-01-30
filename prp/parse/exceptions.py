@@ -16,12 +16,16 @@ class InvalidDataFormat(ParserError):
     """Fatal: content present but corrupted/ill-formed -> ERROR."""
 
 
-class UnsupportedMethod(ParserError):
+class UnsupportedAnalysisTypeError(ParserError):
     """Usually not thrown if 'produces' is configured; if thrown, treat as ERROR or SKIPPED policy-wise."""
 
 
 class SchemaMismatchError(ParserError):
     """Fatal: required schema/columns do not match -> ERROR."""
+
+
+class UnsupportedSoftwareError(ParserError):
+    """No parser registered for software -> ERROR."""
 
 
 class UnsupportedVersionError(ParserError):

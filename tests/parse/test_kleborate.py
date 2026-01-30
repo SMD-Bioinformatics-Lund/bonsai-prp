@@ -117,7 +117,7 @@ TEST_ASSAYS_WO_HAMRONIZATION = [
     (
         "ecoli_kleborate_path",
         {
-            "K_type": "absent",
+            "k_type": "absent",
             "abst": "absent",
             "amr": "error",
             "cbst": "absent",

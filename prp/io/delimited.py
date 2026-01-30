@@ -1,12 +1,13 @@
 """Functions for reading delimited files and validating its content."""
 
 import re
-from typing import IO, Any, Callable, Iterator, Mapping, Sequence
+from typing import Any, Callable, Iterator, Mapping, Sequence
 from pathlib import Path
 import csv
-import io
 import logging
+
 from .types import DelimiterRow, FieldValidationResult, StreamOrPath
+from .utils import ensure_text_stream
 
 _NULLISH = {None, "", " ", "NA", "N/A", "na", "n/a", ".", "-", "ND", "none"}
 _TRAILING_ANNOT_RE = re.compile(r"\s*(\([^)]*\)|\[[^\]]*\])\s*$")
@@ -15,28 +16,6 @@ LOG = logging.getLogger(__name__)
 
 KeyFn = Callable[[str], str]
 ValFn = Callable[[Any], Any]
-
-
-def as_text_stream(
-    source: IO[bytes] | IO[str],
-    *,
-    encoding: str = "utf-8",
-) -> IO[str]:
-    """Return a text stream for a given file-like object (binary or text)."""
-    # If it's already a text stream, return as-is
-    if isinstance(source, io.TextIOBase):
-        return source
-
-    # If it's a binary stream, wrap it
-    if isinstance(source, (io.BufferedIOBase, io.RawIOBase)):
-        return io.TextIOWrapper(source, encoding=encoding, newline="")
-
-    # Fallback for file-like objects not derived from IOBase:
-    # read(0) returns b'' for binary and '' for text.
-    peek = source.read(0)  # type: ignore[arg-type]
-    if isinstance(peek, (bytes, bytearray)):
-        return io.TextIOWrapper(source, encoding=encoding, newline="")  # type: ignore[arg-type]
-    return source
 
 
 def read_delimited(
@@ -75,7 +54,7 @@ def read_delimited(
             )
         return
 
-    text_stream = as_text_stream(source, encoding=encoding)
+    text_stream = ensure_text_stream(source, encoding=encoding)
     # If has_header=False, DictReader will treat the first row as data and use provided fieldnames.
     # If has_header=True and fieldnames=None, DictReader reads header from first row.
     reader = csv.DictReader(text_stream, delimiter=delimiter, fieldnames=fieldnames)

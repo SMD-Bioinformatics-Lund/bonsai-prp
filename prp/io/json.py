@@ -7,6 +7,7 @@ from pathlib import Path
 from prp.exceptions import DataFormatError
 
 from .types import StreamOrPath
+from .utils import ensure_text_stream
 
 
 def read_json(source: StreamOrPath, *, encoding: str = "utf-8") -> Any:
@@ -15,27 +16,16 @@ def read_json(source: StreamOrPath, *, encoding: str = "utf-8") -> Any:
 
     Returns decoded Python object (dict/list/...).
     """
-    # Path-like
-    if isinstance(source, (str, Path)):
-        with open(source, "r", encoding=encoding) as fh:
-            return json.load(fh)
-
-    # File-like (text)
-    if isinstance(source, io.TextIOBase):
-        return json.load(source)
-
-    # File-like (bytes)
-    if isinstance(source, (io.BufferedIOBase, io.RawIOBase)) or hasattr(source, "read"):
-        data = source.read()
-        # data may be bytes or str depending on stream type
-        if isinstance(data, bytes):
-            data = data.decode(encoding, errors="replace")
-        return json.loads(data)
-
-    raise TypeError(f"Unsupported StreamOrPath type: {type(source)!r}")
+    try:
+        stream = ensure_text_stream(source, encoding=encoding)
+        return json.loads(stream.read())
+    except TypeError as exc:
+        raise DataFormatError(f"Failed to read JSON from source of type {type(source)!r}") from exc
 
 
 def require_mapping(obj: Any, *, what: str) -> Mapping[str, Any]:
+    """Read JSON object and ensure it's a dict/mapping."""
+
     if not isinstance(obj, dict):
         raise DataFormatError(f"Expected object '{what}' to be a JSON object/dict, got {type(obj)!r}")
     return obj

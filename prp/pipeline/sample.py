@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Any, Sequence
 
-from prp.parse.exceptions import UnsupportedMethod
+from prp.parse.exceptions import UnsupportedAnalysisTypeError
 from prp.models.manifest import SampleManifest
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from .types import PipelineResult
