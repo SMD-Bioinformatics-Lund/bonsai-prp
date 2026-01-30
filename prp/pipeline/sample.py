@@ -1,9 +1,11 @@
 """Parse for input config using parsers from this module."""
 
+from datetime import datetime
 import logging
 import re
 from typing import Any, Sequence
 
+from prp.models.metadata import PipelineInfo, SequencingInfo
 from prp.parse.exceptions import UnsupportedMethod
 from prp.models.manifest import SampleManifest
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
@@ -341,6 +343,71 @@ def _read_virulence(smp_cnf) -> Sequence[Any]:
     #     )
     return virulence
 
+
+def parse_date_from_run_id(run_id: str) -> datetime | None:
+    """
+    Get the date of sequencing from run id as datetime object.
+
+    XXX_20240112 -> 2024-01-12
+    """
+    err_msg = "Unrecognized format of run_id, sequence time cant be determined"
+    if "_" not in run_id:
+        LOG.warning(err_msg)
+        return None
+    # parse date string
+    try:
+        seq_date = datetime.strptime(run_id.split("_")[0], r"%y%m%d")
+    except ValueError:
+        LOG.warning(err_msg)
+        seq_date = None
+    return seq_date
+
+
+def parse_jasen_run_info(
+    run_metadata: str, software_info: list[str]
+) -> tuple[dict[str, Any], SequencingInfo, PipelineInfo]:
+    """Parse nextflow analysis information from JASEN.
+
+    :param run_metadata: Nextflow analysis metadata in json format.
+    :type run_metadata: str
+    :return: Analysis metadata record.
+    :rtype: RunMetadata
+    """
+    # TODO a flavour of the current data model for pipeline runs and sequenceing data from Bonsai.
+    # TODO use read_json from io
+    # TODO refcator to a parent function, one for reading run_info blob, then call _to_pipeline_run, _to_sequnce_run, etc
+    LOG.info("Parse run metadata.")
+    with open(run_metadata, encoding="utf-8") as jsonfile:
+        run_info = json.load(jsonfile)
+    # get sample info
+    sample_info = {
+        "sample_name": run_info["sample_name"],
+        "lims_id": run_info["lims_id"],
+    }
+    # get sequencing info
+    seq_info = SequencingInfo(
+        run_id=run_info["sequencing_run"],
+        platform=run_info["sequencing_platform"],
+        instrument=None,
+        method={"method": run_info["sequencing_type"]},
+        date=parse_date_from_run_id(run_info["sequencing_run"]),
+    )
+    # get pipeline info
+    soup_versions = get_database_info(software_info)
+    pipeline_info = PipelineInfo(
+        pipeline=run_info["pipeline"],
+        version=run_info["version"],
+        commit=run_info["commit"],
+        analysis_profile=run_info["analysis_profile"],
+        assay=run_info["assay"],
+        release_life_cycle=run_info["release_life_cycle"],
+        configuration_files=run_info["configuration_files"],
+        workflow_name=run_info["workflow_name"],
+        command=run_info["command"],
+        softwares=soup_versions,
+        date=datetime.fromisoformat(run_info["date"]),
+    )
+    return sample_info, seq_info, pipeline_info
 
 def parse_sample(manifest: SampleManifest) -> PipelineResult:
     """Parse sample config object into a combined result object."""

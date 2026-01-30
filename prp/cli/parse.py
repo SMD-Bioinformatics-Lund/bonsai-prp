@@ -14,7 +14,7 @@ from prp.models.manifest import SampleManifest
 from prp.parse.models.enums import AnalysisSoftware
 from prp.pipeline.types import CdmQcMethodIndex, QcMethodIndex
 
-from .utils import OptionalFile, SampleConfigFile
+from .utils import OptionalFile, SampleManifestFile
 
 LOG = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def parse_gr():
     "-s",
     "--sample",
     "sample_cnf",
-    type=SampleConfigFile(),
+    type=SampleManifestFile(),
     help="Sample configuration with results.",
 )
 @click.option("-o", "--output", type=click.Path(), help="Path to result.")
@@ -62,13 +62,13 @@ def format_jasen(manifest: SampleManifest, output: Path | None):
     "-s",
     "--sample",
     "sample_cnf",
-    type=SampleConfigFile(),
+    type=SampleManifestFile(),
     help="Sample configuration with results.",
 )
 @click.option(
     "-o", "--output", required=True, type=click.File("w"), help="output filepath"
 )
-def format_cdm(sample_cnf: SampleConfigFile, output: OptionalFile) -> None:
+def format_cdm(sample_cnf: SampleManifestFile, output: OptionalFile) -> None:
     """Format QC metrics into CDM compatible input file."""
     results: list[QcMethodIndex] = []
     if sample_cnf.postalnqc:
