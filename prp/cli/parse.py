@@ -7,7 +7,7 @@ import click
 from prp.analysis.qc import parse_alignment_results
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.core.registry import run_parser
-from prp.pipeline.sample import parse_sample
+from prp.pipeline.sample import parse_results_from_manifest
 from pydantic import TypeAdapter, ValidationError
 
 from prp.models.manifest import SampleManifest
@@ -25,26 +25,24 @@ def parse_gr():
 
 
 @parse_gr.command()
-@click.option(
-    "-s",
-    "--sample",
-    "sample_cnf",
-    type=SampleManifestFile(),
-    help="Sample configuration with results.",
-)
 @click.option("-o", "--output", type=click.Path(), help="Path to result.")
+@click.argument(
+    "manifest",
+    type=SampleManifestFile(),
+)
 def format_jasen(manifest: SampleManifest, output: Path | None):
     """Parse JASEN results and write as concatenated file in json format."""
     LOG.info("Start generating pipeline result json")
     try:
-        sample_obj = parse_sample(manifest)
+        results_obj = parse_results_from_manifest(manifest)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)
         raise click.Abort
 
     # Either write to stdout or to file
-    dump = sample_obj.model_dump_json(indent=2)
+    # dump = results_obj.model_dump_json(indent=2)
+    dump = results_obj
     if output is None:
         print(dump)
     else:

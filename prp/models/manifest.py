@@ -1,43 +1,62 @@
 """Sample manifest info."""
 
-from pydantic import AnyUrl, BaseModel, Field, FilePath, ValidationError
+from dataclasses import dataclass
+from typing import Any
+from urllib.parse import urlparse
+from pydantic import BaseModel, Field, ValidationInfo
+from pydantic_core import core_schema
 from pathlib import Path
-from .base import AllowExtraModelMixin
+
+from .base import AllowExtraModelMixin, RelOrAbsPath
 from .metadata import MetaEntry
 
 
-class FlexibleURI(str):
-    """Accepts local file paths, http(s) URLs, and s3:// URIs."""
+@dataclass
+class URI:
+    scheme: str
+    path: str
+    netloc: str = ""
+
+
+class FlexibleURI:
+    """
+    Accepts:
+    - relative or absolute local paths → file://
+    - file:// URIs
+    - http(s)://
+    - s3://
+    Returns: URI(scheme, netloc, path)
+    """
 
     @classmethod
-    def __get_pydantic_validator__(cls):
-        yield cls.validate
+    def validate(cls, value: Any, info: ValidationInfo):
+        # Normalize Path → string
+        if isinstance(value, Path):
+            value = str(value)
 
-    @classmethod
-    def validate(cls, value):
-        """Validate URI"""
-        # Check for local file path
-        try:
+        # --- handle local filesystem paths ---
+        if isinstance(value, str):
             p = Path(value)
-            if p.exists() or p.is_absolute():
-                return value
-        except Exception:
-            pass
 
-        # Check if it's http/https URL
-        try:
-            AnyUrl.validate(value)
-            return value
-        except ValidationError:
-            pass
+            # resolve relative to context, if given
+            if not p.is_absolute() and info.context:
+                base = Path(info.context.parent)
+                p = (base / p).resolve()
 
-        # Check for AWS S3 scheme
-        if value.startswith("s3://"):
-            return value
+            if p.exists():
+                pr = urlparse(f"file://{p.as_posix()}")
+                return URI(pr.scheme, pr.path, pr.netloc)
+
+        # --- parse as URL (including s3://, file://, http://, https://, etc.) ---
+        pr = urlparse(value)
+        if pr.scheme:
+            return URI(pr.scheme, pr.path, pr.netloc)
 
         raise ValueError(f"Invalid URI or path: {value}")
 
-
+    @classmethod
+    def __get_pydantic_core_schema__(cls, _source, _handler):
+        return core_schema.with_info_plain_validator_function(cls.validate)
 
 class IgvAnnotation(BaseModel):
     """Format of a IGV annotation track."""
@@ -70,12 +89,12 @@ class SampleManifest(AllowExtraModelMixin):
     metadata: list[MetaEntry] = Field(default_factory=list)
 
     # Reference genome
-    ref_genome_sequence: FilePath | None = None
-    ref_genome_annotation: FilePath | None = None
+    ref_genome_sequence: RelOrAbsPath | None = None
+    ref_genome_annotation: RelOrAbsPath | None = None
 
     igv_annotations: list[IgvAnnotation] = Field(default_factory=list)
 
-    nextflow_run_info: FilePath
+    nextflow_run_info: RelOrAbsPath
 
     analysis_result: list[AnalysisResult] = Field(
         default_factory=list,

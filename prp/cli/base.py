@@ -6,7 +6,8 @@ import click
 
 from prp import VERSION as __version__
 
-from . import annotate, parse, upload, validate
+#from . import annotate, parse, upload, validate
+from . import parse, upload
 
 LOG = logging.getLogger(__name__)
 
@@ -33,13 +34,13 @@ def cli(silent: bool, debug: bool):
 
 ## for manipulating jasen results
 cli.add_command(parse.format_jasen)
-cli.add_command(validate.validate_result)
-cli.add_command(validate.migrate_result)
-cli.add_command(annotate.annotate_delly)
-cli.add_command(annotate.add_igv_annotation_track)
+# cli.add_command(validate.validate_result)
+# cli.add_command(validate.migrate_result)
+# cli.add_command(annotate.annotate_delly)
+# cli.add_command(annotate.add_igv_annotation_track)
 ## qc related
 cli.add_command(parse.format_cdm)
-cli.add_command(parse.create_qc_result)
-cli.add_command(validate.print_schema)
+# cli.add_command(parse.create_qc_result)
+# cli.add_command(validate.print_schema)
 ## bonsai reslated
 cli.add_command(upload.bonsai_upload)
