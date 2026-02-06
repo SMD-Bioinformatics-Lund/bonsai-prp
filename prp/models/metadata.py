@@ -7,7 +7,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field, field_serializer
 from typing_extensions import Annotated
 
-from .base import AllowExtraModelMixin, FilePath, RWModel
+from .base import AllowExtraModelMixin, RelOrAbsPath, RWModel
 
 
 class MetadataTypes(StrEnum):
@@ -61,7 +61,7 @@ class TableMetadataEntry(BaseModel):
     """Container of basic metadata information"""
 
     fieldname: str
-    value: FilePath | str
+    value: RelOrAbsPath | str
     category: str = "general"
     type: Literal["table"]
 
@@ -91,7 +91,7 @@ class SoupVersion(BaseModel):
     type: SoupType
 
 
-class SequencingInfo(RWModel):
+class SequencingInfoOld(RWModel):
     """Information on the sample was sequenced."""
 
     run_id: str
@@ -101,7 +101,7 @@ class SequencingInfo(RWModel):
     date: datetime | None
 
 
-class PipelineInfo(RWModel):
+class PipelineInfoOld(RWModel):
     """Information on the sample was analysed."""
 
     pipeline: str
@@ -151,8 +151,17 @@ class PipelineInfo(AllowExtraModelMixin):
 class PipelineRun(AllowExtraModelMixin):
     """Describe a execution of a pipeline."""
 
-    sample_id: str
     pipeline_run_id: str
     executed_at: datetime
     assay: str
     pipeline_info: PipelineInfo
+
+
+class SequencingInfo(BaseModel):
+    """Information on the sample was sequenced."""
+
+    sequencing_run_id: str
+    platform: str
+    instrument: str | None = None
+    method: dict[str, str] = Field(default_factory=dict)
+    sequenced_at: datetime | None = None

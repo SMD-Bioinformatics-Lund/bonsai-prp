@@ -6,7 +6,7 @@ from pydantic import Field
 
 from prp.parse.models.base import VariantBase
 from prp.models.base import RWModel
-from .metadata import PipelineInfo, SequencingInfo
+from prp.models.metadata import PipelineRun, SequencingInfo
 
 SCHEMA_VERSION: int = 2
 
@@ -28,7 +28,7 @@ class SampleBase(RWModel):
 
     # metadata
     sequencing: SequencingInfo
-    pipeline: PipelineInfo
+    pipeline: PipelineRun
 
     # quality
     qc: list[Any] = Field(..., default_factory=list)

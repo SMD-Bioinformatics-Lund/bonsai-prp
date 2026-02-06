@@ -10,7 +10,7 @@ from prp import VERSION as __version__
 from prp.bonsai_api.auth import authenticate
 from prp.bonsai_api import bonsai
 from prp.models.manifest import SampleManifest
-from prp.pipeline.sample import parse_sample
+from prp.pipeline.sample import parse_results_from_manifest
 
 from .utils import SampleManifestFile
 
@@ -43,7 +43,7 @@ def bonsai_upload(manifest: SampleManifest, username: str, password: str, api_ur
     """Upload a sample to Bonsai using either a sample config or json dump."""
     # Parse sample config
     try:
-        manifest_obj = parse_sample(manifest)
+        manifest_obj = parse_results_from_manifest(manifest)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)
