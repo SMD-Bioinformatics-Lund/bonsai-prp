@@ -1,19 +1,15 @@
 """Functions for parsing JASEN results and generating output Bonsai and CDM output files."""
 
+import json
 import logging
 from pathlib import Path
 
 import click
-from prp.analysis.qc import parse_alignment_results
-from prp.parse.models.enums import AnalysisSoftware, AnalysisType
-from prp.parse.core.registry import run_parser
-from prp.pipeline.sample import parse_results_from_manifest
-from pydantic import TypeAdapter, ValidationError
+from prp.pipeline.loader import parse_results_from_manifest
+from pydantic import ValidationError
 
 from prp.models.manifest import SampleManifest
-from prp.parse.models.enums import AnalysisSoftware
-from prp.pipeline.types import CdmQcMethodIndex, QcMethodIndex
-from prp.export import to_result_json
+from prp.export import to_result_json, to_cdm_format
 
 from .utils import OptionalFile, SampleManifestFile
 
@@ -56,64 +52,30 @@ def format_results(manifest: SampleManifest, output: Path | None):
 
 
 @parse_gr.command("format-cdm")
-@click.option(
-    "-s",
-    "--sample",
-    "sample_cnf",
+@click.argument(
+    "manifest",
     type=SampleManifestFile(),
-    help="Sample configuration with results.",
 )
 @click.option(
-    "-o", "--output", required=True, type=click.File("w"), help="output filepath"
+    "-o", "--output", type=click.File("w"), help="output filepath"
 )
-def format_cdm(sample_cnf: SampleManifestFile, output: OptionalFile) -> None:
+def format_cdm(manifest: SampleManifestFile, output: OptionalFile) -> None:
     """Format QC metrics into CDM compatible input file."""
-    results: list[QcMethodIndex] = []
-    if sample_cnf.postalnqc:
-        LOG.info("Parse quality results")
-        
-        out = run_parser(AnalysisSoftware.POSTALIGNQC, version="1.0.0", data=sample_cnf.postalnqc)
-        res = out.results[AnalysisType.QC]
-        if res.status != "parsed":
-            LOG.warning(res.reason)
-        else:
-            results.append(
-                CdmQcMethodIndex(id="postalignqc", software="postalignqc", result=res.value.model_dump())
-            )
+    try:
+        results_obj = parse_results_from_manifest(manifest)
+    except ValidationError as err:
+        click.secho("Generated result failed validation", fg="red")
+        click.secho(err)
+        raise click.Abort
 
-    if sample_cnf.quast:
-        out = run_parser(AnalysisSoftware.QUAST, version="1.0.0", data=sample_cnf.quast)
-        res = out.results[AnalysisType.QC]
-        if res.status != "parsed":
-            LOG.warning(res.reason)
-        else:
-            results.append(CdmQcMethodIndex(id="quast", software="quast", result=res.value.model_dump()))
-
-    if sample_cnf.gambitcore:
-        out = run_parser(AnalysisSoftware.GAMBIT, version="1.0.0", data=sample_cnf.gambitcore)
-        res = out.results[AnalysisType.QC]
-        if res.status != "parsed":
-            LOG.warning(res.reason)
-        else:
-            results.append(CdmQcMethodIndex(id="gambitcore", software="gambitcore", result=res.value.model_dump()))
-
-    if sample_cnf.chewbbaca:
-        out = run_parser(AnalysisSoftware.CHEWBBACA, version="1.0.0", data=sample_cnf.chewbbaca)
-        res = out.results[AnalysisType.CGMLST]
-        if res.status != "parsed":
-            LOG.warning(res.reason)
-        else:
-            missing_loci = res.value.n_missing
-            n_missing_loci = QcMethodIndex(
-                software=AnalysisSoftware.CHEWBBACA, result={"n_missing": missing_loci}
-            )
-            results.append(
-                CdmQcMethodIndex(id="chewbbaca_missing_loci", **n_missing_loci.model_dump())
-            )
-
-    # cast output as pydantic type for easy serialization
-    qc_data = TypeAdapter(list[CdmQcMethodIndex])
-
-    LOG.info("Storing results to: %s", output.name)
-    output.write(qc_data.dump_json(results, indent=3).decode("utf-8"))
+    cdm_result = to_cdm_format(results_obj)
+    serialized = [e.model_dump(mode='json') for e in cdm_result]
+    if output is None:
+        print(json.dumps(serialized, indent=3))
+    else:
+        LOG.info("Storing results to: %s", output.name)
+        try:
+            print(json.dumps(serialized, indent=3), file=output)
+        except Exception as _:
+            raise click.Abort("Error writing results file")
     click.secho("Finished generating QC output", fg="green")
