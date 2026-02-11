@@ -1,4 +1,33 @@
-"""Parse for input config using parsers from this module."""
+"""
+Utilities for loading and normalizing pipeline results into PRP's internal
+canonical representation.
+
+This module reads the outputs produced by a workflow execution (e.g. Nextflow),
+including:
+
+    • pipeline run metadata (command, version, config files)
+    • sequencing metadata
+    • sample-level manifest metadata (scalar + tabular)
+    • analysis outputs parsed through the registered PRP parsers
+
+and converts them into structured Pydantic models that form the internal
+representation of a processed sample.
+
+Functions in this module perform:
+
+    1. Normalization of run-level metadata into PipelineRun, PipelineInfo,
+       PipelineDefinition, and SequencingInfo models.
+    2. Conversion of manifest metadata entries into GenericMetadataRecord or
+       TabularMetadataRecord objects.
+    3. Execution of PRP parsers for analysis tools and collection of results
+       into unified AnalysisResult objects.
+    4. Construction of the final ParsedSampleResults object, which is the
+       canonical in‑memory representation used for export (JSON/Bonsai).
+
+This module does *not* perform validation, serialization, or API communication.
+It acts purely as the ingestion and normalisation layer for pipeline outputs.
+"""
+
 
 from datetime import datetime
 import logging
