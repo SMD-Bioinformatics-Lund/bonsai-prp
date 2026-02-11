@@ -9,7 +9,6 @@ from requests.exceptions import HTTPError
 from requests.structures import CaseInsensitiveDict
 
 from prp.models.metadata import MetaEntry
-from prp.pipeline.metadata import process_custom_metadata
 
 from prp.models.manifest import SampleManifest
 from prp.pipeline.types import PipelineResult
@@ -171,20 +170,20 @@ def upload_sample(
                 msg, _ = _process_generic_status_codes(error, manifest.sample_id)
                 raise click.UsageError(msg) from error
     # add metadata to an existing sample
-    if len(manifest.metadata) > 0:
-        records = process_custom_metadata(manifest.metadata)
-        try:
-            add_metadata_to_sample(
-                token_obj=conn.token,
-                api_url=conn.api_url,
-                sample_id=manifest.sample_id,
-                metadata=records,
-            )
-        except HTTPError as error:
-            if error.response.status_code == 422:
-                fmt_records = [rec.model_dump_json() for rec in records]
-                click.secho(f"Bad formatting of input data, {fmt_records}", fg="yellow")
-            else:
-                msg, _ = _process_generic_status_codes(error, manifest.sample_id)
-                raise click.UsageError(msg) from error
+    # if len(manifest.metadata) > 0:
+    #     records = process_custom_metadata(manifest.metadata)
+    #     try:
+    #         add_metadata_to_sample(
+    #             token_obj=conn.token,
+    #             api_url=conn.api_url,
+    #             sample_id=manifest.sample_id,
+    #             metadata=records,
+    #         )
+    #     except HTTPError as error:
+    #         if error.response.status_code == 422:
+    #             fmt_records = [rec.model_dump_json() for rec in records]
+    #             click.secho(f"Bad formatting of input data, {fmt_records}", fg="yellow")
+    #         else:
+    #             msg, _ = _process_generic_status_codes(error, manifest.sample_id)
+    #             raise click.UsageError(msg) from error
     return manifest.sample_id

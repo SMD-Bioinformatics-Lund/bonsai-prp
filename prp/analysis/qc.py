@@ -14,8 +14,8 @@ except ImportError as e:
         "This feature requires the 'analysis' extra: pip install bonsai-prp[analysis]"
     ) from e
 
+from prp.models.base import OptionalFile
 
-OptionalFile = TextIO | None
 
 LOG = logging.getLogger(__name__)
 
