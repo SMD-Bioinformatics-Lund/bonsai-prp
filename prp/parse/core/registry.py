@@ -95,4 +95,6 @@ def run_parser(
 
     entry = get_parser(software, version=version)
     parse_fn = resolve_parser(entry, **(parser_init or {}))
-    return parse_fn(data, want=want, **parse_kwargs)
+    ev = parse_fn(data, want=want, **parse_kwargs)
+    # add version to results
+    return ev.model_copy(update={"software_version": version})
