@@ -10,7 +10,7 @@ from prp import VERSION as __version__
 from prp.bonsai_api.auth import authenticate
 from prp.bonsai_api import bonsai
 from prp.models.manifest import SampleManifest
-from prp.pipeline.sample import parse_results_from_manifest
+from prp.pipeline.loader import parse_results_from_manifest
 
 from .utils import SampleManifestFile
 
