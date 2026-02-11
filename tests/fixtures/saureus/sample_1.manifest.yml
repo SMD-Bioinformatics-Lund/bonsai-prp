@@ -63,6 +63,9 @@ analysis_result:
   - software: samtools
     software_version: 1.0.0
     uri: ./samcoverage.txt
+  - software: chewbbaca
+    software_version: 1.0.0
+    uri: ./chewbbaca.out
 
 # indexes
 sourmash_signature: ./sourmash.sig
