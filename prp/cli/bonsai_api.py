@@ -20,12 +20,12 @@ USER_ENV = "BONSAI_USER"
 PASSWD_ENV = "BONSAI_PASSWD"
 
 
-@click.group()
-def upload():
-    ...
+@click.group("bonsai")
+def bonsai_gr():
+    """Interact with the Bonsai API."""
 
 
-@upload.command()
+@bonsai_gr.command()
 @click.option(
     "-a", "--api", "api_url", required=True, type=str, help="Upload configuration"
 )

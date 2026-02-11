@@ -13,6 +13,7 @@ from pydantic import TypeAdapter, ValidationError
 from prp.models.manifest import SampleManifest
 from prp.parse.models.enums import AnalysisSoftware
 from prp.pipeline.types import CdmQcMethodIndex, QcMethodIndex
+from prp.export import to_result_json
 
 from .utils import OptionalFile, SampleManifestFile
 
@@ -21,17 +22,17 @@ LOG = logging.getLogger(__name__)
 
 @click.group("parse")
 def parse_gr():
-    ...
+    """Read and format pipeline results."""
 
 
-@parse_gr.command()
+@parse_gr.command("jasen")
 @click.option("-o", "--output", type=click.Path(), help="Path to result.")
 @click.argument(
     "manifest",
     type=SampleManifestFile(),
 )
-def format_jasen(manifest: SampleManifest, output: Path | None):
-    """Parse JASEN results and write as concatenated file in json format."""
+def format_results(manifest: SampleManifest, output: Path | None):
+    """Parse JASEN results and serialize it in json format."""
     LOG.info("Start generating pipeline result json")
     try:
         results_obj = parse_results_from_manifest(manifest)
@@ -41,21 +42,20 @@ def format_jasen(manifest: SampleManifest, output: Path | None):
         raise click.Abort
 
     # Either write to stdout or to file
-    # dump = results_obj.model_dump_json(indent=2)
-    dump = results_obj
+    blob = to_result_json(results_obj)
     if output is None:
-        print(dump)
+        print(blob)
     else:
         LOG.info("Storing results to: %s", output)
         try:
             with open(output, "w", encoding="utf-8") as fout:
-                fout.write(dump)
+                fout.write(blob)
         except Exception as _:
             raise click.Abort("Error writing results file")
     click.secho("Finished generating pipeline output", fg="green")
 
 
-@parse_gr.command()
+@parse_gr.command("format-cdm")
 @click.option(
     "-s",
     "--sample",
@@ -116,32 +116,4 @@ def format_cdm(sample_cnf: SampleManifestFile, output: OptionalFile) -> None:
 
     LOG.info("Storing results to: %s", output.name)
     output.write(qc_data.dump_json(results, indent=3).decode("utf-8"))
-    click.secho("Finished generating QC output", fg="green")
-
-
-@parse_gr.command()
-@click.option("-i", "--sample-id", required=True, help="Sample identifier")
-@click.option("-b", "--bam", required=True, type=click.File(), help="bam file")
-@click.option("-e", "--bed", type=click.File(), help="bed file")
-@click.option("-a", "--baits", type=click.File(), help="baits file")
-@click.option(
-    "-r", "--reference", required=True, type=click.File(), help="reference fasta"
-)
-@click.option("-c", "--cpus", type=click.INT, default=1, help="cpus")
-@click.option(
-    "-o", "--output", required=True, type=click.File("w"), help="output filepath"
-)
-def create_qc_result(
-    sample_id: str,
-    bam: click.File,
-    bed: OptionalFile,
-    baits: OptionalFile,
-    reference: OptionalFile,
-    cpus: int,
-    output: click.File,
-) -> None:
-    """Generate QC metrics regarding bam file"""
-    if bam and reference:
-        LOG.info("Parse alignment results")
-        parse_alignment_results(sample_id, bam, reference, cpus, output, bed, baits)
     click.secho("Finished generating QC output", fg="green")

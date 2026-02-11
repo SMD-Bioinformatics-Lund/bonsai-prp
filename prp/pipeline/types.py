@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, TypeAdapter
 
 from prp.models.manifest import URI
 from prp.parse.models.base import VariantBase
@@ -143,6 +143,26 @@ class AnalysisResult(BaseModel):
     results: Any
 
 
+class GenericMetadataRecord(BaseModel):
+    """Canonical internal representation of simple metadata values."""
+
+    fieldname: str
+    value: str | int | float | datetime
+    category: str | None = None
+    data_type: Literal["string", "integer", "float", "datetime"]
+
+
+class TabularMetadataRecord(BaseModel):
+    fieldname: str
+    columns: list[str]
+    rows: list[str] | None = None
+    cells: list[list[Any]]
+    category: str | None = None
+    data_type: Literal["table"] = "table"
+
+
+InternalMetadataRecord: TypeAdapter = GenericMetadataRecord | TabularMetadataRecord
+
 class ParsedSampleResults(BaseModel):
     """Internal representation of a parsed sample."""
     schema_version: Literal[3] = 3
@@ -152,6 +172,7 @@ class ParsedSampleResults(BaseModel):
     lims_id: str
 
     # metadata
+    metadata: list[InternalMetadataRecord] = Field(..., default_factory=list)
     sequencing: SequencingInfo
     pipeline: PipelineRun
 
