@@ -28,7 +28,7 @@ Issues = "https://github.com/Clinical-Genomics-Lund/bonsai-prp/issues"
 Changelog = "https://github.com/Clinical-Genomics-Lund/CHANGELOG.md"
 
 [project.scripts]
-prp = "prp.__main__:main"
+prp = "prp.cli:cli"
 
 [project.optional-dependencies]
 
