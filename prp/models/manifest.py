@@ -17,6 +17,9 @@ class URI:
     path: str
     netloc: str = ""
 
+    def __str__(self):
+        return f"{self.scheme}://{self.path}"
+
 
 class FlexibleURI:
     """
