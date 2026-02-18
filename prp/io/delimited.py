@@ -1,10 +1,10 @@
 """Functions for reading delimited files and validating its content."""
 
-import re
-from typing import Any, Callable, Iterator, Mapping, Sequence
-from pathlib import Path
 import csv
 import logging
+import re
+from pathlib import Path
+from typing import Any, Callable, Iterator, Mapping, Sequence
 
 from .types import DelimiterRow, FieldValidationResult, StreamOrPath
 from .utils import ensure_text_stream

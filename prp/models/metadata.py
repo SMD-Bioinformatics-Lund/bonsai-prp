@@ -127,7 +127,7 @@ class PipelineArtifact(BaseModel):
 
 class PipelineProvenance(AllowExtraModelMixin):
     """Evidence of what was executed.
-    
+
     Includes configfiles, hashes, traces etc."""
 
     configuration_files: list[str] = Field(default_factory=list)

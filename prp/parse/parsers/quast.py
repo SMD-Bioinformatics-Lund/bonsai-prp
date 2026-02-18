@@ -3,7 +3,7 @@
 from typing import Any
 
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.parse.core.base import StreamOrPath, SingleAnalysisParser, warn_if_extra_rows
+from prp.parse.core.base import SingleAnalysisParser, StreamOrPath, warn_if_extra_rows
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.qc import QuastQcResult

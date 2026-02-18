@@ -1,4 +1,5 @@
 """Test Serotypefinder parser."""
+
 import pytest
 
 from prp.parse.models.base import GeneBase, ParserOutput, ResultEnvelope

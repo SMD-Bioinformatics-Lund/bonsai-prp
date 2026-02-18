@@ -1,4 +1,5 @@
 """Test various utility functions."""
+
 import pytest
 
 from prp.parse.parsers.utils import safe_percent

@@ -18,7 +18,6 @@ from prp.parse.core.envelope import (
 )
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import AbsentResultError, ParserError
-from prp.parse.models.phenotype import AmrFinderResistanceGene, AmrFinderVariant
 from prp.parse.models.base import ElementTypeResult, PhenotypeInfo, ResultEnvelope
 from prp.parse.models.enums import (
     AnalysisSoftware,
@@ -39,6 +38,7 @@ from prp.parse.models.kleborate import (
     KleboreateSppResult,
     ParsedVariant,
 )
+from prp.parse.models.phenotype import AmrFinderResistanceGene, AmrFinderVariant
 from prp.parse.parsers.hamronization import HAmrOnizationParser
 
 from .utils import safe_int, safe_strand
@@ -207,7 +207,7 @@ def _parse_virulence(result: Mapping[str, Any]) -> KleborateEtScore | None:
 
 
 def _parse_kaptive(
-    result: Mapping[str, Any]
+    result: Mapping[str, Any],
 ) -> dict[AnalysisType.K_TYPE, KleborateKaptiveLocus]:
     """Parse kaptive results in Kleborate and return K/O typing results."""
 
@@ -234,7 +234,7 @@ def _parse_kaptive(
 
 
 def _parse_mlst_like(
-    result: Mapping[str, Any]
+    result: Mapping[str, Any],
 ) -> dict[AnalysisType, KleborateMlstLikeResults]:
     """
     Parse the MLST-like blocks from result["klebsiella"] using your schema definitions.
@@ -455,13 +455,17 @@ def _parse_amr(entries: HamronizationEntries, *, warn: WarnFn) -> ElementTypeRes
                     query_end_pos=q_end,
                     start=entry.reference.gene_start or 0,
                     end=entry.reference.gene_stop or 0,
-                    identity=entry.sequence_identity
-                    if entry.sequence_identity is not None
-                    else -1,
+                    identity=(
+                        entry.sequence_identity
+                        if entry.sequence_identity is not None
+                        else -1
+                    ),
                     depth=entry.coverage_depth,
-                    coverage=entry.coverage_percentage
-                    if entry.coverage_percentage is not None
-                    else -1,
+                    coverage=(
+                        entry.coverage_percentage
+                        if entry.coverage_percentage is not None
+                        else -1
+                    ),
                     frequency=getattr(entry, "variant_frequency", None),
                     passed_qc=None,
                     confidence=None,

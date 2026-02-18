@@ -4,6 +4,7 @@ from enum import StrEnum
 
 from prp.models.enums import AnalysisSoftware, AnalysisType
 
+
 class ResultStatus(StrEnum):
     """
     PARSED - Assay exists and was parsed

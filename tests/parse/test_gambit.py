@@ -1,6 +1,5 @@
 """Test gambit parsing."""
 
-
 from prp.parse.models.base import ParserOutput, ResultEnvelope
 from prp.parse.models.enums import AnalysisType
 from prp.parse.models.qc import GambitcoreQcResult

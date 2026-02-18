@@ -178,8 +178,7 @@ class SingleAnalysisParser(BaseParser):
         return {self.analysis_type: env}
 
     @abstractmethod
-    def _parse_one(self, source: StreamOrPath, **kwargs: Any) -> Any:
-        ...
+    def _parse_one(self, source: StreamOrPath, **kwargs: Any) -> Any: ...
 
 
 def warn_if_extra_rows(

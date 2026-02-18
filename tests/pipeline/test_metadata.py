@@ -28,7 +28,7 @@ def test_parse_sequence_date_from_run_id():
 def test_process_custom_metadata(saureus_sample_conf_path: str):
     """Test that custom metadata fields are handled properly."""
 
-    #TODO migrate to new manifest format and then fix test.
+    # TODO migrate to new manifest format and then fix test.
     # cnf_path = Path(saureus_sample_conf_path)
     # with cnf_path.open(encoding="utf-8") as cfile:
     #     data = yaml.safe_load(cfile)

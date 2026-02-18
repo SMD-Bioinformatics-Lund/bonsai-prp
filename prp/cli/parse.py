@@ -5,11 +5,11 @@ import logging
 from pathlib import Path
 
 import click
-from prp.pipeline.loader import parse_results_from_manifest
 from pydantic import ValidationError
 
+from prp.export import to_cdm_format, to_result_json
 from prp.models.manifest import SampleManifest
-from prp.export import to_result_json, to_cdm_format
+from prp.pipeline.loader import parse_results_from_manifest
 
 from .utils import OptionalFile, SampleManifestFile
 
@@ -56,9 +56,7 @@ def format_results(manifest: SampleManifest, output: Path | None):
     "manifest",
     type=SampleManifestFile(),
 )
-@click.option(
-    "-o", "--output", type=click.File("w"), help="output filepath"
-)
+@click.option("-o", "--output", type=click.File("w"), help="output filepath")
 def format_cdm(manifest: SampleManifestFile, output: OptionalFile) -> None:
     """Format QC metrics into CDM compatible input file."""
     try:
@@ -69,7 +67,7 @@ def format_cdm(manifest: SampleManifestFile, output: OptionalFile) -> None:
         raise click.Abort
 
     cdm_result = to_cdm_format(results_obj)
-    serialized = [e.model_dump(mode='json') for e in cdm_result]
+    serialized = [e.model_dump(mode="json") for e in cdm_result]
     if output is None:
         print(json.dumps(serialized, indent=3))
     else:

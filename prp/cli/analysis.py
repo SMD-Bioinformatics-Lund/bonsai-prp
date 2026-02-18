@@ -1,4 +1,3 @@
-
 import logging
 
 import click
@@ -12,6 +11,7 @@ LOG = logging.getLogger(__name__)
 def analysis_gr():
     """Commands for conducting analysis"""
     ...
+
 
 @analysis_gr.command("alignment_qc")
 @click.option("-i", "--sample-id", required=True, help="Sample identifier")

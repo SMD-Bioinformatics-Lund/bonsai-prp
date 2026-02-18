@@ -5,9 +5,9 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, TypeAdapter
 
+from prp.models.base import RWModel
 from prp.models.enums import AnalysisSoftware, AnalysisType
 from prp.models.manifest import URI
-from prp.models.base import RWModel
 
 SCHEMA_VERSION: int = 2
 
@@ -94,6 +94,7 @@ class SequencingInfo(BaseModel):
 
 class AnalysisResult(BaseModel):
     """Container for analysis results."""
+
     software: AnalysisSoftware
     software_version: str
 
@@ -128,13 +129,17 @@ class TabularMetadataRecord(BaseModel):
 
 InternalMetadataRecord: TypeAdapter = GenericMetadataRecord | TabularMetadataRecord
 
+
 class ParsedSampleResults(BaseModel):
     """Internal representation of a parsed sample."""
+
     schema_version: Literal[3] = 3
 
     sample_id: str
     sample_name: str
     lims_id: str
+
+    groups: list[str] = Field(..., default_factory=list)
 
     # metadata
     metadata: list[InternalMetadataRecord] = Field(..., default_factory=list)
