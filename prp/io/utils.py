@@ -1,5 +1,5 @@
-
 from pathlib import Path
+
 from pydantic import ValidationInfo
 
 
@@ -21,4 +21,3 @@ def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
 
     assert upd_path.is_file(), f"Invalid path: {upd_path}"
     return upd_path
-

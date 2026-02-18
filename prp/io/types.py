@@ -1,9 +1,9 @@
 """Shared IO types."""
 
 from dataclasses import dataclass
-from typing import TypeAlias, TextIO, BinaryIO
 from os import PathLike
 from pathlib import Path
+from typing import BinaryIO, TextIO, TypeAlias
 
 # Path-ish types that are commonly accepted by open()
 Pathish: TypeAlias = str | Path | PathLike[str]

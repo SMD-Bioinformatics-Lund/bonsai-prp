@@ -13,7 +13,7 @@ from prp.parse.core.envelope import (
     envelope_skipped,
     run_as_envelope,
 )
-from prp.parse.models.base import ParserOutput, ResultEnvelope, ParseImplOut
+from prp.parse.models.base import ParseImplOut, ParserOutput, ResultEnvelope
 from prp.parse.models.enums import AnalysisType, ResultStatus
 
 T = TypeVar("T")
@@ -169,8 +169,7 @@ class SingleAnalysisParser(BaseParser):
         return {self.analysis_type: env}
 
     @abstractmethod
-    def _parse_one(self, source: StreamOrPath, **kwargs: Any) -> Any:
-        ...
+    def _parse_one(self, source: StreamOrPath, **kwargs: Any) -> Any: ...
 
 
 def warn_if_extra_rows(

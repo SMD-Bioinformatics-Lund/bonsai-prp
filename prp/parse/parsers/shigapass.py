@@ -11,10 +11,11 @@ from prp.io.delimited import (
     normalize_row,
     read_delimited,
 )
+from prp.parse.core.base import SingleAnalysisParser, StreamOrPath, warn_if_extra_rows
+from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.typing import TypingResultShiga
-from prp.parse.core.base import StreamOrPath, SingleAnalysisParser, warn_if_extra_rows
-from prp.parse.core.registry import register_parser
+
 from .utils import safe_float
 
 LOG = logging.getLogger(__name__)

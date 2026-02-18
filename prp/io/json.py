@@ -2,8 +2,9 @@
 
 import io
 import json
-from typing import Any, Mapping
 from pathlib import Path
+from typing import Any, Mapping
+
 from prp.exceptions import DataFormatError
 
 from .types import StreamOrPath
@@ -37,5 +38,7 @@ def read_json(source: StreamOrPath, *, encoding: str = "utf-8") -> Any:
 
 def require_mapping(obj: Any, *, what: str) -> Mapping[str, Any]:
     if not isinstance(obj, dict):
-        raise DataFormatError(f"Expected object '{what}' to be a JSON object/dict, got {type(obj)!r}")
+        raise DataFormatError(
+            f"Expected object '{what}' to be a JSON object/dict, got {type(obj)!r}"
+        )
     return obj

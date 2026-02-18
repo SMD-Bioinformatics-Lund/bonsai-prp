@@ -1,11 +1,12 @@
 """Functions for reading delimited files and validating its content."""
 
-import re
-from typing import IO, Any, Callable, Iterator, Mapping, Sequence
-from pathlib import Path
 import csv
 import io
 import logging
+import re
+from pathlib import Path
+from typing import IO, Any, Callable, Iterator, Mapping, Sequence
+
 from .types import DelimiterRow, FieldValidationResult, StreamOrPath
 
 _NULLISH = {None, "", " ", "NA", "N/A", "na", "n/a", ".", "-", "ND", "none"}

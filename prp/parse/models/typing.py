@@ -87,6 +87,7 @@ class TypingResultSpatyper(RWModel):
     repeats: str | None
     type: str | None
 
+
 class TypingResultShiga(RWModel):
     """Container for shigatype gene information"""
 

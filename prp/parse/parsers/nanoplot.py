@@ -1,12 +1,11 @@
 """Nanoplot parser."""
 
-
 import re
 from pathlib import Path
 from typing import Any, Literal
 
 from prp.io.delimited import as_text_stream
-from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
+from prp.parse.core.base import SingleAnalysisParser, StreamOrPath
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.qc import NanoPlotQcCutoff, NanoPlotQcResult, NanoPlotSummary

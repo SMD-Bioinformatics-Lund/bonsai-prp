@@ -1,6 +1,5 @@
 """QC result specific data models."""
 
-
 from pydantic import BaseModel, Field
 
 from .enums import GambitQcFlag

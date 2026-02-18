@@ -4,10 +4,10 @@ import logging
 from pathlib import Path
 
 from prp.models.manifest import IgvAnnotation
-from .types import IgvAnnotationTrack
-from prp.parse.models.base import VariantBase
 from prp.models.sample import IgvAnnotationTrack, ReferenceGenome
+from prp.parse.models.base import VariantBase
 
+from .types import IgvAnnotationTrack
 from .variant import load_variants
 
 LOG = logging.getLogger(__name__)

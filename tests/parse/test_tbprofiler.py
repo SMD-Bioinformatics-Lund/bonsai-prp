@@ -1,6 +1,5 @@
 """Test parsing of TbProfiler results."""
 
-
 from prp.parse.models.base import ElementTypeResult, ParserOutput, ResultEnvelope
 from prp.parse.models.enums import AnalysisType
 from prp.parse.models.typing import LineageInformation

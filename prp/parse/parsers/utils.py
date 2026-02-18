@@ -5,8 +5,8 @@ from datetime import datetime
 from typing import Any
 
 from prp.io.delimited import is_nullish
-from prp.parse.models.enums import SequenceStrand, VariantSubType, VariantType
 from prp.parse.models.base import ElementTypeResult
+from prp.parse.models.enums import SequenceStrand, VariantSubType, VariantType
 
 LOG = logging.getLogger(__name__)
 

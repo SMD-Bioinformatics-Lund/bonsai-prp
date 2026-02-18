@@ -1,11 +1,12 @@
 """Sample manifest info."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
+
 from pydantic import BaseModel, Field, ValidationInfo
 from pydantic_core import core_schema
-from pathlib import Path
 
 from .base import AllowExtraModelMixin, RelOrAbsPath
 from .metadata import MetaEntry
@@ -60,6 +61,7 @@ class FlexibleURI:
     @classmethod
     def __get_pydantic_core_schema__(cls, _source, _handler):
         return core_schema.with_info_plain_validator_function(cls.validate)
+
 
 class IgvAnnotation(BaseModel):
     """Format of a IGV annotation track."""

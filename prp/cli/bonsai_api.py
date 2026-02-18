@@ -1,14 +1,14 @@
 """Functions for uploading results to Bonsai."""
 
 import logging
+import os
 
 import click
 from pydantic import ValidationError
-from requests import HTTPError
 
 from prp import VERSION as __version__
-from prp.bonsai_api.auth import authenticate
-from prp.bonsai_api import bonsai
+from prp.bonsai import BonsaiUploadService, make_bonsai_client
+from prp.bonsai.service import UploadStateStore
 from prp.models.manifest import SampleManifest
 from prp.pipeline.loader import parse_results_from_manifest
 
@@ -25,7 +25,7 @@ def bonsai_gr():
     """Interact with the Bonsai API."""
 
 
-@bonsai_gr.command()
+@bonsai_gr.command("upload")
 @click.option(
     "-a", "--api", "api_url", required=True, type=str, help="Upload configuration"
 )
@@ -35,52 +35,40 @@ def bonsai_gr():
 @click.option(
     "-p", "--password", required=True, envvar=PASSWD_ENV, type=str, help="Password"
 )
+@click.option("-d", "--dry-run", is_flag=True)
 @click.argument(
     "manifest",
     type=SampleManifestFile(),
 )
-def bonsai_upload(manifest: SampleManifest, username: str, password: str, api_url: str):
+def bonsai_upload(
+    manifest: SampleManifest, username: str, password: str, api_url: str, dry_run: bool
+):
     """Upload a sample to Bonsai using either a sample config or json dump."""
+    # setup state
+    store = UploadStateStore(root=os.getcwd())
+
     # Parse sample config
     try:
         manifest_obj = parse_results_from_manifest(manifest)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)
-        click.Abort("Upload aborted")
-    print(manifest_obj)
+        raise click.Abort("Upload aborted")
 
-    # Authenticate to Bonsai API
-    # try:
-    #     conn = authenticate(api_url, username, password)
-    # except ValueError as error:
-    #     raise click.UsageError(str(error)) from error
+    # setup client connection and autenticate user
+    client = make_bonsai_client(base_url=api_url)
+    authenticated = client.authenticate_user(username=username, password=password)
+    if not authenticated:
+        raise click.UsageError(
+            "Could not authenticate to Bonsai API, check your credentials"
+        )
 
-    # # Upload sample
-    # bonsai.upload_sample(conn, sample_obj, manifest)
+    service = BonsaiUploadService(client=client, state_store=store, dry_run=dry_run)
+    try:
+        service.upload_sample(manifest_obj)
+    except Exception as exc:
+        LOG.exception("Something went wrong uploading the sample, %s", exc)
+        raise click.Abort("An error prevented the sample from being uploaded.")
 
-    # # add sample to group if it was assigned one.
-    # for group_id in manifest.groups:
-    #     try:
-    #         bonsai.add_sample_to_group(  # pylint: disable=no-value-for-parameter
-    #             token_obj=conn.token,
-    #             api_url=conn.api_url,
-    #             group_id=group_id,
-    #             sample_id=manifest.sample_id,
-    #         )
-    #     except HTTPError as error:
-    #         match error.response.status_code:
-    #             case 404:
-    #                 msg = f"Group with id {group_id} is not in Bonsai"
-    #             case 500:
-    #                 msg = (
-    #                     "Please ensure that you have added the respective sample's group as a group in Bonsai. "
-    #                     "Otherwise, an unexpected error occured in Bonsai, check bonsai api logs by running:\n"
-    #                     "(sudo) docker logs api"
-    #                 )
-    #             case _:
-    #                 msg = f"An unknown error occurred; {str(error)}"
-    #         # raise error and abort execution
-    #         raise click.UsageError(msg) from error
-    # exit script
+    # create a new sample
     click.secho("Sample uploaded", fg="green")

@@ -16,7 +16,6 @@ except ImportError as e:
 
 from prp.models.base import OptionalFile
 
-
 LOG = logging.getLogger(__name__)
 
 

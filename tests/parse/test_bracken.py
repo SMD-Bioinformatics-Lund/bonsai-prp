@@ -1,6 +1,5 @@
 """Test bracken parser."""
 
-
 import pytest
 
 from prp.parse.models.base import ParserOutput, ResultEnvelope

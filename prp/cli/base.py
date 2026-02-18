@@ -6,9 +6,9 @@ import click
 
 from prp import VERSION as __version__
 
-from .parse import parse_gr
-from .bonsai_api import bonsai_gr
 from .analysis import analysis_gr
+from .bonsai_api import bonsai_gr
+from .parse import parse_gr
 
 LOG = logging.getLogger(__name__)
 

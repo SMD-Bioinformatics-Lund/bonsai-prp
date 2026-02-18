@@ -2,8 +2,8 @@
 
 from datetime import datetime
 
-from prp.models.sample import PipelineResult
 from prp.models.metadata import PipelineInfo, SequencingInfo
+from prp.models.sample import PipelineResult
 
 from .fixtures import *
 

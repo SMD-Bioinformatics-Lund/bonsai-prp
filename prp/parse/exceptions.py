@@ -1,6 +1,7 @@
 """Common errors"""
 
 from typing import Any
+
 from prp.exceptions import PrpError
 
 
