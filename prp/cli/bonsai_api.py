@@ -10,7 +10,7 @@ from prp import VERSION as __version__
 from prp.bonsai import BonsaiUploadService, make_bonsai_client
 from prp.bonsai.service import UploadStateStore
 from prp.models.manifest import SampleManifest
-from prp.pipeline.loader import parse_results_from_manifest
+from prp.pipeline.loader import parse_manifest_for_upload
 
 from .utils import SampleManifestFile
 
@@ -49,7 +49,7 @@ def bonsai_upload(
 
     # Parse sample config
     try:
-        manifest_obj = parse_results_from_manifest(manifest)
+        manifest_obj = parse_manifest_for_upload(manifest)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)

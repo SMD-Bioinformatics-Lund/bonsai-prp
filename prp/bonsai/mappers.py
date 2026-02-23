@@ -80,3 +80,7 @@ def sample_to_bonsai(sample_info: ParsedSampleResults) -> InputSampleInfo:
         sequencing=sequencing,
         metadata=bonsai_meta,
     )
+
+
+def assign_to_groups(sample_info: ParsedSampleResults):
+    ...

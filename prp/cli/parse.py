@@ -9,7 +9,7 @@ from pydantic import ValidationError
 
 from prp.export import to_cdm_format, to_result_json
 from prp.models.manifest import SampleManifest
-from prp.pipeline.loader import parse_results_from_manifest
+from prp.pipeline.loader import parse_manifest_for_analysis
 
 from .utils import OptionalFile, SampleManifestFile
 
@@ -31,7 +31,7 @@ def format_results(manifest: SampleManifest, output: Path | None):
     """Parse JASEN results and serialize it in json format."""
     LOG.info("Start generating pipeline result json")
     try:
-        results_obj = parse_results_from_manifest(manifest)
+        results_obj = parse_manifest_for_analysis(manifest)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)
@@ -60,7 +60,7 @@ def format_results(manifest: SampleManifest, output: Path | None):
 def format_cdm(manifest: SampleManifestFile, output: OptionalFile) -> None:
     """Format QC metrics into CDM compatible input file."""
     try:
-        results_obj = parse_results_from_manifest(manifest)
+        results_obj = parse_manifest_for_analysis(manifest)
     except ValidationError as err:
         click.secho("Generated result failed validation", fg="red")
         click.secho(err)

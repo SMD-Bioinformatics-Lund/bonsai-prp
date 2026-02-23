@@ -6,10 +6,11 @@ from dataclasses import dataclass
 from typing import Any
 
 from prp.bonsai.reportning import SimpleReporter
-from prp.pipeline.types import ParsedSampleResults
+from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
 from .client import BonsaiApiClient
 from .state_store import UploadState, UploadStateStore
+# from . import steps
 from . import steps
 
 LOG = logging.getLogger(__name__)
@@ -64,10 +65,7 @@ class BonsaiUploadService:
 
     def upload_sample(self, results: ParsedSampleResults) -> UploadResult:
         """Upload a single sample to Bonsai from a parsed manifest with checkpoint and resume."""
-        STEPS = [
-            ("sample_created", steps.step_create_sample),
-            ("add_to_groups", steps.step_add_sample_to_groups),
-        ]
+        upload_steps = ["create_sample", "add_to_groups", "add_pipeline_run", "add_ska_index", "add_sourmash_signature"]
 
         external_id = results.sample_id
         state = self.state_store.load(self.workflow_id, external_id) or UploadState(
@@ -82,14 +80,26 @@ class BonsaiUploadService:
             "Uploading sample ext_id=%s (workflow=%s)", external_id, self.workflow_id
         )
         # run steps
-        for step_flag, step_fn in STEPS:
-            if state.is_done(step_flag):
-                self.reporter.on_step_skip(external_id, step_flag)
+        for step_name in upload_steps:
+            if state.is_done(step_name):
+                self.reporter.on_step_skip(external_id, step_name)
                 continue
 
-            headers = self._headers_for(step_flag, state)
+            headers = self._headers_for(step_name, state)
 
             # apply the step
+            step_fn = steps.lookup_step(step_name)
             step_fn(self, self.client, results, state, headers=headers, dry_run=self.dry_run)
+        
+        # upload analysis results
+        upload_fn = steps.lookup_step("upload_analysis_results")
+        for result in results.analysis_results:
+            if not isinstance(result, MinimalAnalysisRecord):
+                continue
+
+            upload_fn(
+                self, self.client, results, state, result=result,
+                headers=self._headers_for("upload_analysis_results", state), 
+                substep=result.software, dry_run=self.dry_run, )
 
         return state
