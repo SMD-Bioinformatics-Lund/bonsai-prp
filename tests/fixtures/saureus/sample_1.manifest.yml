@@ -67,6 +67,6 @@ analysis_result:
     software_version: 1.0.0
     uri: ./chewbbaca.out
 
-# indexes
-sourmash_signature: ./sourmash.sig
-ska_index: ./index.sig
+index_artifacts:
+  sourmash_signature: ./sourmash.sig
+  ska_index: ./index.sig

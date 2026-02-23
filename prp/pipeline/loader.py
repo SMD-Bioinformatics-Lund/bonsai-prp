@@ -30,18 +30,21 @@ It acts purely as the ingestion and normalisation layer for pipeline outputs.
 
 import logging
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from prp.io.delimited import read_delimited
 from prp.io.json import read_json
-from prp.models.manifest import SampleManifest
+from prp.models.manifest import URI, IndexArtifacts, SampleManifest
 from prp.models.metadata import MetaEntry, TableMetadataEntry
 from prp.parse import run_parser
 
 from .types import (
-    AnalysisResult,
+    FullAnalysisResult,
     GenericMetadataRecord,
+    InternalIndexArtifacts,
     InternalMetadataRecord,
+    MinimalAnalysisRecord,
     ParsedSampleResults,
     PipelineArtifact,
     PipelineDefinition,
@@ -155,7 +158,25 @@ def to_generic_metadata_record(record: MetaEntry) -> GenericMetadataRecord:
     )
 
 
-def parse_results_from_manifest(manifest: SampleManifest) -> ParsedSampleResults:
+def _path_if_file_uri(uri: URI) -> str | None:
+    """Return the file path if the URI is a file URI and exists, else None."""
+    if uri.scheme == "file":
+        path = Path(uri.path)
+        if path.exists():
+            return path.as_posix()
+    return None
+
+
+def to_internal_artifacts(artifacts: IndexArtifacts) -> InternalIndexArtifacts:
+    """Convert manifest index artifacts to internal representation."""
+    
+    return InternalIndexArtifacts(
+        ska_index=_path_if_file_uri(artifacts.ska_index),
+        sourmash_signature=_path_if_file_uri(artifacts.sourmash_signature),
+    )
+
+
+def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleResults:
     """Parse pipeline analysis results from a manifest file."""
 
     metadata: list[InternalMetadataRecord] = []
@@ -166,8 +187,42 @@ def parse_results_from_manifest(manifest: SampleManifest) -> ParsedSampleResults
             metadata.append(to_generic_metadata_record(record))
 
     raw_run_info = read_json(manifest.nextflow_run_info)
+    return ParsedSampleResults(
+        sample_id=manifest.sample_id,
+        sample_name=manifest.sample_name,
+        lims_id=manifest.lims_id,
+        groups=manifest.groups,
+        metadata=metadata,
+        pipeline=to_internal_run_info(
+            run_info=raw_run_info, analysis_results=manifest.analysis_result
+        ),
+        sequencing=to_internal_sequencing_info(run_info=raw_run_info),
+        index_artifacts=to_internal_artifacts(manifest.index_artifacts) if manifest.index_artifacts else None,
+    )
+
+
+def parse_manifest_for_upload(manifest: SampleManifest) -> ParsedSampleResults:
+    """Parse the sample manifest and prepare data for upload.
+    
+    Do NOT parse the analysis result files.
+    """
+    base_result = parse_base_results_from_manifest(manifest)
+
+    analysis_results = []  # skip parsing analysis results for upload
+    for res in manifest.analysis_result:
+        analysis_results.append(MinimalAnalysisRecord(software=res.software, software_version=res.software_version, uri=res.uri))
+
+    return base_result.model_copy(
+        update={"analysis_results": analysis_results}
+    )
+
+
+def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults:
+    """Parse the sample manifest and the analysis result files for internal use."""
+    base_result = parse_base_results_from_manifest(manifest)
+
     # parse results from analysis softwares
-    analysis_results: list[AnalysisResult] = []
+    analysis_results: list[FullAnalysisResult] = []
     for res in manifest.analysis_result:
         if not res.uri.scheme == "file":
             raise NotImplementedError(
@@ -178,7 +233,7 @@ def parse_results_from_manifest(manifest: SampleManifest) -> ParsedSampleResults
         )
         for at, parser_result in ev.results.items():
             analysis_results.append(
-                AnalysisResult(
+                FullAnalysisResult(
                     software=ev.software,
                     software_version=ev.software_version,
                     parser_name=ev.parser_name,
@@ -190,14 +245,6 @@ def parse_results_from_manifest(manifest: SampleManifest) -> ParsedSampleResults
                 )
             )
 
-    return ParsedSampleResults(
-        sample_id=manifest.sample_id,
-        sample_name=manifest.sample_name,
-        lims_id=manifest.lims_id,
-        metadata=metadata,
-        pipeline=to_internal_run_info(
-            run_info=raw_run_info, analysis_results=manifest.analysis_result
-        ),
-        sequencing=to_internal_sequencing_info(run_info=raw_run_info),
-        analysis_results=analysis_results,
+    return base_result.model_copy(
+        update={"analysis_results": analysis_results}
     )
