@@ -63,12 +63,13 @@ def bonsai_upload(
             "Could not authenticate to Bonsai API, check your credentials"
         )
 
-    service = BonsaiUploadService(client=client, state_store=store, dry_run=dry_run)
+    workflow_id = f"bonsai-prp-upload-{manifest_obj.sample_id}-{manifest_obj.pipeline.pipeline_run_id}"
+    service = BonsaiUploadService(client=client, state_store=store, workflow_id=workflow_id, dry_run=dry_run)
     try:
         service.upload_sample(manifest_obj)
     except Exception as exc:
         LOG.exception("Something went wrong uploading the sample, %s", exc)
-        raise click.Abort("An error prevented the sample from being uploaded.")
+        raise click.Abort("Uploaded aborted.") from exc
 
     # create a new sample
     click.secho("Sample uploaded", fg="green")
