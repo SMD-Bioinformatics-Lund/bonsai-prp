@@ -20,11 +20,11 @@ LOG = logging.getLogger(__name__)
 def cli(silent: bool, debug: bool):
     """Jasen pipeline result processing tool."""
     if silent:
-        log_level = logging.WARNING
+        log_level = logging.ERROR
     elif debug:
         log_level = logging.DEBUG
     else:
-        log_level = logging.INFO
+        log_level = logging.WARNING
     # configure logging
     logging.basicConfig(
         level=log_level, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
