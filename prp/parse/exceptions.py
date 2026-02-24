@@ -26,7 +26,7 @@ class SchemaMismatchError(ParserError):
 
 
 class UnsupportedSoftwareError(ParserError):
-    """No parser registered for software -> ERROR."""
+    """Fatal (or map to SKIPPED at a higher level if you prefer) -> ERROR by default."""
 
 
 class UnsupportedVersionError(ParserError):

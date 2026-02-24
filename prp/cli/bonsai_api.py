@@ -6,6 +6,8 @@ import os
 import click
 from pydantic import ValidationError
 
+from bonsai_libs.api_client.core.exceptions import ApiRequestFailed
+
 from prp import VERSION as __version__
 from prp.bonsai import BonsaiUploadService, make_bonsai_client
 from prp.bonsai.service import UploadStateStore
@@ -58,7 +60,11 @@ def bonsai_upload(
 
     # setup client connection and autenticate user
     client = make_bonsai_client(base_url=api_url)
-    authenticated = client.authenticate_user(username=username, password=password)
+    try:
+        authenticated = client.authenticate_user(username=username, password=password)
+    except ApiRequestFailed as exc:
+        click.secho("Failed to authenticate to Bonsai API", fg="red")
+        raise click.Abort() from exc
     if not authenticated:
         raise click.UsageError(
             "Could not authenticate to Bonsai API, check your credentials"
