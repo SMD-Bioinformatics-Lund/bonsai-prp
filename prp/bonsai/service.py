@@ -10,7 +10,6 @@ from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
 from .client import BonsaiApiClient
 from .state_store import UploadState, UploadStateStore
-# from . import steps
 from . import steps
 
 LOG = logging.getLogger(__name__)
@@ -18,6 +17,8 @@ LOG = logging.getLogger(__name__)
 
 @dataclass
 class UploadResult:
+    """Structured result of an upload operation."""
+
     type: str
     sample_id: str
     details: dict[str, Any]
@@ -65,7 +66,12 @@ class BonsaiUploadService:
 
     def upload_sample(self, results: ParsedSampleResults) -> UploadResult:
         """Upload a single sample to Bonsai from a parsed manifest with checkpoint and resume."""
-        upload_steps = ["create_sample", "add_to_groups", "add_pipeline_run", "add_ska_index", "add_sourmash_signature"]
+        upload_steps = [
+            "create_sample", 
+            "add_pipeline_run", 
+            "add_ska_index", 
+            "add_sourmash_signature",
+        ]
 
         external_id = results.sample_id
         state = self.state_store.load(self.workflow_id, external_id) or UploadState(
@@ -79,27 +85,43 @@ class BonsaiUploadService:
         LOG.info(
             "Uploading sample ext_id=%s (workflow=%s)", external_id, self.workflow_id
         )
-        # run steps
+        # Phase 1: run fixed steps
         for step_name in upload_steps:
             if state.is_done(step_name):
                 self.reporter.on_step_skip(external_id, step_name)
                 continue
 
+            step_fn = steps.lookup_step(step_name)
             headers = self._headers_for(step_name, state)
 
-            # apply the step
-            step_fn = steps.lookup_step(step_name)
+            # decorator handles state persistence, error handling, and dry-run logic
             step_fn(self, self.client, results, state, headers=headers, dry_run=self.dry_run)
         
-        # upload analysis results
-        upload_fn = steps.lookup_step("upload_analysis_results")
+        # Phase 2: upload analysis results
+        upload_analysis_fn = steps.lookup_step("upload_analysis_results")
         for result in results.analysis_results:
             if not isinstance(result, MinimalAnalysisRecord):
+                LOG.warning("Skipping upload of analysis result with software=%s due to missing URI", result.software)
                 continue
 
-            upload_fn(
-                self, self.client, results, state, result=result,
-                headers=self._headers_for("upload_analysis_results", state), 
-                substep=result.software, dry_run=self.dry_run, )
-
-        return state
+            substep = result.software  # used for dynamic state key
+            headers = self._headers_for("upload_analysis_results", state)
+            upload_analysis_fn(
+                self, self.client, results, state,
+                result=result,
+                headers=headers,
+                substep=substep,
+                dry_run=self.dry_run,
+            )
+        
+        # Build a friendly summary result
+        executed = [k for k, v in state.steps.items() if v and not (isinstance(v, dict) and v.get("skipped"))]
+        return UploadResult(
+            type="success",
+            sample_id=state.sample_id or "",
+            details={
+                "executed_steps": executed,
+                "total_steps": len(executed),
+                "resume_supported": True,
+            },
+        )
