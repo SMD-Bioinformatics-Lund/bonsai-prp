@@ -104,8 +104,8 @@ def step_add_pipeline_run(
     client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState, *, headers: Headers
 ) -> None:
     """Add pipeline run metadata to the sample."""
-    # TODO - implement this step once the API supports it
-    return None
+    run_info = mappers.sample_info_to_pipeline_run(sample_info)
+    return client.add_pipeline_run(state.sample_id, pipeline_run=run_info, headers=headers)
 
 
 @step("upload_analysis_results")

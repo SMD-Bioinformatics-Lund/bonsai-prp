@@ -8,6 +8,11 @@ from bonsai_libs.api_client.bonsai.models import (
     InputSampleInfo,
     SequencingInfo,
     SequencingPlatforms,
+    PipelineArtifact,
+    PipelineRunConfig,
+    PipelineDefinition,
+    PipelineInfo,
+    InputPipelineRun,
 )
 from pydantic import TypeAdapter
 
@@ -82,5 +87,38 @@ def sample_to_bonsai(sample_info: ParsedSampleResults) -> InputSampleInfo:
     )
 
 
-def assign_to_groups(sample_info: ParsedSampleResults):
-    ...
+def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> InputPipelineRun:
+    """Extract pipeline run info from parsed manifest for API upload."""
+
+    # Convert from internal representation to API input models
+    raw_pipeline_nfo = sample_info.pipeline.pipeline_info
+    artifacts = [
+        PipelineArtifact(
+            software_name=artifact.software_name,
+            software_version=artifact.software_version,
+            uri=str(artifact.uri),
+        ) for artifact in (raw_pipeline_nfo.artifacts or [])
+    ]
+    pipeline_def = PipelineDefinition(
+        name=raw_pipeline_nfo.definition.name,
+        version=raw_pipeline_nfo.definition.version,
+        commit=raw_pipeline_nfo.definition.commit,
+        release_life_cycle=raw_pipeline_nfo.definition.release_life_cycle,
+    )
+    run_cnf = PipelineRunConfig(
+        command=raw_pipeline_nfo.run_config.command,
+        analysis_profile=raw_pipeline_nfo.run_config.analysis_profile,
+        configuration_files=raw_pipeline_nfo.run_config.configuration_files,
+    )
+
+    return InputPipelineRun(
+        pipeline_run_id=sample_info.pipeline.pipeline_run_id,
+        executed_at=sample_info.pipeline.executed_at,
+        assay=sample_info.pipeline.assay,
+        pipeline_info=PipelineInfo(
+            run_config=run_cnf,
+            definition=pipeline_def,
+            artifacts=artifacts,
+        ),
+    )
+
