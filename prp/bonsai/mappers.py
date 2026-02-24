@@ -1,6 +1,10 @@
 """Convert from internal data to the input required by the API."""
 
+from pathlib import Path
+from pydantic import TypeAdapter
+
 from bonsai_libs.api_client.bonsai.models import (
+    InputAnalysisResult,
     InputMetaEntry,
     InputTableMetadata,
     DatetimeMetadataEntry,
@@ -14,9 +18,8 @@ from bonsai_libs.api_client.bonsai.models import (
     PipelineInfo,
     InputPipelineRun,
 )
-from pydantic import TypeAdapter
 
-from prp.pipeline.types import ParsedSampleResults
+from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
 input_meta_adapter = TypeAdapter(InputMetaEntry)
 
@@ -30,6 +33,7 @@ def convert_metadata_entry(meta) -> InputMetaEntry:
     # 1. Handle table metadata
     if t == "table":
         return None
+        # TODO reenable this later once the API supports it --- IGNORE ---
         return InputTableMetadata(
             fieldname=meta.fieldname,
             value=meta.value,               # probably a filename / serialized table?
@@ -122,3 +126,21 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> InputPipeli
         ),
     )
 
+
+def analysis_result_to_upload_payload(sample_id: str, *, run_id: str, result: MinimalAnalysisRecord) -> InputAnalysisResult:
+    """Convert from internal analysis result representation to API input model."""
+    if not result.uri:
+        raise RuntimeError(f"Analysis result URI is required for upload, but got empty value for sample {sample_id}, run {run_id}, software {result.software}.")
+
+    # assert uri points to file and that it exists
+    uri_path = Path(result.uri.path)
+    if not result.uri.scheme == "file" or not uri_path.is_file():
+        raise ValueError(f"Analysis result URI must point to an existing file. Got: {result.uri}")
+
+    return InputAnalysisResult(
+        sample_id=sample_id,
+        pipeline_run_id=run_id,
+        software=result.software,
+        software_version=result.software_version,
+        file=uri_path,
+    )

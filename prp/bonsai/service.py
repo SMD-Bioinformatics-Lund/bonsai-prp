@@ -123,5 +123,5 @@ class BonsaiUploadService:
                 "executed_steps": executed,
                 "total_steps": len(executed),
                 "resume_supported": True,
-            },
+            }
         )

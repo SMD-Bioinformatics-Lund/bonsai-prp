@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from prp import VERSION as __version__
 from prp.bonsai import BonsaiUploadService, make_bonsai_client
 from prp.bonsai.service import UploadStateStore
+from prp.exceptions import PrpError
 from prp.models.manifest import SampleManifest
 from prp.pipeline.loader import parse_manifest_for_upload
 
@@ -67,8 +68,8 @@ def bonsai_upload(
     service = BonsaiUploadService(client=client, state_store=store, workflow_id=workflow_id, dry_run=dry_run)
     try:
         service.upload_sample(manifest_obj)
-    except Exception as exc:
-        LOG.exception("Something went wrong uploading the sample, %s", exc)
+    except PrpError as exc:
+        LOG.info("Something went wrong uploading the sample, %s", exc)
         raise click.Abort("Uploaded aborted.") from exc
 
     # create a new sample

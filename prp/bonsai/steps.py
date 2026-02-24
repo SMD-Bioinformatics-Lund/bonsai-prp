@@ -2,7 +2,11 @@
 
 from functools import wraps
 from typing import Any, Callable, TypeAlias
+import json
 
+from bonsai_libs.api_client.core.exceptions import ClientError
+
+from prp.exceptions import PrpError
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
 from . import mappers
@@ -61,13 +65,23 @@ def step(step_flag: str):
                     return None
 
                 # normal execution
-                result = fn(client, sample_info, state, headers=headers)
+                result = fn(client, sample_info, state, headers=headers, **kwargs)
                 state.mark(dynamic_id, {"response": result})
                 service.state_store.save(state)
                 service.reporter.on_step_success(external_id, dynamic_id)
                 return result
 
+            except ClientError as exc:
+                # Try to extract meaningful error details from the API response, but fall back to raw body if parsing fails
+                try:
+                    content = json.loads(exc.body) if exc.body else {}
+                    details = content.get("detail", exc.body)
+                except json.JSONDecodeError:
+                    details = exc.body
+                service.reporter.on_step_fail(external_id, dynamic_id, details)
+                raise PrpError(f"API error during step '{dynamic_id}': {details}") from exc
             except Exception as exc:
+                # Fallback error
                 service.reporter.on_step_fail(external_id, dynamic_id, exc)
                 raise
 
@@ -110,11 +124,19 @@ def step_add_pipeline_run(
 
 @step("upload_analysis_results")
 def step_upload_analysis_results(
-    client: BonsaiApiClient, _: ParsedSampleResults, state: UploadState, 
-    *, result: MinimalAnalysisRecord, headers: Headers, substep: str | None = None
+    client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState,
+    *, result: MinimalAnalysisRecord, headers: Headers, **kwargs
 ) -> None:
     """Upload analysis results to the sample."""
-    return client.add_analysis_result(state.sample_id, result, headers=headers)
+    internal_sample_id = state.sample_id
+    payload = mappers.analysis_result_to_upload_payload(
+        internal_sample_id, run_id=sample_info.pipeline.pipeline_run_id, result=result)
+
+    # if "force" flag is set, overwrite existing results for the same software; otherwise, skip upload if results already exist
+    force = kwargs.get("force", False)
+    resp = client.upload_analysis_result(payload, headers=headers, force=force)
+    import pdb; pdb.set_trace()  # --- IGNORE ---
+    return resp
 
 
 @step("add_ska_index")
