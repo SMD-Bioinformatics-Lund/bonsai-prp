@@ -8,8 +8,8 @@ import pytest
 from click.testing import CliRunner
 
 from prp.cli.annotate import add_igv_annotation_track, annotate_delly
-from prp.cli.parse import format_cdm, format_jasen
-from prp.pipeline.types import PipelineResult
+from prp.cli.parse import format_cdm, format_results
+from prp.models.sample import PipelineResult
 
 
 @pytest.mark.parametrize(

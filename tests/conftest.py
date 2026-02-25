@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from prp.models.metadata import PipelineInfo, SequencingInfo
+from prp.models.metadata import PipelineInfo, PipelineProvenance, PipelineRun, SequencingInfo
 from prp.models.sample import PipelineResult
 
 from .fixtures import *
@@ -19,20 +19,22 @@ def simple_pipeline_result():
     """Return a basic analysis result."""
 
     mock_pipeline_info = PipelineInfo(
-        pipeline="Jasen",
-        version="0.0.1",
+        pipeline_name="Jasen",
+        pipeline_version="0.0.1",
         commit="commit-hash",
         analysis_profile=["test_profile"],
-        assay="test_assay",
         release_life_cycle="test_release_life_cycle",
-        configuration_files=[],
-        workflow_name="workflow-name",
         command="nextflow run ...",
-        softwares=[],
-        date=datetime.now(),
+        provenance=PipelineProvenance()
+    )
+    run_info = PipelineRun(
+        pipeline_run_id="run-id",
+        executed_at=datetime.now(),
+        assay="test-assay",
+        pipeline_info=mock_pipeline_info,
     )
     seq_info = SequencingInfo(
-        run_id="run-id",
+        sequencing_run_id="run-id",
         platform="sequencing plattform",
         instrument="illumina",
         date=datetime.now(),
@@ -43,7 +45,7 @@ def simple_pipeline_result():
         sample_name="sample-name",
         lims_id="limbs id",
         sequencing=seq_info,
-        pipeline=mock_pipeline_info,
+        pipeline=run_info,
         qc=[],
         species_prediction=[],
         typing_result=[],
