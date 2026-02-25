@@ -142,7 +142,7 @@ class PipelineInfo(AllowExtraModelMixin):
     pipeline_version: str
     commit: str
     release_life_cycle: str
-    commmand: str
+    command: str
     analysis_profile: list[str]
     provenance: PipelineProvenance
     artifacts: list[PipelineArtifact] = Field(default_factory=list)
