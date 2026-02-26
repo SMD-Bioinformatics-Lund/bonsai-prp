@@ -64,7 +64,7 @@ class BonsaiUploadService:
 
     # ---- Public API ----
 
-    def upload_sample(self, results: ParsedSampleResults) -> UploadResult:
+    def upload_sample(self, results: ParsedSampleResults, *, force: bool) -> UploadResult:
         """Upload a single sample to Bonsai from a parsed manifest with checkpoint and resume."""
         upload_steps = [
             "create_sample", 
