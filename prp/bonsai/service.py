@@ -112,6 +112,7 @@ class BonsaiUploadService:
                 headers=headers,
                 substep=substep,
                 dry_run=self.dry_run,
+                force=force,
             )
         
         # Build a friendly summary result

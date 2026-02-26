@@ -93,7 +93,7 @@ def step(step_flag: str):
 @step("create_sample")
 def step_create_sample(
     client: BonsaiApiClient, sample_info: ParsedSampleResults, _: UploadState, *, headers: Headers
-    ) -> None:
+    ):
     """Create a sample using the API."""
 
     payload = mappers.sample_to_bonsai(sample_info)
@@ -103,7 +103,7 @@ def step_create_sample(
 @step("add_to_groups")
 def step_add_sample_to_groups(
     client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState, *, headers: Headers
-) -> None:
+):
     """Assign a sample to one or more groups."""
 
     responses = []
@@ -116,7 +116,7 @@ def step_add_sample_to_groups(
 @step("add_pipeline_run")
 def step_add_pipeline_run(
     client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState, *, headers: Headers
-) -> None:
+):
     """Add pipeline run metadata to the sample."""
     run_info = mappers.sample_info_to_pipeline_run(sample_info)
     return client.add_pipeline_run(state.sample_id, pipeline_run=run_info, headers=headers)
@@ -126,17 +126,24 @@ def step_add_pipeline_run(
 def step_upload_analysis_results(
     client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState,
     *, result: MinimalAnalysisRecord, headers: Headers, **kwargs
-) -> None:
+) -> dict[str, str]:
     """Upload analysis results to the sample."""
     internal_sample_id = state.sample_id
+    run_id = sample_info.pipeline.pipeline_run_id
     payload = mappers.analysis_result_to_upload_payload(
-        internal_sample_id, run_id=sample_info.pipeline.pipeline_run_id, result=result)
+        internal_sample_id, run_id=run_id, result=result)
 
     # if "force" flag is set, overwrite existing results for the same software; otherwise, skip upload if results already exist
     force = kwargs.get("force", False)
     resp = client.upload_analysis_result(payload, headers=headers, force=force)
-    import pdb; pdb.set_trace()  # --- IGNORE ---
-    return resp
+    # build data to be stored in the state
+    return {
+        "analysis_id": resp.get("analysis_id"), 
+        "pipeline_run_id": run_id, 
+        "software": resp.get("software"),
+        "software_version": resp.get("software_version"),
+        "envelopes": resp.get("envelopes"),
+    }
 
 
 @step("add_ska_index")
