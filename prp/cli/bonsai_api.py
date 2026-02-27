@@ -4,9 +4,8 @@ import logging
 import os
 
 import click
-from pydantic import ValidationError
-
 from bonsai_libs.api_client.core.exceptions import ApiRequestFailed
+from pydantic import ValidationError
 
 from prp import VERSION as __version__
 from prp.bonsai import BonsaiUploadService, make_bonsai_client
@@ -39,13 +38,23 @@ def bonsai_gr():
     "-p", "--password", required=True, envvar=PASSWD_ENV, type=str, help="Password"
 )
 @click.option("-d", "--dry-run", is_flag=True)
-@click.option("-f", "--force", is_flag=True, help="Force upload even if results already exist in Bonsai")
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    help="Force upload even if results already exist in Bonsai",
+)
 @click.argument(
     "manifest",
     type=SampleManifestFile(),
 )
 def bonsai_upload(
-    manifest: SampleManifest, username: str, password: str, api_url: str, dry_run: bool, force: bool
+    manifest: SampleManifest,
+    username: str,
+    password: str,
+    api_url: str,
+    dry_run: bool,
+    force: bool,
 ):
     """Upload a sample to Bonsai using either a sample config or json dump."""
     # setup state
@@ -72,7 +81,9 @@ def bonsai_upload(
         )
 
     workflow_id = f"bonsai-prp-upload-{manifest_obj.sample_id}-{manifest_obj.pipeline.pipeline_run_id}"
-    service = BonsaiUploadService(client=client, state_store=store, workflow_id=workflow_id, dry_run=dry_run)
+    service = BonsaiUploadService(
+        client=client, state_store=store, workflow_id=workflow_id, dry_run=dry_run
+    )
     try:
         service.upload_sample(manifest_obj, force=force)
     except PrpError as exc:

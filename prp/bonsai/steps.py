@@ -1,8 +1,8 @@
 """Functions for steps in the Bonsai upload pipeline."""
 
+import json
 from functools import wraps
 from typing import Any, Callable, TypeAlias
-import json
 
 from bonsai_libs.api_client.core.exceptions import ClientError
 
@@ -10,9 +10,8 @@ from prp.exceptions import PrpError
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
 from . import mappers
-from .state_store import UploadState
 from .client import BonsaiApiClient
-
+from .state_store import UploadState
 
 Headers: TypeAlias = dict[str, str]
 OpHeaders: TypeAlias = Headers | None
@@ -42,9 +41,16 @@ def step(step_flag: str):
 
         @wraps(fn)
         def wrapper(
-            service, client, sample_info, 
-            state: UploadState, *, headers: OpHeaders = None, 
-            dry_run: bool=False, substep: str | None = None, **kwargs):
+            service,
+            client,
+            sample_info,
+            state: UploadState,
+            *,
+            headers: OpHeaders = None,
+            dry_run: bool = False,
+            substep: str | None = None,
+            **kwargs,
+        ):
 
             dynamic_id = f"{step_flag}:{substep}" if substep else step_flag
             external_id = state.sample_external_id
@@ -79,21 +85,30 @@ def step(step_flag: str):
                 except json.JSONDecodeError:
                     details = exc.body
                 service.reporter.on_step_fail(external_id, dynamic_id, details)
-                raise PrpError(f"API error during step '{dynamic_id}': {details}") from exc
+                raise PrpError(
+                    f"API error during step '{dynamic_id}': {details}"
+                ) from exc
             except Exception as exc:
                 # Fallback error
                 service.reporter.on_step_fail(external_id, dynamic_id, exc)
                 raise
 
-        STEP_REGISTRY[step_flag] = wrapper  # register the step function for potential dynamic use
+        STEP_REGISTRY[step_flag] = (
+            wrapper  # register the step function for potential dynamic use
+        )
         return wrapper
+
     return decorator
 
 
 @step("create_sample")
 def step_create_sample(
-    client: BonsaiApiClient, sample_info: ParsedSampleResults, _: UploadState, *, headers: Headers
-    ):
+    client: BonsaiApiClient,
+    sample_info: ParsedSampleResults,
+    _: UploadState,
+    *,
+    headers: Headers,
+):
     """Create a sample using the API."""
 
     payload = mappers.sample_to_bonsai(sample_info)
@@ -102,44 +117,62 @@ def step_create_sample(
 
 @step("add_to_groups")
 def step_add_sample_to_groups(
-    client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState, *, headers: Headers
+    client: BonsaiApiClient,
+    sample_info: ParsedSampleResults,
+    state: UploadState,
+    *,
+    headers: Headers,
 ):
     """Assign a sample to one or more groups."""
 
     responses = []
     for group_id in sample_info.groups:
-        resp = client.add_samples_to_group(group_id, sample_ids=[state.sample_id], headers=headers)
+        resp = client.add_samples_to_group(
+            group_id, sample_ids=[state.sample_id], headers=headers
+        )
         responses.append(resp)
     return responses
 
 
 @step("add_pipeline_run")
 def step_add_pipeline_run(
-    client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState, *, headers: Headers
+    client: BonsaiApiClient,
+    sample_info: ParsedSampleResults,
+    state: UploadState,
+    *,
+    headers: Headers,
 ):
     """Add pipeline run metadata to the sample."""
     run_info = mappers.sample_info_to_pipeline_run(sample_info)
-    return client.add_pipeline_run(state.sample_id, pipeline_run=run_info, headers=headers)
+    return client.add_pipeline_run(
+        state.sample_id, pipeline_run=run_info, headers=headers
+    )
 
 
 @step("upload_analysis_results")
 def step_upload_analysis_results(
-    client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState,
-    *, result: MinimalAnalysisRecord, headers: Headers, **kwargs
+    client: BonsaiApiClient,
+    sample_info: ParsedSampleResults,
+    state: UploadState,
+    *,
+    result: MinimalAnalysisRecord,
+    headers: Headers,
+    **kwargs,
 ) -> dict[str, str]:
     """Upload analysis results to the sample."""
     internal_sample_id = state.sample_id
     run_id = sample_info.pipeline.pipeline_run_id
     payload = mappers.analysis_result_to_upload_payload(
-        internal_sample_id, run_id=run_id, result=result)
+        internal_sample_id, run_id=run_id, result=result
+    )
 
     # if "force" flag is set, overwrite existing results for the same software; otherwise, skip upload if results already exist
     force = kwargs.get("force", False)
     resp = client.upload_analysis_result(payload, headers=headers, force=force)
     # build data to be stored in the state
     return {
-        "analysis_id": resp.analysis_id, 
-        "pipeline_run_id": run_id, 
+        "analysis_id": resp.analysis_id,
+        "pipeline_run_id": run_id,
         "software": resp.software,
         "software_version": resp.software_version,
         "envelopes": resp.envelopes,
@@ -148,23 +181,40 @@ def step_upload_analysis_results(
 
 @step("add_ska_index")
 def step_upload_ska_index(
-    client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState, *, headers: Headers
+    client: BonsaiApiClient,
+    sample_info: ParsedSampleResults,
+    state: UploadState,
+    *,
+    headers: Headers,
 ):
     """Upload an SKA index for a sample."""
     if not sample_info.index_artifacts or not sample_info.index_artifacts.ska_index:
         return None  # no index to upload
 
     return client.upload_ska_index(
-        state.sample_id, index_path=sample_info.index_artifacts.ska_index, headers=headers)
+        state.sample_id,
+        index_path=sample_info.index_artifacts.ska_index,
+        headers=headers,
+    )
 
 
 @step("add_sourmash_signature")
 def step_upload_sourmash_signature(
-    client: BonsaiApiClient, sample_info: ParsedSampleResults, state: UploadState, *, headers: Headers
+    client: BonsaiApiClient,
+    sample_info: ParsedSampleResults,
+    state: UploadState,
+    *,
+    headers: Headers,
 ):
     """Upload a sourmash signature for a sample."""
-    if not sample_info.index_artifacts or not sample_info.index_artifacts.sourmash_signature:
+    if (
+        not sample_info.index_artifacts
+        or not sample_info.index_artifacts.sourmash_signature
+    ):
         return None  # no index to upload
 
     return client.upload_sourmash_signature(
-        state.sample_id, index_path=sample_info.index_artifacts.sourmash_signature, headers=headers)
+        state.sample_id,
+        index_path=sample_info.index_artifacts.sourmash_signature,
+        headers=headers,
+    )

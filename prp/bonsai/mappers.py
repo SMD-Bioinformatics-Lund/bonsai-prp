@@ -1,23 +1,23 @@
 """Convert from internal data to the input required by the API."""
 
 from pathlib import Path
-from pydantic import TypeAdapter
 
 from bonsai_libs.api_client.bonsai.models import (
-    UploadAnalysisResultInput,
-    MetaEntryInput,
-    TableMetadataInput,
     DatetimeMetadataEntry,
     GenericMetadataEntry,
+    MetaEntryInput,
+    PipelineArtifact,
+    PipelineDefinition,
+    PipelineInfo,
+    PipelineRunConfig,
+    PipelineRunInput,
     SampleInfoInput,
     SequencingInfo,
     SequencingPlatforms,
-    PipelineArtifact,
-    PipelineRunConfig,
-    PipelineDefinition,
-    PipelineInfo,
-    PipelineRunInput,
+    TableMetadataInput,
+    UploadAnalysisResultInput,
 )
+from pydantic import TypeAdapter
 
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
@@ -36,7 +36,7 @@ def convert_metadata_entry(meta) -> MetaEntryInput:
         # TODO reenable this later once the API supports it --- IGNORE ---
         return TableMetadataInput(
             fieldname=meta.fieldname,
-            value=meta.value,               # probably a filename / serialized table?
+            value=meta.value,  # probably a filename / serialized table?
             category=meta.category or "general",
         )
 
@@ -44,7 +44,7 @@ def convert_metadata_entry(meta) -> MetaEntryInput:
     if t == "datetime":
         return DatetimeMetadataEntry(
             fieldname=meta.fieldname,
-            value=meta.value,               # must be actual datetime
+            value=meta.value,  # must be actual datetime
             category=meta.category,
         )
 
@@ -75,7 +75,7 @@ def sample_to_bonsai(sample_info: ParsedSampleResults) -> SampleInfoInput:
     )
 
     # add metadata if present
-    bonsai_meta =  []
+    bonsai_meta = []
     for meta in sample_info.metadata:
         fmt_meta = convert_metadata_entry(meta)
         if fmt_meta is not None:
@@ -101,7 +101,8 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> PipelineRun
             software_name=artifact.software_name,
             software_version=artifact.software_version,
             uri=str(artifact.uri),
-        ) for artifact in (raw_pipeline_nfo.artifacts or [])
+        )
+        for artifact in (raw_pipeline_nfo.artifacts or [])
     ]
     pipeline_def = PipelineDefinition(
         name=raw_pipeline_nfo.definition.name,
@@ -127,15 +128,21 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> PipelineRun
     )
 
 
-def analysis_result_to_upload_payload(sample_id: str, *, run_id: str, result: MinimalAnalysisRecord) -> UploadAnalysisResultInput:
+def analysis_result_to_upload_payload(
+    sample_id: str, *, run_id: str, result: MinimalAnalysisRecord
+) -> UploadAnalysisResultInput:
     """Convert from internal analysis result representation to API input model."""
     if not result.uri:
-        raise RuntimeError(f"Analysis result URI is required for upload, but got empty value for sample {sample_id}, run {run_id}, software {result.software}.")
+        raise RuntimeError(
+            f"Analysis result URI is required for upload, but got empty value for sample {sample_id}, run {run_id}, software {result.software}."
+        )
 
     # assert uri points to file and that it exists
     uri_path = Path(result.uri.path)
     if not result.uri.scheme == "file" or not uri_path.is_file():
-        raise ValueError(f"Analysis result URI must point to an existing file. Got: {result.uri}")
+        raise ValueError(
+            f"Analysis result URI must point to an existing file. Got: {result.uri}"
+        )
 
     return UploadAnalysisResultInput(
         sample_id=sample_id,

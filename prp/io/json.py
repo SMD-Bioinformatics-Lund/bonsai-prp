@@ -21,7 +21,9 @@ def read_json(source: StreamOrPath, *, encoding: str = "utf-8") -> Any:
         stream = ensure_text_stream(source, encoding=encoding)
         return json.loads(stream.read())
     except TypeError as exc:
-        raise DataFormatError(f"Failed to read JSON from source of type {type(source)!r}") from exc
+        raise DataFormatError(
+            f"Failed to read JSON from source of type {type(source)!r}"
+        ) from exc
 
 
 def require_mapping(obj: Any, *, what: str) -> Mapping[str, Any]:

@@ -2,8 +2,8 @@
 
 import io
 import os
-from typing import IO
 from pathlib import Path
+from typing import IO
 
 from pydantic import ValidationInfo
 

@@ -3,10 +3,14 @@
 from dataclasses import dataclass
 from typing import Any, Callable, TypeAlias
 
-from packaging.version import Version, InvalidVersion
+from packaging.version import InvalidVersion, Version
 
 from prp.parse.core.base import BaseParser, StreamOrPath
-from prp.parse.exceptions import InvalidDataFormat, UnsupportedSoftwareError, UnsupportedVersionError
+from prp.parse.exceptions import (
+    InvalidDataFormat,
+    UnsupportedSoftwareError,
+    UnsupportedVersionError,
+)
 from prp.parse.models.base import ParserOutput
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 
@@ -71,8 +75,8 @@ def get_parser(software: str, *, version: str) -> RegistryEntry:
             ) from exc
     else:
         raise TypeError(
-            f"`version` must be str|Version|None, got {type(version).__name__}")
-
+            f"`version` must be str|Version|None, got {type(version).__name__}"
+        )
 
     for span in sorted(_REGISTRY[software]):
         if span.min_version <= v <= span.max_version:
@@ -80,7 +84,8 @@ def get_parser(software: str, *, version: str) -> RegistryEntry:
 
     # Return the correct error.
     raise UnsupportedVersionError(
-        f"No parser available for software '{software}' version {v}")
+        f"No parser available for software '{software}' version {v}"
+    )
 
 
 def registered_softwares() -> list[str]:
@@ -97,7 +102,7 @@ def registered_version_ranges(software: str) -> list[VersionRange]:
 
 def resolve_parser(entry, **init_kwargs) -> Callable[..., ParserOutput]:
     """Resolve registry entry to a callable parse function.
-    
+
     If works with both parser classes and parse functions.
     """
 

@@ -2,6 +2,7 @@
 
 from click import secho
 
+
 class Reporter:
     """Hook for reporting workflow events to the CLI or logging system."""
 
@@ -28,4 +29,7 @@ class SimpleReporter(Reporter):
         secho(f"   ✗ [{sample_id}] FAILED in '{step}': {error}", fg="red")
 
     def on_resume(self, sample_id, completed_steps):
-        secho(f"🔁 Resuming [{sample_id}] — completed steps: {', '.join(completed_steps)}", fg="yellow")
+        secho(
+            f"🔁 Resuming [{sample_id}] — completed steps: {', '.join(completed_steps)}",
+            fg="yellow",
+        )

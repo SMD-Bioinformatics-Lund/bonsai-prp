@@ -169,7 +169,7 @@ def _path_if_file_uri(uri: URI) -> str | None:
 
 def to_internal_artifacts(artifacts: IndexArtifacts) -> InternalIndexArtifacts:
     """Convert manifest index artifacts to internal representation."""
-    
+
     return InternalIndexArtifacts(
         ska_index=_path_if_file_uri(artifacts.ska_index),
         sourmash_signature=_path_if_file_uri(artifacts.sourmash_signature),
@@ -197,24 +197,32 @@ def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleRe
             run_info=raw_run_info, analysis_results=manifest.analysis_result
         ),
         sequencing=to_internal_sequencing_info(run_info=raw_run_info),
-        index_artifacts=to_internal_artifacts(manifest.index_artifacts) if manifest.index_artifacts else None,
+        index_artifacts=(
+            to_internal_artifacts(manifest.index_artifacts)
+            if manifest.index_artifacts
+            else None
+        ),
     )
 
 
 def parse_manifest_for_upload(manifest: SampleManifest) -> ParsedSampleResults:
     """Parse the sample manifest and prepare data for upload.
-    
+
     Do NOT parse the analysis result files.
     """
     base_result = parse_base_results_from_manifest(manifest)
 
     analysis_results = []  # skip parsing analysis results for upload
     for res in manifest.analysis_result:
-        analysis_results.append(MinimalAnalysisRecord(software=res.software, software_version=res.software_version, uri=res.uri))
+        analysis_results.append(
+            MinimalAnalysisRecord(
+                software=res.software,
+                software_version=res.software_version,
+                uri=res.uri,
+            )
+        )
 
-    return base_result.model_copy(
-        update={"analysis_results": analysis_results}
-    )
+    return base_result.model_copy(update={"analysis_results": analysis_results})
 
 
 def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults:
@@ -245,6 +253,4 @@ def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults
                 )
             )
 
-    return base_result.model_copy(
-        update={"analysis_results": analysis_results}
-    )
+    return base_result.model_copy(update={"analysis_results": analysis_results})
