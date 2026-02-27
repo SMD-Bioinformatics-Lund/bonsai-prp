@@ -1,3 +1,6 @@
+"""Exceptions used by PRP."""
+
+
 class PrpError(Exception):
     """Base for all PRP errors."""
 

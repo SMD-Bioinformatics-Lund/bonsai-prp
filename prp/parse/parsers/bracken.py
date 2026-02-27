@@ -46,6 +46,8 @@ def to_taxlevel(lvl: str | TaxLevel) -> TaxLevel:
 
 @register_parser(BRACKEN)
 class BrackenParser(SingleAnalysisParser):
+    """Parser for Bracken results."""
+
     software = BRACKEN
     parser_name = "BrackenParser"
     parser_version = 1

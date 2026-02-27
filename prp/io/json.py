@@ -1,8 +1,6 @@
 """Read json files."""
 
-import io
 import json
-from pathlib import Path
 from typing import Any, Mapping
 
 from prp.exceptions import DataFormatError

@@ -14,7 +14,6 @@ from bonsai_libs.api_client.bonsai.models import (
     SampleInfoInput,
     SequencingInfo,
     SequencingPlatforms,
-    TableMetadataInput,
     UploadAnalysisResultInput,
 )
 from pydantic import TypeAdapter
@@ -34,11 +33,6 @@ def convert_metadata_entry(meta) -> MetaEntryInput:
     if t == "table":
         return None
         # TODO reenable this later once the API supports it --- IGNORE ---
-        return TableMetadataInput(
-            fieldname=meta.fieldname,
-            value=meta.value,  # probably a filename / serialized table?
-            category=meta.category or "general",
-        )
 
     # 2. Handle datetime metadata
     if t == "datetime":
@@ -134,7 +128,11 @@ def analysis_result_to_upload_payload(
     """Convert from internal analysis result representation to API input model."""
     if not result.uri:
         raise RuntimeError(
-            f"Analysis result URI is required for upload, but got empty value for sample {sample_id}, run {run_id}, software {result.software}."
+            (
+                f"Analysis result URI is required for upload, "
+                f"but got empty value for sample {sample_id}, "
+                f"run {run_id}, software {result.software}."
+            )
         )
 
     # assert uri points to file and that it exists

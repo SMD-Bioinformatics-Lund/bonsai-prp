@@ -3,13 +3,13 @@
 from itertools import chain
 from typing import Any
 
-from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
+from prp.io.delimited import read_delimited
 from prp.parse.core.base import SingleAnalysisParser, StreamOrPath
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.qc import ContigCoverage, SamtoolsCoverageQcResult
 
-from .utils import safe_float, safe_int
+from .utils import normalize_delimited_row, safe_float, safe_int
 
 SAMTOOLS = AnalysisSoftware.SAMTOOLS
 
@@ -24,17 +24,6 @@ COLUMN_MAP = {
     "meanbaseq": "mean_base_quality",
     "meanmapq": "mean_map_quality",
 }
-
-
-def _normalize_qc_row(row: DelimiterRow) -> DelimiterRow:
-    """Normalize qc row. Wraps normalize_row"""
-
-    return normalize_row(
-        row,
-        key_fn=lambda r: r.strip(),
-        val_fn=lambda v: None if is_nullish(v) else v,
-        column_map=COLUMN_MAP,
-    )
 
 
 def _to_contig_result(row: dict[str, Any]) -> ContigCoverage:
@@ -73,18 +62,21 @@ class SamtoolsCovParser(SingleAnalysisParser):
     ) -> SamtoolsCoverageQcResult | None:
         """Parse Gambit core csv and return GambitcoreQcResult."""
 
-        rows_iter = read_delimited(source)
-        try:
-            first_raw = next(rows_iter)
-        except StopIteration:
-            self.log_info(f"{self.software} input empty")
+        first = self._get_first_normalized_row(
+            source,
+            COLUMN_MAP,
+            required=set(COLUMN_MAP),
+            strict_columns=strict,
+        )
+        if first is None:
             return None
 
-        required_cols = set(COLUMN_MAP)
-        self.validate_columns(first_raw, required=required_cols, strict=strict)
-
         contigs: list[ContigCoverage] = []
-        for raw_row in chain([first_raw], rows_iter):
-            row = _normalize_qc_row(raw_row)
-            contigs.append(_to_contig_result(row))
+        # first is already normalized, so iterate remaining rows normally
+        rows_iter = read_delimited(source)
+        # skip the first row we've already consumed
+        next(rows_iter, None)
+        for raw_row in chain([first], rows_iter):
+            normed = normalize_delimited_row(raw_row, COLUMN_MAP)
+            contigs.append(_to_contig_result(normed))
         return SamtoolsCoverageQcResult(contigs=contigs)

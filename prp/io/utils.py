@@ -54,7 +54,9 @@ def ensure_text_stream(
             return source  # type: ignore[return-value]
 
         if isinstance(sample, (bytes, bytearray)):
-            return io.TextIOWrapper(source, encoding=encoding, newline=newline)  # type: ignore[arg-type]
+            return io.TextIOWrapper(
+                source, encoding=encoding, newline=newline
+            )  # type: ignore[arg-type]
         return source  # type: ignore[return-value]
 
     raise TypeError(f"Unsupported StreamOrPath type: {type(source)!r}")

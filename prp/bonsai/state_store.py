@@ -1,6 +1,7 @@
 """State management for bonsai-prp sample uploads."""
 
 import json
+import logging
 import os
 import tempfile
 from dataclasses import dataclass, field
@@ -10,8 +11,17 @@ from typing import Any
 
 from pydantic import BaseModel
 
+LOG = logging.getLogger(__name__)
+
+
+def _now_iso() -> str:
+    """Get current time as ISO string."""
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
 
 def _normalize_dict(data):
+    """Recursively convert BaseModel instances in a dict to plain dicts."""
+
     out = {}
     for k, v in data.items():
         if isinstance(v, BaseModel):
@@ -35,10 +45,12 @@ class UploadState:
 
     # step booleans and optional details
     steps: dict[str, Any] = field(default_factory=dict)
-    created_at: str = field(default_factory=lambda: _now_iso())
-    updated_at: str = field(default_factory=lambda: _now_iso())
+    created_at: str = field(default_factory=_now_iso)
+    updated_at: str = field(default_factory=_now_iso)
 
     def mark(self, step: str, value: Any = True) -> None:
+        """Mark a step as done, optionally with additional details."""
+
         if isinstance(value, BaseModel):
             value = value.model_dump(mode="json")
         if isinstance(value, dict):
@@ -48,6 +60,7 @@ class UploadState:
 
     def is_done(self, step: str) -> bool:
         """Check if a step is marked as done."""
+
         return bool(self.steps.get(step))
 
 
@@ -59,10 +72,14 @@ class UploadStateStore:
         self.root.mkdir(parents=True, exist_ok=True)
 
     def path_for(self, workflow_id: str, external_id: str) -> Path:
+        """Get the file path for a given workflow and sample external ID."""
+
         safe_ext = _safe_name(external_id)
         return self.root / f"{workflow_id}__{safe_ext}.json"
 
     def load(self, workflow_id: str, external_id: str) -> UploadState | None:
+        """Load state from JSON file; return None if not found."""
+
         p = self.path_for(workflow_id, external_id)
         if not p.exists():
             return None
@@ -70,6 +87,8 @@ class UploadStateStore:
         return UploadState(**data)
 
     def save(self, state: UploadState) -> None:
+        """Save state to JSON file atomically."""
+
         p = self.path_for(state.workflow_id, state.sample_external_id)
         tmp_fd, tmp_name = tempfile.mkstemp(
             dir=str(self.root), prefix=p.name, suffix=".tmp"
@@ -88,13 +107,13 @@ class UploadStateStore:
                 LOG.debug("Failed to cleanup tmp file: %s", tmp_name)
 
 
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
-
-
 def _safe_name(s: str) -> str:
+    """Sanitize a string to be safe for filenames, keeping it reasonably readable."""
+
     return "".join(c if c.isalnum() or c in ("-", "_", ".") else "_" for c in s)[:180]
 
 
 def _idem_key(workflow_id: str, external_id: str, step: str) -> str:
+    """Generate a consistent key for idempotent steps."""
+
     return f"bonsai-prp/{workflow_id}/{external_id}/{step}"

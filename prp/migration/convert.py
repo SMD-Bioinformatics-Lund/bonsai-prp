@@ -6,7 +6,7 @@ from itertools import chain
 from typing import Any, Callable
 
 from prp.migration import config
-from prp.pipeline.types import PipelineResult
+from prp.pipeline.types import PipelineInfo
 
 LOG = logging.getLogger(__name__)
 
@@ -15,32 +15,35 @@ UnformattedResult = dict[str, Any]
 
 def migrate_result(
     old_result: UnformattedResult, validate: bool = True
-) -> UnformattedResult | PipelineResult:
+) -> UnformattedResult | PipelineInfo:
     """Migrate old JASEN result to the current schema.
 
     The final model can optionally be validated.
     """
-    ALL_FUNCS: dict[int, Callable[..., UnformattedResult]] = {2: v1_to_v2}
+    all_funcs: dict[int, Callable[..., UnformattedResult]] = {2: v1_to_v2}
 
     # verify input
     input_schema_version = old_result["schema_version"]
     LOG.info("Migrating result from version %d", input_schema_version)
-    valid_versions = (ver for ver in chain([1], ALL_FUNCS.keys()))
+    valid_versions = (ver for ver in chain([1], all_funcs.keys()))
     if input_schema_version not in valid_versions:
-        all_versions = ", ".join([str(ver) for ver in ALL_FUNCS])
+        all_versions = ", ".join([str(ver) for ver in all_funcs])
         raise ValueError(
-            f"Unknown result version, found {input_schema_version} expected any of '{all_versions}'"
+            (
+                f"Unknown result version, found {input_schema_version} "
+                f"expected any of '{all_versions}'"
+            )
         )
 
     # migrate
     temp_result = copy(old_result)
-    for to_version, func in ALL_FUNCS.items():
+    for to_version, func in all_funcs.items():
         if input_schema_version < to_version:
             temp_result = func(temp_result)
 
     # validate migrated model
     if validate:
-        return PipelineResult.model_validate(temp_result)
+        return PipelineInfo.model_validate(temp_result)
     return temp_result
 
 

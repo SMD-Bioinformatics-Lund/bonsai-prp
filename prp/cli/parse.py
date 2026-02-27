@@ -1,4 +1,4 @@
-"""Functions for parsing JASEN results and generating output Bonsai and CDM output files."""
+"""Parsing JASEN results and generating Bonsai and CDM output files."""
 
 import json
 import logging

@@ -2,11 +2,13 @@
 
 from typing import Any
 
-from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
+from prp.io.delimited import DelimiterRow, is_nullish, read_delimited
 from prp.parse.core.base import SingleAnalysisParser, StreamOrPath, warn_if_extra_rows
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.typing import TypingResultSpatyper
+
+from .utils import normalize_delimited_row
 
 SPATYPER = AnalysisSoftware.SPATYPER
 
@@ -19,13 +21,10 @@ COLUMN_MAP = {
 
 
 def _normalize_spatyper_row(row: DelimiterRow) -> DelimiterRow:
-    """Wrapps normalize row."""
-    return normalize_row(
-        row,
-        key_fn=lambda r: r.strip(),
-        val_fn=lambda v: None if is_nullish(v) else v,
-        column_map=COLUMN_MAP,
-    )
+    """Wrapper kept for backwards compatibility; delegates to shared helper."""
+    from .utils import normalize_delimited_row
+
+    return normalize_delimited_row(row, COLUMN_MAP)
 
 
 def _to_typing_result(row: dict[str, Any]) -> TypingResultSpatyper:
@@ -59,21 +58,14 @@ class SpatyperParser(SingleAnalysisParser):
         **kwargs: Any,
     ) -> TypingResultSpatyper | None:
         """Parse shigapass predictions and return a ShigaTypingMethodIndex."""
-        rows = read_delimited(source)
-
-        try:
-            first_raw = next(rows)
-        except StopIteration:
-            self.log_info(f"{self.software} input empty")
+        first = self._get_first_normalized_row(
+            source,
+            COLUMN_MAP,
+            required=REQUIRED_COLUMNS,
+            strict_columns=strict_columns,
+        )
+        if first is None:
             return None
-
-        self.validate_columns(
-            first_raw, required=REQUIRED_COLUMNS, strict=strict_columns
-        )
-        first = _normalize_spatyper_row(first_raw)
-        warn_if_extra_rows(
-            rows, self.log_warning, context=f"{self.software} file", max_consume=10
-        )
 
         # Build typing result
         return _to_typing_result(first)

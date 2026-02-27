@@ -4,7 +4,9 @@ import logging
 from datetime import datetime
 from typing import Any
 
-from prp.io.delimited import is_nullish
+from prp.io.delimited import is_nullish, normalize_row
+from prp.io.json import read_json
+from prp.io.types import DelimiterRow, StreamOrPath
 from prp.parse.models.base import ElementTypeResult
 from prp.parse.models.enums import SequenceStrand, VariantSubType, VariantType
 
@@ -42,6 +44,49 @@ def is_prediction_result_empty(result: ElementTypeResult) -> bool:
     """
     n_entries = len(result.genes) + len(result.variants)
     return n_entries == 0
+
+
+# helpers used by many parsers -------------------------------------------------
+
+
+def normalize_delimited_row(
+    row: DelimiterRow, column_map: dict[str, str]
+) -> DelimiterRow:
+    """Common normalization of a single delimited input row.
+
+    This mirrors the pattern used in many of the parsers:
+
+        normalize_row(
+            row,
+            key_fn=lambda r: r.strip(),
+            val_fn=lambda v: None if is_nullish(v) else v,
+            column_map=COLUMN_MAP,
+        )
+
+    Breaking it out into a helper keeps the individual parser modules tidy.
+    """
+    return normalize_row(
+        row,
+        key_fn=lambda r: r.strip(),
+        val_fn=lambda v: None if is_nullish(v) else v,
+        column_map=column_map,
+    )
+
+
+def read_json_safe(source: StreamOrPath, parser: Any, *, strict: bool = False) -> Any:
+    """Read JSON from ``source`` and log on failure.
+
+    Many parsers need a guarded ``read_json`` call that logs an error instead of
+    blowing up.  ``strict`` re‑raises the original exception on failure.
+    """
+
+    try:
+        return read_json(source)
+    except Exception as exc:  # pylint: disable=broad-except
+        parser.log_error("Failed to read JSON", error=str(exc))
+        if strict:
+            raise
+        return {}
 
 
 def get_nt_change(ref_codon: str, alt_codon: str) -> tuple[str, str]:

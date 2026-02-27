@@ -14,7 +14,7 @@ LOG = logging.getLogger(__name__)
 
 
 def _extract_accn_from_header(fasta_fpath: str):
-    with open(fasta_fpath, "r") as fin:
+    with open(fasta_fpath, "r", encoding="utf-8") as fin:
         header = fin.readline().strip()
     return str(header[1:].split()[0])
 

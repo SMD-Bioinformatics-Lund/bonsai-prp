@@ -3,8 +3,6 @@
 import logging
 from typing import Any
 
-from pydantic import TypeAdapter
-
 from prp.models.enums import AnalysisSoftware
 from prp.pipeline.types import CdmRecord, CdmRecords, ParsedSampleResults
 

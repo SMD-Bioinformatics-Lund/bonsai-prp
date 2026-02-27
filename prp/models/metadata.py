@@ -11,6 +11,8 @@ from .base import AllowExtraModelMixin, RelOrAbsPath, RWModel
 
 
 class MetadataTypes(StrEnum):
+    """Supported metadata types."""
+
     STR = "string"
     INT = "integer"
     FLOAT = "float"

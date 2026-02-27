@@ -7,7 +7,6 @@ from typing import TextIO
 import click
 from pydantic import ValidationError
 
-from prp import VERSION as __version__
 from prp.migration import migrate_result as migrate_result_json
 from prp.models.sample import PipelineResult
 
@@ -21,7 +20,7 @@ def validate_gr(): ...
 @validate_gr.command()
 def print_schema():
     """Print Pipeline result output format schema."""
-    click.secho(message=PipelineResult.model_json_schema(indent=2))
+    click.secho(message=PipelineResult.model_json_schema())
 
 
 @validate_gr.command()

@@ -4,7 +4,6 @@ from typing import Any, TextIO
 
 import click
 
-from prp import VERSION as __version__
 from prp.io.json import read_json
 from prp.io.manifest import read_manifest
 from prp.models.manifest import SampleManifest

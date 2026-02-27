@@ -10,7 +10,6 @@ LOG = logging.getLogger(__name__)
 @click.group("analysis")
 def analysis_gr():
     """Commands for conducting analysis"""
-    ...
 
 
 @analysis_gr.command("alignment_qc")

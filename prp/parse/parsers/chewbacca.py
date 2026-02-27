@@ -91,9 +91,9 @@ def replace_cgmlst_errors(
 
 
 def _to_typing_result(
-    row: Mapping[str, Any], *, strict: bool, log_warn: Any | None = None
+    row: Mapping[str, Any], *, log_warn: Any | None = None
 ) -> TypingResultCgMlst:
-    """Cast result to TypingResultShiga."""
+    """Cast result to TypingResultCgMlst."""
 
     # remove file column
     row.pop("FILE")
@@ -149,4 +149,4 @@ class ChewbbacaParser(SingleAnalysisParser):
         )
 
         # to envelope
-        return _to_typing_result(first, strict=strict)
+        return _to_typing_result(first, log_warn=self.log_warning)

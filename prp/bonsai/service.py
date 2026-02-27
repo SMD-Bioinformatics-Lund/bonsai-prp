@@ -41,7 +41,8 @@ class BonsaiUploadService:
         Args:
             client: An instance of bonsai-libs client (e.g., BonsaiApiClient).
             state_store: Persistent store for per-sample upload state.
-            dry_run: If True, do not perform network calls; only log and persist state transitions hypothetically.
+            dry_run: If True, do not perform network calls;
+                    only log and persist state transitions hypothetically.
         """
 
         self.client = client
@@ -67,7 +68,7 @@ class BonsaiUploadService:
     def upload_sample(
         self, results: ParsedSampleResults, *, force: bool
     ) -> UploadResult:
-        """Upload a single sample to Bonsai from a parsed manifest with checkpoint and resume."""
+        """Upload a single sample to Bonsai from a manifest."""
         upload_steps = [
             "create_sample",
             "add_pipeline_run",
@@ -106,7 +107,7 @@ class BonsaiUploadService:
         for result in results.analysis_results:
             if not isinstance(result, MinimalAnalysisRecord):
                 LOG.warning(
-                    "Skipping upload of analysis result with software=%s due to missing URI",
+                    "Skipping upload of result with software=%s due to missing URI",
                     result.software,
                 )
                 continue

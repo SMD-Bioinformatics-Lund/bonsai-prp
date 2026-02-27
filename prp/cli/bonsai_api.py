@@ -80,7 +80,8 @@ def bonsai_upload(
             "Could not authenticate to Bonsai API, check your credentials"
         )
 
-    workflow_id = f"bonsai-prp-upload-{manifest_obj.sample_id}-{manifest_obj.pipeline.pipeline_run_id}"
+    rid = manifest_obj.pipeline.pipeline_run_id
+    workflow_id = f"bonsai-prp-upload-{manifest_obj.sample_id}-{rid}"
     service = BonsaiUploadService(
         client=client, state_store=store, workflow_id=workflow_id, dry_run=dry_run
     )

@@ -57,7 +57,7 @@ def step(step_flag: str):
 
             service.reporter.on_step_start(external_id, dynamic_id)
 
-            # Generate headers before the dry_run check for consistent handling and logging.
+            # Generate headers for consistent handling and logging.
             headers = headers or {}
 
             try:
@@ -78,7 +78,8 @@ def step(step_flag: str):
                 return result
 
             except ClientError as exc:
-                # Try to extract meaningful error details from the API response, but fall back to raw body if parsing fails
+                # Try to extract meaningful error details from the API response,
+                # but fall back to raw body if parsing fails
                 try:
                     content = json.loads(exc.body) if exc.body else {}
                     details = content.get("detail", exc.body)
@@ -166,7 +167,8 @@ def step_upload_analysis_results(
         internal_sample_id, run_id=run_id, result=result
     )
 
-    # if "force" flag is set, overwrite existing results for the same software; otherwise, skip upload if results already exist
+    # if "force" flag is set, overwrite existing results for the same software;
+    # otherwise, skip upload if results already exist
     force = kwargs.get("force", False)
     resp = client.upload_analysis_result(payload, headers=headers, force=force)
     # build data to be stored in the state

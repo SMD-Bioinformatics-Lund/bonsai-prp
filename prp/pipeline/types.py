@@ -1,9 +1,9 @@
 """Types for generating pipeline results."""
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 
-from pydantic import BaseModel, Field, FilePath, TypeAdapter
+from pydantic import BaseModel, Field, FilePath
 
 from prp.models.base import RWModel
 from prp.models.enums import AnalysisSoftware, AnalysisType
@@ -37,7 +37,7 @@ class CdmRecord(BaseModel):
     result: Any
 
 
-CdmRecords = TypeAdapter(list[CdmRecord])
+CdmRecords: TypeAlias = list[CdmRecord]
 
 
 class PipelineArtifact(BaseModel):
@@ -93,6 +93,8 @@ class SequencingInfo(BaseModel):
 
 
 class MinimalAnalysisRecord(BaseModel):
+    """Minimal information about an analysis result, for upload to Bonsai."""
+
     software: str
     software_version: str
     uri: URI
@@ -125,6 +127,8 @@ class GenericMetadataRecord(BaseModel):
 
 
 class TabularMetadataRecord(BaseModel):
+    """Canonical internal representation of tabular metadata."""
+
     fieldname: str
     columns: list[str]
     rows: list[str] | None = None
@@ -133,7 +137,7 @@ class TabularMetadataRecord(BaseModel):
     data_type: Literal["table"] = "table"
 
 
-InternalMetadataRecord: TypeAdapter = GenericMetadataRecord | TabularMetadataRecord
+InternalMetadataRecord: TypeAlias = GenericMetadataRecord | TabularMetadataRecord
 
 
 class InternalIndexArtifacts(BaseModel):
