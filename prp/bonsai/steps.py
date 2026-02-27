@@ -138,11 +138,11 @@ def step_upload_analysis_results(
     resp = client.upload_analysis_result(payload, headers=headers, force=force)
     # build data to be stored in the state
     return {
-        "analysis_id": resp.get("analysis_id"), 
+        "analysis_id": resp.analysis_id, 
         "pipeline_run_id": run_id, 
-        "software": resp.get("software"),
-        "software_version": resp.get("software_version"),
-        "envelopes": resp.get("envelopes"),
+        "software": resp.software,
+        "software_version": resp.software_version,
+        "envelopes": resp.envelopes,
     }
 
 

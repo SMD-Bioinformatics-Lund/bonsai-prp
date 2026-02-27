@@ -4,29 +4,29 @@ from pathlib import Path
 from pydantic import TypeAdapter
 
 from bonsai_libs.api_client.bonsai.models import (
-    InputAnalysisResult,
-    InputMetaEntry,
-    InputTableMetadata,
+    UploadAnalysisResultInput,
+    MetaEntryInput,
+    TableMetadataInput,
     DatetimeMetadataEntry,
     GenericMetadataEntry,
-    InputSampleInfo,
+    SampleInfoInput,
     SequencingInfo,
     SequencingPlatforms,
     PipelineArtifact,
     PipelineRunConfig,
     PipelineDefinition,
     PipelineInfo,
-    InputPipelineRun,
+    PipelineRunInput,
 )
 
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
-input_meta_adapter = TypeAdapter(InputMetaEntry)
+meta_adapter_input = TypeAdapter(MetaEntryInput)
 
 
-def convert_metadata_entry(meta) -> InputMetaEntry:
+def convert_metadata_entry(meta) -> MetaEntryInput:
     """
-    Convert one PRP metadata entry into a Bonsai InputMetaEntry variant.
+    Convert one PRP metadata entry into a Bonsai MetaEntryInput variant.
     """
     t = meta.data_type  # your internal type tag
 
@@ -34,7 +34,7 @@ def convert_metadata_entry(meta) -> InputMetaEntry:
     if t == "table":
         return None
         # TODO reenable this later once the API supports it --- IGNORE ---
-        return InputTableMetadata(
+        return TableMetadataInput(
             fieldname=meta.fieldname,
             value=meta.value,               # probably a filename / serialized table?
             category=meta.category or "general",
@@ -61,7 +61,7 @@ def convert_metadata_entry(meta) -> InputMetaEntry:
     raise ValueError(f"Unsupported metadata data_type: {t!r}")
 
 
-def sample_to_bonsai(sample_info: ParsedSampleResults) -> InputSampleInfo:
+def sample_to_bonsai(sample_info: ParsedSampleResults) -> SampleInfoInput:
     """Create sample info from parsed manifest."""
 
     # convert platform
@@ -81,7 +81,7 @@ def sample_to_bonsai(sample_info: ParsedSampleResults) -> InputSampleInfo:
         if fmt_meta is not None:
             bonsai_meta.append(fmt_meta)
 
-    return InputSampleInfo(
+    return SampleInfoInput(
         sample_id=sample_info.sample_id,
         sample_name=sample_info.sample_name,
         lims_id=sample_info.lims_id,
@@ -91,7 +91,7 @@ def sample_to_bonsai(sample_info: ParsedSampleResults) -> InputSampleInfo:
     )
 
 
-def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> InputPipelineRun:
+def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> PipelineRunInput:
     """Extract pipeline run info from parsed manifest for API upload."""
 
     # Convert from internal representation to API input models
@@ -115,7 +115,7 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> InputPipeli
         configuration_files=raw_pipeline_nfo.run_config.configuration_files,
     )
 
-    return InputPipelineRun(
+    return PipelineRunInput(
         pipeline_run_id=sample_info.pipeline.pipeline_run_id,
         executed_at=sample_info.pipeline.executed_at,
         assay=sample_info.pipeline.assay,
@@ -127,7 +127,7 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> InputPipeli
     )
 
 
-def analysis_result_to_upload_payload(sample_id: str, *, run_id: str, result: MinimalAnalysisRecord) -> InputAnalysisResult:
+def analysis_result_to_upload_payload(sample_id: str, *, run_id: str, result: MinimalAnalysisRecord) -> UploadAnalysisResultInput:
     """Convert from internal analysis result representation to API input model."""
     if not result.uri:
         raise RuntimeError(f"Analysis result URI is required for upload, but got empty value for sample {sample_id}, run {run_id}, software {result.software}.")
@@ -137,7 +137,7 @@ def analysis_result_to_upload_payload(sample_id: str, *, run_id: str, result: Mi
     if not result.uri.scheme == "file" or not uri_path.is_file():
         raise ValueError(f"Analysis result URI must point to an existing file. Got: {result.uri}")
 
-    return InputAnalysisResult(
+    return UploadAnalysisResultInput(
         sample_id=sample_id,
         pipeline_run_id=run_id,
         software=result.software,
