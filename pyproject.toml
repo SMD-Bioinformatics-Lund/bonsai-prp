@@ -36,7 +36,7 @@ prp = "prp.cli:cli"
 
 # upload = cli + requests
 upload = [
-    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@master",
+    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.1.0",
     "click>=8.1",
     "requests>=2.31",
 ]
@@ -52,7 +52,7 @@ analysis = [
 ]
 
 all = [
-    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@master",
+    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.1.0",
     "click>=8.1",
     "requests>=2.31,<3",
     "numpy>=1.26,<2.0",
