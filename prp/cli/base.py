@@ -6,7 +6,9 @@ import click
 
 from prp import VERSION as __version__
 
-from . import annotate, parse, upload, validate
+from .analysis import analysis_gr
+from .bonsai_api import bonsai_gr
+from .parse import parse_gr
 
 LOG = logging.getLogger(__name__)
 
@@ -18,11 +20,11 @@ LOG = logging.getLogger(__name__)
 def cli(silent: bool, debug: bool):
     """Jasen pipeline result processing tool."""
     if silent:
-        log_level = logging.WARNING
+        log_level = logging.ERROR
     elif debug:
         log_level = logging.DEBUG
     else:
-        log_level = logging.INFO
+        log_level = logging.WARNING
     # configure logging
     logging.basicConfig(
         level=log_level, format="[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
@@ -32,14 +34,14 @@ def cli(silent: bool, debug: bool):
 # add commands
 
 ## for manipulating jasen results
-cli.add_command(parse.format_jasen)
-cli.add_command(validate.validate_result)
-cli.add_command(validate.migrate_result)
-cli.add_command(annotate.annotate_delly)
-cli.add_command(annotate.add_igv_annotation_track)
+cli.add_command(parse_gr)
+cli.add_command(bonsai_gr)
+cli.add_command(analysis_gr)
+# cli.add_command(validate.validate_result)
+# cli.add_command(validate.migrate_result)
+# cli.add_command(annotate.annotate_delly)
+# cli.add_command(annotate.add_igv_annotation_track)
 ## qc related
-cli.add_command(parse.format_cdm)
-cli.add_command(parse.create_qc_result)
-cli.add_command(validate.print_schema)
+# cli.add_command(parse.create_qc_result)
+# cli.add_command(validate.print_schema)
 ## bonsai reslated
-cli.add_command(upload.bonsai_upload)

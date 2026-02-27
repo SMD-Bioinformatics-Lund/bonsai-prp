@@ -8,7 +8,6 @@ import click
 import pysam
 from cyvcf2 import VCF, Writer
 
-from prp import VERSION as __version__
 from prp.models.sample import IgvAnnotationTrack, PipelineResult
 from prp.pipeline.variant import annotate_delly_variants
 
@@ -17,7 +16,7 @@ LOG = logging.getLogger(__name__)
 
 @click.group("annotate")
 def annotate_gr():
-    ...
+    """Annotate existing results with new data."""
 
 
 @annotate_gr.command()

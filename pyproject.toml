@@ -29,13 +29,14 @@ Issues = "https://github.com/Clinical-Genomics-Lund/bonsai-prp/issues"
 Changelog = "https://github.com/Clinical-Genomics-Lund/CHANGELOG.md"
 
 [project.scripts]
-prp = "prp.__main__:main"
+prp = "prp.cli:cli"
 
 [project.optional-dependencies]
 
 
 # upload = cli + requests
 upload = [
+    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.1.0",
     "click>=8.1",
     "requests>=2.31",
 ]
@@ -51,6 +52,7 @@ analysis = [
 ]
 
 all = [
+    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.1.0",
     "click>=8.1",
     "requests>=2.31,<3",
     "numpy>=1.26,<2.0",

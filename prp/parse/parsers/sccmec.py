@@ -3,7 +3,7 @@
 import logging
 
 from prp.io.delimited import DelimiterRow, normalize_nulls, read_delimited
-from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
+from prp.parse.core.base import SingleAnalysisParser, StreamOrPath
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.typing import TypingResultSccmec

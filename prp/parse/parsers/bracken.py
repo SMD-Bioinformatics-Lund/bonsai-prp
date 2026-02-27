@@ -3,7 +3,7 @@
 from typing import Any
 
 from prp.io.delimited import read_delimited
-from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
+from prp.parse.core.base import SingleAnalysisParser, StreamOrPath
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import ParserError
 from prp.parse.models.bracken import BrackenSpeciesPrediction
@@ -46,6 +46,8 @@ def to_taxlevel(lvl: str | TaxLevel) -> TaxLevel:
 
 @register_parser(BRACKEN)
 class BrackenParser(SingleAnalysisParser):
+    """Parser for Bracken results."""
+
     software = BRACKEN
     parser_name = "BrackenParser"
     parser_version = 1

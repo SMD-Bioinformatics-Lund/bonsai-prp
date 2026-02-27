@@ -18,7 +18,6 @@ from prp.parse.core.envelope import (
 )
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import AbsentResultError, ParserError
-from prp.parse.models.phenotype import AmrFinderResistanceGene, AmrFinderVariant
 from prp.parse.models.base import ElementTypeResult, PhenotypeInfo, ResultEnvelope
 from prp.parse.models.enums import (
     AnalysisSoftware,
@@ -39,6 +38,7 @@ from prp.parse.models.kleborate import (
     KleboreateSppResult,
     ParsedVariant,
 )
+from prp.parse.models.phenotype import AmrFinderResistanceGene, AmrFinderVariant
 from prp.parse.parsers.hamronization import HAmrOnizationParser
 
 from .utils import safe_int, safe_strand
@@ -207,7 +207,7 @@ def _parse_virulence(result: Mapping[str, Any]) -> KleborateEtScore | None:
 
 
 def _parse_kaptive(
-    result: Mapping[str, Any]
+    result: Mapping[str, Any],
 ) -> dict[AnalysisType.K_TYPE, KleborateKaptiveLocus]:
     """Parse kaptive results in Kleborate and return K/O typing results."""
 
@@ -234,7 +234,7 @@ def _parse_kaptive(
 
 
 def _parse_mlst_like(
-    result: Mapping[str, Any]
+    result: Mapping[str, Any],
 ) -> dict[AnalysisType, KleborateMlstLikeResults]:
     """
     Parse the MLST-like blocks from result["klebsiella"] using your schema definitions.
@@ -365,7 +365,10 @@ def _parse_variant_str(
 
     m = pattern.fullmatch(v)
     if not m:
-        msg = f"Could not parse variant string {variant_str!r} with pattern for {residue_type} {subtype}"
+        msg = (
+            f"Could not parse variant string {variant_str!r} "
+            f"with pattern for {residue_type} {subtype}"
+        )
         if warn:
             warn(msg)
         if strict:
@@ -455,13 +458,17 @@ def _parse_amr(entries: HamronizationEntries, *, warn: WarnFn) -> ElementTypeRes
                     query_end_pos=q_end,
                     start=entry.reference.gene_start or 0,
                     end=entry.reference.gene_stop or 0,
-                    identity=entry.sequence_identity
-                    if entry.sequence_identity is not None
-                    else -1,
+                    identity=(
+                        entry.sequence_identity
+                        if entry.sequence_identity is not None
+                        else -1
+                    ),
                     depth=entry.coverage_depth,
-                    coverage=entry.coverage_percentage
-                    if entry.coverage_percentage is not None
-                    else -1,
+                    coverage=(
+                        entry.coverage_percentage
+                        if entry.coverage_percentage is not None
+                        else -1
+                    ),
                     frequency=getattr(entry, "variant_frequency", None),
                     passed_qc=None,
                     confidence=None,
@@ -531,6 +538,7 @@ class KleborateParser(BaseParser):
 
         # convert result as nested dict
         observed_sample_ids: str | None = None
+        nested = _normalize_kleborate_row(first_row)
         for raw_row in chain([first_row], row_iter):
             nested = _normalize_kleborate_row(raw_row)
 
@@ -545,7 +553,10 @@ class KleborateParser(BaseParser):
                     sample_ids=[observed_sample_ids, sample_id],
                 )
                 raise ParserError(
-                    f"There are multiple sample ids in file, {observed_sample_ids} != {sample_id}"
+                    (
+                        "There are multiple sample ids in file, "
+                        f"{observed_sample_ids} != {sample_id}"
+                    )
                 )
 
             base_meta = {
@@ -568,7 +579,7 @@ class KleborateParser(BaseParser):
                 out[AnalysisType.QC] = run_as_envelope(
                     analysis_name=AnalysisType.QC,
                     fn=lambda: _parse_qc(nested),
-                    reason_if_absent=f"No QC results present",
+                    reason_if_absent="No QC results present",
                     reason_if_empty="No QC result",
                     meta=base_meta,
                     logger=self.logger,
@@ -578,7 +589,7 @@ class KleborateParser(BaseParser):
                 out[AnalysisType.VIRULENCE] = run_as_envelope(
                     analysis_name=AnalysisType.VIRULENCE,
                     fn=lambda: _parse_virulence(nested),
-                    reason_if_absent=f"No virulence prediction in result",
+                    reason_if_absent="No virulence prediction in result",
                     reason_if_empty="No virulence genes",
                     meta=base_meta,
                     logger=self.logger,
@@ -589,7 +600,7 @@ class KleborateParser(BaseParser):
                 kaptive_env = run_as_envelope(
                     analysis_name="Kaptive",
                     fn=lambda: _parse_kaptive(nested),
-                    reason_if_absent=f"Kaptive not present",
+                    reason_if_absent="Kaptive not present",
                     reason_if_empty="Kaptive result",
                     meta=base_meta,
                     logger=self.logger,
@@ -607,7 +618,8 @@ class KleborateParser(BaseParser):
                             payload, meta={**base_meta, "step": "kaptive.o_type"}
                         )
                 else:
-                    # Propagate non-PARSED status (ABSENT/EMPTY/ERROR) to requested sub-types
+                    # Propagate non-PARSED status
+                    # (ABSENT/EMPTY/ERROR) to requested sub-types
                     if AnalysisType.K_TYPE in want:
                         out[AnalysisType.K_TYPE] = ResultEnvelope(
                             status=kaptive_env.status,
@@ -661,7 +673,7 @@ class KleborateParser(BaseParser):
 
                     res = hres.results.get(AnalysisType.AMR)
                     if res.status != "parsed":
-                        # Should not happen if prepopulated by that parser; treat as ABSENT
+                        # Should not happen if prepopulated by that parser
                         out[AnalysisType.AMR] = envelope_absent(
                             "hAMRonization AMR not present",
                             meta={**base_meta, "step": "amr"},

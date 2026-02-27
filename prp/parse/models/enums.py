@@ -2,58 +2,7 @@
 
 from enum import StrEnum
 
-
-class AnalysisSoftware(StrEnum):
-    """Single source of truth for analysis software names."""
-
-    AMRFINDER = "amrfinder"
-    BRACKEN = "bracken"
-    CHEWBBACA = "chewbbaca"
-    EMMTYPER = "emmtyper"
-    GAMBIT = "gambit"
-    HAMRONIZATION = "hAMRonization"
-    KLEBORATE = "kleborate"
-    MYKROBE = "mykrobe"
-    MLST = "mlst"
-    NANOPLOT = "nanoplot"
-    POSTALIGNQC = "postalignqc"
-    QUAST = "quast"
-    RESFINDER = "resfinder"
-    SAMTOOLS = "samtools"
-    SCCMECTYPER = "sccmectyper"
-    SEROTYPEFINDER = "serotypefinder"
-    SHIGAPASS = "shigapass"
-    SPATYPER = "spatyper"
-    TBPROFILER = "tbprofiler"
-    VIRULENCEFINDER = "virulencefinder"
-
-
-class AnalysisType(StrEnum):
-    """The various types of analysis a parser can produce."""
-
-    ABST = "abst"
-    AMR = "amr"
-    CBST = "cbst"
-    CGMLST = "cgmlst"
-    COVERAGE = "coverage"
-    EMM = "emm"
-    H_TYPE = "h_type"
-    K_TYPE = "k_type"
-    LINEAGE = "lineage"
-    MLST = "mlst"
-    O_TYPE = "o_type"
-    QC = "qc"
-    RMST = "rmst"
-    SCCMEC = "sccmec"
-    SHIGATYPE = "shigatype"
-    SMST = "smst"
-    SPATYPE = "spatype"
-    SPECIES = "species"
-    STRESS = "stress"
-    STX = "stx"
-    TYPING = "typing"
-    VIRULENCE = "virulence"
-    YBST = "ybst"
+from prp.models.enums import AnalysisSoftware, AnalysisType
 
 
 class ResultStatus(StrEnum):

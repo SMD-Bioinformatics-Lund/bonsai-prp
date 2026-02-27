@@ -8,6 +8,8 @@
 
 ### Changed
 
+- Changed manifest format to include software version and database info.
+- Use shared library for API calls
 - Simplified repo structure and data models to increase code legibility.
 - All parsers of analysis tools now share the same structure and helper functions.
 - Reworked and simplified data models

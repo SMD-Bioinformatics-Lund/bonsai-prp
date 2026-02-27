@@ -194,6 +194,8 @@ def lookup_antibiotic_class(antibiotic: str) -> str:
 
 
 def assign_res_subtype(prediction: dict[str, Any], element_type: ElementType) -> Any:
+    """Assign resistance subtype based on prediction info and element type."""
+
     if element_type == ElementType.STRESS:
         predicted = set(prediction.get("phenotypes") or [])
         for sub_type, phenos in STRESS_FACTORS.items():
@@ -208,6 +210,8 @@ def assign_res_subtype(prediction: dict[str, Any], element_type: ElementType) ->
 def get_resfinder_sr_profile(
     resfinder_result: dict[str, Any], limit_to: list[str] | None = None
 ) -> dict[str, list[str]]:
+    """Get resfinder susceptibility/resistance profile."""
+
     susceptible: set[str] = set()
     resistant: set[str] = set()
 
@@ -230,6 +234,8 @@ def get_resfinder_sr_profile(
 def parse_resfinder_genes(
     resfinder_result: dict[str, Any], limit_to: list[str] | None = None
 ) -> list[GeneBase]:
+    """Parse resfinder gene predictions."""
+
     results: list[GeneBase] = []
     phenotypes = resfinder_result.get("phenotypes") or {}
     for info in (resfinder_result.get("seq_regions") or {}).values():
@@ -295,7 +301,8 @@ def parse_resfinder_genes(
 def parse_resfinder_variants(
     resfinder_result: dict[str, Any], limit_to: list[str] | None = None
 ) -> list[VariantBase]:
-    # prediction method
+    """Parse resfinder variant predictions."""
+
     prediction_method = None
     for exec_info in (resfinder_result.get("software_executions") or {}).values():
         prediction_method = exec_info.get("parameters", {}).get("method")
@@ -387,6 +394,7 @@ def get_resfinder_amr_sr_profie(resfinder_result, limit_to_phenotypes=None):
 def build_resfinder_result(
     pred: dict[str, Any], resistance_category: ElementType
 ) -> ElementTypeResult:
+    """Build resfinder result for a given resistance category."""
     stress_factors = list(chain(*STRESS_FACTORS.values()))
     all_phenos = pred.get("phenotypes") or {}
 

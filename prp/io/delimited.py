@@ -1,15 +1,15 @@
 """Functions for reading delimited files and validating its content."""
 
-import re
-from typing import Any, Callable, Iterator, Mapping, Sequence
-from pathlib import Path
 import csv
 import logging
+import re
+from pathlib import Path
+from typing import Any, Callable, Iterator, Mapping, Sequence
 
 from .types import DelimiterRow, FieldValidationResult, StreamOrPath
 from .utils import ensure_text_stream
 
-_NULLISH = {None, "", " ", "NA", "N/A", "na", "n/a", ".", "-", "ND", "none"}
+_NULLISH = [None, "", " ", "NA", "N/A", "na", "n/a", ".", "-", "ND", "none"]
 _TRAILING_ANNOT_RE = re.compile(r"\s*(\([^)]*\)|\[[^\]]*\])\s*$")
 
 LOG = logging.getLogger(__name__)
@@ -55,11 +55,14 @@ def read_delimited(
         return
 
     text_stream = ensure_text_stream(source, encoding=encoding)
-    # If has_header=False, DictReader will treat the first row as data and use provided fieldnames.
-    # If has_header=True and fieldnames=None, DictReader reads header from first row.
+    # If has_header=False, DictReader will treat the first row as data
+    # and use provided fieldnames.
+    # If has_header=True and fieldnames=None,
+    # DictReader reads header from first row.
     reader = csv.DictReader(text_stream, delimiter=delimiter, fieldnames=fieldnames)
 
-    # If has_header=True AND fieldnames was provided, DictReader will NOT consume header.
+    # If has_header=True AND fieldnames was provided,
+    # DictReader will NOT consume header.
     if has_header and fieldnames is not None:
         # Consume one row (the header row) and discard
         next(reader, None)
@@ -87,8 +90,9 @@ def read_delimited(
         yield cleaned
 
 
-def is_nullish(value: Any, null_values: set[str] = _NULLISH) -> bool:
+def is_nullish(value: Any, null_values: set[str] | None = None) -> bool:
     """Check if value is a null value."""
+    null_values = null_values or set(_NULLISH)
     if value is None:
         return True
     if isinstance(value, str) and value.strip() in null_values:

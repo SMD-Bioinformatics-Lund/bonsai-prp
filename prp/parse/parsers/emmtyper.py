@@ -4,10 +4,11 @@ import logging
 from typing import Any
 
 from prp.io.delimited import read_delimited
-from prp.parse.core.base import StreamOrPath, SingleAnalysisParser
+from prp.parse.core.base import SingleAnalysisParser, StreamOrPath
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.typing import TypingResultEmm
+
 from .utils import is_nullish
 
 LOG = logging.getLogger(__name__)

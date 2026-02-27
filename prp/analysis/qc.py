@@ -14,8 +14,7 @@ except ImportError as e:
         "This feature requires the 'analysis' extra: pip install bonsai-prp[analysis]"
     ) from e
 
-
-OptionalFile = TextIO | None
+from prp.models.base import OptionalFile
 
 LOG = logging.getLogger(__name__)
 
@@ -111,12 +110,16 @@ class ComputePostAlnQc:
             iqr / median_cov if quartile1 and quartile3 and median_cov else None
         )
 
-        self.results["pct_above_x"] = pct_above
-        self.results["mean_cov"] = mean_cov
-        self.results["coverage_uniformity"] = coverage_uniformity
-        self.results["quartile1"] = quartile1
-        self.results["median_cov"] = median_cov
-        self.results["quartile3"] = quartile3
+        self.results.update(
+            {
+                "pct_above_x": pct_above,
+                "mean_cov": mean_cov,
+                "coverage_uniformity": coverage_uniformity,
+                "quartile1": quartile1,
+                "median_cov": median_cov,
+                "quartile3": quartile3,
+            }
+        )
 
     def is_paired(self) -> bool:
         """Check if reads are paired"""
@@ -241,12 +244,16 @@ class ComputePostAlnQc:
             # Remove base coverage file
             os.remove(f"{out_prefix}.basecov.bed")
 
-        self.results["n_reads"] = n_reads
-        self.results["n_mapped_reads"] = n_mapped_reads
-        self.results["n_read_pairs"] = n_read_pairs
-        self.results["n_dup_reads"] = n_dup_reads
-        self.results["dup_pct"] = n_dup_reads / n_mapped_reads
-        self.results["sample_id"] = self.sample_id
+        self.results.update(
+            {
+                "n_reads": n_reads,
+                "n_mapped_reads": n_mapped_reads,
+                "n_read_pairs": n_read_pairs,
+                "n_dup_reads": n_dup_reads,
+                "dup_pct": n_dup_reads / n_mapped_reads if n_mapped_reads > 0 else 0,
+                "sample_id": self.sample_id,
+            }
+        )
 
         return self.results
 

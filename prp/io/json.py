@@ -1,9 +1,8 @@
 """Read json files."""
 
-import io
 import json
 from typing import Any, Mapping
-from pathlib import Path
+
 from prp.exceptions import DataFormatError
 
 from .types import StreamOrPath
@@ -20,12 +19,16 @@ def read_json(source: StreamOrPath, *, encoding: str = "utf-8") -> Any:
         stream = ensure_text_stream(source, encoding=encoding)
         return json.loads(stream.read())
     except TypeError as exc:
-        raise DataFormatError(f"Failed to read JSON from source of type {type(source)!r}") from exc
+        raise DataFormatError(
+            f"Failed to read JSON from source of type {type(source)!r}"
+        ) from exc
 
 
 def require_mapping(obj: Any, *, what: str) -> Mapping[str, Any]:
     """Read JSON object and ensure it's a dict/mapping."""
 
     if not isinstance(obj, dict):
-        raise DataFormatError(f"Expected object '{what}' to be a JSON object/dict, got {type(obj)!r}")
+        raise DataFormatError(
+            f"Expected object '{what}' to be a JSON object/dict, got {type(obj)!r}"
+        )
     return obj

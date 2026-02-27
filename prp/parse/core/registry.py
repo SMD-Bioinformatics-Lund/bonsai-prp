@@ -3,10 +3,14 @@
 from dataclasses import dataclass
 from typing import Any, Callable, TypeAlias
 
-from packaging.version import Version, InvalidVersion
+from packaging.version import InvalidVersion, Version
 
 from prp.parse.core.base import BaseParser, StreamOrPath
-from prp.parse.exceptions import InvalidDataFormat, UnsupportedSoftwareError, UnsupportedVersionError
+from prp.parse.exceptions import (
+    InvalidDataFormat,
+    UnsupportedSoftwareError,
+    UnsupportedVersionError,
+)
 from prp.parse.models.base import ParserOutput
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 
@@ -38,12 +42,12 @@ def register_parser(
     max_version = max_version or "99999.0.0"
 
     def wrapper(cls: RegistryEntry):
-        range = VersionRange(
+        v_range = VersionRange(
             min_version=Version(min_version),
             max_version=Version(max_version),
             parser=cls,
         )
-        _REGISTRY.setdefault(software, []).append(range)
+        _REGISTRY.setdefault(software, []).append(v_range)
         return cls
 
     return wrapper
@@ -56,7 +60,7 @@ def get_parser(software: str, *, version: str) -> RegistryEntry:
 
     if software not in registered_softwares():
         raise UnsupportedSoftwareError(f"No parser registered for software: {software}")
-    
+
     # Normalize version to PkgVersion
     if isinstance(version, Version):
         v = version
@@ -70,15 +74,18 @@ def get_parser(software: str, *, version: str) -> RegistryEntry:
                 context={"software": software, "version": version},
             ) from exc
     else:
-        raise TypeError(f"`version` must be str|Version|None, got {type(version).__name__}")
-
+        raise TypeError(
+            f"`version` must be str|Version|None, got {type(version).__name__}"
+        )
 
     for span in sorted(_REGISTRY[software]):
         if span.min_version <= v <= span.max_version:
             return span.parser
 
     # Return the correct error.
-    raise UnsupportedVersionError(f"No parser available for software '{software}' version {v}")
+    raise UnsupportedVersionError(
+        f"No parser available for software '{software}' version {v}"
+    )
 
 
 def registered_softwares() -> list[str]:
@@ -95,7 +102,7 @@ def registered_version_ranges(software: str) -> list[VersionRange]:
 
 def resolve_parser(entry, **init_kwargs) -> Callable[..., ParserOutput]:
     """Resolve registry entry to a callable parse function.
-    
+
     If works with both parser classes and parse functions.
     """
 
@@ -115,9 +122,13 @@ def run_parser(
     parser_init: dict[str, Any] | None = None,
     **parse_kwargs: Any,
 ) -> ParserOutput:
+    """Run parser for given software, version and data."""
+
     if not isinstance(software, (AnalysisSoftware, str)):
         raise ValueError(f"Invalid input for 'run_parser', got {type(software)}")
 
     entry = get_parser(software, version=version)
     parse_fn = resolve_parser(entry, **(parser_init or {}))
-    return parse_fn(data, software_version=version, want=want, **parse_kwargs)
+    ev = parse_fn(data, want=want, **parse_kwargs)
+    # add version to results
+    return ev.model_copy(update={"software_version": version})

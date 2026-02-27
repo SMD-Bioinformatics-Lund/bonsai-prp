@@ -1,6 +1,5 @@
 """Parse mlst.py results."""
 
-
 from typing import Any
 
 from prp.io.delimited import is_nullish

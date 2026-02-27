@@ -1,10 +1,11 @@
 """Helper functions for file I/O operations."""
 
-
 import io
 import os
-from typing import IO
 from pathlib import Path
+from typing import IO
+
+from pydantic import ValidationInfo
 
 from prp.io.types import StreamOrPath
 
@@ -53,7 +54,29 @@ def ensure_text_stream(
             return source  # type: ignore[return-value]
 
         if isinstance(sample, (bytes, bytearray)):
-            return io.TextIOWrapper(source, encoding=encoding, newline=newline)  # type: ignore[arg-type]
+            return io.TextIOWrapper(
+                source, encoding=encoding, newline=newline
+            )  # type: ignore[arg-type]
         return source  # type: ignore[return-value]
 
     raise TypeError(f"Unsupported StreamOrPath type: {type(source)!r}")
+
+
+def convert_rel_to_abs_path(path: str, validation_info: ValidationInfo) -> Path:
+    """Validate that file exist and resolve realtive directories.
+
+    if a path is relative, convert to absolute from the configs parent directory
+    i.e.  prp_path = ./results/sample_name.json --> /path/to/sample_name.json
+          given, cnf_path = /data/samples/cnf.yml
+    relative paths are used when bootstraping a test database
+    """
+    # convert relative path to absolute
+    upd_path = Path(path)
+    if not upd_path.is_absolute():
+        # check if config file path is provided as the model context
+        if validation_info.context is None:
+            raise ValueError("No context defined for model.")
+        upd_path = Path(validation_info.context).parent / upd_path
+
+    assert upd_path.is_file(), f"Invalid path: {upd_path}"
+    return upd_path

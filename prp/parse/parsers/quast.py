@@ -2,8 +2,8 @@
 
 from typing import Any
 
-from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.parse.core.base import StreamOrPath, SingleAnalysisParser, warn_if_extra_rows
+from prp.io.delimited import DelimiterRow, is_nullish, read_delimited
+from prp.parse.core.base import SingleAnalysisParser, StreamOrPath, warn_if_extra_rows
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 from prp.parse.models.qc import QuastQcResult
@@ -51,14 +51,21 @@ def _to_qc_result(row: dict[str, Any]) -> QuastQcResult:
     )
 
 
-def _normalize_quast_row(row: DelimiterRow) -> DelimiterRow:
-    """Wrapps normalize row."""
-    return normalize_row(
-        row,
-        key_fn=lambda r: r.strip(),
-        val_fn=lambda v: None if is_nullish(v) else v,
-        column_map=COLUMN_MAP,
-    )
+# normalization is generic; use shared helper instead of repeating the pattern
+
+
+def _normalize_quast_row(
+    row: DelimiterRow,
+) -> DelimiterRow:  # kept for backwards compatibility
+    """Normalize a single Quast row.
+
+    This wrapper exists to preserve the old name; it delegates to the generic
+    ``normalize_delimited_row`` defined in :mod:`.utils` so that identical
+    implementations aren't copied into every parser.
+    """
+    from .utils import normalize_delimited_row
+
+    return normalize_delimited_row(row, COLUMN_MAP)
 
 
 @register_parser(QUAST)
@@ -81,20 +88,16 @@ class QuastParser(SingleAnalysisParser):
         **kwargs: Any,
     ) -> QuastQcResult | None:
         """Parse shigapass predictions and return a ShigaTypingMethodIndex."""
-        rows = read_delimited(source)
-        try:
-            first_raw = next(rows)
-        except StopIteration:
-            self.log_info(f"{self.software} input empty")
+        # read and normalise a single row; handles empty file and column
+        # validation internally
+        first = self._get_first_normalized_row(
+            source,
+            COLUMN_MAP,
+            required=REQUIRED_COLUMNS,
+            strict_columns=strict_columns,
+        )
+        if first is None:
             return None
-
-        self.validate_columns(
-            first_raw, required=REQUIRED_COLUMNS, strict=strict_columns
-        )
-        first = _normalize_quast_row(first_raw)
-        warn_if_extra_rows(
-            rows, self.log_warning, context=f"{self.software} file", max_consume=10
-        )
 
         # build qc result
         return _to_qc_result(first)

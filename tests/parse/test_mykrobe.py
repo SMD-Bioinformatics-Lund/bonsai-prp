@@ -1,6 +1,5 @@
 """Test Mykrobe parser."""
 
-
 from prp.parse.models.base import ElementTypeResult, ParserOutput, ResultEnvelope
 from prp.parse.models.typing import ResultLineageBase
 from prp.parse.parsers.mykrobe import MykrobeParser

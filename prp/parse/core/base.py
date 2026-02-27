@@ -5,8 +5,8 @@ from collections.abc import Callable, Iterator
 from logging import Logger, getLogger
 from typing import Any, Mapping, Type, TypeVar
 
-from prp.io.delimited import validate_fields
-from prp.io.types import StreamOrPath
+from prp.io.delimited import read_delimited, validate_fields
+from prp.io.types import DelimiterRow, StreamOrPath
 from prp.parse.core.envelope import (
     default_empty_predicate,
     envelope_absent,
@@ -14,7 +14,7 @@ from prp.parse.core.envelope import (
     run_as_envelope,
 )
 from prp.parse.exceptions import UnsupportedAnalysisTypeError
-from prp.parse.models.base import ParserOutput, ResultEnvelope, ParseImplOut
+from prp.parse.models.base import ParseImplOut, ParserOutput, ResultEnvelope
 from prp.parse.models.enums import AnalysisType, ResultStatus
 
 T = TypeVar("T")
@@ -33,12 +33,16 @@ class BaseParser(ABC):
         self.logger = logger or getLogger(f"bonsai_prp.parse.{self.parser_name}")
 
     def log_info(self, msg: str, **ctx):
+        """Log info message with context."""
+
         self.logger.info(msg, extra={"context": ctx})
 
     def log_warning(self, msg: str, **ctx):
+        """Log warning message with context."""
         self.logger.warning(msg, extra={"context": ctx})
 
     def log_error(self, msg: str, **ctx):
+        """Log error message with context."""
         self.logger.error(msg, extra={"context": ctx})
 
     def parse(
@@ -49,6 +53,7 @@ class BaseParser(ABC):
         software_version: str | None = None,
         **kwargs: Any,
     ) -> ParserOutput:
+        """Parse a source into structured results."""
         want: set[AnalysisType] = self._normalize_want(want)
 
         out = self._new_output(software_version)
@@ -58,7 +63,8 @@ class BaseParser(ABC):
             if want is not None and atype not in want:
                 out.results[atype] = envelope_skipped()
             else:
-                # The specific parser implementation will have to clarify why a analysis was absent
+                # The specific parser implementation will have to clarify
+                # why a analysis was absent
                 out.results[atype] = envelope_absent(reason="Prepopulated")
 
         # exit if the parser cant produce what is requested
@@ -76,7 +82,6 @@ class BaseParser(ABC):
                     "produces": [p.value for p in self.produces],
                 },
             )
-                
 
         self.log_info("Parsing", software=self.software, parser=self.parser_name)
 
@@ -90,6 +95,8 @@ class BaseParser(ABC):
     def _normalize_want(
         self, want: set[AnalysisType] | AnalysisType | None
     ) -> set[AnalysisType]:
+        """Normalize the want parameter to a set of AnalysisType."""
+
         want = want or set(self.produces)
         return {want} if isinstance(want, AnalysisType) else want
 
@@ -128,6 +135,72 @@ class BaseParser(ABC):
             )
             raise
 
+    # generic helpers ---------------------------------------------------------
+
+    def _read_rows(
+        self,
+        source: StreamOrPath,
+        *,
+        required: set[str] | None = None,
+        strict_columns: bool = False,
+    ) -> tuple[Mapping[str, Any] | None, Iterator[DelimiterRow] | None]:
+        """Read a delimited source, validate header and return iterator.
+
+        Returns a ``(first_row, rows_iterator)`` pair.  ``first_row`` will be
+        ``None`` if the source is empty; in that case both elements of the tuple
+        are ``None`` and the caller should bail out.  ``required`` is an
+        optional set of column names to validate against the first row.  The
+        columns are validated via :meth:`validate_columns`, so any resulting
+        exception is propagated.
+        """
+        rows = read_delimited(source)
+        try:
+            first = next(rows)
+        except StopIteration:
+            self.log_info(f"{self.software} input empty")
+            return None, None
+        if required:
+            self.validate_columns(first, required=required, strict=strict_columns)
+        return first, rows
+
+    def _get_first_normalized_row(
+        self,
+        source: StreamOrPath,
+        column_map: dict[str, str],
+        *,
+        required: set[str] | None = None,
+        strict_columns: bool = False,
+        max_consume: int = 10,
+    ) -> Mapping[str, Any] | None:
+        """Convenience: read, validate and normalize a single delimited row.
+
+        ``column_map`` is passed through to :func:`prp.io.delimited.normalize_row`.
+        If the source is empty this returns ``None``.  Extra rows are consumed up
+        to ``max_consume`` and a warning emitted via :meth:`log_warning`.
+        """
+        first, rows = self._read_rows(
+            source, required=required, strict_columns=strict_columns
+        )
+        if first is None:
+            return None
+        # normalization is a very common pattern; import lazily to avoid a
+        # circular dependency during package import.
+        from prp.io.delimited import is_nullish, normalize_row
+
+        normalized = normalize_row(
+            first,
+            key_fn=lambda r: r.strip(),
+            val_fn=lambda v: None if is_nullish(v) else v,
+            column_map=column_map,
+        )
+        warn_if_extra_rows(
+            rows,
+            self.log_warning,
+            context=f"{self.software} file",
+            max_consume=max_consume,
+        )
+        return normalized
+
     @abstractmethod
     def _parse_impl(
         self,
@@ -159,7 +232,9 @@ class SingleAnalysisParser(BaseParser):
         return default_empty_predicate
 
     def absent_predicate(self) -> Callable[[Any], bool] | None:
-        """Optional hook if a subclass prefers a value-based absent detection instead of raising AbsentResultError."""
+        """Optional hook if a subclass prefers a value-based absent detection.
+
+        This instead of raising AbsentResultError."""
         return None
 
     def _parse_impl(
@@ -178,8 +253,7 @@ class SingleAnalysisParser(BaseParser):
         return {self.analysis_type: env}
 
     @abstractmethod
-    def _parse_one(self, source: StreamOrPath, **kwargs: Any) -> Any:
-        ...
+    def _parse_one(self, source: StreamOrPath, **kwargs: Any) -> Any: ...
 
 
 def warn_if_extra_rows(
