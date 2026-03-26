@@ -13,10 +13,13 @@
 - Simplified repo structure and data models to increase code legibility.
 - All parsers of analysis tools now share the same structure and helper functions.
 - Reworked and simplified data models
+- Removed `annotate-delly` and `analysis alignment_qc` subcommands that don't concern result processing
+- `TypingResultCgMlst.n_novel` is now `int | None`; returns `None` for chewbbaca output that predates the `INF-<id>` allele notation (v3.4+), where novel alleles cannot be distinguished from known ones
 
 ### Fixed
 
 - Improved error handling and unified some names.
+- cgMLST novel allele counting now correctly handles chewbbaca output format differences between versions
 
 ## [1.5.0]
 
