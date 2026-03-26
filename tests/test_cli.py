@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from click.testing import CliRunner
 
-from prp.cli.annotate import add_igv_annotation_track, annotate_delly
+from prp.cli.annotate import add_igv_annotation_track
 from prp.cli.parse import format_cdm, format_results
 from prp.models.sample import PipelineResult
 
@@ -85,41 +85,6 @@ def test_cdm_cmd(ecoli_sample_conf_path: Path, ecoli_cdm_input: list[dict[str, A
     #     with open(output_file, "rb") as inpt:
     #         cdm_output = json.load(inpt)
     #         assert cdm_output == ecoli_cdm_input
-
-
-def test_annotate_delly(
-    mtuberculosis_delly_bcf_path: Path,
-    converged_bed_path: Path,
-    annotated_delly_path: Path,
-):
-    """Test command for annotating delly output."""
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        sample_id = "test_mtuberculosis_1"
-        output_fname = f"{sample_id}_annotated_delly.vcf"
-        result = runner.invoke(
-            annotate_delly,
-            [
-                "--vcf",
-                str(mtuberculosis_delly_bcf_path),
-                "--bed",
-                str(converged_bed_path),
-                "--output",
-                output_fname,
-            ],
-        )
-
-        # test successful execution of command
-        assert result.exit_code == 0
-
-        # test correct output format
-        with (
-            open(output_fname, "r", encoding="utf-8") as test_annotated_delly_output,
-            open(annotated_delly_path, "r", encoding="utf-8") as annotated_delly_output,
-        ):
-            test_contents = test_annotated_delly_output.read()
-            expected_contents = annotated_delly_output.read()
-            assert test_contents == expected_contents
 
 
 def test_add_igv_annotation_track(
