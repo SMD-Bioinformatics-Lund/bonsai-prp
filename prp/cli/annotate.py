@@ -2,14 +2,10 @@
 
 import json
 import logging
-from pathlib import Path
 
 import click
-import pysam
-from cyvcf2 import VCF, Writer
 
 from prp.models.sample import IgvAnnotationTrack, PipelineResult
-from prp.pipeline.variant import annotate_delly_variants
 
 LOG = logging.getLogger(__name__)
 
@@ -17,66 +13,6 @@ LOG = logging.getLogger(__name__)
 @click.group("annotate")
 def annotate_gr():
     """Annotate existing results with new data."""
-
-
-@annotate_gr.command()
-@click.option("-v", "--vcf", type=click.Path(exists=True), help="VCF file")
-@click.option("-b", "--bed", type=click.Path(exists=True), help="BED file")
-@click.option(
-    "-o",
-    "--output",
-    required=True,
-    type=click.Path(writable=True),
-    help="output filepath",
-)
-def annotate_delly(vcf: Path | None, bed: Path | None, output: Path):
-    """Annotate Delly SV varinats with genes in BED file."""
-    output = Path(output)
-    # load annotation
-    if bed is not None:
-        annotation = pysam.TabixFile(bed, parser=pysam.asTuple())
-    else:
-        raise click.UsageError("You must provide a annotation file.")
-
-    vcf_obj = VCF(vcf)
-    variant = next(vcf_obj)
-    annot_chrom = False
-    if not variant.CHROM in annotation.contigs:
-        if len(annotation.contigs) > 1:
-            raise click.UsageError(
-                (
-                    f'"{variant.CHROM}" not in BED file'
-                    " and the file contains "
-                    f"{len(annotation.contigs)} chromosomes"
-                )
-            )
-        # if there is only one "chromosome" in the bed file
-        annot_chrom = True
-        LOG.warning("Annotating variant chromosome to %s", annotation.contigs[0])
-    # reset vcf file
-    vcf_obj = VCF(vcf)
-    vcf_obj.add_info_to_header(
-        {
-            "ID": "gene",
-            "Description": "overlapping gene",
-            "Type": "Character",
-            "Number": "1",
-        }
-    )
-    vcf_obj.add_info_to_header(
-        {
-            "ID": "locus_tag",
-            "Description": "overlapping tbdb locus tag",
-            "Type": "Character",
-            "Number": "1",
-        }
-    )
-
-    # open vcf writer
-    writer = Writer(output.absolute(), vcf_obj)
-    annotate_delly_variants(writer, vcf_obj, annotation, annot_chrom=annot_chrom)
-
-    click.secho(f"Wrote annotated delly variants to {output.name}", fg="green")
 
 
 @annotate_gr.command()
