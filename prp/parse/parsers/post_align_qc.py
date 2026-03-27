@@ -11,17 +11,7 @@ from .utils import safe_float, safe_int
 POSTALIGNQC = AnalysisSoftware.POSTALIGNQC
 
 # Optional: required keys you consider mandatory for a valid QC blob
-REQUIRED_KEYS = {
-    "mean_cov",
-    "pct_above_x",
-    "n_reads",
-    "n_mapped_reads",
-    "n_read_pairs",
-    "quartile1",
-    "median_cov",
-    "quartile3",
-    # ins_size, ins_size_dev, coverage_uniformity are optional in your original code
-}
+REQUIRED_KEYS = {"n_reads", "n_read_pairs"}
 
 
 def _validate_keys(qc_dict: Mapping[str, Any], *, strict: bool = False) -> None:
@@ -71,18 +61,18 @@ def _to_postalignqc_result(
                     f"Invalid coverage_uniformity={qc_dict.get('coverage_uniformity')!r}"
                 ) from exc
 
+    # conditionally optional fields (present in full pipeline output, absent in minimal)
+    mean_cov = safe_float(qc_dict["mean_cov"], logger=logger) if "mean_cov" in qc_dict else None
+    n_mapped_reads = safe_int(qc_dict["n_mapped_reads"], logger=logger) if "n_mapped_reads" in qc_dict else None
+    quartile1 = safe_float(qc_dict["quartile1"], logger=logger) if "quartile1" in qc_dict else None
+    median_cov = safe_float(qc_dict["median_cov"], logger=logger) if "median_cov" in qc_dict else None
+    quartile3 = safe_float(qc_dict["quartile3"], logger=logger) if "quartile3" in qc_dict else None
+    pct_above_x = qc_dict.get("pct_above_x")
+
     # required fields
     try:
-        mean_cov = safe_float(qc_dict["mean_cov"])
         n_reads = safe_int(qc_dict["n_reads"])
-        n_mapped_reads = safe_int(qc_dict["n_mapped_reads"])
         n_read_pairs = safe_int(qc_dict["n_read_pairs"])
-
-        quartile1 = safe_float(qc_dict["quartile1"])
-        median_cov = safe_float(qc_dict["median_cov"])
-        quartile3 = safe_float(qc_dict["quartile3"])
-
-        pct_above_x = qc_dict["pct_above_x"]
     except KeyError as exc:
         raise ValueError(f"Missing key in PostAlignQC JSON: {exc}") from exc
     except (TypeError, ValueError) as exc:
