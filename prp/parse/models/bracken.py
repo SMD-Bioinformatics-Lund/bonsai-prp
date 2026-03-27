@@ -2,10 +2,13 @@
 
 from pydantic import Field
 
+from prp.parse.core.registry import register_result_model
+
 from .base import BaseSpeciesPrediction
-from .enums import TaxLevel
+from .enums import TaxLevel, AnalysisSoftware, AnalysisType
 
 
+@register_result_model(AnalysisSoftware.BRACKEN, AnalysisType.SPECIES)
 class BrackenSpeciesPrediction(BaseSpeciesPrediction):
     """Species prediction results."""
 

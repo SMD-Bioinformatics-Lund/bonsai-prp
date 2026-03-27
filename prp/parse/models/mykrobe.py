@@ -4,9 +4,13 @@ from dataclasses import dataclass
 
 from pydantic import Field
 
+from prp.parse.core.registry import register_result_model
+
 from .base import BaseSpeciesPrediction
+from .enums import AnalysisType, AnalysisSoftware
 
 
+@register_result_model(AnalysisSoftware.MYKROBE, AnalysisType.SPECIES)
 class MykrobeSpeciesPrediction(BaseSpeciesPrediction):
     """Mykrobe species prediction results."""
 

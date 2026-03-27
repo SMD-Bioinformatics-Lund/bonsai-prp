@@ -32,7 +32,7 @@ class VersionRange(Generic[TEntry]):
 
 
 _PARSER_REGISTRY: dict[str, list[VersionRange[ParserRegistryEntry]]] = {}
-_RESULT_MODEL_REGISTRY: dict[tuple[AnalysisSoftware, AnalysisType], list[VersionRange[ModelClass]]] = {}
+_RESULT_MODEL_REGISTRY: dict[tuple[AnalysisSoftware, AnalysisType], ModelClass] = {}
 
 
 def _normalize_version(version: str | Version) -> Version:
@@ -139,29 +139,15 @@ def run_parser(
 def register_result_model(
     software: str | AnalysisSoftware,
     analysis_type: str | AnalysisType,
-    *,
-    min_version: str | None = None,
-    max_version: str | None = None,
 ):
-    """Decorator to register a result model for a range of software versions.
-
-    Null values mean either undefined or 'no upper limit'.
-    """
-    min_version = min_version or "0.0.0"
-    max_version = max_version or "99999.0.0"
-
+    """Decorator to register a result model."""
     # Normalise to string keys to keep the registry consistent
     software_key = str(software)
     analysis_type_key = str(analysis_type)
 
     def wrapper(cls: ModelClass) -> ModelClass:
-        v_range = VersionRange(
-            min_version=Version(min_version),
-            max_version=Version(max_version),
-            entry=cls,
-        )
         key = (software_key, analysis_type_key)
-        _RESULT_MODEL_REGISTRY.setdefault(key, []).append(v_range)
+        _RESULT_MODEL_REGISTRY.setdefault(key, cls)
         return cls
 
     return wrapper
@@ -170,29 +156,20 @@ def register_result_model(
 def get_result_model(
     software: str | AnalysisSoftware,
     analysis_type: str | AnalysisType,
-    *,
-    version: str,
 ) -> ModelClass | None:
     """Return the registered result model class for software/type/version, or None."""
     software_key = str(software)
     analysis_type_key = str(analysis_type)
     key = (software_key, analysis_type_key)
 
-    ranges = _RESULT_MODEL_REGISTRY.get(key)
-    if not ranges:
-        return None  # No result model registered for this software/type
+    model_cls = _RESULT_MODEL_REGISTRY.get(key)
+    if model_cls:
+        return model_cls
 
-    v = _normalize_version(version)
-
-    for span in sorted(ranges):
-        if span.min_version <= v <= span.max_version:
-            return span.entry
-
-    # Version not supported → None; let caller decide how to handle
-    return None
+    return None  # No result model registered for this software/type
 
 
-def hydrate_result(*, software: str, software_version: str, analysis_type: str, result: dict) -> Any:
+def hydrate_result(*, software: str, analysis_type: str, result: dict) -> Any:
     """Hydrate json data into a typed result object or raw data if unknown."""
     if not isinstance(result, dict):
         raise ValueError("Expected a dictionary to hydrate the result object.")
@@ -200,7 +177,6 @@ def hydrate_result(*, software: str, software_version: str, analysis_type: str, 
     model_cls = get_result_model(
         software=software,
         analysis_type=analysis_type,
-        version=software_version,
     )
     if model_cls is None:
         return result

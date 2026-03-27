@@ -5,6 +5,8 @@ from typing import Any
 from pydantic import BaseModel
 
 from prp.models.base import RWModel
+from prp.parse import register_result_model
+from .enums import AnalysisSoftware, AnalysisType
 
 
 class ResultMlstBase(BaseModel):
@@ -20,6 +22,7 @@ class TypingResultMlst(ResultMlstBase):
     sequence_type: int | str | None = None
 
 
+@register_result_model(AnalysisSoftware.CHEWBBACA, AnalysisType.CGMLST)
 class TypingResultCgMlst(ResultMlstBase):
     """MLST results"""
 
@@ -27,6 +30,7 @@ class TypingResultCgMlst(ResultMlstBase):
     n_missing: int = 0
 
 
+@register_result_model(AnalysisSoftware.EMMTYPER, AnalysisType.EMM)
 class TypingResultEmm(BaseModel):
     """Container for emmtype gene information"""
 
