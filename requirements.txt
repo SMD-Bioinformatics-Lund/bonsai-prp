@@ -1,0 +1,11 @@
+# Core dependencies
+pydantic>=2.4,<3
+pyyaml>=6,<7
+packaging>=25
+
+# CLI / upload dependencies
+click>=8.1
+requests>=2.31
+
+# NOTE: bonsai-libs is not on conda and must be installed separately via pip:
+#   pip install "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.1.0"
