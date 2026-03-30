@@ -50,7 +50,7 @@ class AnalysisType(StrEnum):
     SHIGATYPE = "shigatype"
     SMST = "smst"
     SPATYPE = "spatype"
-    SPECIES = "species"
+    SPECIES = "species_prediction"
     STRESS = "stress"
     STX = "stx"
     TYPING = "typing"
