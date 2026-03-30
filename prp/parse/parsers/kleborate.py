@@ -9,7 +9,9 @@ from itertools import chain
 from typing import Any, Callable, Literal, Mapping
 
 from prp.io.delimited import DelimiterRow, is_nullish, normalize_row, read_delimited
-from prp.parse.core.base import BaseParser, ParseImplOut, StreamOrPath
+from prp.io.types import StreamOrPath
+from prp.parse.core.base import BaseParser
+from prp.parse.models.base import ParseImplOut
 from prp.parse.core.envelope import (
     envelope_absent,
     envelope_error,

@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from prp.models.base import RWModel
-from prp.parse import register_result_model
+from prp.parse.core.registry import register_result_model
 from .enums import AnalysisSoftware, AnalysisType
 
 

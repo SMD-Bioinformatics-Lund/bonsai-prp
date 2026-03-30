@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from prp.models.base import RWModel
 from prp.models.enums import AnalysisSoftware
-from prp.parse import register_result_model
+from prp.parse.core.registry import register_result_model
 from prp.parse.exceptions import AbsentResultError, ParserError
 
 from .enums import (

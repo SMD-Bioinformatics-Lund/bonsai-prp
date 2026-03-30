@@ -5,7 +5,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
 from prp.models.base import RWModel
-from prp.parse import register_result_model
+from prp.parse.core.registry import register_result_model
 
 from .enums import VariantSubType, AnalysisSoftware, AnalysisType
 from .typing import LineageMixin, TypingResultMlst

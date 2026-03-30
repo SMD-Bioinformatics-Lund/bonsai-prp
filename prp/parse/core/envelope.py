@@ -4,7 +4,6 @@ from logging import Logger
 from typing import Any, Callable, TypeVar
 
 from prp.parse.exceptions import AbsentResultError, ParserError
-from prp.parse.models.base import ResultEnvelope
 from prp.parse.models.enums import ResultStatus
 
 PredicateFn = Callable[[Any], bool]
@@ -27,31 +26,35 @@ def envelope_from_value(
     empty_predicate: PredicateFn = default_empty_predicate,
     reason: str | None = None,
     meta: dict[str, Any] | None = None,
-) -> ResultEnvelope:
+) -> "ResultEnvelope":
     """Create a PARSED/ EMPTY envelope based on the provided result."""
 
     status = ResultStatus.EMPTY if empty_predicate(value) else ResultStatus.PARSED
+    from prp.parse.models.base import ResultEnvelope
     return ResultEnvelope(status=status, value=value, reason=reason, meta=meta or {})
 
 
 def envelope_error(
     reason: str, *, meta: dict[str, Any] | None = None
-) -> ResultEnvelope:
+) -> "ResultEnvelope":
     """Create an envelope that signifies that an error occured."""
+    from prp.parse.models.base import ResultEnvelope
     return ResultEnvelope(status=ResultStatus.ERROR, reason=reason, meta=meta or {})
 
 
 def envelope_absent(
     reason: str, *, meta: dict[str, Any] | None = None
-) -> ResultEnvelope:
+) -> "ResultEnvelope":
     """Create an envelope that for result being absent in the input file."""
+    from prp.parse.models.base import ResultEnvelope
     return ResultEnvelope(status=ResultStatus.ABSENT, reason=reason, meta=meta or {})
 
 
 def envelope_skipped(
     reason: str = "Omitted by user", *, meta: dict[str, Any] | None = None
-) -> ResultEnvelope:
+) -> "ResultEnvelope":
     """Create an envelope that signifies that the result was skipped by the user."""
+    from prp.parse.models.base import ResultEnvelope
     return ResultEnvelope(status=ResultStatus.SKIPPED, reason=reason, meta=meta or {})
 
 
@@ -65,7 +68,7 @@ def run_as_envelope(
     reason_if_empty: str | None = None,
     meta: dict[str, Any] | None = None,
     logger: Logger | None = None,
-) -> ResultEnvelope:
+) -> "ResultEnvelope":
     """Execute a parser function and wrap it in a ResultEnvelope."""
     base_meta = {**(meta or {}), "step": analysis_name}
     try:
@@ -111,4 +114,6 @@ def run_as_envelope(
     if empty_predicate(value):
         status = ResultStatus.EMPTY
         reason = reason_if_empty or None
+
+    from prp.parse.models.base import ResultEnvelope
     return ResultEnvelope(status=status, value=value, reason=reason, meta=base_meta)
