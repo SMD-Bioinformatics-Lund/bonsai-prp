@@ -6,7 +6,7 @@ from prp.io.delimited import read_delimited
 from prp.parse.core.base import SingleAnalysisParser, StreamOrPath
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import ParserError
-from prp.parse.models.bracken import BrackenSpeciesPrediction
+from prp.parse.models.bracken import BrackenSpeciesPrediction, BrackenSpeciesPredictions
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType, TaxLevel
 
 from .utils import safe_float, safe_int
@@ -62,7 +62,7 @@ class BrackenParser(SingleAnalysisParser):
         cutoff: float | None = None,
         strict_columns: bool = False,
         **_,
-    ) -> list[BrackenSpeciesPrediction]:
+    ) -> BrackenSpeciesPredictions:
         """Parse Bracken results."""
         rows = read_delimited(source)
         try:
@@ -76,7 +76,7 @@ class BrackenParser(SingleAnalysisParser):
             first_row, required=REQUIRED_COLUMNS, strict=strict_columns
         )
 
-        results: list[BrackenSpeciesPrediction] = []
+        results: BrackenSpeciesPredictions = []
         # append first row
         if spp_obj := self._to_spp_results(first_row, cutoff=cutoff):
             results.append(spp_obj)

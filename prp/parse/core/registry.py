@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Generic, TypeAlias, TypeVar
 
 from packaging.version import InvalidVersion, Version
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from prp.parse.core.base import BaseParser, StreamOrPath
 from prp.parse.exceptions import (
@@ -213,5 +213,10 @@ def hydrate_result(*, software: str, analysis_type: str, result: dict) -> Any:
     )
     if model_cls is None:
         return result
-
-    return model_cls.model_validate(result)
+    
+    if isinstance(model_cls, TypeAdapter):
+        return model_cls.validate_python(result)
+    elif issubclass(model_cls, BaseModel):
+        return model_cls.model_validate(result)
+    
+    raise TypeError(f"Unsupported model class type for hydration: {type(model_cls).__name__}")
