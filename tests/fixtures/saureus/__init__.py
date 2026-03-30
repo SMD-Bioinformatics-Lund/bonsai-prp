@@ -117,3 +117,15 @@ def saureus_nanoplot_path(data_path: Path) -> Path:
 def saureus_samtools_coverage_path(data_path: Path) -> str:
     """Get path for saureus samtools coverage file"""
     return str(data_path.joinpath("saureus", "samcoverage.txt"))
+
+
+@pytest.fixture()
+def saureus_samtools_stats_path(data_path: Path) -> Path:
+    """Get path for saureus samtools stats file"""
+    return data_path.joinpath("saureus", "samtools_stats.txt")
+
+
+@pytest.fixture()
+def saureus_samtools_bedcov_path(data_path: Path) -> Path:
+    """Get path for saureus samtools bedcov file"""
+    return data_path.joinpath("saureus", "samtools_bedcov.txt")
