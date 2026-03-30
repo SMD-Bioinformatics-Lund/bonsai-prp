@@ -12,11 +12,10 @@ from prp.parse.exceptions import (
     UnsupportedSoftwareError,
     UnsupportedVersionError,
 )
-from prp.parse.models.base import ParserOutput
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
 
 ParserClass: TypeAlias = type[BaseParser]
-ParserFn: TypeAlias = Callable[..., ParserOutput]
+ParserFn: TypeAlias = Callable[..., "ParserOutput"]
 ParserRegistryEntry: TypeAlias = ParserClass | ParserFn
 ModelClass: TypeAlias = type[BaseModel]
 TEntry = TypeVar("TEntry")
@@ -53,17 +52,38 @@ def register_parser(
     """Decorator to register a parser for a range of versions.
 
     Null values means either undefined or no upper range.
+    Ensures version ranges do not overlap for a given software.
     """
+
     min_version = min_version or "0.0.0"
     max_version = max_version or "99999.0.0"
 
     def wrapper(cls: ParserRegistryEntry):
+        new_min = _normalize_version(min_version)
+        new_max = _normalize_version(max_version)
+
+        # Fetch existing ranges for this software
+        existing_ranges = _PARSER_REGISTRY.get(software, [])
+
+        # Check for overlapping version ranges
+        for span in existing_ranges:
+            if not (new_max < span.min_version or new_min > span.max_version):
+                # Ranges overlap → safety error
+                raise ValueError(
+                    f"Cannot register parser {cls.__name__} for software '{software}' "
+                    f"with version range [{new_min}, {new_max}] because it overlaps "
+                    f"with existing parser {span.entry.__name__} range "
+                    f"[{span.min_version}, {span.max_version}]."
+                )
+
+        # Safe to register
         v_range = VersionRange(
-            min_version=Version(min_version),
-            max_version=Version(max_version),
+            min_version=new_min,
+            max_version=new_max,
             entry=cls,
         )
         _PARSER_REGISTRY.setdefault(software, []).append(v_range)
+
         return cls
 
     return wrapper
@@ -80,7 +100,7 @@ def get_parser(software: str, *, version: str) -> ParserRegistryEntry:
     # Normalize version to PkgVersion
     v = _normalize_version(version)
 
-    for span in sorted(_PARSER_REGISTRY[software]):
+    for span in sorted(_PARSER_REGISTRY[software], key=lambda r: (r.min_version, r.max_version)):
         if span.min_version <= v <= span.max_version:
             return span.entry
 
@@ -102,7 +122,7 @@ def registered_version_ranges(software: str) -> list[VersionRange]:
     return _PARSER_REGISTRY.get(software, [])
 
 
-def resolve_parser(entry, **init_kwargs) -> Callable[..., ParserOutput]:
+def resolve_parser(entry, **init_kwargs) -> Callable[..., "ParserOutput"]:
     """Resolve registry entry to a callable parse function.
 
     If works with both parser classes and parse functions.
@@ -123,7 +143,7 @@ def run_parser(
     want: set[AnalysisType] | None = None,
     parser_init: dict[str, Any] | None = None,
     **parse_kwargs: Any,
-) -> ParserOutput:
+) -> "ParserOutput":
     """Run parser for given software, version and data."""
 
     if not isinstance(software, (AnalysisSoftware, str)):
@@ -140,14 +160,27 @@ def register_result_model(
     software: str | AnalysisSoftware,
     analysis_type: str | AnalysisType,
 ):
-    """Decorator to register a result model."""
-    # Normalise to string keys to keep the registry consistent
+    """Decorator to register a result model.
+    
+    Prevents duplicate registration for the same (software, analysis_type) key.
+    """
+    # Normalize to strings to keep the registry consistent.
     software_key = str(software)
     analysis_type_key = str(analysis_type)
 
     def wrapper(cls: ModelClass) -> ModelClass:
         key = (software_key, analysis_type_key)
-        _RESULT_MODEL_REGISTRY.setdefault(key, cls)
+
+        if key in _RESULT_MODEL_REGISTRY:
+            existing = _RESULT_MODEL_REGISTRY[key].__name__
+            new = cls.__name__
+            raise ValueError(
+                f"Result model already registered for software={software_key!r}, "
+                f"analysis_type={analysis_type_key!r}. "
+                f"Existing model: {existing}, attempted new model: {new}"
+            )
+
+        _RESULT_MODEL_REGISTRY[key] = cls
         return cls
 
     return wrapper
