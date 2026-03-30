@@ -221,9 +221,13 @@ class VariantBase(RWModel):
 
 
 @register_result_model(AnalysisSoftware.AMRFINDER, AnalysisType.AMR)
-@register_result_model(AnalysisSoftware.AMRFINDER, AnalysisType.VIRULENCE)
 @register_result_model(AnalysisSoftware.AMRFINDER, AnalysisType.STRESS)
+@register_result_model(AnalysisSoftware.AMRFINDER, AnalysisType.VIRULENCE)
 @register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.AMR)
+@register_result_model(AnalysisSoftware.MYKROBE, AnalysisType.AMR)
+@register_result_model(AnalysisSoftware.RESFINDER, AnalysisType.AMR)
+@register_result_model(AnalysisSoftware.TBPROFILER, AnalysisType.AMR)
+@register_result_model(AnalysisSoftware.VIRULENCEFINDER, AnalysisType.VIRULENCE)
 class ElementTypeResult(BaseModel):
     """Phenotype result data model.
 

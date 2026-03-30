@@ -1,8 +1,8 @@
 """Chewbacca specific models."""
 
-from typing import Any
+from typing import Any, TypeAlias
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from prp.models.base import RWModel
 from prp.parse.core.registry import register_result_model
@@ -57,6 +57,11 @@ class LineageInformation(RWModel):
     support: list[dict[str, Any]] | None = None
 
 
+LineageResults: TypeAlias = list[LineageInformation]
+register_result_model(AnalysisSoftware.TBPROFILER, AnalysisType.LINEAGE)(TypeAdapter(LineageResults))
+
+
+@register_result_model(AnalysisSoftware.MYKROBE, AnalysisType.LINEAGE)
 class ResultLineageBase(RWModel):
     """Lineage results"""
 
@@ -65,6 +70,7 @@ class ResultLineageBase(RWModel):
     sublineage: str
 
 
+@register_result_model(AnalysisSoftware.SCCMECTYPER, AnalysisType.SCCMEC)
 class TypingResultSccmec(RWModel):
     """Sccmec results"""
 
@@ -85,6 +91,7 @@ class TypingResultSccmec(RWModel):
     comment: str | None = None
 
 
+@register_result_model(AnalysisSoftware.SPATYPER, AnalysisType.SPATYPE)
 class TypingResultSpatyper(RWModel):
     """Spatyper results"""
 
@@ -93,6 +100,7 @@ class TypingResultSpatyper(RWModel):
     type: str | None
 
 
+@register_result_model(AnalysisSoftware.SHIGAPASS, AnalysisType.SHIGATYPE)
 class TypingResultShiga(RWModel):
     """Container for shigatype gene information"""
 

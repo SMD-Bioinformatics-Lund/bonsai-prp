@@ -20,7 +20,7 @@ from prp.parse.models.enums import (
     VariantType,
 )
 from prp.parse.models.phenotype import TbProfilerVariant
-from prp.parse.models.typing import LineageInformation
+from prp.parse.models.typing import LineageInformation, LineageResults
 
 from .utils import get_db_version
 
@@ -157,7 +157,7 @@ def parse_drug_resistance_info(drugs: list[dict[str, str]]) -> list[PhenotypeInf
     return phenotypes
 
 
-def _to_lineage_result(pred: dict[str, Any]) -> list[LineageInformation]:
+def _to_lineage_result(pred: dict[str, Any]) -> LineageResults:
     """Transpose prediction result into a lineage object."""
 
     return [
