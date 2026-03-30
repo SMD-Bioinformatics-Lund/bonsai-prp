@@ -68,7 +68,7 @@ class MlstParser(SingleAnalysisParser):
     schema_version = 1
     produces = {AnalysisType.MLST}
 
-    def _parse_one(self, source, *, strict: bool = False, **kwargs):
+    def _parse_one(self, source, *, strict: bool = False, **kwargs) -> TypingResultMlst:
         """Parser implementation."""
 
         # read analysis result

@@ -15,6 +15,7 @@ class ResultMlstBase(BaseModel):
     alleles: dict[str, int | str | list | None]
 
 
+@register_result_model(AnalysisSoftware.MLST, AnalysisType.MLST)
 class TypingResultMlst(ResultMlstBase):
     """MLST results"""
 
