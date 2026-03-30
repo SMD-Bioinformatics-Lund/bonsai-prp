@@ -32,7 +32,7 @@ from prp.parse.models.enums import (
     VariantSubType,
     VariantType,
 )
-from prp.parse.models.mykrobe import MykrobeSpeciesPrediction, SRProfile
+from prp.parse.models.mykrobe import MykrobeSpeciesPredictions, MykrobeSpeciesPrediction, SRProfile
 from prp.parse.models.typing import ResultLineageBase
 
 from .utils import get_nt_change, safe_float, safe_int
@@ -212,7 +212,7 @@ def _parse_amr_variants(rows: TableRows, *, log_warning) -> list[VariantBase]:
     return out
 
 
-def _parse_species(rows: TableRows) -> list[MykrobeSpeciesPrediction]:
+def _parse_species(rows: TableRows) -> MykrobeSpeciesPredictions:
     """Parse Mykrobe species predictions."""
     if not rows:
         return []
@@ -224,7 +224,7 @@ def _parse_species(rows: TableRows) -> list[MykrobeSpeciesPrediction]:
     phylo_covg = _split_csv_list("phylo_group_per_covg", row=r0)
     species_covg = _split_csv_list("species_per_covg", row=r0)
 
-    out: list[MykrobeSpeciesPrediction] = []
+    out: MykrobeSpeciesPredictions = []
     for idx, spp in enumerate(species):
         if not spp.strip():
             continue
