@@ -204,8 +204,8 @@ def get_result_model(
 
 def hydrate_result(*, software: str, analysis_type: str, result: dict) -> Any:
     """Hydrate json data into a typed result object or raw data if unknown."""
-    if not isinstance(result, dict):
-        raise ValueError("Expected a dictionary to hydrate the result object.")
+    if not isinstance(result, dict | list | int | str | float | bool | None):
+        raise ValueError("Expected result to be a JSON-serializable dict, list, primitive or None")
 
     model_cls = get_result_model(
         software=software,
