@@ -29,6 +29,8 @@ class PostAlignQcResult(BaseModel):
     n_reads: int
     n_mapped_reads: int | None = None
     n_read_pairs: int
+    n_dup_reads: int | None = None
+    dup_pct: float | None = None
     coverage_uniformity: float | None = None
     quartile1: float | None = None
     median_cov: float | None = None
