@@ -4,7 +4,7 @@ import pytest
 
 from prp.parse.models.base import ParserOutput, ResultEnvelope
 from prp.parse.models.bracken import BrackenSpeciesPrediction
-from prp.parse.models.enums import TaxLevel
+from prp.parse.models.enums import TaxLevel, AnalysisType
 from prp.parse.parsers.bracken import BrackenParser, to_taxlevel
 
 EXPECTED_PARSER_RESULT = [
@@ -26,7 +26,7 @@ def test_bracken_cutoff(fixture_name, expected, request):
     # assert correct ouptut data model
     assert isinstance(result, ParserOutput)
 
-    spp = result.results["species"]
+    spp = result.results[AnalysisType.SPECIES]
     assert isinstance(spp, ResultEnvelope)
 
     assert spp.status == "parsed"

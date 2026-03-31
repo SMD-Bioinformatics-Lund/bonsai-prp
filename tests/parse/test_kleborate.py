@@ -125,7 +125,7 @@ TEST_ASSAYS_WO_HAMRONIZATION = [
             "qc": "parsed",
             "rmst": "absent",
             "smst": "absent",
-            "species": "parsed",
+            "species_prediction": "parsed",
             "virulence": "absent",
             "ybst": "absent",
         },

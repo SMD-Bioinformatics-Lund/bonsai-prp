@@ -2,6 +2,8 @@
 
 import pytest
 from packaging.version import Version
+from typing import Any
+from pydantic import BaseModel
 
 from prp.parse.exceptions import InvalidDataFormat, UnsupportedVersionError
 from prp.parse.core.registry import (
@@ -9,10 +11,12 @@ from prp.parse.core.registry import (
     _normalize_version,
     register_parser,
     register_result_model,
+    register_result_element_models,
     _PARSER_REGISTRY,
     _RESULT_MODEL_REGISTRY,
     get_parser,
     get_result_model,
+    hydrate_result,
 )
 
 
@@ -163,3 +167,32 @@ def test_get_result_model(key, exists):
     result = get_result_model(*key)
 
     assert (result == DummyModel) == exists
+
+
+class DummyElementTypeResult(BaseModel):
+    genes: list[Any] = []
+    variants: list[Any] = []
+
+
+class DummyGene(BaseModel):
+    name: str
+
+
+class DummyVariant(BaseModel):
+    pos: int
+
+
+def test_register_result_element_models_and_hydrate_nested_fields():
+    register_result_model("soft", "analysis")(DummyElementTypeResult)
+    register_result_element_models(
+        "soft",
+        "analysis",
+        field_models={"genes": DummyGene, "variants": DummyVariant},
+    )
+
+    raw = {"genes": [{"name": "g1"}], "variants": [{"pos": 42}]}
+    hydrated = hydrate_result(software="soft", analysis_type="analysis", result=raw)
+
+    assert isinstance(hydrated, DummyElementTypeResult)
+    assert isinstance(hydrated.genes[0], DummyGene)
+    assert isinstance(hydrated.variants[0], DummyVariant)
