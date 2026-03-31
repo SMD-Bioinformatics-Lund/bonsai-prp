@@ -9,10 +9,10 @@ from prp.pipeline.types import CdmRecord, CdmRecords, ParsedSampleResults
 LOG = logging.getLogger(__name__)
 
 
-def to_result_json(sample_results: ParsedSampleResults) -> dict[str, Any]:
+def to_result_json(sample_results: ParsedSampleResults) -> str:
     """Serialize the analysis results for a sample into json format."""
 
-    return sample_results.model_dump(mode="json")
+    return sample_results.model_dump_json()
 
 
 def to_cdm_format(sample_results: ParsedSampleResults) -> CdmRecords:
