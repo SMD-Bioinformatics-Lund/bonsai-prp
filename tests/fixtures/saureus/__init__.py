@@ -116,7 +116,7 @@ def saureus_nanoplot_path(data_path: Path) -> Path:
 @pytest.fixture()
 def saureus_samtools_coverage_path(data_path: Path) -> str:
     """Get path for saureus samtools coverage file"""
-    return str(data_path.joinpath("saureus", "samcoverage.txt"))
+    return str(data_path.joinpath("saureus", "samtools_coverage.txt"))
 
 
 @pytest.fixture()
