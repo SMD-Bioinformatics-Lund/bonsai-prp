@@ -32,6 +32,7 @@ class VersionRange(Generic[TEntry]):
 
 _PARSER_REGISTRY: dict[str, list[VersionRange[ParserRegistryEntry]]] = {}
 _RESULT_MODEL_REGISTRY: dict[tuple[AnalysisSoftware, AnalysisType], ModelClass] = {}
+_RESULT_ELEMENT_MODEL_REGISTRY: dict[tuple[str, str], dict[str, ModelClass | TypeAdapter]] = {}
 
 
 def _normalize_version(version: str | Version) -> Version:
@@ -202,6 +203,62 @@ def get_result_model(
     return None  # No result model registered for this software/type
 
 
+def register_result_element_models(
+    software: str | AnalysisSoftware,
+    analysis_type: str | AnalysisType,
+    *,
+    field_models: dict[str, ModelClass | TypeAdapter],
+) -> None:
+    """Register nested element field models for a result type."""
+    key = (str(software), str(analysis_type))
+    if key in _RESULT_ELEMENT_MODEL_REGISTRY:
+        existing = _RESULT_ELEMENT_MODEL_REGISTRY[key]
+        raise ValueError(
+            f"Nested field models already registered for software={software!r}, "
+            f"analysis_type={analysis_type!r}. Existing={list(existing.keys())}"
+        )
+    _RESULT_ELEMENT_MODEL_REGISTRY[key] = field_models.copy()
+
+
+def get_result_element_models(
+    software: str | AnalysisSoftware,
+    analysis_type: str | AnalysisType,
+) -> dict[str, ModelClass | TypeAdapter] | None:
+    """Return nested element field models for a result type."""
+    key = (str(software), str(analysis_type))
+    return _RESULT_ELEMENT_MODEL_REGISTRY.get(key)
+
+
+def _hydrate_raw_value(model_cls: ModelClass | TypeAdapter, raw_value: Any) -> Any:
+    if isinstance(model_cls, TypeAdapter):
+        return model_cls.validate_python(raw_value)
+    if issubclass(model_cls, BaseModel):
+        return model_cls.model_validate(raw_value)
+    raise TypeError(f"Unsupported nested element model type: {type(model_cls).__name__}")
+
+
+def _hydrate_nested_fields(result_obj: BaseModel, field_models: dict[str, ModelClass | TypeAdapter]) -> BaseModel:
+    updates: dict[str, Any] = {}
+
+    for field_name, model_cls in field_models.items():
+        if not hasattr(result_obj, field_name):
+            continue
+
+        raw_value = getattr(result_obj, field_name)
+        if raw_value is None:
+            continue
+
+        if isinstance(raw_value, list):
+            if isinstance(model_cls, TypeAdapter):
+                updates[field_name] = model_cls.validate_python(raw_value)
+            else:
+                updates[field_name] = [_hydrate_raw_value(model_cls, item) for item in raw_value]
+        else:
+            updates[field_name] = _hydrate_raw_value(model_cls, raw_value)
+
+    return result_obj.model_copy(update=updates)
+
+
 def hydrate_result(*, software: str, analysis_type: str, result: dict) -> Any:
     """Hydrate json data into a typed result object or raw data if unknown."""
     if not isinstance(result, dict | list | int | str | float | bool | None):
@@ -216,7 +273,15 @@ def hydrate_result(*, software: str, analysis_type: str, result: dict) -> Any:
     
     if isinstance(model_cls, TypeAdapter):
         return model_cls.validate_python(result)
+
     elif issubclass(model_cls, BaseModel):
-        return model_cls.model_validate(result)
+        result_obj = model_cls.model_validate(result)
+        field_models = get_result_element_models(
+            software=software,
+            analysis_type=analysis_type,
+        )
+        if field_models:
+            return _hydrate_nested_fields(result_obj, field_models)
+        return result_obj
     
     raise TypeError(f"Unsupported model class type for hydration: {type(model_cls).__name__}")

@@ -2,6 +2,9 @@
 
 from pydantic import Field
 
+from prp.models.enums import AnalysisSoftware, AnalysisType
+from prp.parse.core.registry import register_result_element_models
+
 from .base import DatabaseReferenceMixin, GeneBase, PhenotypeModelMixin, VariantBase
 from .enums import SequenceStrand
 
@@ -51,3 +54,27 @@ class TbProfilerVariant(VariantBase):
     hgvs_aa_change: str | None = Field(
         default=None, description="Protein change in HGVS format"
     )
+
+# ---------------------------------------------------------------------------
+# Register phenotype models
+
+register_result_element_models(
+    AnalysisSoftware.AMRFINDER,
+    AnalysisType.AMR,
+    field_models={
+        "genes": AmrFinderResistanceGene,
+        "variants": AmrFinderVariant,
+    },
+)
+
+register_result_element_models(
+    AnalysisSoftware.AMRFINDER,
+    AnalysisType.VIRULENCE,
+    field_models={"genes": AmrFinderVirulenceGene},
+)
+
+register_result_element_models(
+    AnalysisSoftware.TBPROFILER,
+    AnalysisType.AMR,
+    field_models={"variants": TbProfilerVariant},
+)
