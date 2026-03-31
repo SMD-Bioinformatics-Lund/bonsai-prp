@@ -71,6 +71,7 @@ class AnalysisResult(BaseModel):
 
     software: str
     software_version: str
+    subcommand: str | None = None
     database: str | None = None
     uri: FlexibleURI
 

@@ -44,11 +44,12 @@ def _to_contig_result(row: dict[str, Any]) -> ContigCoverage:
     )
 
 
-@register_parser(SAMTOOLS)
+@register_parser(SAMTOOLS, subcommand="coverage")
 class SamtoolsCovParser(SingleAnalysisParser):
     """Gambit core parser."""
 
     software = SAMTOOLS
+    subcommand = "coverage"
     parser_name = "SamtoolsCovParser"
     parser_version = 1
     schema_version = 1
@@ -212,11 +213,13 @@ def _coverage_stats(
     }
 
 
-@register_parser(POSTALIGNQC)
+@register_parser(SAMTOOLS, subcommand="stats")
 class SamtoolsQcParser(SingleAnalysisParser):
     """Parse samtools stats (+ optional bedcov) into a PostAlignQcResult."""
 
     software = POSTALIGNQC
+    subcommand = "stats"
+    required_companions = {"bedcov_path": "bedcov"}
     parser_name = "SamtoolsQcParser"
     parser_version = 1
     schema_version = 1

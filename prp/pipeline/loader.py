@@ -38,6 +38,8 @@ from prp.io.json import read_json
 from prp.models.manifest import URI, IndexArtifacts, SampleManifest
 from prp.models.metadata import MetaEntry, TableMetadataEntry
 from prp.parse import run_parser
+from prp.parse.core.registry import get_parser
+from prp.parse.exceptions import UnsupportedSoftwareError, UnsupportedVersionError
 
 from .types import (
     FullAnalysisResult,
@@ -229,6 +231,12 @@ def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults
     """Parse the sample manifest and the analysis result files for internal use."""
     base_result = parse_base_results_from_manifest(manifest)
 
+    # Build lookup: (software, subcommand) → file path for companion resolution
+    available: dict[tuple[str, str | None], str] = {
+        (r.software, r.subcommand): r.uri.path
+        for r in manifest.analysis_result
+    }
+
     # parse results from analysis softwares
     analysis_results: list[FullAnalysisResult] = []
     for res in manifest.analysis_result:
@@ -236,8 +244,39 @@ def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults
             raise NotImplementedError(
                 f"No method for reading {res.uri.scheme} URI scheme."
             )
+
+        # Skip entries with no registered parser (companion-only entries like bedcov)
+        try:
+            parser_cls = get_parser(
+                res.software, version=res.software_version, subcommand=res.subcommand
+            )
+        except (UnsupportedSoftwareError, UnsupportedVersionError):
+            continue
+
+        # Resolve required companions; skip if any are absent from the manifest
+        companions: dict[str, str] = {}
+        skip = False
+        for kwarg, companion_sub in getattr(parser_cls, "required_companions", {}).items():
+            key = (res.software, companion_sub)
+            if key not in available:
+                LOG.warning(
+                    "Skipping %s.%s: missing companion '%s'",
+                    res.software,
+                    res.subcommand,
+                    companion_sub,
+                )
+                skip = True
+                break
+            companions[kwarg] = available[key]
+        if skip:
+            continue
+
         ev = run_parser(
-            software=res.software, version=res.software_version, data=res.uri.path
+            software=res.software,
+            subcommand=res.subcommand,
+            version=res.software_version,
+            data=res.uri.path,
+            **companions,
         )
         for at, parser_result in ev.results.items():
             analysis_results.append(
