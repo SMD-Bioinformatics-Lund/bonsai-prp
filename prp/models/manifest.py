@@ -66,15 +66,6 @@ class FlexibleURI:
         return core_schema.with_info_plain_validator_function(cls.validate)
 
 
-class IgvAnnotation(BaseModel):
-    """Format of a IGV annotation track."""
-
-    name: str
-    type: str
-    uri: str | None = None
-    index_uri: str | None = None
-
-
 class AnalysisResult(BaseModel):
     """Describe how a analysis result was derived."""
 
@@ -106,8 +97,6 @@ class SampleManifest(AllowExtraModelMixin):
     # Reference genome
     ref_genome_sequence: RelOrAbsPath | None = None
     ref_genome_annotation: RelOrAbsPath | None = None
-
-    igv_annotations: list[IgvAnnotation] = Field(default_factory=list)
 
     nextflow_run_info: RelOrAbsPath
 

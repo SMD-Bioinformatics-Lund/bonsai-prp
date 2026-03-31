@@ -17,6 +17,7 @@
 - `TypingResultCgMlst.n_novel` is now `int | None`; returns `None` for chewbbaca output that predates the `INF-<id>` allele notation (v3.4+), where novel alleles cannot be distinguished from known ones
 - Made `PostAlignQcResult` fields optional so pipelines can output only `n_reads` and `n_read_pairs`; `mean_cov`, `pct_above_x`, `n_mapped_reads`, `quartile1`, `median_cov`, and `quartile3` now default to `None`
 - Replaced `PostAlignQcParser` (JSON-based) with `SamtoolsQcParser` which parses `samtools stats` and optional `samtools bedcov` files directly into `PostAlignQcResult`; merged into `prp/parse/parsers/samtools.py` alongside `SamtoolsCovParser`
+- Removed IGV track pipeline code (`prp/pipeline/igv.py`), the `add-igv-annotation-track` CLI command, `IgvAnnotation` manifest model, and `igv_annotations` field from `SampleManifest`; `IgvAnnotationTrack` output model retained in `prp/models/sample.py`
 
 ### Fixed
 

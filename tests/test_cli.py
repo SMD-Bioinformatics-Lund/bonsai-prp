@@ -7,7 +7,6 @@ from typing import Any
 import pytest
 from click.testing import CliRunner
 
-from prp.cli.annotate import add_igv_annotation_track
 from prp.cli.parse import format_cdm, format_results
 from prp.models.sample import PipelineResult
 
@@ -86,40 +85,3 @@ def test_cdm_cmd(ecoli_sample_conf_path: Path, ecoli_cdm_input: list[dict[str, A
     #         cdm_output = json.load(inpt)
     #         assert cdm_output == ecoli_cdm_input
 
-
-def test_add_igv_annotation_track(
-    mtuberculosis_snv_vcf_path: Path, simple_pipeline_result: PipelineResult
-):
-    """Test command for adding IGV annotation track to a result file."""
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        result_fname = "before_update.json"
-        # write fixture to file
-        with open(result_fname, "w") as outp:
-            outp.write(simple_pipeline_result.model_dump_json())
-
-        output_fname = "after_update.json"
-        args = [
-            "--track-name",
-            "snv",
-            "--annotation-file",
-            str(mtuberculosis_snv_vcf_path),
-            "--bonsai-input-file",
-            result_fname,
-            "--output",
-            output_fname,
-        ]
-        result = runner.invoke(add_igv_annotation_track, args)
-
-        # test successful execution of command
-        assert result.exit_code == 0
-
-        # test correct output format
-        with open(output_fname, "r", encoding="utf-8") as file_after:
-            test_file_after = json.load(file_after)
-            n_tracks_before = (
-                0
-                if simple_pipeline_result.genome_annotation is None
-                else len(simple_pipeline_result.genome_annotation)
-            )
-            assert len(test_file_after["genome_annotation"]) == n_tracks_before + 1
