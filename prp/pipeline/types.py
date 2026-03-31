@@ -22,13 +22,6 @@ class ReferenceGenome(RWModel):
     genes: str
 
 
-class IgvAnnotationTrack(RWModel):
-    """IGV annotation track data."""
-
-    name: str  # track name to display
-    file: str  # path to the annotation file
-
-
 class CdmRecord(BaseModel):
     """Qc results container for CDM"""
 
