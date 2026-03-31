@@ -37,7 +37,6 @@ cli.add_command(parse_gr)
 cli.add_command(bonsai_gr)
 # cli.add_command(validate.validate_result)
 # cli.add_command(validate.migrate_result)
-# cli.add_command(annotate.add_igv_annotation_track)
 ## qc related
 # cli.add_command(parse.create_qc_result)
 # cli.add_command(validate.print_schema)
