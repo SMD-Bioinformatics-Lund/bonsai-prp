@@ -61,11 +61,20 @@ analysis_result:
     software_version: 1.0.0
     uri: ./nanoplot.txt
   - software: samtools
+    subcommand: coverage
     software_version: 1.0.0
-    uri: ./samcoverage.txt
+    uri: ./samtools_coverage.txt
   - software: chewbbaca
     software_version: 1.0.0
     uri: ./chewbbaca.out
+  - software: samtools
+    subcommand: bedcov
+    software_version: 1.0.0
+    uri: ./samtools_bedcov.txt
+  - software: samtools
+    subcommand: stats
+    software_version: 1.0.0
+    uri: ./samtools_stats.txt
 
 index_artifacts:
   sourmash_signature: ./sourmash.sig
