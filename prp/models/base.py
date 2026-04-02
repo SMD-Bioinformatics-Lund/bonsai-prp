@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, ValidationInfo
-from pysam import Callable
+from typing import Callable
 from typing_extensions import Annotated
 
 
