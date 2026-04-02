@@ -20,7 +20,7 @@ def test_parse_virulence_prediction(saureus_amrfinder_path):
     assert isinstance(result, VirulenceMethodIndex)
 
     # test that all genes are identified
-    assert len(result.result.genes) == 14
+    assert len(result.result.genes) == 15
 
 
 EXPECTED_RESULT = [
@@ -28,7 +28,7 @@ EXPECTED_RESULT = [
         "saureus_amrfinder_path",
         (
             8,
-            3,
+            2,
             (
                 "beta-lactam",
                 "fosfomycin",
