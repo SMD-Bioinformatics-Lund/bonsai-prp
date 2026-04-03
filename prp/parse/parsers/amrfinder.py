@@ -40,17 +40,17 @@ AMRFINDER = AnalysisSoftware.AMRFINDER
 
 COLUMN_MAP: dict[str, str] = {
     "Contig id": "contig_id",
-    "Gene symbol": "gene_symbol",
-    "Sequence name": "sequence_name",
-    "Element type": "element_type",
-    "Element subtype": "element_subtype",
+    "Element symbol": "gene_symbol",
+    "Element name": "sequence_name",
+    "Type": "element_type",
+    "Subtype": "element_subtype",
     "Target length": "target_length",
     "Reference sequence length": "ref_seq_len",
-    "% Coverage of reference sequence": "ref_seq_cov",
-    "% Identity to reference sequence": "ref_seq_identity",
+    "% Coverage of reference": "ref_seq_cov",
+    "% Identity to reference": "ref_seq_identity",
     "Alignment length": "align_len",
-    "Accession of closest sequence": "close_seq_accn",
-    "Name of closest sequence": "close_seq_name",
+    "Closest reference accession": "close_seq_accn",
+    "Closest reference name": "close_seq_name",
     # fields used downstream but not renamed:
     "Start": "Start",
     "Stop": "Stop",
@@ -60,7 +60,7 @@ COLUMN_MAP: dict[str, str] = {
     "Subclass": "Subclass",
 }
 
-DROP_COLUMNS = {"Protein identifier", "HMM id", "HMM description"}
+DROP_COLUMNS = {"Protein id", "HMM accession", "HMM description"}
 
 # Case insensitive pattern for variants like "A123T"
 VARIANT_PATTERN = re.compile(r"([A-Za-z]+)(\d+)([A-Za-z]+)$")
