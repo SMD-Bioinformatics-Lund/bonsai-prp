@@ -90,3 +90,26 @@ def test_chewbbaca_parser(saureus_chewbbaca_path):
     assert res.status == "parsed"
 
     assert isinstance(res.value, TypingResultCgMlst)
+    # v3.4.0 format uses INF- prefix; n_novel should be a counted integer
+    assert isinstance(res.value.n_novel, int)
+    assert res.value.n_novel > 0
+
+
+def test_chewbbaca_parser_legacy_format():
+    """Test ChewbbacaParser with v3.3.2-style output (no INF- prefix).
+
+    In chewbbaca <v3.4, novel alleles are reported as plain integers,
+    making them indistinguishable from known alleles.  n_novel should
+    be None rather than a misleading 0.
+    """
+    import io
+
+    legacy_tsv = "FILE\tLOCUS1\tLOCUS2\tLOCUS3\tLOCUS4\n" "sample\t1\t802\t5\tLNF\n"
+
+    parser = ChewbbacaParser()
+    result = parser.parse(io.StringIO(legacy_tsv))
+
+    res = result.results[AnalysisType.CGMLST]
+    assert res.status == "parsed"
+    assert res.value.n_novel is None
+    assert res.value.n_missing == 1

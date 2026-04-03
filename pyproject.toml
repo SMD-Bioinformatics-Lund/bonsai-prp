@@ -41,25 +41,15 @@ upload = [
     "requests>=2.31",
 ]
 
-# analysis = cli + all heavy tools
+# analysis = cli
 analysis = [
     "click>=8.1",
-    "numpy>=1.26,<2.0",
-    "pandas>=2.1,<2.3",
-    "biopython>=1.83,<1.86",
-    "cyvcf2>=0.31,<0.32",
-    "pysam>=0.22,<0.23",
 ]
 
 all = [
     "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.1.0",
     "click>=8.1",
     "requests>=2.31,<3",
-    "numpy>=1.26,<2.0",
-    "pandas>=2.1,<2.3",
-    "biopython>=1.83,<1.86",
-    "cyvcf2>=0.31,<0.32",
-    "pysam>=0.22,<0.23",
 ]
 
 # dev-only tools (not installed with 'all')
@@ -95,8 +85,6 @@ addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 95
 [tool.coverage.run]
 source = ["prp"]
 
-[tool.pylint.TYPECHECK]
-generated-members = "pysam.asTuple,pysam.TabixFile,pysam.AlignmentFile"
 
 [tool.mypy]
 python_version = "3.11"

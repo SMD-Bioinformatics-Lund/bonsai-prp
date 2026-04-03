@@ -100,12 +100,20 @@ def _to_typing_result(
 
     errors = [err.value for err in ChewbbacaErrors]
 
-    n_novel = 0
+    has_novel_markers = any(
+        isinstance(v, str) and (v.startswith("INF") or v.startswith("*"))
+        for v in row.values()
+    )
+    n_novel: int | None = 0 if has_novel_markers else None
     n_missing = 0
     corrected_alleles: dict[str, Any] = {}
     for name, allele in row.items():
+        if not isinstance(allele, str):
+            corrected_alleles[name] = replace_cgmlst_errors(allele, log_warn=log_warn)
+            continue
         if allele.startswith("INF") or allele.startswith("*"):
-            n_novel += 1
+            if n_novel is not None:
+                n_novel += 1
         if allele in errors:
             n_missing += 1
         corrected_alleles[name] = replace_cgmlst_errors(allele, log_warn=log_warn)

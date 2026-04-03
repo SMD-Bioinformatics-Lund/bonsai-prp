@@ -6,7 +6,6 @@ import click
 
 from prp import VERSION as __version__
 
-from .analysis import analysis_gr
 from .bonsai_api import bonsai_gr
 from .parse import parse_gr
 
@@ -36,11 +35,8 @@ def cli(silent: bool, debug: bool):
 ## for manipulating jasen results
 cli.add_command(parse_gr)
 cli.add_command(bonsai_gr)
-cli.add_command(analysis_gr)
 # cli.add_command(validate.validate_result)
 # cli.add_command(validate.migrate_result)
-# cli.add_command(annotate.annotate_delly)
-# cli.add_command(annotate.add_igv_annotation_track)
 ## qc related
 # cli.add_command(parse.create_qc_result)
 # cli.add_command(validate.print_schema)

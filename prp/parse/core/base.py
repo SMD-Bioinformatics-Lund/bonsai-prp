@@ -215,6 +215,9 @@ class BaseParser(ABC):
 class SingleAnalysisParser(BaseParser):
     """Abtracted parser class for softwares that produces exactly one AnalysisType"""
 
+    subcommand: str | None = None
+    required_companions: dict[str, str] = {}
+
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, "produces") or len(cls.produces) != 1:

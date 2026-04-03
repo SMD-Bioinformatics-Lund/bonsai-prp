@@ -31,8 +31,16 @@ class VersionRange:
 _REGISTRY: dict[str, list[VersionRange]] = {}
 
 
+def _registry_key(software: str, subcommand: str | None) -> str:
+    """Build the registry lookup key from software and optional subcommand."""
+    return f"{software}.{subcommand}" if subcommand else software
+
+
 def register_parser(
-    software: str, min_version: str | None = None, max_version: str | None = None
+    software: str,
+    subcommand: str | None = None,
+    min_version: str | None = None,
+    max_version: str | None = None,
 ):
     """Decorator to register a parser for a range of versions.
 
@@ -47,19 +55,24 @@ def register_parser(
             max_version=Version(max_version),
             parser=cls,
         )
-        _REGISTRY.setdefault(software, []).append(v_range)
+        key = _registry_key(software, subcommand)
+        _REGISTRY.setdefault(key, []).append(v_range)
         return cls
 
     return wrapper
 
 
-def get_parser(software: str, *, version: str) -> RegistryEntry:
+def get_parser(
+    software: str, *, version: str, subcommand: str | None = None
+) -> RegistryEntry:
     """Get parser from registry."""
     if not isinstance(software, str):
         raise TypeError(f"`software` must be str, got {type(software).__name__}")
 
-    if software not in registered_softwares():
-        raise UnsupportedSoftwareError(f"No parser registered for software: {software}")
+    key = _registry_key(software, subcommand)
+
+    if key not in registered_softwares():
+        raise UnsupportedSoftwareError(f"No parser registered for software: {key}")
 
     # Normalize version to PkgVersion
     if isinstance(version, Version):
@@ -78,13 +91,13 @@ def get_parser(software: str, *, version: str) -> RegistryEntry:
             f"`version` must be str|Version|None, got {type(version).__name__}"
         )
 
-    for span in sorted(_REGISTRY[software]):
+    for span in sorted(_REGISTRY[key]):
         if span.min_version <= v <= span.max_version:
             return span.parser
 
     # Return the correct error.
     raise UnsupportedVersionError(
-        f"No parser available for software '{software}' version {v}"
+        f"No parser available for software '{key}' version {v}"
     )
 
 
@@ -118,6 +131,7 @@ def run_parser(
     *,
     version: str,
     data: StreamOrPath,
+    subcommand: str | None = None,
     want: set[AnalysisType] | None = None,
     parser_init: dict[str, Any] | None = None,
     **parse_kwargs: Any,
@@ -127,7 +141,7 @@ def run_parser(
     if not isinstance(software, (AnalysisSoftware, str)):
         raise ValueError(f"Invalid input for 'run_parser', got {type(software)}")
 
-    entry = get_parser(software, version=version)
+    entry = get_parser(software, version=version, subcommand=subcommand)
     parse_fn = resolve_parser(entry, **(parser_init or {}))
     ev = parse_fn(data, want=want, **parse_kwargs)
     # add version to results

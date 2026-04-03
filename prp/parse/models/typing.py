@@ -23,7 +23,7 @@ class TypingResultMlst(ResultMlstBase):
 class TypingResultCgMlst(ResultMlstBase):
     """MLST results"""
 
-    n_novel: int = 0
+    n_novel: int | None = None
     n_missing: int = 0
 
 
