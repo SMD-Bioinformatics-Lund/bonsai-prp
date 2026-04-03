@@ -34,9 +34,9 @@ EXPECTED_AMRFINDER_RESULT = [
     (
         "saureus_amrfinder_path",
         (
-            14,  # virulence genes
+            15,  # virulence genes
             8,  # amr genes
-            3,  # amr variants
+            2,  # amr variants
             (
                 "beta-lactam",
                 "fosfomycin",
