@@ -47,15 +47,15 @@ class PostAlignQcResult(BaseModel):
 
     ins_size: int | None = None
     ins_size_dev: int | None = None
-    mean_cov: int
-    pct_above_x: dict[str, float]
+    mean_cov: int | None = None
+    pct_above_x: dict[str, float] | None = None
     n_reads: int
-    n_mapped_reads: int
+    n_mapped_reads: int | None = None
     n_read_pairs: int
     coverage_uniformity: float | None = None
-    quartile1: float
-    median_cov: float
-    quartile3: float
+    quartile1: float | None = None
+    median_cov: float | None = None
+    quartile3: float | None = None
 
 
 class GenomeCompleteness(BaseModel):

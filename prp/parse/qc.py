@@ -307,19 +307,19 @@ def parse_postalignqc_results(postalignqc_fpath: str) -> QcMethodIndex:
                 if "ins_size_dev" not in qc_dict
                 else int(float(qc_dict["ins_size_dev"]))
             ),
-            mean_cov=int(qc_dict["mean_cov"]),
-            pct_above_x=qc_dict["pct_above_x"],
+            mean_cov=int(qc_dict["mean_cov"]) if qc_dict.get("mean_cov") is not None else None,
+            pct_above_x=qc_dict.get("pct_above_x"),
             n_reads=int(qc_dict["n_reads"]),
-            n_mapped_reads=int(qc_dict["n_mapped_reads"]),
+            n_mapped_reads=int(qc_dict["n_mapped_reads"]) if qc_dict.get("n_mapped_reads") is not None else None,
             n_read_pairs=int(qc_dict["n_read_pairs"]),
             coverage_uniformity=(
                 float(qc_dict["coverage_uniformity"])
                 if qc_dict.get("coverage_uniformity") is not None
                 else None
             ),
-            quartile1=float(qc_dict["quartile1"]),
-            median_cov=float(qc_dict["median_cov"]),
-            quartile3=float(qc_dict["quartile3"]),
+            quartile1=float(qc_dict["quartile1"]) if qc_dict.get("quartile1") is not None else None,
+            median_cov=float(qc_dict["median_cov"]) if qc_dict.get("median_cov") is not None else None,
+            quartile3=float(qc_dict["quartile3"]) if qc_dict.get("quartile3") is not None else None,
         )
     return QcMethodIndex(software=QcSoftware.POSTALIGNQC, result=qc_res)
 
