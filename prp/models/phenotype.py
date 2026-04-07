@@ -83,6 +83,7 @@ class ElementVirulenceSubtype(str, Enum):
     VIR = "VIRULENCE"
     ANTIGEN = "ANTIGEN"
     TOXIN = "TOXIN"
+    STX_TYPE = "STX_TYPE"
 
 
 class AnnotationType(str, Enum):

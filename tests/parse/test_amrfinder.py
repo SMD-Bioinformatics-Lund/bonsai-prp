@@ -23,6 +23,19 @@ def test_parse_virulence_prediction(saureus_amrfinder_path):
     assert len(result.result.genes) == 15
 
 
+def test_parse_virulence_prediction_stx_type(ecoli_amrfinder_path):
+    """Test that AMRFinder v4 STX_TYPE subtype is parsed without validation error."""
+    from prp.models.phenotype import ElementVirulenceSubtype
+
+    result = parse_vir_pred(ecoli_amrfinder_path)
+
+    assert isinstance(result, VirulenceMethodIndex)
+
+    stx_genes = [g for g in result.result.genes if g.element_subtype == ElementVirulenceSubtype.STX_TYPE]
+    assert len(stx_genes) == 1
+    assert stx_genes[0].gene_symbol == "stx2c_operon"
+
+
 EXPECTED_RESULT = [
     (
         "saureus_amrfinder_path",

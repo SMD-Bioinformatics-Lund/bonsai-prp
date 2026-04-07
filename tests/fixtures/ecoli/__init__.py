@@ -34,7 +34,7 @@ def ecoli_quast_path(data_path: Path) -> Path:
 @pytest.fixture()
 def ecoli_amrfinder_path(data_path: Path) -> Path:
     """Get path for ecoli amrfinder file"""
-    return data_path.joinpath("ecoli", "amrfinder.out")
+    return data_path.joinpath("ecoli", "amrfinder.tsv")
 
 
 @pytest.fixture()
