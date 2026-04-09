@@ -1,10 +1,14 @@
 """Mykrobe specific data models."""
 
+from typing import TypeAlias
 from dataclasses import dataclass
 
-from pydantic import Field
+from pydantic import Field, TypeAdapter
+
+from prp.parse.core.registry import register_result_model
 
 from .base import BaseSpeciesPrediction
+from .enums import AnalysisType, AnalysisSoftware
 
 
 class MykrobeSpeciesPrediction(BaseSpeciesPrediction):
@@ -18,6 +22,12 @@ class MykrobeSpeciesPrediction(BaseSpeciesPrediction):
     )
     species_coverage: float = Field(..., description="Species kmer converage.")
 
+
+MykrobeSpeciesPredictions: TypeAlias = list[MykrobeSpeciesPrediction]
+register_result_model(
+    AnalysisSoftware.MYKROBE,
+    AnalysisType.SPECIES,
+)(TypeAdapter(MykrobeSpeciesPredictions))
 
 @dataclass(frozen=True)
 class SRProfile:

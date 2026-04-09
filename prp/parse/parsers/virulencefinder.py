@@ -4,7 +4,9 @@ import logging
 from typing import Any
 
 from prp.io.json import read_json, require_mapping
-from prp.parse.core.base import BaseParser, ParseImplOut, StreamOrPath
+from prp.io.types import StreamOrPath
+from prp.parse.core.base import BaseParser
+from prp.parse.models.base import ParseImplOut
 from prp.parse.core.envelope import run_as_envelope
 from prp.parse.core.registry import register_parser
 from prp.parse.exceptions import InvalidDataFormat

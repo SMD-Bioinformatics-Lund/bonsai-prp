@@ -5,11 +5,13 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, field_validator
 
 from prp.models.base import RWModel
+from prp.parse.core.registry import register_result_model
 
-from .enums import VariantSubType
+from .enums import VariantSubType, AnalysisSoftware, AnalysisType
 from .typing import LineageMixin, TypingResultMlst
 
 
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.QC)
 class KleborateQcResult(BaseModel):
     """QC metrics reported by Kleborate."""
 
@@ -21,6 +23,7 @@ class KleborateQcResult(BaseModel):
     qc_warnings: None | bool = None
 
 
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.SPECIES)
 class KleboreateSppResult(RWModel):
     """Species prediction results."""
 
@@ -30,10 +33,16 @@ class KleboreateSppResult(RWModel):
     )
 
 
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.ABST)
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.CBST)
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.RMST)
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.SMST)
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.YBST)
 class KleborateMlstLikeResults(TypingResultMlst, LineageMixin):
     """Kleborate MLST-like analysis"""
 
 
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.VIRULENCE)
 class KleborateEtScore(RWModel):
     """Records and validate score."""
 
@@ -41,6 +50,8 @@ class KleborateEtScore(RWModel):
     spurious_hits: Any
 
 
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.K_TYPE)
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.O_TYPE)
 class KleborateKaptiveLocus(RWModel):
     """Kleboraete curation of Kaptive typing."""
 

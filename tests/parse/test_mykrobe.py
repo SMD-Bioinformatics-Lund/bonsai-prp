@@ -1,5 +1,6 @@
 """Test Mykrobe parser."""
 
+from prp.models.enums import AnalysisType
 from prp.parse.models.base import ElementTypeResult, ParserOutput, ResultEnvelope
 from prp.parse.models.typing import ResultLineageBase
 from prp.parse.parsers.mykrobe import MykrobeParser
@@ -18,7 +19,7 @@ def test_mykrobe_parser_results(mtuberculosis_mykrobe_path):
     result_types = list(result.results.keys())
     assert all(method in result_types for method in parser.produces)
 
-    spp = result.results["species"]
+    spp = result.results[AnalysisType.SPECIES]
     assert isinstance(spp, ResultEnvelope)
 
     # verify that species prediction was included

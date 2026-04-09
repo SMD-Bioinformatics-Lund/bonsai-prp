@@ -14,7 +14,6 @@ from prp.parse.core.envelope import (
     run_as_envelope,
 )
 from prp.parse.exceptions import UnsupportedAnalysisTypeError
-from prp.parse.models.base import ParseImplOut, ParserOutput, ResultEnvelope
 from prp.parse.models.enums import AnalysisType, ResultStatus
 
 T = TypeVar("T")
@@ -52,7 +51,7 @@ class BaseParser(ABC):
         want: set[AnalysisType] | AnalysisType | None = None,
         software_version: str | None = None,
         **kwargs: Any,
-    ) -> ParserOutput:
+    ) -> "ParserOutput":
         """Parse a source into structured results."""
         want: set[AnalysisType] = self._normalize_want(want)
 
@@ -100,8 +99,11 @@ class BaseParser(ABC):
         want = want or set(self.produces)
         return {want} if isinstance(want, AnalysisType) else want
 
-    def _new_output(self, software_version: str | None) -> ParserOutput:
+    def _new_output(self, software_version: str | None) -> "ParserOutput":
         """Create a new output model."""
+        # lazy load to avoid circular imports
+        from prp.parse.models.base import ParserOutput
+
         return ParserOutput(
             software=self.software,
             software_version=software_version,
@@ -208,7 +210,7 @@ class BaseParser(ABC):
         *,
         want: set[AnalysisType],
         **kwargs: Any,
-    ) -> ParseImplOut:
+    ) -> "ParseImplOut":
         """Return results keyed by analysis_type."""
 
 
@@ -290,6 +292,9 @@ def parse_child(
     parser: BaseParser, source: StreamOrPath, atype: AnalysisType, *, strict: bool
 ) -> Any:
     """Utility to call another parser inside a parser."""
+
+    # lazy load deps to avoid circular imports
+    from prp.parse.models.base import ResultEnvelope
 
     child = parser.parse(source, want={atype}, strict=strict)
     env = child.results.get(atype)

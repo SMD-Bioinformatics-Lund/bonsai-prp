@@ -5,6 +5,8 @@ from typing import Any, Collection, Mapping, Self, TypeAlias
 from pydantic import BaseModel, Field, model_validator
 
 from prp.models.base import RWModel
+from prp.models.enums import AnalysisSoftware
+from prp.parse.core.registry import register_result_model
 from prp.parse.exceptions import AbsentResultError, ParserError
 
 from .enums import (
@@ -218,6 +220,14 @@ class VariantBase(RWModel):
         return self
 
 
+@register_result_model(AnalysisSoftware.AMRFINDER, AnalysisType.AMR)
+@register_result_model(AnalysisSoftware.AMRFINDER, AnalysisType.STRESS)
+@register_result_model(AnalysisSoftware.AMRFINDER, AnalysisType.VIRULENCE)
+@register_result_model(AnalysisSoftware.KLEBORATE, AnalysisType.AMR)
+@register_result_model(AnalysisSoftware.MYKROBE, AnalysisType.AMR)
+@register_result_model(AnalysisSoftware.RESFINDER, AnalysisType.AMR)
+@register_result_model(AnalysisSoftware.TBPROFILER, AnalysisType.AMR)
+@register_result_model(AnalysisSoftware.VIRULENCEFINDER, AnalysisType.VIRULENCE)
 class ElementTypeResult(BaseModel):
     """Phenotype result data model.
 

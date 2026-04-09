@@ -1,10 +1,12 @@
 """Chewbacca specific models."""
 
-from typing import Any
+from typing import Any, TypeAlias
 
-from pydantic import BaseModel
+from pydantic import BaseModel, TypeAdapter
 
 from prp.models.base import RWModel
+from prp.parse.core.registry import register_result_model
+from .enums import AnalysisSoftware, AnalysisType
 
 
 class ResultMlstBase(BaseModel):
@@ -13,6 +15,7 @@ class ResultMlstBase(BaseModel):
     alleles: dict[str, int | str | list | None]
 
 
+@register_result_model(AnalysisSoftware.MLST, AnalysisType.MLST)
 class TypingResultMlst(ResultMlstBase):
     """MLST results"""
 
@@ -20,6 +23,7 @@ class TypingResultMlst(ResultMlstBase):
     sequence_type: int | str | None = None
 
 
+@register_result_model(AnalysisSoftware.CHEWBBACA, AnalysisType.CGMLST)
 class TypingResultCgMlst(ResultMlstBase):
     """MLST results"""
 
@@ -27,6 +31,7 @@ class TypingResultCgMlst(ResultMlstBase):
     n_missing: int = 0
 
 
+@register_result_model(AnalysisSoftware.EMMTYPER, AnalysisType.EMM)
 class TypingResultEmm(BaseModel):
     """Container for emmtype gene information"""
 
@@ -52,6 +57,11 @@ class LineageInformation(RWModel):
     support: list[dict[str, Any]] | None = None
 
 
+LineageResults: TypeAlias = list[LineageInformation]
+register_result_model(AnalysisSoftware.TBPROFILER, AnalysisType.LINEAGE)(TypeAdapter(LineageResults))
+
+
+@register_result_model(AnalysisSoftware.MYKROBE, AnalysisType.LINEAGE)
 class ResultLineageBase(RWModel):
     """Lineage results"""
 
@@ -60,6 +70,7 @@ class ResultLineageBase(RWModel):
     sublineage: str
 
 
+@register_result_model(AnalysisSoftware.SCCMECTYPER, AnalysisType.SCCMEC)
 class TypingResultSccmec(RWModel):
     """Sccmec results"""
 
@@ -80,6 +91,7 @@ class TypingResultSccmec(RWModel):
     comment: str | None = None
 
 
+@register_result_model(AnalysisSoftware.SPATYPER, AnalysisType.SPATYPE)
 class TypingResultSpatyper(RWModel):
     """Spatyper results"""
 
@@ -88,6 +100,7 @@ class TypingResultSpatyper(RWModel):
     type: str | None
 
 
+@register_result_model(AnalysisSoftware.SHIGAPASS, AnalysisType.SHIGATYPE)
 class TypingResultShiga(RWModel):
     """Container for shigatype gene information"""
 

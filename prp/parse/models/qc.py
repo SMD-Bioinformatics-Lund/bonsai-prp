@@ -2,9 +2,12 @@
 
 from pydantic import BaseModel, Field
 
-from .enums import GambitQcFlag
+from prp.parse.core.registry import register_result_model
+
+from .enums import GambitQcFlag, AnalysisSoftware, AnalysisType
 
 
+@register_result_model(AnalysisSoftware.QUAST, AnalysisType.QC)
 class QuastQcResult(BaseModel):
     """Assembly QC metrics."""
 
@@ -19,6 +22,7 @@ class QuastQcResult(BaseModel):
     duplication_ratio: float | None = None
 
 
+@register_result_model(AnalysisSoftware.POSTALIGNQC, AnalysisType.QC)
 class PostAlignQcResult(BaseModel):
     """Alignment QC metrics."""
 
@@ -41,6 +45,7 @@ class GenomeCompleteness(BaseModel):
     n_missing: int = Field(..., description="Number of missing cgMLST alleles")
 
 
+@register_result_model(AnalysisSoftware.GAMBIT, AnalysisType.QC)
 class GambitcoreQcResult(BaseModel):
     """Gambitcore genome completeness QC metrics."""
 
@@ -79,6 +84,7 @@ class NanoPlotQcCutoff(BaseModel):
     q30: float
 
 
+@register_result_model(AnalysisSoftware.NANOPLOT, AnalysisType.QC)
 class NanoPlotQcResult(BaseModel):
     """Nanopore sequencing QC metrics from NanoPlot."""
 
@@ -102,6 +108,7 @@ class ContigCoverage(BaseModel):
     mean_map_quality: float
 
 
+@register_result_model(AnalysisSoftware.SAMTOOLS, AnalysisType.QC)
 class SamtoolsCoverageQcResult(BaseModel):
     """SAMtools coverage QC result model."""
 

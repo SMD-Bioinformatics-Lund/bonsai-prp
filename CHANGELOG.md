@@ -2,6 +2,7 @@
 
 ### Added
 
+- Added a result model registry and function for casting JSON results to a result data model.
 - Added APIs for registering and excecuting parses from the input software name and version.
 - Added parser registry with support for version based parser selection.
 - Added added tests for several existing parsers
