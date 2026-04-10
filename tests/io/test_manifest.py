@@ -6,24 +6,10 @@ from pydantic import ValidationError
 
 from prp.io.manifest import read_bootstrap_config
 
-def test_read_bootstrap_config_valid(tmp_path: Path):
+def test_read_bootstrap_config_valid(bootstap_config_valid):
     """Test reading config file."""
 
-    cfg = tmp_path / "bootstrap.yml"
-    cfg.write_text(
-        """
-        users:
-          - username: user
-            email: user@mail.com
-            password: user123
-            role: [user]
-        groups:
-          - group_id: mtuberculosis
-            display_name: "M. tuberculosis"
-            description: "Tuberculosis test samples"
-    """, encoding="utf-8")
-
-    config = read_bootstrap_config(cfg)
+    config = read_bootstrap_config(bootstap_config_valid)
 
     assert len(config.users) == 1
     assert len(config.groups) == 1
