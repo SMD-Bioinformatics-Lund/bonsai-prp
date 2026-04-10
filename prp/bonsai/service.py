@@ -5,6 +5,8 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
+from bonsai_libs.api_client.core.exceptions import ClientError
+
 from prp.bonsai.reportning import SimpleReporter
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
@@ -64,6 +66,56 @@ class BonsaiUploadService:
         return headers
 
     # ---- Public API ----
+
+    def ensure_user_exists(self, user_id: str, **user_data) -> dict[str, Any]:
+        """
+        Get existing user or create if missing.
+
+        Args:
+            user_id: The unique identifier for the user.
+            **user_data: Additional user data to pass during creation.
+
+        Returns:
+            The user object from the API.
+        """
+        try:
+            LOG.debug("Fetching user: %s", user_id)
+            user = self.client.get_user(user_id)
+            LOG.info("User already exists: %s", user_id)
+            return user
+        except ClientError as exc:
+            if exc.status == 404:
+                LOG.info("Creating new user: %s", user_id)
+                user = self.client.create_user(user_id, **user_data)
+                LOG.info("User created successfully: %s", user_id)
+                return user
+            # Re-raise if it's not a 404
+            raise
+
+    def ensure_group_exists(self, group_id: str, **group_data) -> dict[str, Any]:
+        """
+        Get existing group or create if missing.
+
+        Args:
+            group_id: The unique identifier for the group.
+            **group_data: Additional group data to pass during creation.
+
+        Returns:
+            The group object from the API.
+        """
+        try:
+            LOG.debug("Fetching group: %s", group_id)
+            group = self.client.get_group(group_id)
+            LOG.info("Group already exists: %s", group_id)
+            return group
+        except ClientError as exc:
+            if exc.status == 404:
+                LOG.info("Creating new group: %s", group_id)
+                group = self.client.create_group(group_id, **group_data)
+                LOG.info("Group created successfully: %s", group_id)
+                return group
+            # Re-raise if it's not a 404
+            raise
 
     def upload_sample(
         self, results: ParsedSampleResults, *, force: bool
