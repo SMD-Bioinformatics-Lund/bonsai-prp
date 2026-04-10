@@ -9,6 +9,7 @@ from click.testing import CliRunner
 
 from prp.cli.annotate import add_igv_annotation_track, annotate_delly
 from prp.cli.parse import format_cdm, format_results
+from prp.cli.bonsai_api import bonsai_bootstrap
 from prp.models.sample import PipelineResult
 
 
@@ -158,3 +159,15 @@ def test_add_igv_annotation_track(
                 else len(simple_pipeline_result.genome_annotation)
             )
             assert len(test_file_after["genome_annotation"]) == n_tracks_before + 1
+
+
+def test_bootstrap_cmd():
+    """Test bootstrap command."""
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        args = []
+        result = runner.invoke(bonsai_bootstrap, args)
+
+    # test successful execution of command
+    assert result.exit_code == 0

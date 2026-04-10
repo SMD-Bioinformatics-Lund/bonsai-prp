@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from bonsai_libs.api_client.core.exceptions import ClientError
+from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput
 
 from prp.bonsai.reportning import SimpleReporter
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
@@ -67,7 +68,7 @@ class BonsaiUploadService:
 
     # ---- Public API ----
 
-    def ensure_user_exists(self, user_id: str, **user_data) -> dict[str, Any]:
+    def ensure_user_exists(self, user_data: CreateUserInput) -> dict[str, Any]:
         """
         Get existing user or create if missing.
 
@@ -78,21 +79,22 @@ class BonsaiUploadService:
         Returns:
             The user object from the API.
         """
+        username = user_data.username
         try:
-            LOG.debug("Fetching user: %s", user_id)
-            user = self.client.get_user(user_id)
-            LOG.info("User already exists: %s", user_id)
+            LOG.debug("Fetching user: %s", username)
+            user = self.client.get_user(username)
+            LOG.info("User already exists: %s", username)
             return user
         except ClientError as exc:
             if exc.status == 404:
-                LOG.info("Creating new user: %s", user_id)
-                user = self.client.create_user(user_id, **user_data)
-                LOG.info("User created successfully: %s", user_id)
+                LOG.info("Creating new user: %s", username)
+                user = self.client.create_user(user_data)
+                LOG.info("User created successfully: %s", username)
                 return user
             # Re-raise if it's not a 404
             raise
 
-    def ensure_group_exists(self, group_id: str, **group_data) -> dict[str, Any]:
+    def ensure_group_exists(self, group_data: CreateGroupInput) -> dict[str, Any]:
         """
         Get existing group or create if missing.
 
@@ -103,6 +105,7 @@ class BonsaiUploadService:
         Returns:
             The group object from the API.
         """
+        group_id = group_data.group_id
         try:
             LOG.debug("Fetching group: %s", group_id)
             group = self.client.get_group(group_id)
@@ -111,7 +114,7 @@ class BonsaiUploadService:
         except ClientError as exc:
             if exc.status == 404:
                 LOG.info("Creating new group: %s", group_id)
-                group = self.client.create_group(group_id, **group_data)
+                group = self.client.create_group(group_data)
                 LOG.info("Group created successfully: %s", group_id)
                 return group
             # Re-raise if it's not a 404

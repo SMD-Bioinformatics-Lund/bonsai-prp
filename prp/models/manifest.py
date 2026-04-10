@@ -8,6 +8,8 @@ from urllib.parse import urlparse
 from pydantic import BaseModel, Field, ValidationInfo
 from pydantic_core import core_schema
 
+from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput
+
 from .base import AllowExtraModelMixin, RelOrAbsPath
 from .metadata import MetaEntry
 
@@ -121,3 +123,10 @@ class SampleManifest(AllowExtraModelMixin):
     def assigned_to_group(self) -> bool:
         """Return True if sample is assigned to a group."""
         return len(self.groups) > 0
+    
+
+class BootstrapConfig(BaseModel):
+    """Definition of informaiton required to bootstrap Bonsai."""
+
+    users: list[CreateUserInput] = Field(default_factory=list)
+    groups: list[CreateGroupInput] = Field(default_factory=list)
