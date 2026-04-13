@@ -62,3 +62,22 @@ def simple_pipeline_result():
         typing_result=[],
         element_type_result=[],
     )
+
+
+@pytest.fixture()
+def bootstap_config_valid(tmp_path: Path) -> Path:
+    """Create a valid bootstrap config."""
+    cfg = tmp_path / "default.yaml"
+    cfg.write_text(
+        """
+        users:
+          - username: user
+            email: user@mail.com
+            password: user123
+            role: [user]
+        groups:
+          - group_id: mtuberculosis
+            display_name: "M. tuberculosis"
+            description: "Tuberculosis test samples"
+    """, encoding="utf-8")
+    return cfg

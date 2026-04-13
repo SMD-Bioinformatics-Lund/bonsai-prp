@@ -14,8 +14,7 @@ RUN apt-get update && \
 
 # Pip install bonsai-prp & dependencies
 RUN pip install --upgrade pip && \
-    pip install . && \
-    #pip install bonsai-prp && \
+    pip install .[all] && \
     pip install biopython 
 
 # Download and install Sambamba
