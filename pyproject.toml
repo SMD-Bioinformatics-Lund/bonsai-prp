@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "pydantic>=2.4,<3",
+    "pydantic[email]>=2.4,<3",
     "pyyaml>=6,<7",
     "packaging>=25",
 ]
@@ -36,7 +36,7 @@ prp = "prp.cli:cli"
 
 # upload = cli + requests
 upload = [
-    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.1.0",
+    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.2.0",
     "click>=8.1",
     "requests>=2.31",
 ]
@@ -52,7 +52,7 @@ analysis = [
 ]
 
 all = [
-    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.1.0",
+    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@v0.2.0",
     "click>=8.1",
     "requests>=2.31,<3",
     "numpy>=1.26,<2.0",
