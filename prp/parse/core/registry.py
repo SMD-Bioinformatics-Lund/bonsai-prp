@@ -32,7 +32,13 @@ _REGISTRY: dict[str, list[VersionRange]] = {}
 
 
 def _registry_key(software: str, subcommand: str | None) -> str:
-    """Build the registry lookup key from software and optional subcommand."""
+    """Build the registry lookup key from software and optional subcommand.
+
+    When a subcommand is given the key becomes 'software.subcommand'
+    (e.g. 'samtools.coverage', 'samtools.stats'), forming a single composite
+    key — not two separate registrations — so multiple parsers can share the
+    same software name without colliding.
+    """
     return f"{software}.{subcommand}" if subcommand else software
 
 

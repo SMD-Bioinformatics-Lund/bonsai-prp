@@ -231,7 +231,7 @@ def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults
     """Parse the sample manifest and the analysis result files for internal use."""
     base_result = parse_base_results_from_manifest(manifest)
 
-    # Build lookup: (software, subcommand) → file path for companion resolution
+    # Build lookup: (software, subcommand) → file path
     available: dict[tuple[str, str | None], str] = {
         (r.software, r.subcommand): r.uri.path
         for r in manifest.analysis_result
@@ -245,7 +245,7 @@ def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults
                 f"No method for reading {res.uri.scheme} URI scheme."
             )
 
-        # Skip entries with no registered parser (companion-only entries like bedcov)
+        # Skip entries with no registered parser (e.g. samtools bedcov)
         try:
             parser_cls = get_parser(
                 res.software, version=res.software_version, subcommand=res.subcommand
@@ -253,30 +253,18 @@ def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults
         except (UnsupportedSoftwareError, UnsupportedVersionError):
             continue
 
-        # Resolve required companions; skip if any are absent from the manifest
-        companions: dict[str, str] = {}
-        skip = False
-        for kwarg, companion_sub in getattr(parser_cls, "required_companions", {}).items():
-            key = (res.software, companion_sub)
-            if key not in available:
-                LOG.warning(
-                    "Skipping %s.%s: missing companion '%s'",
-                    res.software,
-                    res.subcommand,
-                    companion_sub,
-                )
-                skip = True
-                break
-            companions[kwarg] = available[key]
-        if skip:
-            continue
+        # Pass bedcov path if available (used by samtools.stats for coverage metrics)
+        kwargs: dict[str, str] = {}
+        bedcov_path = available.get((res.software, "bedcov"))
+        if bedcov_path is not None:
+            kwargs["bedcov_path"] = bedcov_path
 
         ev = run_parser(
             software=res.software,
             subcommand=res.subcommand,
             version=res.software_version,
             data=res.uri.path,
-            **companions,
+            **kwargs,
         )
         for at, parser_result in ev.results.items():
             analysis_results.append(

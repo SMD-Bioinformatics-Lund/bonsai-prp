@@ -216,7 +216,10 @@ class SingleAnalysisParser(BaseParser):
     """Abtracted parser class for softwares that produces exactly one AnalysisType"""
 
     subcommand: str | None = None
-    required_companions: dict[str, str] = {}
+    """Optional subcommand identifier used when one software binary produces
+    multiple distinct output formats (e.g. 'coverage' and 'stats' for samtools).
+    The registry uses (software, subcommand) as a composite key so each output
+    type can have its own parser class."""
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
