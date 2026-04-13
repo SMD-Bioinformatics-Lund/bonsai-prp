@@ -21,6 +21,7 @@ LOG = logging.getLogger(__name__)
 
 USER_ENV = "BONSAI_USER"
 PASSWD_ENV = "BONSAI_PASSWD"
+BONSAI_API_ENV = "BONSAI_API"
 
 
 @click.group("bonsai")
@@ -30,7 +31,7 @@ def bonsai_gr():
 
 @bonsai_gr.command("upload")
 @click.option(
-    "-a", "--api", "api_url", required=True, type=str, help="Upload configuration"
+    "-a", "--api", "api_url", required=True, envvar=BONSAI_API_ENV, type=str, help="Upload configuration"
 )
 @click.option(
     "-u", "--username", required=True, envvar=USER_ENV, type=str, help="Username"
@@ -99,7 +100,7 @@ def bonsai_upload(
 @bonsai_gr.command("bootstrap")
 @click.option("-d", "--dry-run", is_flag=True)
 @click.option(
-    "-a", "--api", "api_url", required=True, type=str, help="Upload configuration"
+    "-a", "--api", "api_url", required=True, envvar=BONSAI_API_ENV, type=str, help="Upload configuration"
 )
 @click.option(
     "-u", "--username", required=True, envvar=USER_ENV, type=str, help="Username"
