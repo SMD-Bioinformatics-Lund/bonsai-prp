@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -62,6 +62,13 @@ class UploadState:
         """Check if a step is marked as done."""
 
         return bool(self.steps.get(step))
+    
+    def assert_sample_id(self) -> str:
+        """Assert that sample id has been set."""
+        if self.sample_id is None:
+            raise ValueError("Sample ID has not been set!")
+        
+        return self.sample_id
 
 
 class UploadStateStore:
@@ -95,7 +102,7 @@ class UploadStateStore:
         )
         try:
             with os.fdopen(tmp_fd, "w", encoding="utf-8") as fh:
-                json.dump(state.__dict__, fh, ensure_ascii=False, indent=2)
+                json.dump(asdict(state), fh, ensure_ascii=False, indent=2)
                 fh.flush()
                 os.fsync(fh.fileno())
             os.replace(tmp_name, p)  # atomic on POSIX

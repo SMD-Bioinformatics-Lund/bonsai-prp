@@ -106,14 +106,19 @@ def step(step_flag: str):
 def step_create_sample(
     client: BonsaiApiClient,
     sample_info: ParsedSampleResults,
-    _: UploadState,
+    state: UploadState,
     *,
     headers: Headers,
-):
+) -> "CreateSampleResponse":
     """Create a sample using the API."""
 
     payload = mappers.sample_to_bonsai(sample_info)
-    return client.create_sample(payload, headers=headers)
+    resp = client.create_sample(payload, headers=headers)
+
+    # set sample id in state
+    state.sample_id = resp.internal_sample_id
+
+    return resp
 
 
 @step("add_to_groups")
@@ -125,11 +130,12 @@ def step_add_sample_to_groups(
     headers: Headers,
 ):
     """Assign a sample to one or more groups."""
+    internal_sample_id = state.assert_sample_id()
 
     responses = []
     for group_id in sample_info.groups:
         resp = client.add_samples_to_group(
-            group_id, sample_ids=[state.sample_id], headers=headers
+            group_id, sample_ids=[internal_sample_id], headers=headers
         )
         responses.append(resp)
     return responses
@@ -145,8 +151,9 @@ def step_add_pipeline_run(
 ):
     """Add pipeline run metadata to the sample."""
     run_info = mappers.sample_info_to_pipeline_run(sample_info)
+    internal_sample_id = state.assert_sample_id()
     return client.add_pipeline_run(
-        state.sample_id, pipeline_run=run_info, headers=headers
+        internal_sample_id, pipeline_run=run_info, headers=headers
     )
 
 
@@ -161,7 +168,8 @@ def step_upload_analysis_results(
     **kwargs,
 ) -> dict[str, str]:
     """Upload analysis results to the sample."""
-    internal_sample_id = state.sample_id
+    internal_sample_id = state.assert_sample_id()
+
     run_id = sample_info.pipeline.pipeline_run_id
     payload = mappers.analysis_result_to_upload_payload(
         internal_sample_id, run_id=run_id, result=result
@@ -193,8 +201,10 @@ def step_upload_ska_index(
     if not sample_info.index_artifacts or not sample_info.index_artifacts.ska_index:
         return None  # no index to upload
 
+    internal_sample_id = state.assert_sample_id()
+
     return client.upload_ska_index(
-        state.sample_id,
+        internal_sample_id,
         index_path=sample_info.index_artifacts.ska_index,
         headers=headers,
     )
@@ -214,9 +224,13 @@ def step_upload_sourmash_signature(
         or not sample_info.index_artifacts.sourmash_signature
     ):
         return None  # no index to upload
+    internal_sample_id = state.assert_sample_id()
 
-    return client.upload_sourmash_signature(
-        state.sample_id,
-        index_path=sample_info.index_artifacts.sourmash_signature,
-        headers=headers,
+    # read sourmash data
+    with sample_info.index_artifacts.sourmash_signature.open("rb") as f:
+        return client.upload_sourmash_signature(
+            internal_sample_id,
+            signature_file=f,
+            filename=str(sample_info.index_artifacts.sourmash_signature),
+            headers=headers,
     )
