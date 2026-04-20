@@ -204,10 +204,10 @@ class VariantBase(RWModel):
     frequency: float | None = Field(None, description="Alt allele frequency.")
     confidence: float | None = Field(None, description="Genotype confidence.")
     method: str | None = Field(
-        ..., description="Prediction method used to call variant"
+        None, description="Prediction method used to call variant"
     )
     passed_qc: bool | None = Field(
-        ..., description="Describe if variant has passed the tool qc check"
+        None, description="Describe if variant has passed the tool qc check"
     )
 
     @model_validator(mode="after")
