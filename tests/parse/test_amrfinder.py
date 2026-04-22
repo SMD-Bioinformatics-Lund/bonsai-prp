@@ -8,7 +8,7 @@ from prp.parse.models.base import (
     ResultEnvelope,
 )
 from prp.parse.models.enums import AnalysisType
-from prp.parse.parsers.amrfinder import AmrFinderParser
+from prp.parse.parsers.amrfinder import AmrFinderParser, AmrFinderV3Parser
 
 EXPECTED_RESULT = [
     (
@@ -92,3 +92,43 @@ def test_amrfinder_parser_filter(saureus_amrfinder_path):
 
     res = result.results[selected_result]
     assert res.status == "parsed"
+
+
+def test_amrfinder_parser_v3_format(saureus_amrfinder_v3_path):
+    """AMRFinder v3 column headers are parsed correctly."""
+    parser = AmrFinderV3Parser()
+    result = parser.parse(source=saureus_amrfinder_v3_path)
+
+    assert isinstance(result, ParserOutput)
+    assert all(at in result.results for at in parser.produces)
+
+    vir = result.results[AnalysisType.VIRULENCE]
+    assert isinstance(vir, ResultEnvelope)
+    assert isinstance(vir.value, ElementTypeResult)
+    assert len(vir.value.genes) == 14
+
+    amr = result.results[AnalysisType.AMR]
+    assert isinstance(amr, ResultEnvelope)
+    assert isinstance(amr.value, ElementTypeResult)
+    assert len(amr.value.genes) == 8
+    assert len(amr.value.variants) == 3
+
+
+def test_amrfinder_parser_v4_format(saureus_amrfinder_path):
+    """AMRFinder v4 column headers are parsed correctly."""
+    parser = AmrFinderParser()
+    result = parser.parse(source=saureus_amrfinder_path)
+
+    assert isinstance(result, ParserOutput)
+    assert all(at in result.results for at in parser.produces)
+
+    vir = result.results[AnalysisType.VIRULENCE]
+    assert isinstance(vir, ResultEnvelope)
+    assert isinstance(vir.value, ElementTypeResult)
+    assert len(vir.value.genes) == 15
+
+    amr = result.results[AnalysisType.AMR]
+    assert isinstance(amr, ResultEnvelope)
+    assert isinstance(amr.value, ElementTypeResult)
+    assert len(amr.value.genes) == 8
+    assert len(amr.value.variants) == 2

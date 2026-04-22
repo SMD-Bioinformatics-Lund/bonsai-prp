@@ -7,7 +7,7 @@ import pytest
 from prp.parse.models.base import ParserOutput, ResultEnvelope
 from prp.parse.models.enums import AnalysisType
 from prp.parse.models.qc import PostAlignQcResult
-from prp.parse.parsers.postalignqc import SamtoolsQcParser
+from prp.parse.parsers.post_align_qc import SamtoolsQcParser
 
 
 def test_samtools_qc_parser(

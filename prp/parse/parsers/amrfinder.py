@@ -38,7 +38,8 @@ AmrFinderVariants: TypeAlias = list[AmrFinderVariant]
 AMRFINDER = AnalysisSoftware.AMRFINDER
 
 
-COLUMN_MAP: dict[str, str] = {
+# Column names as they appear in AMRFinder v4+ output.
+V4_COLUMN_MAP: dict[str, str] = {
     "Contig id": "contig_id",
     "Element symbol": "gene_symbol",
     "Element name": "sequence_name",
@@ -59,26 +60,53 @@ COLUMN_MAP: dict[str, str] = {
     "Class": "Class",
     "Subclass": "Subclass",
 }
+V4_DROP_COLUMNS: frozenset[str] = frozenset({"Protein id", "HMM accession", "HMM description"})
 
-DROP_COLUMNS = {"Protein id", "HMM accession", "HMM description"}
+# Column names as they appear in AMRFinder v3 output.
+V3_COLUMN_MAP: dict[str, str] = {
+    "Contig id": "contig_id",
+    "Gene symbol": "gene_symbol",
+    "Sequence name": "sequence_name",
+    "Element type": "element_type",
+    "Element subtype": "element_subtype",
+    "Target length": "target_length",
+    "Reference sequence length": "ref_seq_len",
+    "% Coverage of reference sequence": "ref_seq_cov",
+    "% Identity to reference sequence": "ref_seq_identity",
+    "Alignment length": "align_len",
+    "Accession of closest sequence": "close_seq_accn",
+    "Name of closest sequence": "close_seq_name",
+    # fields used downstream but not renamed:
+    "Start": "Start",
+    "Stop": "Stop",
+    "Strand": "Strand",
+    "Method": "Method",
+    "Class": "Class",
+    "Subclass": "Subclass",
+}
+V3_DROP_COLUMNS: frozenset[str] = frozenset({"Protein identifier", "HMM id"})
 
 # Case insensitive pattern for variants like "A123T"
 VARIANT_PATTERN = re.compile(r"([A-Za-z]+)(\d+)([A-Za-z]+)$")
 
 
-def _normalize_row(raw: dict[str, Any]) -> dict[str, Any]:
+def _normalize_row(
+    raw: dict[str, Any],
+    column_map: dict[str, str],
+    drop_columns: frozenset[str],
+) -> dict[str, Any]:
     """Normalize an AMRFinder row by
     - drop unused columns
     - rename columns to internal names
     - convert empty strings to null values
     """
     raw = {
-        col_name: val for col_name, val in raw.items() if col_name not in DROP_COLUMNS
+        col_name: val for col_name, val in raw.items() if col_name not in drop_columns
     }
     raw = normalize_nulls(raw)
 
     normalized: dict[str, Any] = {}
-    for src, dest in COLUMN_MAP.items():
+    for src, dest in column_map.items():
         if src in raw:
             normalized[dest] = raw[src]
         else:
@@ -201,16 +229,19 @@ def _parse_variant(hit: dict[str, Any], variant_no: int) -> AmrFinderVariant:
 
 def read_amrfinder_results(
     source: StreamOrPath,
+    column_map: dict[str, str],
+    drop_columns: frozenset[str],
 ) -> tuple[AmrFinderGenes, AmrFinderVariants]:
     """Read AMRFinder TSV and return parsed gene hits and point variants.
 
-    source can be a path or a binary stream."""
+    source can be a path or a binary stream.
+    column_map and drop_columns select the v3 or v4 header mapping."""
     genes: AmrFinderGenes = []
     variants: AmrFinderVariants = []
     var_no = 1
 
     for raw_row in read_delimited(source, delimiter="\t"):
-        hit = _normalize_row(raw_row)
+        hit = _normalize_row(raw_row, column_map, drop_columns)
 
         if hit.get("element_subtype") == "POINT":
             variants.append(_parse_variant(hit, variant_no=var_no))
@@ -271,32 +302,39 @@ def _to_virulence_results(genes) -> ElementTypeResult:
     return ElementTypeResult(phenotypes={}, genes=filtered_genes, variants=[])
 
 
-@register_parser(AMRFINDER)
-class AmrFinderParser(BaseParser):
-    """Parse AmrFinder and AmrFinder plus results."""
+class _AmrFinderParserBase(BaseParser):
+    """Shared parse logic for all AMRFinder versions.
+
+    Subclasses select the correct column map for their version range via the
+    class attributes ``_column_map`` and ``_drop_columns``; the registry then
+    dispatches to the right subclass based on ``software_version`` in the
+    sample manifest.
+    """
 
     software = AMRFINDER
-    parser_name = "AmrFinderParser"
     parser_version = 1
     schema_version = 1
     produces = {AnalysisType.AMR, AnalysisType.VIRULENCE, AnalysisType.STRESS}
 
+    _column_map: dict[str, str]
+    _drop_columns: frozenset[str]
+
     def _parse_impl(
         self, source: StreamOrPath, *, want: set[AnalysisType], **_
     ) -> ParseImplOut:
-        """Parse analysis results."""
-        genes, variants = read_amrfinder_results(source)
+        genes, variants = read_amrfinder_results(
+            source, self._column_map, self._drop_columns
+        )
 
         base_meta = {"parser": self.parser_name, "software": self.software}
 
-        # AMR & STRESS share the same underlying element type filter in this outpu
         results: dict[AnalysisType, Any] = {}
         for analysis_type in [AnalysisType.AMR, AnalysisType.STRESS]:
             if analysis_type in want:
                 results[analysis_type] = run_as_envelope(
                     analysis_name=analysis_type,
-                    fn=lambda: _to_resistance_results(
-                        genes, variants, analysis_type=analysis_type
+                    fn=lambda at=analysis_type: _to_resistance_results(
+                        genes, variants, analysis_type=at
                     ),
                     reason_if_absent=f"{analysis_type} not present",
                     reason_if_empty="No findings",
@@ -306,12 +344,30 @@ class AmrFinderParser(BaseParser):
 
         if AnalysisType.VIRULENCE in want:
             results[AnalysisType.VIRULENCE] = run_as_envelope(
-                analysis_name=analysis_type,
+                analysis_name=AnalysisType.VIRULENCE,
                 fn=lambda: _to_virulence_results(genes),
-                reason_if_absent=f"{analysis_type} not present",
+                reason_if_absent=f"{AnalysisType.VIRULENCE} not present",
                 reason_if_empty="No findings",
                 meta=base_meta,
                 logger=self.logger,
             )
 
         return results
+
+
+@register_parser(AMRFINDER, max_version="3.99.99")
+class AmrFinderV3Parser(_AmrFinderParserBase):
+    """Parse AMRFinder v3 output (pre-v4 column headers)."""
+
+    parser_name = "AmrFinderV3Parser"
+    _column_map = V3_COLUMN_MAP
+    _drop_columns = V3_DROP_COLUMNS
+
+
+@register_parser(AMRFINDER, min_version="4.0.0")
+class AmrFinderParser(_AmrFinderParserBase):
+    """Parse AMRFinder v4+ output."""
+
+    parser_name = "AmrFinderParser"
+    _column_map = V4_COLUMN_MAP
+    _drop_columns = V4_DROP_COLUMNS
