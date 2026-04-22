@@ -95,12 +95,12 @@ def _coverage_stats(
     mean_cov = total_bases_mapped / genome_length if genome_length else None
 
     # Build (depth → count) including depth 0
-    covered = sum(c for _, c in cov)
-    depth0_count = max(0, genome_length - covered)
+    coverages = [c for _, c in cov]
+    depth0_count = max(0, genome_length - sum(coverages))
 
     # depths and counts in ascending order (0 first, then COV entries)
     depths = [0] + [d for d, _ in cov]
-    counts = [depth0_count] + [c for _, c in cov]
+    counts = [depth0_count] + coverages
 
     # Cumulative counts for percentile lookup
     cumulative: list[int] = []
