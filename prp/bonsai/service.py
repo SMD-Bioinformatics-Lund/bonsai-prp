@@ -158,7 +158,8 @@ class BonsaiUploadService:
             )
 
         # Phase 2: upload analysis results
-        upload_analysis_fn = steps.lookup_step("upload_analysis_results")
+        step_name = "upload_analysis_results"
+        upload_analysis_fn = steps.lookup_step(step_name)
         for result in results.analysis_results:
             if not isinstance(result, MinimalAnalysisRecord):
                 LOG.warning(
@@ -168,6 +169,12 @@ class BonsaiUploadService:
                 continue
 
             substep = result.software  # used for dynamic state key
+
+            # Skip if upload step has been run
+            if state.is_done(f"{step_name}:{substep}") and not force:
+                self.reporter.on_step_skip(external_id, f"{step_name}:{substep}")
+                continue
+
             headers = self._headers_for("upload_analysis_results", state)
             upload_analysis_fn(
                 self,
