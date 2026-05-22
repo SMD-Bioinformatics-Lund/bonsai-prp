@@ -39,6 +39,7 @@ class BonsaiUploadService:
         reporter: None = None,
         workflow_id: str | None = None,
         dry_run: bool = False,
+        ignore_errors: bool = False,
     ):
         """
         Args:
@@ -54,6 +55,7 @@ class BonsaiUploadService:
         self.idempotency = idempotency
         self.reporter = reporter or SimpleReporter()
         self.dry_run = dry_run
+        self.ignore_errors = ignore_errors
 
     def _headers_for(self, step: str, state: UploadState) -> dict[str, str]:
         headers = {
@@ -154,7 +156,7 @@ class BonsaiUploadService:
 
             # decorator handles state persistence, error handling, and dry-run logic
             step_fn(
-                self, self.client, results, state, headers=headers, dry_run=self.dry_run
+                self, self.client, results, state, headers=headers, dry_run=self.dry_run, ignore_errors=self.ignore_errors
             )
 
         # Phase 2: upload analysis results
@@ -186,6 +188,7 @@ class BonsaiUploadService:
                 substep=substep,
                 dry_run=self.dry_run,
                 force=force,
+                ignore_errors=self.ignore_errors
             )
 
         # Build a friendly summary result

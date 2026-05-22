@@ -4,7 +4,7 @@ import json
 from functools import wraps
 from typing import Any, Callable, TypeAlias
 
-from bonsai_libs.api_client.core.exceptions import ClientError
+from bonsai_libs.api_client.core.exceptions import ClientError, ConflictError
 
 from prp.exceptions import PrpError
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
@@ -48,6 +48,7 @@ def step(step_flag: str):
             *,
             headers: OpHeaders = None,
             dry_run: bool = False,
+            ignore_errors: bool = False,
             substep: str | None = None,
             **kwargs,
         ):
@@ -86,9 +87,11 @@ def step(step_flag: str):
                 except json.JSONDecodeError:
                     details = exc.body
                 service.reporter.on_step_fail(external_id, dynamic_id, details)
-                raise PrpError(
-                    f"API error during step '{dynamic_id}': {details}"
-                ) from exc
+
+                if not ignore_errors:
+                    raise PrpError(
+                        f"API error during step '{dynamic_id}': {details}"
+                    ) from exc
             except Exception as exc:
                 # Fallback error
                 service.reporter.on_step_fail(external_id, dynamic_id, exc)
@@ -205,7 +208,7 @@ def step_upload_ska_index(
 
     return client.upload_ska_index(
         internal_sample_id,
-        index_path=sample_info.index_artifacts.ska_index,
+        index_path=str(sample_info.index_artifacts.ska_index),
         headers=headers,
     )
 
