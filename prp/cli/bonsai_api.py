@@ -41,6 +41,12 @@ def bonsai_gr():
 )
 @click.option("-d", "--dry-run", is_flag=True)
 @click.option(
+    "-i",
+    "--ignore-errors",
+    is_flag=True,
+    help="Continue uploading even if some steps fail",
+)
+@click.option(
     "-f",
     "--force",
     is_flag=True,
@@ -56,6 +62,7 @@ def bonsai_upload(
     password: str,
     api_url: str,
     dry_run: bool,
+    ignore_errors: bool,
     force: bool,
 ):
     """Upload a sample to Bonsai using either a sample config or json dump."""
@@ -85,7 +92,8 @@ def bonsai_upload(
     rid = manifest_obj.pipeline.pipeline_run_id
     workflow_id = f"bonsai-prp-upload-{manifest_obj.sample_id}-{rid}"
     service = BonsaiUploadService(
-        client=client, state_store=store, workflow_id=workflow_id, dry_run=dry_run
+        client=client, state_store=store, workflow_id=workflow_id, 
+        dry_run=dry_run, ignore_errors=ignore_errors
     )
     try:
         service.upload_sample(manifest_obj, force=force)
@@ -142,7 +150,7 @@ def bonsai_bootstrap(api_url: str, username: str, password: str, dry_run: bool, 
         )
 
     bootstrap_service = BonsaiUploadService(
-        client=client, state_store=store, dry_run=dry_run
+        client=client, state_store=store, dry_run=dry_run, ignore_errors=True
     )
 
     # Bootstrap users and groups
