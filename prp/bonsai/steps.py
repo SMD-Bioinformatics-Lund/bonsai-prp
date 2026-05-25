@@ -205,7 +205,7 @@ def step_upload_ska_index(
 
     return client.upload_ska_index(
         internal_sample_id,
-        index_path=sample_info.index_artifacts.ska_index,
+        index_path=str(sample_info.index_artifacts.ska_index),
         headers=headers,
     )
 
