@@ -7,7 +7,7 @@ from typing import Any, Callable, TypeAlias
 from bonsai_libs.api_client.core.exceptions import ClientError, ConflictError
 
 from prp.exceptions import PrpError
-from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
+from prp.pipeline.types import IgvAnnotationTrack, MinimalAnalysisRecord, ParsedSampleResults
 
 from . import mappers
 from .client import BonsaiApiClient
@@ -142,6 +142,40 @@ def step_add_sample_to_groups(
         )
         responses.append(resp)
     return responses
+
+
+@step("add_reference_genome")
+def step_add_reference_genome(
+    client: BonsaiApiClient,
+    sample_info: ParsedSampleResults,
+    state: UploadState,
+    *,
+    headers: Headers,
+):
+    """Associate sample with a reference genome."""
+    internal_sample_id = state.assert_sample_id()
+    return client.add_reference_genome_to_sample(
+        internal_sample_id,
+        reference_genome_id=sample_info.reference_genome_id,
+        headers=headers,
+    )
+
+
+@step("add_annotation_track")
+def step_add_annotation_track(
+    client: BonsaiApiClient,
+    sample_info: ParsedSampleResults,
+    state: UploadState,
+    *,
+    track: IgvAnnotationTrack,
+    headers: Headers,
+):
+    """Associate sample with a reference genome."""
+    internal_sample_id = state.assert_sample_id()
+    payload = track.model_dump(mode="json")
+    return client.add_annotation_track_to_sample(
+        internal_sample_id, track=payload, headers=headers
+    )
 
 
 @step("add_pipeline_run")

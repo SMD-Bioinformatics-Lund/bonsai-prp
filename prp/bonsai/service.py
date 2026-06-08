@@ -9,7 +9,7 @@ from bonsai_libs.api_client.core.exceptions import ClientError
 from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput
 
 from prp.bonsai.reportning import SimpleReporter
-from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
+from prp.pipeline.types import IgvAnnotationTrack, MinimalAnalysisRecord, ParsedSampleResults
 
 from . import steps
 from .client import BonsaiApiClient
@@ -128,6 +128,7 @@ class BonsaiUploadService:
         """Upload a single sample to Bonsai from a manifest."""
         upload_steps = [
             "create_sample",
+            "add_reference_genome",
             "add_pipeline_run",
             "add_ska_index",
             "add_sourmash_signature",
@@ -159,7 +160,31 @@ class BonsaiUploadService:
                 self, self.client, results, state, headers=headers, dry_run=self.dry_run, ignore_errors=self.ignore_errors
             )
 
-        # Phase 2: upload analysis results
+        # Phase 2: create annotation tracks
+        step_name = "add_annotation_track"
+        create_track_fn = steps.lookup_step(step_name)
+        for track in results.annotation_tracks:
+            substep = track.uri  # used for dynamic state key
+
+            # Skip if upload step has been run
+            if state.is_done(f"{step_name}:{substep}") and not force:
+                self.reporter.on_step_skip(external_id, f"{step_name}:{substep}")
+                continue
+
+            headers = self._headers_for("upload_analysis_results", state)
+            create_track_fn(
+                self,
+                self.client,
+                results,
+                state,
+                track=track,
+                headers=headers,
+                substep=substep,
+                dry_run=self.dry_run,
+                ignore_errors=self.ignore_errors
+            )
+
+        # Phase 3: upload analysis results
         step_name = "upload_analysis_results"
         upload_analysis_fn = steps.lookup_step(step_name)
         for result in results.analysis_results:

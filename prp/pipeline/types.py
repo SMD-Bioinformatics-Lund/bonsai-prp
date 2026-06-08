@@ -26,7 +26,9 @@ class IgvAnnotationTrack(RWModel):
     """IGV annotation track data."""
 
     name: str  # track name to display
-    file: str  # path to the annotation file
+    type: str  # track type
+    uri: str  # path to the annotation file
+    index_uri: str | None = None  # Optional path to the index
 
 
 class CdmRecord(BaseModel):
@@ -162,6 +164,10 @@ class ParsedSampleResults(BaseModel):
     metadata: list[InternalMetadataRecord] = Field(..., default_factory=list)
     sequencing: SequencingInfo
     pipeline: PipelineRun
+
+    # reference info
+    reference_genome_id: str | None = None
+    annotation_tracks: list[IgvAnnotationTrack] = Field(..., default_factory=list)
 
     # analysis results and artifacts
     analysis_results: list[FullAnalysisResult | MinimalAnalysisRecord] = Field(
