@@ -3,8 +3,10 @@
 import json
 from functools import wraps
 from typing import Any, Callable, TypeAlias
+from pathlib import Path
 
-from bonsai_libs.api_client.core.exceptions import ClientError, ConflictError
+from bonsai_libs.api_client.core.exceptions import ClientError
+from bonsai_libs.api_client.bonsai.models import GenomicResourceInput, AnnotationTrack
 
 from prp.exceptions import PrpError
 from prp.pipeline.types import IgvAnnotationTrack, MinimalAnalysisRecord, ParsedSampleResults
@@ -17,6 +19,7 @@ Headers: TypeAlias = dict[str, str]
 OpHeaders: TypeAlias = Headers | None
 
 STEP_REGISTRY: dict[str, Callable[[], Any]] = {}
+EXPECTED_SUFFIXES = ['vcf', 'bam', 'cram', 'gff', 'gff3', 'gtf', 'bed', 'bp']
 
 
 def lookup_step(step_name: str) -> Callable[[], Any]:
@@ -172,9 +175,32 @@ def step_add_annotation_track(
 ):
     """Associate sample with a reference genome."""
     internal_sample_id = state.assert_sample_id()
-    payload = track.model_dump(mode="json")
+
+    # infere file format if not provided
+    file_fmt = track.format
+    if file_fmt is None:
+        suffix = Path(track.uri).suffix.strip('.')
+        if suffix not in EXPECTED_SUFFIXES:
+            raise ValueError(
+                f"Could not infere format of file '{track.uri}', please specify format."
+            )
+        file_fmt = suffix
+
+    api_input = GenomicResourceInput(
+        reference_genome_id=sample_info.reference_genome_id,
+        pipeline_run_id=sample_info.pipeline.pipeline_run_id,
+        resource_data=[
+            AnnotationTrack(
+                name=track.name,
+                format=file_fmt,
+                type=track.type,
+                path=track.uri,
+                index_path=track.index_uri,
+            )
+        ],
+    )
     return client.add_annotation_track_to_sample(
-        internal_sample_id, track=payload, headers=headers
+        internal_sample_id, track=api_input, headers=headers
     )
 
 
