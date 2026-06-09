@@ -26,6 +26,7 @@ class IgvAnnotationTrack(RWModel):
     """IGV annotation track data."""
 
     name: str  # track name to display
+    format: str | None = None
     type: str  # track type
     uri: str  # path to the annotation file
     index_uri: str | None = None  # Optional path to the index

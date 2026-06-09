@@ -71,9 +71,10 @@ class FlexibleURI:
 class IgvAnnotation(BaseModel):
     """Format of a IGV annotation track."""
 
-    name: str
+    name: str | None = None
+    format: str | None = None
     type: str
-    uri: str | None = None
+    uri: str
     index_uri: str | None = None
 
 
