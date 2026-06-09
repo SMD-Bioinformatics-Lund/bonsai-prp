@@ -164,7 +164,7 @@ class BonsaiUploadService:
         step_name = "add_annotation_track"
         create_track_fn = steps.lookup_step(step_name)
         for track in results.annotation_tracks:
-            substep = track.uri  # used for dynamic state key
+            substep = track.name  # used for dynamic state key
 
             # Skip if upload step has been run
             if state.is_done(f"{step_name}:{substep}") and not force:
