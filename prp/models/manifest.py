@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from pydantic import BaseModel, Field, ValidationInfo
 from pydantic_core import core_schema
 
-from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput
+from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput, CreateReferenceGenomeInput
 
 from .base import AllowExtraModelMixin, RelOrAbsPath
 from .metadata import MetaEntry
@@ -129,3 +129,4 @@ class BootstrapConfig(BaseModel):
 
     users: list[CreateUserInput] = Field(default_factory=list)
     groups: list[CreateGroupInput] = Field(default_factory=list)
+    reference_genomes: list[CreateReferenceGenomeInput] = Field(default_factory=list)

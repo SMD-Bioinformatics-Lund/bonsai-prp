@@ -161,5 +161,9 @@ def bonsai_bootstrap(api_url: str, username: str, password: str, dry_run: bool, 
     LOG.info("Bootstraping groups")
     for group in config.groups:
         bootstrap_service.ensure_group_exists(group)
+
+    LOG.info("Bootstraping reference genomes")
+    for ref in config.reference_genomes:
+        bootstrap_service.ensure_reference_genome_exists(ref)
     
     click.secho("Bootstrap complete!", fg="green")

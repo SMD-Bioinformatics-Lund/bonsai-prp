@@ -79,5 +79,16 @@ def bootstap_config_valid(tmp_path: Path) -> Path:
           - group_id: mtuberculosis
             display_name: "M. tuberculosis"
             description: "Tuberculosis test samples"
+        reference_genomes:
+          - name: mtuberculosis
+            accession: TEST123
+            organism: Mycobacterium tubcerculosis
+            fasta_resource: genome.fasta
+            fasta_index_resource: genome.fasta.fai
+            reference_tracks:
+              - name: Rifampicin resistance-determining region
+                format: bed
+                type: annotation
+                path: annotation.bed
     """, encoding="utf-8")
     return cfg
