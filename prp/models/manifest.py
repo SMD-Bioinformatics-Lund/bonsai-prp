@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 from pydantic import BaseModel, Field, ValidationInfo
 from pydantic_core import core_schema
 
-from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput
+from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput, CreateReferenceGenomeInput
 
 from .base import AllowExtraModelMixin, RelOrAbsPath
 from .metadata import MetaEntry
@@ -71,9 +71,10 @@ class FlexibleURI:
 class IgvAnnotation(BaseModel):
     """Format of a IGV annotation track."""
 
-    name: str
+    name: str | None = None
+    format: str | None = None
     type: str
-    uri: str | None = None
+    uri: str
     index_uri: str | None = None
 
 
@@ -106,9 +107,7 @@ class SampleManifest(AllowExtraModelMixin):
     metadata: list[MetaEntry] = Field(default_factory=list)
 
     # Reference genome
-    ref_genome_sequence: RelOrAbsPath | None = None
-    ref_genome_annotation: RelOrAbsPath | None = None
-
+    reference_genome_id: str | None = None
     igv_annotations: list[IgvAnnotation] = Field(default_factory=list)
 
     nextflow_run_info: RelOrAbsPath
@@ -130,3 +129,4 @@ class BootstrapConfig(BaseModel):
 
     users: list[CreateUserInput] = Field(default_factory=list)
     groups: list[CreateGroupInput] = Field(default_factory=list)
+    reference_genomes: list[CreateReferenceGenomeInput] = Field(default_factory=list)

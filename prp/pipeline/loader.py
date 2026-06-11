@@ -35,7 +35,7 @@ from typing import Any
 
 from prp.io.delimited import read_delimited
 from prp.io.json import read_json
-from prp.models.manifest import URI, IndexArtifacts, SampleManifest
+from prp.models.manifest import URI, AnalysisResult, IgvAnnotation, IndexArtifacts, SampleManifest
 from prp.models.metadata import MetaEntry, TableMetadataEntry
 from prp.parse import run_parser
 
@@ -53,13 +53,14 @@ from .types import (
     PipelineRunConfig,
     SequencingInfo,
     TabularMetadataRecord,
+    IgvAnnotationTrack
 )
 
 LOG = logging.getLogger(__name__)
 
 
 def to_internal_run_info(
-    *, run_info: dict[str, Any], analysis_results: list[dict[str, Any]]
+    *, run_info: dict[str, Any], analysis_results: list[AnalysisResult]
 ) -> PipelineRun:
     """Parse the run information dump from JASEN."""
     artifacts = [
@@ -129,8 +130,8 @@ def to_table_record(record: TableMetadataEntry) -> TabularMetadataRecord:
     if not isinstance(record, TableMetadataEntry):
         raise ValueError("Function expects TableMetadataEntry got {type(record)}")
 
-    suffix = record.value.suffix
-    if not record.value.suffix in [".csv", ".tsv"]:
+    suffix = Path(record.value).suffix
+    if not Path(record.value).suffix in [".csv", ".tsv"]:
         raise ValueError(f"Dont know how to parse {suffix}")
     delimiter = "," if suffix == ".csv" else "\t"
 
@@ -158,7 +159,7 @@ def to_generic_metadata_record(record: MetaEntry) -> GenericMetadataRecord:
     )
 
 
-def _path_if_file_uri(uri: URI) -> str | None:
+def _path_if_file_uri(uri: URI | None) -> str | None:
     """Return the file path if the URI is a file URI and exists, else None."""
     if uri.scheme == "file":
         path = Path(uri.path)
@@ -176,6 +177,12 @@ def to_internal_artifacts(artifacts: IndexArtifacts) -> InternalIndexArtifacts:
     )
 
 
+def _get_track_name(track: IgvAnnotation) -> str:
+    """Get name if is defined otherwise use filename."""
+    return track.name or Path(track.uri).name
+
+
+
 def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleResults:
     """Parse pipeline analysis results from a manifest file."""
 
@@ -187,12 +194,21 @@ def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleRe
             metadata.append(to_generic_metadata_record(record))
 
     raw_run_info = read_json(manifest.nextflow_run_info)
+
+    annotations = [
+        IgvAnnotationTrack(
+            name=_get_track_name(a), type=a.type, uri=a.uri, index_uri=a.index_uri
+        )
+        for a in manifest.igv_annotations]
+
     return ParsedSampleResults(
         sample_id=manifest.sample_id,
         sample_name=manifest.sample_name,
         lims_id=manifest.lims_id,
         groups=manifest.groups,
         metadata=metadata,
+        reference_genome_id=manifest.reference_genome_id,
+        annotation_tracks=annotations,
         pipeline=to_internal_run_info(
             run_info=raw_run_info, analysis_results=manifest.analysis_result
         ),
