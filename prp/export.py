@@ -18,7 +18,7 @@ def to_result_json(sample_results: ParsedSampleResults) -> str:
 def to_cdm_format(sample_results: ParsedSampleResults) -> CdmRecords:
     """Format a sample result into the output expected by CDM."""
     # list of generic parsing
-    targets = ["postalignqc", "quast", "gambit"]
+    targets = ["postalignqc", "quast", "gambitcore"]
     results: list[CdmRecord] = []
     for res in sample_results.analysis_results:
         if res.software not in targets:
