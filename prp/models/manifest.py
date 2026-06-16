@@ -1,5 +1,6 @@
 """Sample manifest info."""
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -15,6 +16,8 @@ from pydantic_core import core_schema
 
 from .base import AllowExtraModelMixin, RelOrAbsPath
 from .metadata import MetaEntry
+
+LOG = logging.getLogger(__name__)
 
 
 @dataclass
@@ -50,14 +53,21 @@ class FlexibleURI:
         if isinstance(value, str):
             p = Path(value)
 
-            # resolve relative to context, if given
-            if not p.is_absolute() and info.context:
-                base = Path(info.context.parent)
-                p = (base / p).resolve()
-
-            if p.exists():
+            # absolute paths are accepted as file:// without requiring existence here:
+            # access/symlink-dir files may not be linked yet when prp parse runs
+            # (analysis-result files are validated when read; index artifacts are not read)
+            if p.is_absolute():
+                if not p.exists():
+                    LOG.warning("File not found at %s (not yet symlinked?); accepting as file:// URI", p)
                 pr = urlparse(f"file://{p.as_posix()}")
                 return URI(pr.scheme, pr.path, pr.netloc)
+
+            # relative paths are resolved against the manifest location and must exist
+            if info.context:
+                p = (Path(info.context.parent) / p).resolve()
+                if p.exists():
+                    pr = urlparse(f"file://{p.as_posix()}")
+                    return URI(pr.scheme, pr.path, pr.netloc)
 
         # --- parse as URL (including s3://, file://, http://, https://, etc.) ---
         pr = urlparse(value)
