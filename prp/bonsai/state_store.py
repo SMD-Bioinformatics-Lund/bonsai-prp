@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import tempfile
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -62,12 +62,12 @@ class UploadState:
         """Check if a step is marked as done."""
 
         return bool(self.steps.get(step))
-    
+
     def assert_sample_id(self) -> str:
         """Assert that sample id has been set."""
         if self.sample_id is None:
             raise ValueError("Sample ID has not been set!")
-        
+
         return self.sample_id
 
 

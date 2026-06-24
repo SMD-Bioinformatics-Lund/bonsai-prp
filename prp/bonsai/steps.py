@@ -2,14 +2,18 @@
 
 import json
 from functools import wraps
-from typing import Any, Callable, TypeAlias
 from pathlib import Path
+from typing import Any, Callable, TypeAlias
 
+from bonsai_libs.api_client.bonsai.models import AnnotationTrack, GenomicResourceInput
 from bonsai_libs.api_client.core.exceptions import ClientError
-from bonsai_libs.api_client.bonsai.models import GenomicResourceInput, AnnotationTrack
 
 from prp.exceptions import PrpError
-from prp.pipeline.types import IgvAnnotationTrack, MinimalAnalysisRecord, ParsedSampleResults
+from prp.pipeline.types import (
+    IgvAnnotationTrack,
+    MinimalAnalysisRecord,
+    ParsedSampleResults,
+)
 
 from . import mappers
 from .client import BonsaiApiClient
@@ -19,7 +23,7 @@ Headers: TypeAlias = dict[str, str]
 OpHeaders: TypeAlias = Headers | None
 
 STEP_REGISTRY: dict[str, Callable[[], Any]] = {}
-EXPECTED_SUFFIXES = ['vcf', 'bam', 'cram', 'gff', 'gff3', 'gtf', 'bed', 'bp']
+EXPECTED_SUFFIXES = ["vcf", "bam", "cram", "gff", "gff3", "gtf", "bed", "bp"]
 
 
 def lookup_step(step_name: str) -> Callable[[], Any]:
@@ -179,7 +183,7 @@ def step_add_annotation_track(
     # infere file format if not provided
     file_fmt = track.format
     if file_fmt is None:
-        suffix = Path(track.uri).suffix.strip('.')
+        suffix = Path(track.uri).suffix.strip(".")
         if suffix not in EXPECTED_SUFFIXES:
             raise ValueError(
                 f"Could not infere format of file '{track.uri}', please specify format."
@@ -296,4 +300,4 @@ def step_upload_sourmash_signature(
             signature_file=f,
             filename=str(sample_info.index_artifacts.sourmash_signature),
             headers=headers,
-    )
+        )

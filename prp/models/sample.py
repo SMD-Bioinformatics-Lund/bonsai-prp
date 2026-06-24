@@ -2,9 +2,8 @@
 
 from typing import Any, Literal
 
+from bonsai_libs.parse.models.base import VariantBase
 from pydantic import Field
-
-from prp.parse.models.base import VariantBase
 
 from .base import RWModel
 from .metadata import PipelineRun, SequencingInfo

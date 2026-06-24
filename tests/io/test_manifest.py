@@ -1,7 +1,6 @@
 """Testing functions reading manifest files."""
 
 import pytest
-from pathlib import Path
 from pydantic import ValidationError
 
 from prp.io.manifest import read_bootstrap_config

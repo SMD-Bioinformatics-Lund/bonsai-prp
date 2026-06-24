@@ -8,10 +8,10 @@ from bonsai_libs.api_client.core.exceptions import ApiRequestFailed, ServerError
 from pydantic import ValidationError
 
 from prp import VERSION as __version__
-from prp.io.manifest import read_bootstrap_config
 from prp.bonsai import BonsaiUploadService, make_bonsai_client
 from prp.bonsai.service import UploadStateStore
 from prp.exceptions import PrpError
+from prp.io.manifest import read_bootstrap_config
 from prp.models.manifest import SampleManifest
 from prp.pipeline.loader import parse_manifest_for_upload
 
@@ -31,7 +31,13 @@ def bonsai_gr():
 
 @bonsai_gr.command("upload")
 @click.option(
-    "-a", "--api", "api_url", required=True, envvar=BONSAI_API_ENV, type=str, help="Upload configuration"
+    "-a",
+    "--api",
+    "api_url",
+    required=True,
+    envvar=BONSAI_API_ENV,
+    type=str,
+    help="Upload configuration",
 )
 @click.option(
     "-u", "--username", required=True, envvar=USER_ENV, type=str, help="Username"
@@ -92,8 +98,11 @@ def bonsai_upload(
     rid = manifest_obj.pipeline.pipeline_run_id
     workflow_id = f"bonsai-prp-upload-{manifest_obj.sample_id}-{rid}"
     service = BonsaiUploadService(
-        client=client, state_store=store, workflow_id=workflow_id, 
-        dry_run=dry_run, ignore_errors=ignore_errors
+        client=client,
+        state_store=store,
+        workflow_id=workflow_id,
+        dry_run=dry_run,
+        ignore_errors=ignore_errors,
     )
     try:
         service.upload_sample(manifest_obj, force=force)
@@ -108,7 +117,13 @@ def bonsai_upload(
 @bonsai_gr.command("bootstrap")
 @click.option("-d", "--dry-run", is_flag=True)
 @click.option(
-    "-a", "--api", "api_url", required=True, envvar=BONSAI_API_ENV, type=str, help="Upload configuration"
+    "-a",
+    "--api",
+    "api_url",
+    required=True,
+    envvar=BONSAI_API_ENV,
+    type=str,
+    help="Upload configuration",
 )
 @click.option(
     "-u", "--username", required=True, envvar=USER_ENV, type=str, help="Username"
@@ -122,9 +137,11 @@ def bonsai_upload(
     required=False,
     default="bootstrap/default.yaml",
 )
-def bonsai_bootstrap(api_url: str, username: str, password: str, dry_run: bool, config_file: str) -> None:
+def bonsai_bootstrap(
+    api_url: str, username: str, password: str, dry_run: bool, config_file: str
+) -> None:
     """Bootstrap a new test instance of Bonsai.
-    
+
     CONFIG_FILE should be a YAML file containing users, groups, and samples to bootstrap.
     """
     # setup state
@@ -136,7 +153,7 @@ def bonsai_bootstrap(api_url: str, username: str, password: str, dry_run: bool, 
     except Exception as exc:
         click.secho(f"Failed to load config file {config_file}: {exc}", fg="red")
         raise click.Abort()
-    
+
     # Setup client (assuming admin credentials from env or config)
     client = make_bonsai_client(base_url=api_url)
     try:
@@ -165,5 +182,5 @@ def bonsai_bootstrap(api_url: str, username: str, password: str, dry_run: bool, 
     LOG.info("Bootstraping reference genomes")
     for ref in config.reference_genomes:
         bootstrap_service.ensure_reference_genome_exists(ref)
-    
+
     click.secho("Bootstrap complete!", fg="green")

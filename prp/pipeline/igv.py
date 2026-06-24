@@ -3,9 +3,10 @@
 import logging
 from pathlib import Path
 
+from bonsai_libs.parse.models.base import VariantBase
+
 from prp.models.manifest import IgvAnnotation
 from prp.models.sample import IgvAnnotationTrack, ReferenceGenome
-from prp.parse.models.base import VariantBase
 
 from .types import IgvAnnotationTrack
 from .variant import load_variants
