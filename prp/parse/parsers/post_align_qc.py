@@ -4,6 +4,7 @@ import bisect
 from pathlib import Path
 from typing import Any, IO
 
+from prp.io.delimited import read_delimited
 from prp.parse.core.base import SingleAnalysisParser, StreamOrPath
 from prp.parse.core.registry import register_parser
 from prp.parse.models.enums import AnalysisSoftware, AnalysisType
@@ -67,17 +68,16 @@ def _parse_stats_file(
     return sn, cov
 
 
-def _genome_length_from_bedcov(bedcov_path: str | Path) -> int:
-    """Sum region lengths from a samtools bedcov file."""
+_BEDCOV_FIELDS = ["chrom", "start", "end"]
+
+
+def _genome_length_from_bedcov(bedcov: StreamOrPath) -> int:
+    """Sum region lengths from a samtools bedcov file (path, text or binary stream)."""
     total = 0
-    with open(bedcov_path, encoding="utf-8") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            parts = line.split("\t")
-            if len(parts) >= 3:
-                total += int(parts[2]) - int(parts[1])
+    for row in read_delimited(bedcov, has_header=False, fieldnames=_BEDCOV_FIELDS):
+        if row["chrom"] is not None and row["chrom"].startswith("#"):
+            continue
+        total += int(row["end"]) - int(row["start"])
     return total
 
 
@@ -158,15 +158,16 @@ class SamtoolsQcParser(SingleAnalysisParser):
         self,
         source: StreamOrPath,
         *,
-        bedcov_path: str | Path | None = None,
+        bedcov_path: StreamOrPath | None = None,
         **kwargs: Any,
     ) -> PostAlignQcResult | None:
         """Parse samtools stats (and optionally bedcov) into PostAlignQcResult.
 
         Args:
-            source: path to `samtools stats` output file
-            bedcov_path: optional path to `samtools bedcov` output; when provided
-                enables mean_cov, pct_above_x, quartile, and uniformity metrics.
+            source: `samtools stats` output, as a path, text stream or binary stream
+            bedcov_path: optional `samtools bedcov` output (path, text or binary
+                stream); when provided enables mean_cov, pct_above_x, quartile,
+                and uniformity metrics.
         """
         try:
             sn, cov = _parse_stats_file(source)

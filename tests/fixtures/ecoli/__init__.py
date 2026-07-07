@@ -92,12 +92,6 @@ def ecoli_serotypefinder_meta_path(data_path: Path) -> Path:
 
 
 @pytest.fixture()
-def ecoli_shigapass_path(data_path: Path) -> Path:
-    """Get path for Shigapass results for ecoli."""
-    return data_path.joinpath("ecoli", "shigapass.csv")
-
-
-@pytest.fixture()
 def ecoli_mlst_path(data_path: Path) -> Path:
     """Get path for ecoli mlst file"""
     return data_path.joinpath("ecoli", "mlst.json")

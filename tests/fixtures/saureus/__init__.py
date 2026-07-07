@@ -55,8 +55,8 @@ def saureus_amrfinder_v3_path(data_path: Path) -> Path:
 
 @pytest.fixture()
 def saureus_amrfinder_path(data_path: Path) -> Path:
-    """Get path for saureus amrfinder file"""
-    return data_path.joinpath("saureus", "amrfinder.tsv")
+    """Get path for saureus amrfinder v4-format file"""
+    return data_path.joinpath("saureus", "amrfinder.v4.tsv")
 
 
 @pytest.fixture()

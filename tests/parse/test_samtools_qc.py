@@ -56,6 +56,24 @@ def test_samtools_qc_parser(
     assert qc.pct_above_x["30"] == pytest.approx(0.0, abs=1e-3)
 
 
+def test_samtools_qc_parser_bedcov_as_stream(
+    saureus_samtools_stats_path: Path,
+    saureus_samtools_bedcov_path: Path,
+):
+    """bedcov_path also accepts an open text stream, not just a path."""
+    parser = SamtoolsQcParser()
+    with open(saureus_samtools_bedcov_path, encoding="utf-8") as bedcov_stream:
+        result = parser.parse(
+            saureus_samtools_stats_path,
+            bedcov_path=bedcov_stream,
+        )
+
+    qc = result.results[AnalysisType.QC].value
+    assert isinstance(qc, PostAlignQcResult)
+    assert qc.mean_cov == pytest.approx(2.062, rel=1e-2)
+    assert qc.median_cov == 2.0
+
+
 def test_samtools_qc_parser_no_bedcov(saureus_samtools_stats_path: Path):
     """Without bedcov, read-level metrics are populated; coverage metrics are None."""
     parser = SamtoolsQcParser()
