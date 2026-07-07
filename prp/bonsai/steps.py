@@ -26,6 +26,11 @@ STEP_REGISTRY: dict[str, Callable[[], Any]] = {}
 EXPECTED_SUFFIXES = ["vcf", "bam", "cram", "gff", "gff3", "gtf", "bed", "bp"]
 
 
+class SkipStep(Exception):
+    def __init__(self, reason: str):
+        self.reason = reason
+
+
 def lookup_step(step_name: str) -> Callable[[], Any]:
     """Lookup a step function by name."""
     step_fn = STEP_REGISTRY.get(step_name)
@@ -99,6 +104,13 @@ def step(step_flag: str):
                     raise PrpError(
                         f"API error during step '{dynamic_id}': {details}"
                     ) from exc
+            
+            except SkipStep as exc:
+                service.reporter.on_step_skip(external_id, dynamic_id)
+                state.mark(dynamic_id, {"skipped": True, "reason": exc.reason})
+                service.state_store.save(state)
+                return None
+
             except Exception as exc:
                 # Fallback error
                 service.reporter.on_step_fail(external_id, dynamic_id, exc)
@@ -160,6 +172,9 @@ def step_add_reference_genome(
     headers: Headers,
 ):
     """Associate sample with a reference genome."""
+    if sample_info.reference_genome_id is None:
+        raise SkipStep("No reference genome id provided")
+
     internal_sample_id = state.assert_sample_id()
     return client.add_reference_genome_to_sample(
         internal_sample_id,
@@ -263,16 +278,19 @@ def step_upload_ska_index(
     state: UploadState,
     *,
     headers: Headers,
+    **kwargs,
 ):
     """Upload an SKA index for a sample."""
     if not sample_info.index_artifacts or not sample_info.index_artifacts.ska_index:
-        return None  # no index to upload
+        raise SkipStep("No index to upload")
 
+    force = kwargs.get("force", False)
     internal_sample_id = state.assert_sample_id()
 
     return client.upload_ska_index(
         internal_sample_id,
         index_path=str(sample_info.index_artifacts.ska_index),
+        force=force,
         headers=headers,
     )
 
@@ -290,7 +308,7 @@ def step_upload_sourmash_signature(
         not sample_info.index_artifacts
         or not sample_info.index_artifacts.sourmash_signature
     ):
-        return None  # no index to upload
+        raise SkipStep("No index to upload")
     internal_sample_id = state.assert_sample_id()
 
     # read sourmash data
