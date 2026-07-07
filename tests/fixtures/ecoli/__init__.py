@@ -44,6 +44,12 @@ def ecoli_amrfinder_path(data_path: Path) -> Path:
 
 
 @pytest.fixture()
+def ecoli_amrfinder_v4_stx_path(data_path: Path) -> Path:
+    """Get path for ecoli amrfinder v4 file containing an STX_TYPE (stx operon) hit"""
+    return data_path.joinpath("ecoli", "amrfinder.v4.stx.tsv")
+
+
+@pytest.fixture()
 def ecoli_resfinder_path(data_path: Path) -> Path:
     """Get path for ecoli resfinder file"""
     return data_path.joinpath("ecoli", "resfinder.json")
