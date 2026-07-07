@@ -7,11 +7,14 @@ from typing import Any
 import pytest
 from click.testing import CliRunner
 
-from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput
+from bonsai_libs.api_client.bonsai.models import (
+    CreateUserInput,
+    CreateGroupInput,
+    CreateReferenceGenomeInput,
+)
 
 from prp.cli.parse import format_cdm, format_results
 from prp.cli.bonsai_api import bonsai_bootstrap
-from prp.models.sample import PipelineResult
 
 
 @pytest.mark.parametrize(
@@ -88,7 +91,6 @@ def test_cdm_cmd(ecoli_sample_conf_path: Path, ecoli_cdm_input: list[dict[str, A
     #         cdm_output = json.load(inpt)
     #         assert cdm_output == ecoli_cdm_input
 
-
 def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_valid):
     """Test that bootstrap cli calls the expected paths"""
     # --- Fake client ---
@@ -99,7 +101,7 @@ def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_
             return True
 
     # --- Capture calls ---
-    calls = {"users": [], "groups": [], "ref_genome": None}
+    calls = {"users": [], "groups": [], "reference_genomes": []}
 
     class FakeService:
         def __init__(self, client, state_store, dry_run=False, **kwargs):
@@ -118,6 +120,10 @@ def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_
         def ensure_reference_genome_exists(self, genome_data):
             calls["ref_genome"] = genome_data
             return {"id": genome_data}
+
+        def ensure_reference_genome_exists(self, reference_genome, **ref_data):
+            calls["reference_genomes"].append((reference_genome, ref_data))
+            return {"id": getattr(reference_genome, "accession", None)}
 
     # Monkeypatch wiring in CLI module
 
@@ -140,3 +146,4 @@ def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_
     # --- Verify calls ---
     assert isinstance(calls["users"][0][0], CreateUserInput)
     assert isinstance(calls["groups"][0][0], CreateGroupInput)
+    assert isinstance(calls["reference_genomes"][0][0], CreateReferenceGenomeInput)
