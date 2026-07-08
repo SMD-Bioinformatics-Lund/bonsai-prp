@@ -173,7 +173,7 @@ def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_
             return True
 
     # --- Capture calls ---
-    calls = {"users": [], "groups": []}
+    calls = {"users": [], "groups": [], "ref_genome": None}
 
     class FakeService:
         def __init__(self, client, state_store, dry_run=False, **kwargs):
@@ -188,6 +188,10 @@ def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_
         def ensure_group_exists(self, group_id, **group_data):
             calls["groups"].append((group_id, group_data))
             return {"id": group_id}
+        
+        def ensure_reference_genome_exists(self, genome_data):
+            calls["ref_genome"] = genome_data
+            return {"id": genome_data}
 
     # Monkeypatch wiring in CLI module
 

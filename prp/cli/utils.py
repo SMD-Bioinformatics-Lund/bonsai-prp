@@ -3,8 +3,8 @@
 from typing import Any, TextIO
 
 import click
+from bonsai_libs.parse.io.json import read_json
 
-from prp.io.json import read_json
 from prp.io.manifest import read_manifest
 from prp.models.manifest import SampleManifest
 

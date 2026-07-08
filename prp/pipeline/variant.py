@@ -4,10 +4,9 @@ import logging
 import os
 import re
 
+from bonsai_libs.parse.models.base import VariantBase
+from bonsai_libs.parse.models.enums import VariantType
 from cyvcf2 import VCF, Variant
-
-from prp.parse.models.base import VariantBase
-from prp.parse.models.enums import VariantType
 
 LOG = logging.getLogger(__name__)
 SOURCE_PATTERN = r"##source=(.+)\n"
