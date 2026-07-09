@@ -5,19 +5,11 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
-from bonsai_libs.api_client.bonsai.models import (
-    CreateGroupInput,
-    CreateReferenceGenomeInput,
-    CreateUserInput,
-)
 from bonsai_libs.api_client.core.exceptions import ClientError
+from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput, CreateReferenceGenomeInput
 
 from prp.bonsai.reportning import SimpleReporter
-from prp.pipeline.types import (
-    IgvAnnotationTrack,
-    MinimalAnalysisRecord,
-    ParsedSampleResults,
-)
+from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
 from . import steps
 from .client import BonsaiApiClient
@@ -130,9 +122,7 @@ class BonsaiUploadService:
             # Re-raise if it's not a 404
             raise
 
-    def ensure_reference_genome_exists(
-        self, genome_data: CreateReferenceGenomeInput
-    ) -> dict[str, Any]:
+    def ensure_reference_genome_exists(self, genome_data: CreateReferenceGenomeInput) -> dict[str, Any]:
         """
         Get existing reference gneome or create if missing.
 
@@ -152,9 +142,9 @@ class BonsaiUploadService:
 
         # check if genomes exist
         for genome in genomes:
-            same_name = genome_data.name == genome["name"]
-            same_accnr = genome_data.accession == genome["accession"]
-            same_organism = genome_data.organism == genome["accession"]
+            same_name = genome_data.name == genome['name']
+            same_accnr = genome_data.accession == genome['accession']
+            same_organism = genome_data.organism == genome['accession']
             if same_name and same_accnr and same_organism:
                 LOG.info("Reference genome exists: id=%s", genome["id"])
                 return genome
@@ -283,7 +273,7 @@ class BonsaiUploadService:
                 substep=substep,
                 dry_run=self.dry_run,
                 force=force,
-                ignore_errors=self.ignore_errors,
+                ignore_errors=self.ignore_errors
             )
 
         # Build a friendly summary result

@@ -4,10 +4,10 @@ import logging
 import os
 
 import click
-from bonsai_libs.api_client.core.exceptions import ApiRequestFailed, ServerError
 from pydantic import ValidationError
 
-from prp import VERSION as __version__
+from bonsai_libs.api_client.core.exceptions import ApiRequestFailed, ServerError
+
 from prp.bonsai import BonsaiUploadService, make_bonsai_client
 from prp.bonsai.service import UploadStateStore
 from prp.exceptions import PrpError
@@ -63,10 +63,10 @@ def bonsai_gr():
     multiple=True,
     metavar="SOFTWARE",
     help=(
-        "Upload only the result(s) from the given software (e.g. 'chewbbaca') onto an "
-        "already-existing sample, skipping sample creation and other steps. Repeatable. "
-        "The manifest's sample_id must be the existing Bonsai sample id. Combine with "
-        "--force to overwrite the existing result."
+        "Upload only the result(s) from the given software (e.g. 'chewbbaca') "
+        "onto an already-existing sample, skipping sample creation and other "
+        "steps. Repeatable. The manifest's sample_id must be the existing "
+        "Bonsai sample id. Combine with --force to overwrite the existing result."
     ),
 )
 @click.argument(
@@ -128,7 +128,9 @@ def bonsai_upload(
 
     # create a new sample
     if only_set:
-        click.secho(f"Uploaded result(s) for: {', '.join(sorted(only_set))}", fg="green")
+        click.secho(
+            f"Uploaded result(s) for: {', '.join(sorted(only_set))}", fg="green"
+        )
     else:
         click.secho("Sample uploaded", fg="green")
 
@@ -161,7 +163,7 @@ def bonsai_bootstrap(
 ) -> None:
     """Bootstrap a new test instance of Bonsai.
 
-    CONFIG_FILE should be a YAML file containing users, groups, and samples to bootstrap.
+    CONFIG_FILE is a YAML file of users, groups, and samples to bootstrap.
     """
     # setup state
     store = UploadStateStore(root=os.getcwd())
@@ -172,6 +174,7 @@ def bonsai_bootstrap(
     except Exception as exc:
         click.secho(f"Failed to load config file {config_file}: {exc}", fg="red")
         raise click.Abort()
+
 
     # Setup client (assuming admin credentials from env or config)
     client = make_bonsai_client(base_url=api_url)

@@ -7,7 +7,6 @@ import click
 from prp import VERSION as __version__
 
 from .bonsai_api import bonsai_gr
-from .parse import parse_gr
 
 LOG = logging.getLogger(__name__)
 
@@ -31,13 +30,4 @@ def cli(silent: bool, debug: bool):
 
 
 # add commands
-
-## for manipulating jasen results
-cli.add_command(parse_gr)
 cli.add_command(bonsai_gr)
-# cli.add_command(validate.validate_result)
-# cli.add_command(validate.migrate_result)
-## qc related
-# cli.add_command(parse.create_qc_result)
-# cli.add_command(validate.print_schema)
-## bonsai reslated
