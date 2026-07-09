@@ -1,5 +1,12 @@
 ## [Unreleased]
 
+### Removed
+
+- Removed the `parse jasen` and `parse format-cdm` subcommands along with the entire `prp.parse` parsing library, the pipeline-result orchestration layer (`prp.pipeline`, `prp.export`), the sample manifest models (`prp.models.manifest`, `prp.models.metadata`), and the unused schema-migration commands (`prp.cli.validate`, `prp.migration`, `prp.models.sample`)
+- The parsing library and manifest/pipeline orchestration moved to `bonsai-libs` (`bonsai_libs.parse`, `bonsai_libs.pipeline`) as the shared dependency also used by `bonsai upload`
+- CDM input generation (`format-cdm`) moved to `jasentool` as a self-contained feature (`jasentool.cdm`, `jasentool format-cdm`); it does not depend on bonsai-libs or bonsai-prp
+- `bonsai-prp` no longer has any result-parsing subcommands; only `bonsai upload` and `bonsai bootstrap` remain
+
 ### Added
 
 - Added methods for ensuring existance of users and groups.
@@ -11,9 +18,8 @@
 
 ### Changed
 
-- Moved parse package to bonsai-sdk.
-- Use bonsai-sdk api client for interacting with Bonsai.
 - Changed manifest format to include software version and database info.
+- Use shared library for API calls
 - Simplified repo structure and data models to increase code legibility.
 - All parsers of analysis tools now share the same structure and helper functions.
 - Reworked and simplified data models

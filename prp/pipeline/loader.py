@@ -33,26 +33,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from bonsai_libs.parse import run_parser
-from bonsai_libs.parse.io.delimited import read_delimited
-from bonsai_libs.parse.io.json import read_json
-
-from prp.models.manifest import (
-    URI,
-    AnalysisResult,
-    IgvAnnotation,
-    IndexArtifacts,
-    SampleManifest,
-)
+from prp.io.delimited import read_delimited
+from prp.io.json import read_json
+from prp.models.manifest import URI, AnalysisResult, IgvAnnotation, IndexArtifacts, SampleManifest
 from prp.models.metadata import MetaEntry, TableMetadataEntry
-from prp.parse import run_parser
-from prp.parse.core.registry import get_parser
-from prp.parse.exceptions import UnsupportedSoftwareError, UnsupportedVersionError
 
 from .types import (
-    FullAnalysisResult,
     GenericMetadataRecord,
-    IgvAnnotationTrack,
     InternalIndexArtifacts,
     InternalMetadataRecord,
     MinimalAnalysisRecord,
@@ -64,6 +51,7 @@ from .types import (
     PipelineRunConfig,
     SequencingInfo,
     TabularMetadataRecord,
+    IgvAnnotationTrack
 )
 
 LOG = logging.getLogger(__name__)
@@ -192,6 +180,7 @@ def _get_track_name(track: IgvAnnotation) -> str:
     return track.name or Path(track.uri).name
 
 
+
 def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleResults:
     """Parse pipeline analysis results from a manifest file."""
 
@@ -208,8 +197,7 @@ def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleRe
         IgvAnnotationTrack(
             name=_get_track_name(a), type=a.type, uri=a.uri, index_uri=a.index_uri
         )
-        for a in manifest.igv_annotations
-    ]
+        for a in manifest.igv_annotations]
 
     return ParsedSampleResults(
         sample_id=manifest.sample_id,
@@ -247,61 +235,5 @@ def parse_manifest_for_upload(manifest: SampleManifest) -> ParsedSampleResults:
                 uri=res.uri,
             )
         )
-
-    return base_result.model_copy(update={"analysis_results": analysis_results})
-
-
-def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults:
-    """Parse the sample manifest and the analysis result files for internal use."""
-    base_result = parse_base_results_from_manifest(manifest)
-
-    # Build lookup: (software, subcommand) → file path
-    available: dict[tuple[str, str | None], str] = {
-        (r.software, r.subcommand): r.uri.path
-        for r in manifest.analysis_result
-    }
-
-    # parse results from analysis softwares
-    analysis_results: list[FullAnalysisResult] = []
-    for res in manifest.analysis_result:
-        if not res.uri.scheme == "file":
-            raise NotImplementedError(
-                f"No method for reading {res.uri.scheme} URI scheme."
-            )
-
-        # Skip entries with no registered parser (e.g. samtools bedcov)
-        try:
-            parser_cls = get_parser(
-                res.software, version=res.software_version, subcommand=res.subcommand
-            )
-        except (UnsupportedSoftwareError, UnsupportedVersionError):
-            continue
-
-        # Pass bedcov path if available (used by samtools.stats for coverage metrics)
-        kwargs: dict[str, str] = {}
-        bedcov_path = available.get((res.software, "bedcov"))
-        if bedcov_path is not None:
-            kwargs["bedcov_path"] = bedcov_path
-
-        ev = run_parser(
-            software=res.software,
-            subcommand=res.subcommand,
-            version=res.software_version,
-            data=res.uri.path,
-            **kwargs,
-        )
-        for at, parser_result in ev.results.items():
-            analysis_results.append(
-                FullAnalysisResult(
-                    software=ev.software,
-                    software_version=ev.software_version,
-                    parser_name=ev.parser_name,
-                    parser_version=ev.parser_version,
-                    parser_status=parser_result.status,
-                    reason=parser_result.reason,
-                    analysis_type=at,
-                    results=parser_result.value,
-                )
-            )
 
     return base_result.model_copy(update={"analysis_results": analysis_results})

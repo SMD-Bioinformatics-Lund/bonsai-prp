@@ -6,13 +6,10 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from bonsai_libs.api_client.bonsai.models import (
-    CreateGroupInput,
-    CreateReferenceGenomeInput,
-    CreateUserInput,
-)
 from pydantic import BaseModel, Field, ValidationInfo
 from pydantic_core import core_schema
+
+from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput, CreateReferenceGenomeInput
 
 from .base import AllowExtraModelMixin, RelOrAbsPath
 from .metadata import MetaEntry
@@ -136,7 +133,7 @@ class SampleManifest(AllowExtraModelMixin):
     def assigned_to_group(self) -> bool:
         """Return True if sample is assigned to a group."""
         return len(self.groups) > 0
-
+    
 
 class BootstrapConfig(BaseModel):
     """Definition of informaiton required to bootstrap Bonsai."""

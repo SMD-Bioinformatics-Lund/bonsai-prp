@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from prp.models.manifest import BootstrapConfig, SampleManifest
+from prp.models.manifest import SampleManifest, BootstrapConfig
 
 from .types import Pathish
 
