@@ -4,9 +4,8 @@ import logging
 import os
 
 import click
-from pydantic import ValidationError
-
 from bonsai_libs.api_client.core.exceptions import ApiRequestFailed, ServerError
+from pydantic import ValidationError
 
 from prp.bonsai import BonsaiUploadService, make_bonsai_client
 from prp.bonsai.service import UploadStateStore
@@ -117,8 +116,11 @@ def bonsai_upload(
     rid = manifest_obj.pipeline.pipeline_run_id
     workflow_id = f"bonsai-prp-upload-{manifest_obj.sample_id}-{rid}"
     service = BonsaiUploadService(
-        client=client, state_store=store, workflow_id=workflow_id,
-        dry_run=dry_run, ignore_errors=ignore_errors
+        client=client,
+        state_store=store,
+        workflow_id=workflow_id,
+        dry_run=dry_run,
+        ignore_errors=ignore_errors,
     )
     try:
         service.upload_sample(manifest_obj, force=force, only=only_set or None)
@@ -163,7 +165,7 @@ def bonsai_bootstrap(
 ) -> None:
     """Bootstrap a new test instance of Bonsai.
 
-    CONFIG_FILE is a YAML file of users, groups, and samples to bootstrap.
+    CONFIG_FILE should be a YAML file containing users, groups, and samples to bootstrap.
     """
     # setup state
     store = UploadStateStore(root=os.getcwd())
@@ -174,7 +176,6 @@ def bonsai_bootstrap(
     except Exception as exc:
         click.secho(f"Failed to load config file {config_file}: {exc}", fg="red")
         raise click.Abort()
-
 
     # Setup client (assuming admin credentials from env or config)
     client = make_bonsai_client(base_url=api_url)

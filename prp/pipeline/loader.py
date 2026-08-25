@@ -33,13 +33,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from prp.io.delimited import read_delimited
-from prp.io.json import read_json
-from prp.models.manifest import URI, AnalysisResult, IgvAnnotation, IndexArtifacts, SampleManifest
+from bonsai_libs.parse.io.delimited import read_delimited
+from bonsai_libs.parse.io.json import read_json
+from prp.models.manifest import (
+    URI,
+    AnalysisResult,
+    IgvAnnotation,
+    IndexArtifacts,
+    SampleManifest,
+)
 from prp.models.metadata import MetaEntry, TableMetadataEntry
 
 from .types import (
     GenericMetadataRecord,
+    IgvAnnotationTrack,
     InternalIndexArtifacts,
     InternalMetadataRecord,
     MinimalAnalysisRecord,
@@ -51,7 +58,6 @@ from .types import (
     PipelineRunConfig,
     SequencingInfo,
     TabularMetadataRecord,
-    IgvAnnotationTrack
 )
 
 LOG = logging.getLogger(__name__)
@@ -180,7 +186,6 @@ def _get_track_name(track: IgvAnnotation) -> str:
     return track.name or Path(track.uri).name
 
 
-
 def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleResults:
     """Parse pipeline analysis results from a manifest file."""
 
@@ -197,7 +202,8 @@ def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleRe
         IgvAnnotationTrack(
             name=_get_track_name(a), type=a.type, uri=a.uri, index_uri=a.index_uri
         )
-        for a in manifest.igv_annotations]
+        for a in manifest.igv_annotations
+    ]
 
     return ParsedSampleResults(
         sample_id=manifest.sample_id,

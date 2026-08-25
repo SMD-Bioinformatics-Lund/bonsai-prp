@@ -31,5 +31,7 @@ def bootstap_config_valid(tmp_path: Path) -> Path:
                 format: bed
                 type: annotation
                 path: annotation.bed
-    """, encoding="utf-8")
+    """,
+        encoding="utf-8",
+    )
     return cfg

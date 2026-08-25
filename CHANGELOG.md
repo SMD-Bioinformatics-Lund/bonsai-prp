@@ -2,8 +2,8 @@
 
 ### Removed
 
-- Removed the `parse jasen` and `parse format-cdm` subcommands along with the entire `prp.parse` parsing library, the pipeline-result orchestration layer (`prp.pipeline`, `prp.export`), the sample manifest models (`prp.models.manifest`, `prp.models.metadata`), and the unused schema-migration commands (`prp.cli.validate`, `prp.migration`, `prp.models.sample`)
-- The parsing library and manifest/pipeline orchestration moved to `bonsai-libs` (`bonsai_libs.parse`, `bonsai_libs.pipeline`) as the shared dependency also used by `bonsai upload`
+- Removed the `parse jasen` and `parse format-cdm` subcommands along with the entire `prp.parse` per-software parsing library, the JSON/CDM export helpers (`prp.export`), and the unused schema-migration code (`prp.cli.validate`, `prp.migration`, `prp.models.sample`)
+- The per-software parsers moved to `bonsai-libs` (`bonsai_libs.parse`), the shared dependency also used by `bonsai upload`; `prp.pipeline` and `prp.models.manifest`/`prp.models.metadata` remain in bonsai-prp, slimmed down to only build the manifest representation `bonsai upload` needs (no longer the full per-software analysis results)
 - CDM input generation (`format-cdm`) moved to `jasentool` as a self-contained feature (`jasentool.cdm`, `jasentool format-cdm`); it does not depend on bonsai-libs or bonsai-prp
 - `bonsai-prp` no longer has any result-parsing subcommands; only `bonsai upload` and `bonsai bootstrap` remain
 
@@ -25,9 +25,9 @@
 - Reworked and simplified data models
 - Removed `annotate-delly` and `analysis alignment_qc` subcommands that don't concern result processing
 - Made `PostAlignQcResult` fields optional so pipelines can output only `n_reads` and `n_read_pairs`; `mean_cov`, `pct_above_x`, `n_mapped_reads`, `quartile1`, `median_cov`, and `quartile3` now default to `None`
-- Replaced `PostAlignQcParser` (JSON-based) with `SamtoolsQcParser` which parses `samtools stats` and optional `samtools bedcov` files directly into `PostAlignQcResult`; lives in `prp/parse/parsers/post_align_qc.py` while `SamtoolsCovParser` remains in `prp/parse/parsers/samtools.py`
+- Replaced `PostAlignQcParser` (JSON-based) with `SamtoolsQcParser` which parses `samtools stats` and optional `samtools bedcov` files directly into `PostAlignQcResult`; lives in `bonsai_libs/parse/parsers/post_align_qc.py` while `SamtoolsCovParser` remains in `bonsai_libs/parse/parsers/samtools.py`
 - Removed `required_companions` from `SingleAnalysisParser`; the loader now passes `bedcov_path` directly when a bedcov entry is present in the manifest
-- Removed IGV track pipeline code (`prp/pipeline/igv.py`), the `add-igv-annotation-track` CLI command, `IgvAnnotation` manifest model, and `igv_annotations` field from `SampleManifest`; `IgvAnnotationTrack` output model retained in `prp/models/sample.py`
+- Removed IGV track pipeline code (`prp/pipeline/igv.py`) and the standalone `add-igv-annotation-track` CLI command; `IgvAnnotation`/`igv_annotations` on `SampleManifest` and the `IgvAnnotationTrack` output model (`prp/pipeline/types.py`) are still used by `bonsai upload`
 - Renamed `gambit` to `gambitcore`, added `kraken`, `plasmidfinder` and `shigatyper` software enums, dropped `shigapass`
 - AmrFinder now picks a v3 or v4 parser based on the software version instead of assuming v4 columns
 - AmrFinder virulence genes accept the `STX_TYPE` subtype from v4 output
