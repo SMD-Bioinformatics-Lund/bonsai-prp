@@ -19,7 +19,6 @@ classifiers = [
 dependencies = [
     "pydantic[email]>=2.4,<3",
     "pyyaml>=6,<7",
-    "packaging>=25",
 ]
 
 [project.urls]
@@ -77,7 +76,7 @@ profile = "black"
 max-line-length = 88
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 55"
+addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 70"
 
 [tool.coverage.run]
 source = ["prp"]

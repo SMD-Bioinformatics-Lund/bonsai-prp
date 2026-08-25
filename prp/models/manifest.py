@@ -6,10 +6,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from bonsai_libs.api_client.bonsai.models import (
+    CreateGroupInput,
+    CreateReferenceGenomeInput,
+    CreateUserInput,
+)
 from pydantic import BaseModel, Field, ValidationInfo
 from pydantic_core import core_schema
-
-from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput, CreateReferenceGenomeInput
 
 from .base import AllowExtraModelMixin, RelOrAbsPath
 from .metadata import MetaEntry
@@ -55,7 +58,10 @@ class FlexibleURI:
             # (analysis-result files are validated when read; index artifacts are not read)
             if p.is_absolute():
                 if not p.exists():
-                    LOG.warning("File not found at %s (not yet symlinked?); accepting as file:// URI", p)
+                    LOG.warning(
+                        "File not found at %s (not yet symlinked?); accepting as file:// URI",
+                        p,
+                    )
                 pr = urlparse(f"file://{p.as_posix()}")
                 return URI(pr.scheme, pr.path, pr.netloc)
 
@@ -93,7 +99,6 @@ class AnalysisResult(BaseModel):
 
     software: str
     software_version: str
-    subcommand: str | None = None
     database: str | None = None
     uri: FlexibleURI
 
@@ -133,7 +138,7 @@ class SampleManifest(AllowExtraModelMixin):
     def assigned_to_group(self) -> bool:
         """Return True if sample is assigned to a group."""
         return len(self.groups) > 0
-    
+
 
 class BootstrapConfig(BaseModel):
     """Definition of informaiton required to bootstrap Bonsai."""

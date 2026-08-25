@@ -2,11 +2,11 @@
 
 import json
 from functools import wraps
-from typing import Any, Callable, TypeAlias
 from pathlib import Path
+from typing import Any, Callable, TypeAlias
 
+from bonsai_libs.api_client.bonsai.models import AnnotationTrack, GenomicResourceInput
 from bonsai_libs.api_client.core.exceptions import ClientError
-from bonsai_libs.api_client.bonsai.models import GenomicResourceInput, AnnotationTrack
 
 from prp.exceptions import PrpError
 from prp.pipeline.types import (
@@ -23,7 +23,12 @@ Headers: TypeAlias = dict[str, str]
 OpHeaders: TypeAlias = Headers | None
 
 STEP_REGISTRY: dict[str, Callable[[], Any]] = {}
-EXPECTED_SUFFIXES = ['vcf', 'bam', 'cram', 'gff', 'gff3', 'gtf', 'bed', 'bp']
+EXPECTED_SUFFIXES = ["vcf", "bam", "cram", "gff", "gff3", "gtf", "bed", "bp"]
+
+
+class SkipStep(Exception):
+    def __init__(self, reason: str):
+        self.reason = reason
 
 
 def lookup_step(step_name: str) -> Callable[[], Any]:
@@ -99,6 +104,13 @@ def step(step_flag: str):
                     raise PrpError(
                         f"API error during step '{dynamic_id}': {details}"
                     ) from exc
+
+            except SkipStep as exc:
+                service.reporter.on_step_skip(external_id, dynamic_id)
+                state.mark(dynamic_id, {"skipped": True, "reason": exc.reason})
+                service.state_store.save(state)
+                return None
+
             except Exception as exc:
                 # Fallback error
                 service.reporter.on_step_fail(external_id, dynamic_id, exc)
@@ -160,6 +172,9 @@ def step_add_reference_genome(
     headers: Headers,
 ):
     """Associate sample with a reference genome."""
+    if sample_info.reference_genome_id is None:
+        raise SkipStep("No reference genome id provided")
+
     internal_sample_id = state.assert_sample_id()
     return client.add_reference_genome_to_sample(
         internal_sample_id,
@@ -183,7 +198,7 @@ def step_add_annotation_track(
     # infere file format if not provided
     file_fmt = track.format
     if file_fmt is None:
-        suffix = Path(track.uri).suffix.strip('.')
+        suffix = Path(track.uri).suffix.strip(".")
         if suffix not in EXPECTED_SUFFIXES:
             raise ValueError(
                 f"Could not infere format of file '{track.uri}', please specify format."
@@ -266,7 +281,7 @@ def step_upload_ska_index(
 ):
     """Upload an SKA index for a sample."""
     if not sample_info.index_artifacts or not sample_info.index_artifacts.ska_index:
-        return None  # no index to upload
+        raise SkipStep("No index to upload")
 
     internal_sample_id = state.assert_sample_id()
 
@@ -290,7 +305,7 @@ def step_upload_sourmash_signature(
         not sample_info.index_artifacts
         or not sample_info.index_artifacts.sourmash_signature
     ):
-        return None  # no index to upload
+        raise SkipStep("No index to upload")
     internal_sample_id = state.assert_sample_id()
 
     # read sourmash data
@@ -300,4 +315,4 @@ def step_upload_sourmash_signature(
             signature_file=f,
             filename=str(sample_info.index_artifacts.sourmash_signature),
             headers=headers,
-    )
+        )

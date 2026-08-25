@@ -2,8 +2,6 @@
 
 from pathlib import Path
 
-from pydantic import TypeAdapter
-
 from bonsai_libs.api_client.bonsai.models import (
     DatetimeMetadataEntry,
     GenericMetadataEntry,
@@ -18,6 +16,7 @@ from bonsai_libs.api_client.bonsai.models import (
     SequencingPlatforms,
     UploadAnalysisResultInput,
 )
+from pydantic import TypeAdapter
 
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 

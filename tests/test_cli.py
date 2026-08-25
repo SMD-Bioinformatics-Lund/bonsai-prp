@@ -1,18 +1,18 @@
 """Test PRP cli functions."""
 
-from click.testing import CliRunner
-
 from bonsai_libs.api_client.bonsai.models import (
-    CreateUserInput,
     CreateGroupInput,
     CreateReferenceGenomeInput,
+    CreateUserInput,
 )
+from click.testing import CliRunner
 
 from prp.cli.bonsai_api import bonsai_bootstrap
 
 
 def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_valid):
     """Test that bootstrap cli calls the expected paths"""
+
     # --- Fake client ---
     class FakeClient:
         def authenticate_user(self, username, password):
@@ -44,7 +44,9 @@ def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_
     # Monkeypatch wiring in CLI module
 
     # 1. make_bonsai_client() returns our fake client
-    monkeypatch.setattr("prp.cli.bonsai_api.make_bonsai_client", lambda base_url: FakeClient())
+    monkeypatch.setattr(
+        "prp.cli.bonsai_api.make_bonsai_client", lambda base_url: FakeClient()
+    )
     # 2. BonsaiUploadService is replaced with our fake service
     monkeypatch.setattr("prp.cli.bonsai_api.BonsaiUploadService", FakeService)
 
