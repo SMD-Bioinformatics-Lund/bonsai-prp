@@ -130,35 +130,33 @@ class BonsaiUploadService:
         self, genome_data: CreateReferenceGenomeInput
     ) -> dict[str, Any]:
         """
-        Get existing reference gneome or create if missing.
+        Get existing reference genome or create if missing.
+
+        bonsai-libs' BonsaiApiClient has no dedicated reference-genome methods
+        yet, so this calls the API directly via the client's public
+        `request_json` helper against `GET/POST /reference-genomes`.
 
         Returns:
             The reference genome object from the API.
         """
-        genomes = []
-        try:
-            LOG.debug("Fetching reference genomes")
-            genomes = self.client.list_reference_genomes()
-        except ClientError as exc:
-            if exc.status == 404:
-                LOG.info("Creating new ref genome")
-                genome = self.client.create_reference_genome(genome_data)
-                LOG.info("Reference genome created successfully: id=%s", genome["id"])
-                return genome
-
-        # check if genomes exist
-        for genome in genomes:
+        resp = self.client.request_json("GET", "reference-genomes")
+        for genome in resp.data or []:
             same_name = genome_data.name == genome["name"]
             same_accnr = genome_data.accession == genome["accession"]
-            same_organism = genome_data.organism == genome["accession"]
+            same_organism = genome_data.organism == genome["organism"]
             if same_name and same_accnr and same_organism:
                 LOG.info("Reference genome exists: id=%s", genome["id"])
                 return genome
 
-        LOG.info("Creating new ref genome")
-        genome = self.client.create_reference_genome(genome_data)
-        LOG.info("Reference genome created successfully: id=%s", genome["id"])
-        return genome
+        LOG.info("Creating new reference genome: %s", genome_data.name)
+        resp = self.client.request_json(
+            "POST",
+            "reference-genomes",
+            json=genome_data.model_dump(mode="json"),
+            expected_status=(200, 201),
+        )
+        LOG.info("Reference genome created successfully: id=%s", resp.data["id"])
+        return resp.data
 
     def upload_sample(
         self, results: ParsedSampleResults, *, force: bool, only: set[str] | None = None
