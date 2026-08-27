@@ -45,17 +45,15 @@ class FlexibleURI:
     @classmethod
     def validate(cls, value: Any, info: ValidationInfo):
         """Convert flexible URI input into a standardized URI object."""
-        # Normalize Path → string
         if isinstance(value, Path):
             value = str(value)
 
-        # --- handle local filesystem paths ---
         if isinstance(value, str):
             p = Path(value)
 
-            # absolute paths are accepted as file:// without requiring existence here:
-            # access/symlink-dir files may not be linked yet when prp parse runs
-            # (analysis-result files are validated when read; index artifacts are not read)
+            # Absolute paths don't need to exist yet: the access/symlink dir may not
+            # be mounted at manifest-read time. Only warn, since bonsai upload reads
+            # analysis-result files later and index artifacts aren't read at all.
             if p.is_absolute():
                 if not p.exists():
                     LOG.warning(
@@ -65,14 +63,12 @@ class FlexibleURI:
                 pr = urlparse(f"file://{p.as_posix()}")
                 return URI(pr.scheme, pr.path, pr.netloc)
 
-            # relative paths are resolved against the manifest location and must exist
             if info.context:
                 p = (Path(info.context.parent) / p).resolve()
                 if p.exists():
                     pr = urlparse(f"file://{p.as_posix()}")
                     return URI(pr.scheme, pr.path, pr.netloc)
 
-        # --- parse as URL (including s3://, file://, http://, https://, etc.) ---
         pr = urlparse(value)
         if pr.scheme:
             return URI(pr.scheme, pr.path, pr.netloc)
@@ -113,16 +109,13 @@ class IndexArtifacts(BaseModel):
 class SampleManifest(AllowExtraModelMixin):
     """Sample information with metadata and results files."""
 
-    # Sample information
     sample_id: str = Field(..., min_length=3, max_length=100)
     sample_name: str
     lims_id: str
 
-    # Bonsai paramters
     groups: list[str] = Field(default_factory=list)
     metadata: list[MetaEntry] = Field(default_factory=list)
 
-    # Reference genome
     reference_genome_id: str | None = None
     igv_annotations: list[IgvAnnotation] = Field(default_factory=list)
 
