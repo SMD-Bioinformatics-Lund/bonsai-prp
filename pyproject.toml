@@ -34,13 +34,13 @@ prp = "prp.cli:cli"
 
 # upload = cli + requests
 upload = [
-    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@master",
+    "bonsai-libs @ git+https://github.com/SMD-Bioinformatics-Lund/bonsai-sdk.git@migrate-parse-pipeline-from-prp",
     "click>=8.1",
     "requests>=2.31",
 ]
 
 all = [
-    "bonsai-libs @ git+https://github.com/mhkc/bonsai-libs.git@master",
+    "bonsai-libs @ git+https://github.com/SMD-Bioinformatics-Lund/bonsai-sdk.git@migrate-parse-pipeline-from-prp",
     "click>=8.1",
     "requests>=2.31,<3",
 ]
