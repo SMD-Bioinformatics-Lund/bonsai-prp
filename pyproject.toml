@@ -19,6 +19,8 @@ classifiers = [
 dependencies = [
     "pydantic[email]>=2.4,<3",
     "pyyaml>=6,<7",
+    "click>=8.1",
+    "bonsai-libs @ git+https://github.com/SMD-Bioinformatics-Lund/bonsai-sdk.git@master",
 ]
 
 [project.urls]
@@ -32,18 +34,12 @@ prp = "prp.cli:cli"
 [project.optional-dependencies]
 
 
-# upload = cli + requests
-upload = [
-    "bonsai-libs @ git+https://github.com/SMD-Bioinformatics-Lund/bonsai-sdk.git@migrate-parse-pipeline-from-prp",
-    "click>=8.1",
-    "requests>=2.31",
-]
+# bonsai-libs and click are core dependencies now (prp is just a CLI around
+# bonsai upload/bootstrap); these extras are kept as no-op aliases so existing
+# `pip install bonsai-prp[all]` / `[upload]` commands keep working.
+upload = []
 
-all = [
-    "bonsai-libs @ git+https://github.com/SMD-Bioinformatics-Lund/bonsai-sdk.git@migrate-parse-pipeline-from-prp",
-    "click>=8.1",
-    "requests>=2.31,<3",
-]
+all = []
 
 # dev-only tools (not installed with 'all')
 dev = [
