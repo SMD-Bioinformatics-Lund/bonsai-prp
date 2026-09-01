@@ -57,7 +57,9 @@ class PipelineDefinition(BaseModel):
     name: str
     version: str
     commit: str | None = None
-    release_life_cycle: Literal["development", "staging", "production", "unknown"]
+    release_life_cycle: Literal[
+        "development", "validation", "staging", "production", "unknown"
+    ]
 
 
 class PipelineRunConfig(BaseModel):

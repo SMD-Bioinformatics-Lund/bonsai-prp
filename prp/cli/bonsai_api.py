@@ -7,7 +7,6 @@ import click
 from bonsai_libs.api_client.core.exceptions import ApiRequestFailed, ServerError
 from pydantic import ValidationError
 
-from prp import VERSION as __version__
 from prp.bonsai import BonsaiUploadService, make_bonsai_client
 from prp.bonsai.service import UploadStateStore
 from prp.exceptions import PrpError
@@ -58,6 +57,17 @@ def bonsai_gr():
     is_flag=True,
     help="Force upload even if results already exist in Bonsai",
 )
+@click.option(
+    "--only",
+    multiple=True,
+    metavar="SOFTWARE",
+    help=(
+        "Upload only the result(s) from the given software (e.g. 'chewbbaca') "
+        "onto an already-existing sample, skipping sample creation and other "
+        "steps. Repeatable. The manifest's sample_id must be the existing "
+        "Bonsai sample id. Combine with --force to overwrite the existing result."
+    ),
+)
 @click.argument(
     "manifest",
     type=SampleManifestFile(),
@@ -70,6 +80,7 @@ def bonsai_upload(
     dry_run: bool,
     ignore_errors: bool,
     force: bool,
+    only: tuple[str, ...],
 ):
     """Upload a sample to Bonsai using either a sample config or json dump."""
     # setup state
@@ -95,6 +106,13 @@ def bonsai_upload(
             "Could not authenticate to Bonsai API, check your credentials"
         )
 
+    only_set = {software.lower() for software in only}
+    if only_set and not force:
+        click.secho(
+            "--only replaces existing results; combine with --force to overwrite them",
+            fg="yellow",
+        )
+
     rid = manifest_obj.pipeline.pipeline_run_id
     workflow_id = f"bonsai-prp-upload-{manifest_obj.sample_id}-{rid}"
     service = BonsaiUploadService(
@@ -105,13 +123,18 @@ def bonsai_upload(
         ignore_errors=ignore_errors,
     )
     try:
-        service.upload_sample(manifest_obj, force=force)
+        service.upload_sample(manifest_obj, force=force, only=only_set or None)
     except PrpError as exc:
         LOG.info("Something went wrong uploading the sample, %s", exc)
         raise click.Abort("Uploaded aborted.") from exc
 
     # create a new sample
-    click.secho("Sample uploaded", fg="green")
+    if only_set:
+        click.secho(
+            f"Uploaded result(s) for: {', '.join(sorted(only_set))}", fg="green"
+        )
+    else:
+        click.secho("Sample uploaded", fg="green")
 
 
 @bonsai_gr.command("bootstrap")

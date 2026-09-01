@@ -104,7 +104,7 @@ def step(step_flag: str):
                     raise PrpError(
                         f"API error during step '{dynamic_id}': {details}"
                     ) from exc
-            
+
             except SkipStep as exc:
                 service.reporter.on_step_skip(external_id, dynamic_id)
                 state.mark(dynamic_id, {"skipped": True, "reason": exc.reason})
@@ -278,19 +278,16 @@ def step_upload_ska_index(
     state: UploadState,
     *,
     headers: Headers,
-    **kwargs,
 ):
     """Upload an SKA index for a sample."""
     if not sample_info.index_artifacts or not sample_info.index_artifacts.ska_index:
         raise SkipStep("No index to upload")
 
-    force = kwargs.get("force", False)
     internal_sample_id = state.assert_sample_id()
 
     return client.upload_ska_index(
         internal_sample_id,
         index_path=str(sample_info.index_artifacts.ska_index),
-        force=force,
         headers=headers,
     )
 

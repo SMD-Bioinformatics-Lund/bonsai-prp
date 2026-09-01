@@ -1,208 +1,243 @@
-"""Test PRP cli functions."""
+"""Test PRP cli functions, driven end-to-end through the actual CLI entrypoints."""
 
 import json
 from pathlib import Path
-from typing import Any
+from types import SimpleNamespace
 
-import pytest
+from bonsai_libs.api_client.bonsai.models import (
+    CreateGroupInput,
+    CreateSampleResponse,
+    CreateUserInput,
+    UploadAnalysisResultResponse,
+)
+from bonsai_libs.api_client.core.exceptions import ClientError
 from click.testing import CliRunner
 
-from bonsai_libs.api_client.bonsai.models import CreateUserInput, CreateGroupInput
-
-from prp.cli.annotate import add_igv_annotation_track, annotate_delly
-from prp.cli.parse import format_cdm, format_results
-from prp.cli.bonsai_api import bonsai_bootstrap
-from prp.models.sample import PipelineResult
+from prp.cli.bonsai_api import bonsai_bootstrap, bonsai_upload
 
 
-@pytest.mark.parametrize(
-    "fixture_name,expected_sw",
-    [
-        ("saureus_sample_conf_path", ["resfinder", "amrfinder", "virulencefinder"]),
-        ("ecoli_sample_conf_path", ["resfinder", "amrfinder", "virulencefinder"]),
-        # ("kp_sample_conf_path", ["kleborate"]),
-        ("mtuberculosis_sample_conf_path", ["mykrobe", "tbprofiler"]),
-    ],
-)
-def test_parse_cmd(
-    fixture_name: str, expected_sw: list[str], request: pytest.FixtureRequest
-):
-    """Test creating a analysis summary.
-
-    The test is intended as an end-to-end test.
-    """
-
-    # TODO reinstate the test when implementation of manifest v2 is done
-
-    # sample_conf = request.getfixturevalue(fixture_name)
-    # output_file = "test_output.json"
-    # runner = CliRunner()
-    # with runner.isolated_filesystem():
-    #     args: list[str] = [
-    #         "--sample",
-    #         sample_conf,
-    #         "--output",
-    #         output_file,
-    #     ]
-    #     result = runner.invoke(format_jasen, args)
-    #     assert result.exit_code == 0
-
-    #     # test that the correct output was generated
-    #     with open(output_file) as inpt:
-    #         prp_output = json.load(inpt)
-    #     # get prediction softwares in ouptut
-    #     prediction_sw = {res["software"] for res in prp_output["element_type_result"]}
-
-    #     # Test
-    #     # ====
-
-    #     # 1. that resfinder, amrfinder and virulence finder result is in output
-    #     assert len(set(expected_sw) & prediction_sw) == len(expected_sw)
-
-    #     # 2. that the output datamodel can be used to format input data as well
-    #     output_data_model = PipelineResult.model_validate(prp_output)
-    #     output_data_model_json = json.loads(output_data_model.model_dump_json())
-    #     assert prp_output == output_data_model_json
+class _Resp(SimpleNamespace):
+    """Stand-in for a bonsai-libs response model."""
 
 
-def test_cdm_cmd(ecoli_sample_conf_path: Path, ecoli_cdm_input: list[dict[str, Any]]):
-    """Test command for creating CDM input."""
+class FakeBonsaiClient:
+    """Fakes BonsaiApiClient at the HTTP boundary (method signatures match bonsai-libs
+    exactly), so the real BonsaiUploadService/steps code runs underneath the CLI."""
 
-    # TODO reinstate the test when implementation of manifest v2 is done
+    def __init__(self, *, existing_users=(), existing_groups=(), existing_genomes=()):
+        self.existing_users = set(existing_users)
+        self.existing_groups = set(existing_groups)
+        self.existing_genomes = list(existing_genomes)
+        self.calls: list[tuple] = []
 
-    # output_file = "test_output.json"
-    # runner = CliRunner()
-    # with runner.isolated_filesystem():
-    #     args: list[str] = [
-    #         "--sample",
-    #         str(ecoli_sample_conf_path),
-    #         "--output",
-    #         output_file,
-    #     ]
-    #     result = runner.invoke(format_cdm, args)
+    def authenticate_user(self, username: str, password: str, *, headers=None) -> bool:
+        return True
 
-    #     # test successful execution of command
-    #     assert result.exit_code == 0
+    # --- users / groups / reference genomes (bootstrap) ---
 
-    #     # test correct output format
-    #     with open(output_file, "rb") as inpt:
-    #         cdm_output = json.load(inpt)
-    #         assert cdm_output == ecoli_cdm_input
+    def get_user(self, username: str, *, headers=None):
+        if username not in self.existing_users:
+            raise ClientError("not found", status=404)
+        return {"username": username}
+
+    def create_user(self, user: CreateUserInput, *, headers=None):
+        self.existing_users.add(user.username)
+        self.calls.append(("create_user", user))
+        return {"username": user.username}
+
+    def get_group(self, group_id: str, *, headers=None):
+        if group_id not in self.existing_groups:
+            raise ClientError("not found", status=404)
+        return {"id": group_id}
+
+    def create_group(self, group: CreateGroupInput, *, headers=None):
+        self.existing_groups.add(group.group_id)
+        self.calls.append(("create_group", group))
+        return {"id": group.group_id}
+
+    def request_json(self, method, path, *, json=None, expected_status=(200,)):
+        assert path == "reference-genomes"
+        if method == "GET":
+            return _Resp(data=self.existing_genomes)
+        self.calls.append(("create_reference_genome", json))
+        return _Resp(data={**json, "id": "genome-1"})
+
+    # --- sample upload ---
+
+    def create_sample(self, sample_info, *, headers=None):
+        self.calls.append(("create_sample", sample_info))
+        return CreateSampleResponse(
+            inserted_id="inserted-1",
+            internal_sample_id="internal-1",
+            external_sample_id=sample_info.sample_id,
+        )
+
+    def add_reference_genome_to_sample(
+        self, sample_id, *, reference_genome_id, headers=None
+    ):
+        self.calls.append(("add_reference_genome_to_sample", reference_genome_id))
+        return {"reference_genome_id": reference_genome_id}
+
+    def add_annotation_track_to_sample(self, sample_id, *, track, headers=None):
+        self.calls.append(("add_annotation_track_to_sample", track))
+        return {"ok": True}
+
+    def add_pipeline_run(self, sample_id, *, pipeline_run, headers=None):
+        self.calls.append(("add_pipeline_run", pipeline_run))
+        return "pipeline-run-1"
+
+    def upload_ska_index(self, sample_id, *, index_path, force=False, headers=None):
+        self.calls.append(("upload_ska_index", index_path))
+        return "ok"
+
+    def upload_sourmash_signature(
+        self, sample_id, *, signature_file, filename="signature.json", headers=None
+    ):
+        self.calls.append(("upload_sourmash_signature", filename))
+        return "ok"
+
+    def upload_analysis_result(self, result, *, headers=None, force=False):
+        self.calls.append(("upload_analysis_result", result.software, force))
+        return UploadAnalysisResultResponse(
+            sample_id=result.sample_id,
+            pipeline_run_id=result.pipeline_run_id,
+            analysis_id="an-1",
+            software=result.software,
+            software_version=result.software_version,
+            envelopes={},
+        )
 
 
-def test_annotate_delly(
-    mtuberculosis_delly_bcf_path: Path,
-    converged_bed_path: Path,
-    annotated_delly_path: Path,
-):
-    """Test command for annotating delly output."""
+def _write_manifest(tmp_path: Path, *, only_mode: bool = False) -> Path:
+    """Write a full, valid manifest (+ companion files) to tmp_path and return its path."""
+    (tmp_path / "run_info.json").write_text(
+        json.dumps(
+            {
+                "pipeline": "jasen",
+                "version": "2.1.0",
+                "commit": "abc123",
+                "release_life_cycle": "production",
+                "workflow_name": "run-42",
+                "assay": "saureus",
+                "date": "2026-01-01T00:00:00",
+                "command": "nextflow run jasen",
+                "analysis_profile": ["mlst"],
+                "configuration_files": ["nextflow.config"],
+                "sequencing_run": "240112_A00001",
+                "sequencing_platform": "illumina",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "mlst.tsv").write_text("placeholder\n", encoding="utf-8")
+    (tmp_path / "index.ska").write_text("placeholder\n", encoding="utf-8")
+    (tmp_path / "sig.sourmash").write_text("placeholder\n", encoding="utf-8")
+    (tmp_path / "track.bed").write_text("placeholder\n", encoding="utf-8")
+    (tmp_path / "sccmec.csv").write_text(
+        "gene,type\nmecA,SCCmec IV\n", encoding="utf-8"
+    )
+
+    manifest = tmp_path / "manifest.yml"
+    manifest.write_text(
+        f"""
+sample_id: {"cli-test-sample-existing" if only_mode else "cli-test-sample-001"}
+sample_name: CLI Test Sample
+lims_id: lims-cli-1
+groups: [saureus]
+metadata:
+  - fieldname: host
+    value: human
+    type: string
+  - fieldname: sccmec
+    value: ./sccmec.csv
+    type: table
+reference_genome_id: ref-genome-1
+nextflow_run_info: ./run_info.json
+analysis_result:
+  - software: mlst
+    software_version: "2.0"
+    uri: ./mlst.tsv
+index_artifacts:
+  ska_index: ./index.ska
+  sourmash_signature: ./sig.sourmash
+igv_annotations:
+  - type: annotation
+    uri: ./track.bed
+""",
+        encoding="utf-8",
+    )
+    return manifest
+
+
+def test_bonsai_upload_full_flow(monkeypatch, tmp_path: Path):
+    """`bonsai upload` walks the real create_sample/reference_genome/pipeline_run/
+    index/annotation_track/analysis_result steps end-to-end."""
+    manifest = _write_manifest(tmp_path)
+    client = FakeBonsaiClient()
+    monkeypatch.setattr(
+        "prp.cli.bonsai_api.make_bonsai_client", lambda base_url: client
+    )
+
     runner = CliRunner()
     with runner.isolated_filesystem():
-        sample_id = "test_mtuberculosis_1"
-        output_fname = f"{sample_id}_annotated_delly.vcf"
         result = runner.invoke(
-            annotate_delly,
+            bonsai_upload,
+            [str(manifest), "-a", "http://api:8000", "-u", "admin", "-p", "secret"],
+        )
+
+    assert result.exit_code == 0, result.output
+    called = [c[0] for c in client.calls]
+    assert called == [
+        "create_sample",
+        "add_reference_genome_to_sample",
+        "add_pipeline_run",
+        "upload_ska_index",
+        "upload_sourmash_signature",
+        "add_annotation_track_to_sample",
+        "upload_analysis_result",
+    ]
+
+
+def test_bonsai_upload_only_flag(monkeypatch, tmp_path: Path):
+    """`--only` uploads just the named software, with force, and skips every other step."""
+    manifest = _write_manifest(tmp_path, only_mode=True)
+    client = FakeBonsaiClient()
+    monkeypatch.setattr(
+        "prp.cli.bonsai_api.make_bonsai_client", lambda base_url: client
+    )
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            bonsai_upload,
             [
-                "--vcf",
-                str(mtuberculosis_delly_bcf_path),
-                "--bed",
-                str(converged_bed_path),
-                "--output",
-                output_fname,
+                str(manifest),
+                "-a",
+                "http://api:8000",
+                "-u",
+                "admin",
+                "-p",
+                "secret",
+                "--only",
+                "mlst",
+                "--force",
             ],
         )
 
-        # test successful execution of command
-        assert result.exit_code == 0
-
-        # test correct output format
-        with (
-            open(output_fname, "r", encoding="utf-8") as test_annotated_delly_output,
-            open(annotated_delly_path, "r", encoding="utf-8") as annotated_delly_output,
-        ):
-            test_contents = test_annotated_delly_output.read()
-            expected_contents = annotated_delly_output.read()
-            assert test_contents == expected_contents
-
-
-def test_add_igv_annotation_track(
-    mtuberculosis_snv_vcf_path: Path, simple_pipeline_result: PipelineResult
-):
-    """Test command for adding IGV annotation track to a result file."""
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        result_fname = "before_update.json"
-        # write fixture to file
-        with open(result_fname, "w") as outp:
-            outp.write(simple_pipeline_result.model_dump_json())
-
-        output_fname = "after_update.json"
-        args = [
-            "--track-name",
-            "snv",
-            "--annotation-file",
-            str(mtuberculosis_snv_vcf_path),
-            "--bonsai-input-file",
-            result_fname,
-            "--output",
-            output_fname,
-        ]
-        result = runner.invoke(add_igv_annotation_track, args)
-
-        # test successful execution of command
-        assert result.exit_code == 0
-
-        # test correct output format
-        with open(output_fname, "r", encoding="utf-8") as file_after:
-            test_file_after = json.load(file_after)
-            n_tracks_before = (
-                0
-                if simple_pipeline_result.genome_annotation is None
-                else len(simple_pipeline_result.genome_annotation)
-            )
-            assert len(test_file_after["genome_annotation"]) == n_tracks_before + 1
+    assert result.exit_code == 0, result.output
+    assert [c[0] for c in client.calls] == ["upload_analysis_result"]
+    assert client.calls[0][1:] == ("mlst", True)
 
 
 def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_valid):
-    """Test that bootstrap cli calls the expected paths"""
-    # --- Fake client ---
-    class FakeClient:
-        def authenticate_user(self, username, password):
-            assert username == "admin"
-            assert password == "secret"
-            return True
-
-    # --- Capture calls ---
-    calls = {"users": [], "groups": [], "ref_genome": None}
-
-    class FakeService:
-        def __init__(self, client, state_store, dry_run=False, **kwargs):
-            self.client = client
-            self.state_store = state_store
-            self.dry_run = dry_run
-
-        def ensure_user_exists(self, user_id, **user_data):
-            calls["users"].append((user_id, user_data))
-            return {"username": user_id}
-
-        def ensure_group_exists(self, group_id, **group_data):
-            calls["groups"].append((group_id, group_data))
-            return {"id": group_id}
-        
-        def ensure_reference_genome_exists(self, genome_data):
-            calls["ref_genome"] = genome_data
-            return {"id": genome_data}
-
-    # Monkeypatch wiring in CLI module
-
-    # 1. make_bonsai_client() returns our fake client
-    monkeypatch.setattr("prp.cli.bonsai_api.make_bonsai_client", lambda base_url: FakeClient())
-    # 2. BonsaiUploadService is replaced with our fake service
-    monkeypatch.setattr("prp.cli.bonsai_api.BonsaiUploadService", FakeService)
+    """Bootstrap CLI drives the real BonsaiUploadService.ensure_* methods."""
+    client = FakeBonsaiClient()
+    monkeypatch.setattr(
+        "prp.cli.bonsai_api.make_bonsai_client", lambda base_url: client
+    )
 
     runner = CliRunner()
     with runner.isolated_filesystem():
-        # invoke: use default config_file path
         cfg_path = str(bootstap_config_valid.absolute())
         result = runner.invoke(
             bonsai_bootstrap,
@@ -211,6 +246,38 @@ def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_
 
     assert result.exit_code == 0, result.output
 
-    # --- Verify calls ---
-    assert isinstance(calls["users"][0][0], CreateUserInput)
-    assert isinstance(calls["groups"][0][0], CreateGroupInput)
+    call_types = [c[0] for c in client.calls]
+    assert call_types == ["create_user", "create_group", "create_reference_genome"]
+    assert isinstance(client.calls[0][1], CreateUserInput)
+    assert isinstance(client.calls[1][1], CreateGroupInput)
+    assert isinstance(client.calls[2][1], dict)  # genome_data.model_dump()
+
+
+def test_bootstrap_skips_existing_users_and_groups(monkeypatch, bootstap_config_valid):
+    """Bootstrap treats an already-existing user/group/genome as a no-op, not a create."""
+    client = FakeBonsaiClient(
+        existing_users={"user"},
+        existing_groups={"mtuberculosis"},
+        existing_genomes=[
+            {
+                "id": "existing-genome",
+                "name": "mtuberculosis",
+                "accession": "TEST123",
+                "organism": "Mycobacterium tubcerculosis",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        "prp.cli.bonsai_api.make_bonsai_client", lambda base_url: client
+    )
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        cfg_path = str(bootstap_config_valid.absolute())
+        result = runner.invoke(
+            bonsai_bootstrap,
+            [cfg_path, "-a", "http://api:8000", "-u", "admin", "-p", "secret"],
+        )
+
+    assert result.exit_code == 0, result.output
+    assert client.calls == []

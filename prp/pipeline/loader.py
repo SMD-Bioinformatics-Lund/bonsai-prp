@@ -33,10 +33,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from bonsai_libs.parse import run_parser
 from bonsai_libs.parse.io.delimited import read_delimited
 from bonsai_libs.parse.io.json import read_json
-
 from prp.models.manifest import (
     URI,
     AnalysisResult,
@@ -47,7 +45,6 @@ from prp.models.manifest import (
 from prp.models.metadata import MetaEntry, TableMetadataEntry
 
 from .types import (
-    FullAnalysisResult,
     GenericMetadataRecord,
     IgvAnnotationTrack,
     InternalIndexArtifacts,
@@ -244,36 +241,5 @@ def parse_manifest_for_upload(manifest: SampleManifest) -> ParsedSampleResults:
                 uri=res.uri,
             )
         )
-
-    return base_result.model_copy(update={"analysis_results": analysis_results})
-
-
-def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults:
-    """Parse the sample manifest and the analysis result files for internal use."""
-    base_result = parse_base_results_from_manifest(manifest)
-
-    # parse results from analysis softwares
-    analysis_results: list[FullAnalysisResult] = []
-    for res in manifest.analysis_result:
-        if not res.uri.scheme == "file":
-            raise NotImplementedError(
-                f"No method for reading {res.uri.scheme} URI scheme."
-            )
-        ev = run_parser(
-            software=res.software, version=res.software_version, data=res.uri.path
-        )
-        for at, parser_result in ev.results.items():
-            analysis_results.append(
-                FullAnalysisResult(
-                    software=ev.software,
-                    software_version=ev.software_version,
-                    parser_name=ev.parser_name,
-                    parser_version=ev.parser_version,
-                    parser_status=parser_result.status,
-                    reason=parser_result.reason,
-                    analysis_type=at,
-                    results=parser_result.value,
-                )
-            )
 
     return base_result.model_copy(update={"analysis_results": analysis_results})

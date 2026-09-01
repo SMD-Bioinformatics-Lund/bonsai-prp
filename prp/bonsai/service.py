@@ -13,11 +13,7 @@ from bonsai_libs.api_client.bonsai.models import (
 from bonsai_libs.api_client.core.exceptions import ClientError
 
 from prp.bonsai.reportning import SimpleReporter
-from prp.pipeline.types import (
-    IgvAnnotationTrack,
-    MinimalAnalysisRecord,
-    ParsedSampleResults,
-)
+from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
 from . import steps
 from .client import BonsaiApiClient
@@ -134,40 +130,46 @@ class BonsaiUploadService:
         self, genome_data: CreateReferenceGenomeInput
     ) -> dict[str, Any]:
         """
-        Get existing reference gneome or create if missing.
+        Get existing reference genome or create if missing.
+
+        bonsai-libs' BonsaiApiClient has no dedicated reference-genome methods
+        yet, so this calls the API directly via the client's public
+        `request_json` helper against `GET/POST /reference-genomes`.
 
         Returns:
             The reference genome object from the API.
         """
-        genomes = []
-        try:
-            LOG.debug("Fetching reference genomes")
-            genomes = self.client.list_reference_genomes()
-        except ClientError as exc:
-            if exc.status == 404:
-                LOG.info("Creating new ref genome")
-                genome = self.client.create_reference_genome(genome_data)
-                LOG.info("Reference genome created successfully: id=%s", genome["id"])
-                return genome
-
-        # check if genomes exist
-        for genome in genomes:
+        resp = self.client.request_json("GET", "reference-genomes")
+        for genome in resp.data or []:
             same_name = genome_data.name == genome["name"]
             same_accnr = genome_data.accession == genome["accession"]
-            same_organism = genome_data.organism == genome["accession"]
+            same_organism = genome_data.organism == genome["organism"]
             if same_name and same_accnr and same_organism:
                 LOG.info("Reference genome exists: id=%s", genome["id"])
                 return genome
 
-        LOG.info("Creating new ref genome")
-        genome = self.client.create_reference_genome(genome_data)
-        LOG.info("Reference genome created successfully: id=%s", genome["id"])
-        return genome
+        LOG.info("Creating new reference genome: %s", genome_data.name)
+        resp = self.client.request_json(
+            "POST",
+            "reference-genomes",
+            json=genome_data.model_dump(mode="json"),
+            expected_status=(200, 201),
+        )
+        LOG.info("Reference genome created successfully: id=%s", resp.data["id"])
+        return resp.data
 
     def upload_sample(
-        self, results: ParsedSampleResults, *, force: bool
+        self, results: ParsedSampleResults, *, force: bool, only: set[str] | None = None
     ) -> UploadResult:
-        """Upload a single sample to Bonsai from a manifest."""
+        """Upload a single sample to Bonsai from a manifest.
+
+        When ``only`` is given (a set of software names), restrict the upload to
+        the analysis results from those softwares and skip sample creation,
+        reference genome, pipeline run, index and annotation-track steps. This
+        overwrites just those results on an already-existing sample;
+        ``results.sample_id`` must be the sample's existing (internal) Bonsai id.
+        Combine with ``force`` to overwrite results that already exist.
+        """
         upload_steps = [
             "create_sample",
             "add_reference_genome",
@@ -188,54 +190,74 @@ class BonsaiUploadService:
         LOG.info(
             "Uploading sample ext_id=%s (workflow=%s)", external_id, self.workflow_id
         )
-        # Phase 1: run fixed steps
-        for step_name in upload_steps:
-            if state.is_done(step_name):
-                self.reporter.on_step_skip(external_id, step_name)
-                continue
 
-            step_fn = steps.lookup_step(step_name)
-            headers = self._headers_for(step_name, state)
+        if only:
+            # Result-only mode: the sample already exists, so adopt its id directly
+            # instead of creating it, and skip every step except result upload.
+            state.sample_id = external_id
+        else:
+            # Phase 1: run fixed steps
+            for step_name in upload_steps:
+                if state.is_done(step_name):
+                    self.reporter.on_step_skip(external_id, step_name)
+                    continue
 
-            # decorator handles state persistence, error handling, and dry-run logic
-            step_fn(
-                self,
-                self.client,
-                results,
-                state,
-                headers=headers,
-                dry_run=self.dry_run,
-                ignore_errors=self.ignore_errors,
-            )
+                step_fn = steps.lookup_step(step_name)
+                headers = self._headers_for(step_name, state)
 
-        # Phase 2: create annotation tracks
-        step_name = "add_annotation_track"
-        create_track_fn = steps.lookup_step(step_name)
-        for track in results.annotation_tracks:
-            substep = track.name  # used for dynamic state key
+                # decorator handles state persistence, error handling, and dry-run logic
+                step_fn(
+                    self,
+                    self.client,
+                    results,
+                    state,
+                    headers=headers,
+                    dry_run=self.dry_run,
+                    ignore_errors=self.ignore_errors,
+                )
 
-            # Skip if upload step has been run
-            if state.is_done(f"{step_name}:{substep}") and not force:
-                self.reporter.on_step_skip(external_id, f"{step_name}:{substep}")
-                continue
+            # Phase 2: create annotation tracks
+            step_name = "add_annotation_track"
+            create_track_fn = steps.lookup_step(step_name)
+            for track in results.annotation_tracks:
+                substep = track.name  # used for dynamic state key
 
-            headers = self._headers_for("upload_analysis_results", state)
-            create_track_fn(
-                self,
-                self.client,
-                results,
-                state,
-                track=track,
-                headers=headers,
-                substep=substep,
-                dry_run=self.dry_run,
-                ignore_errors=self.ignore_errors,
-            )
+                # Skip if upload step has been run
+                if state.is_done(f"{step_name}:{substep}") and not force:
+                    self.reporter.on_step_skip(external_id, f"{step_name}:{substep}")
+                    continue
+
+                headers = self._headers_for("upload_analysis_results", state)
+                create_track_fn(
+                    self,
+                    self.client,
+                    results,
+                    state,
+                    track=track,
+                    headers=headers,
+                    substep=substep,
+                    dry_run=self.dry_run,
+                    ignore_errors=self.ignore_errors,
+                )
+
+        # Warn about requested softwares that aren't present in the manifest, so a
+        # typo in --only doesn't silently upload nothing.
+        if only:
+            available = {r.software for r in results.analysis_results}
+            for software in sorted(only - available):
+                LOG.warning(
+                    "Requested --only software '%s' not found in manifest for %s",
+                    software,
+                    external_id,
+                )
 
         # Phase 3: upload analysis results
         step_name = "upload_analysis_results"
         upload_analysis_fn = steps.lookup_step(step_name)
         for result in results.analysis_results:
+            if only and result.software not in only:
+                continue
+
             if not isinstance(result, MinimalAnalysisRecord):
                 LOG.warning(
                     "Skipping upload of result with software=%s due to missing URI",
