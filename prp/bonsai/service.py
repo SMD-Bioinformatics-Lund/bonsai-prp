@@ -198,7 +198,7 @@ class BonsaiUploadService:
         else:
             # Phase 1: run fixed steps
             for step_name in upload_steps:
-                if state.is_done(step_name):
+                if state.is_done(step_name, dry_run=self.dry_run):
                     self.reporter.on_step_skip(external_id, step_name)
                     continue
 
@@ -223,7 +223,8 @@ class BonsaiUploadService:
                 substep = track.name  # used for dynamic state key
 
                 # Skip if upload step has been run
-                if state.is_done(f"{step_name}:{substep}") and not force:
+                is_done = state.is_done(f"{step_name}:{substep}", dry_run=self.dry_run)
+                if is_done and not force:
                     self.reporter.on_step_skip(external_id, f"{step_name}:{substep}")
                     continue
 
@@ -238,6 +239,7 @@ class BonsaiUploadService:
                     substep=substep,
                     dry_run=self.dry_run,
                     ignore_errors=self.ignore_errors,
+                    force=force,
                 )
 
         # Warn about requested softwares that aren't present in the manifest, so a
@@ -268,7 +270,8 @@ class BonsaiUploadService:
             substep = result.software  # used for dynamic state key
 
             # Skip if upload step has been run
-            if state.is_done(f"{step_name}:{substep}") and not force:
+            is_done = state.is_done(f"{step_name}:{substep}", dry_run=self.dry_run)
+            if is_done and not force:
                 self.reporter.on_step_skip(external_id, f"{step_name}:{substep}")
                 continue
 
