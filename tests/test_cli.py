@@ -10,7 +10,7 @@ from bonsai_libs.api_client.bonsai.models import (
     CreateUserInput,
     UploadAnalysisResultResponse,
 )
-from bonsai_libs.api_client.core.exceptions import ClientError
+from bonsai_libs.api_client.core.exceptions import ClientError, NotFoundError
 from click.testing import CliRunner
 
 from prp.cli.bonsai_api import bonsai_bootstrap, bonsai_upload
@@ -24,11 +24,24 @@ class FakeBonsaiClient:
     """Fakes BonsaiApiClient at the HTTP boundary (method signatures match bonsai-libs
     exactly), so the real BonsaiUploadService/steps code runs underneath the CLI."""
 
-    def __init__(self, *, existing_users=(), existing_groups=(), existing_genomes=()):
+    def __init__(
+        self,
+        *,
+        existing_users=(),
+        existing_groups=(),
+        existing_genomes=(),
+        existing_samples=(),
+    ):
         self.existing_users = set(existing_users)
         self.existing_groups = set(existing_groups)
         self.existing_genomes = list(existing_genomes)
+        self.existing_samples = dict(existing_samples)
         self.calls: list[tuple] = []
+
+    def get_sample_by_external_id(self, external_sample_id, *, headers=None):
+        if external_sample_id not in self.existing_samples:
+            raise NotFoundError("not found", status=404)
+        return self.existing_samples[external_sample_id]
 
     def authenticate_user(self, username: str, password: str, *, headers=None) -> bool:
         return True
@@ -78,8 +91,10 @@ class FakeBonsaiClient:
         self.calls.append(("add_reference_genome_to_sample", reference_genome_id))
         return {"reference_genome_id": reference_genome_id}
 
-    def add_annotation_track_to_sample(self, sample_id, *, track, headers=None):
-        self.calls.append(("add_annotation_track_to_sample", track))
+    def add_annotation_track_to_sample(
+        self, sample_id, *, track, force=False, headers=None
+    ):
+        self.calls.append(("add_annotation_track_to_sample", track, force))
         return {"ok": True}
 
     def add_pipeline_run(self, sample_id, *, pipeline_run, headers=None):
@@ -189,6 +204,36 @@ def test_bonsai_upload_full_flow(monkeypatch, tmp_path: Path):
     called = [c[0] for c in client.calls]
     assert called == [
         "create_sample",
+        "add_reference_genome_to_sample",
+        "add_pipeline_run",
+        "upload_ska_index",
+        "upload_sourmash_signature",
+        "add_annotation_track_to_sample",
+        "upload_analysis_result",
+    ]
+
+
+def test_bonsai_upload_adopts_existing_sample(monkeypatch, tmp_path: Path):
+    """create_sample is skipped when a sample with the same external id already exists."""
+    manifest = _write_manifest(tmp_path)
+    client = FakeBonsaiClient(
+        existing_samples={"cli-test-sample-001": {"sample_id": "internal-1"}}
+    )
+    monkeypatch.setattr(
+        "prp.cli.bonsai_api.make_bonsai_client", lambda base_url: client
+    )
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            bonsai_upload,
+            [str(manifest), "-a", "http://api:8000", "-u", "admin", "-p", "secret"],
+        )
+
+    assert result.exit_code == 0, result.output
+    called = [c[0] for c in client.calls]
+    assert "create_sample" not in called
+    assert called == [
         "add_reference_genome_to_sample",
         "add_pipeline_run",
         "upload_ska_index",

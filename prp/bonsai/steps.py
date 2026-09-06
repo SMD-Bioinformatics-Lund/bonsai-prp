@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Callable, TypeAlias
 
 from bonsai_libs.api_client.bonsai.models import AnnotationTrack, GenomicResourceInput
-from bonsai_libs.api_client.core.exceptions import ClientError
+from bonsai_libs.api_client.core.exceptions import ClientError, NotFoundError
 
 from prp.exceptions import PrpError
 from prp.pipeline.types import (
@@ -131,8 +131,17 @@ def step_create_sample(
     state: UploadState,
     *,
     headers: Headers,
-) -> "CreateSampleResponse":
-    """Create a sample using the API."""
+):
+    """Create a sample using the API, or adopt an existing one with the same external id."""
+
+    try:
+        existing = client.get_sample_by_external_id(
+            sample_info.sample_id, headers=headers
+        )
+        state.sample_id = existing["sample_id"]
+        raise SkipStep("Sample already exists")
+    except NotFoundError:
+        pass
 
     payload = mappers.sample_to_bonsai(sample_info)
     resp = client.create_sample(payload, headers=headers)
@@ -191,6 +200,7 @@ def step_add_annotation_track(
     *,
     track: IgvAnnotationTrack,
     headers: Headers,
+    force: bool = False,
 ):
     """Associate sample with a reference genome."""
     internal_sample_id = state.assert_sample_id()
@@ -219,7 +229,7 @@ def step_add_annotation_track(
         ],
     )
     return client.add_annotation_track_to_sample(
-        internal_sample_id, track=api_input, headers=headers
+        internal_sample_id, track=api_input, force=force, headers=headers
     )
 
 

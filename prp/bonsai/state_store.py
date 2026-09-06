@@ -58,10 +58,19 @@ class UploadState:
         self.steps[step] = value
         self.updated_at = _now_iso()
 
-    def is_done(self, step: str) -> bool:
-        """Check if a step is marked as done."""
+    def is_done(self, step: str, *, dry_run: bool = False) -> bool:
+        """Check if a step is marked as done.
 
-        return bool(self.steps.get(step))
+        A step recorded during a dry run only counts as done for another dry
+        run; it must never make a real run skip work that was never actually
+        performed.
+        """
+        value = self.steps.get(step)
+        if not value:
+            return False
+        if isinstance(value, dict) and value.get("dry_run") and not dry_run:
+            return False
+        return True
 
     def assert_sample_id(self) -> str:
         """Assert that sample id has been set."""
