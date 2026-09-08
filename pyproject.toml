@@ -20,7 +20,7 @@ dependencies = [
     "pydantic[email]>=2.4,<3",
     "pyyaml>=6,<7",
     "click>=8.1",
-    "bonsai-libs @ git+https://github.com/SMD-Bioinformatics-Lund/bonsai-sdk.git@master",
+    "bonsai-libs @ git+https://github.com/SMD-Bioinformatics-Lund/bonsai-sdk.git@migrate-parse-pipeline-from-prp",
 ]
 
 [project.urls]
