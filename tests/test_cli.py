@@ -86,10 +86,10 @@ class FakeBonsaiClient:
         )
 
     def add_reference_genome_to_sample(
-        self, sample_id, *, reference_genome_id, headers=None
+        self, sample_id, *, reference_genome_accession, headers=None
     ):
-        self.calls.append(("add_reference_genome_to_sample", reference_genome_id))
-        return {"reference_genome_id": reference_genome_id}
+        self.calls.append(("add_reference_genome_to_sample", reference_genome_accession))
+        return {"reference_genome_accession": reference_genome_accession}
 
     def add_annotation_track_to_sample(
         self, sample_id, *, track, force=False, headers=None
@@ -166,7 +166,7 @@ metadata:
   - fieldname: sccmec
     value: ./sccmec.csv
     type: table
-reference_genome_id: ref-genome-1
+reference_genome_accession: GCF_000012045.1
 nextflow_run_info: ./run_info.json
 analysis_result:
   - software: mlst
