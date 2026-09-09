@@ -237,6 +237,7 @@ def parse_manifest_for_upload(manifest: SampleManifest) -> ParsedSampleResults:
         analysis_results.append(
             MinimalAnalysisRecord(
                 software=res.software,
+                subcommand=res.subcommand,
                 software_version=res.software_version,
                 uri=res.uri,
             )

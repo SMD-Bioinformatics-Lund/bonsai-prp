@@ -267,7 +267,14 @@ class BonsaiUploadService:
                 )
                 continue
 
-            substep = result.software  # used for dynamic state key
+            # dynamic state key; include the subcommand so that e.g. samtools
+            # coverage/bedcov/stats are tracked separately rather than the first
+            # one marking the rest as already done
+            substep = (
+                f"{result.software}.{result.subcommand}"
+                if result.subcommand
+                else result.software
+            )
 
             # Skip if upload step has been run
             is_done = state.is_done(f"{step_name}:{substep}", dry_run=self.dry_run)
