@@ -181,13 +181,13 @@ def step_add_reference_genome(
     headers: Headers,
 ):
     """Associate sample with a reference genome."""
-    if sample_info.reference_genome_id is None:
-        raise SkipStep("No reference genome id provided")
+    if sample_info.reference_genome_accession is None:
+        raise SkipStep("No reference genome accession provided")
 
     internal_sample_id = state.assert_sample_id()
     return client.add_reference_genome_to_sample(
         internal_sample_id,
-        reference_genome_id=sample_info.reference_genome_id,
+        reference_genome_accession=sample_info.reference_genome_accession,
         headers=headers,
     )
 
@@ -216,7 +216,7 @@ def step_add_annotation_track(
         file_fmt = suffix
 
     api_input = GenomicResourceInput(
-        reference_genome_id=sample_info.reference_genome_id,
+        reference_genome_accession=sample_info.reference_genome_accession,
         pipeline_run_id=sample_info.pipeline.pipeline_run_id,
         resource_data=[
             AnnotationTrack(
