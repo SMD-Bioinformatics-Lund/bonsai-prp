@@ -202,7 +202,12 @@ def step_add_annotation_track(
     headers: Headers,
     force: bool = False,
 ):
-    """Associate sample with a reference genome."""
+    """Attach an IGV annotation track to a sample."""
+    # Annotation tracks are rendered by IGV, which cannot place them without a
+    # reference genome, so there is nothing to attach them to.
+    if sample_info.reference_genome_accession is None:
+        raise SkipStep("No reference genome accession provided")
+
     internal_sample_id = state.assert_sample_id()
 
     # infere file format if not provided
