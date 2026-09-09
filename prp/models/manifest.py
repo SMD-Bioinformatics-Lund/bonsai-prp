@@ -94,6 +94,7 @@ class AnalysisResult(BaseModel):
     """Describe how a analysis result was derived."""
 
     software: str
+    subcommand: str | None = None
     software_version: str
     database: str | None = None
     uri: FlexibleURI

@@ -101,6 +101,7 @@ class MinimalAnalysisRecord(BaseModel):
     """Minimal information about an analysis result, for upload to Bonsai."""
 
     software: str
+    subcommand: str | None = None
     software_version: str
     uri: URI
 

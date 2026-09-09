@@ -146,6 +146,7 @@ def analysis_result_to_upload_payload(
         sample_id=sample_id,
         pipeline_run_id=run_id,
         software=result.software,
+        subcommand=result.subcommand,
         software_version=result.software_version,
         file=uri_path,
     )
