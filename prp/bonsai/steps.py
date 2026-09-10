@@ -262,6 +262,7 @@ def step_upload_analysis_results(
     *,
     result: MinimalAnalysisRecord,
     headers: Headers,
+    aux_paths: dict[str, Any] | None = None,
     **kwargs,
 ) -> dict[str, str]:
     """Upload analysis results to the sample."""
@@ -269,7 +270,7 @@ def step_upload_analysis_results(
 
     run_id = sample_info.pipeline.pipeline_run_id
     payload = mappers.analysis_result_to_upload_payload(
-        internal_sample_id, run_id=run_id, result=result
+        internal_sample_id, run_id=run_id, result=result, aux_paths=aux_paths
     )
 
     # if "force" flag is set, overwrite existing results for the same software;

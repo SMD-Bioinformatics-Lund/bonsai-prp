@@ -123,7 +123,11 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> PipelineRun
 
 
 def analysis_result_to_upload_payload(
-    sample_id: str, *, run_id: str, result: MinimalAnalysisRecord
+    sample_id: str,
+    *,
+    run_id: str,
+    result: MinimalAnalysisRecord,
+    aux_paths: dict[str, Path] | None = None,
 ) -> UploadAnalysisResultInput:
     """Convert from internal analysis result representation to API input model."""
     if not result.uri:
@@ -149,4 +153,5 @@ def analysis_result_to_upload_payload(
         subcommand=result.subcommand,
         software_version=result.software_version,
         file=uri_path,
+        **(aux_paths or {}),
     )
