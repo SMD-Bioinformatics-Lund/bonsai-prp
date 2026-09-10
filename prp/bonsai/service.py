@@ -3,6 +3,7 @@
 import logging
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from bonsai_libs.api_client.bonsai.models import (
@@ -256,8 +257,28 @@ class BonsaiUploadService:
         # Phase 3: upload analysis results
         step_name = "upload_analysis_results"
         upload_analysis_fn = steps.lookup_step(step_name)
+
+        # bedcov has no parser of its own; it is an input to samtools stats.
+        AUX_FOR = {"coverage": "coverage_file", "bedcov": "bedcov_file"}
+        SKIP_AS_STANDALONE = {("samtools", "bedcov")}
+        samtools_aux: dict[str, Path] = {}
+        for result in results.analysis_results:
+            if result.software != "samtools" or result.subcommand not in AUX_FOR:
+                continue
+            uri = getattr(result, "uri", None)
+            if uri is not None and getattr(uri, "scheme", None) == "file":
+                samtools_aux[AUX_FOR[result.subcommand]] = Path(uri.path)
+
         for result in results.analysis_results:
             if only and result.software not in only:
+                continue
+
+            if (result.software, result.subcommand) in SKIP_AS_STANDALONE:
+                LOG.info(
+                    "Not uploading %s %s on its own; it is an auxiliary input",
+                    result.software,
+                    result.subcommand,
+                )
                 continue
 
             if not isinstance(result, MinimalAnalysisRecord):
@@ -282,6 +303,12 @@ class BonsaiUploadService:
                 self.reporter.on_step_skip(external_id, f"{step_name}:{substep}")
                 continue
 
+            aux_paths = (
+                samtools_aux
+                if (result.software, result.subcommand) == ("samtools", "stats")
+                else None
+            )
+
             headers = self._headers_for("upload_analysis_results", state)
             upload_analysis_fn(
                 self,
@@ -290,6 +317,7 @@ class BonsaiUploadService:
                 state,
                 result=result,
                 headers=headers,
+                aux_paths=aux_paths,
                 substep=substep,
                 dry_run=self.dry_run,
                 force=force,
