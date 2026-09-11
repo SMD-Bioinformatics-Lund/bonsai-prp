@@ -28,6 +28,7 @@ This module does *not* perform validation, serialization, or API communication.
 It acts purely as the ingestion and normalisation layer for pipeline outputs.
 """
 
+import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -35,6 +36,7 @@ from typing import Any
 
 from bonsai_libs.parse.io.delimited import read_delimited
 from bonsai_libs.parse.io.json import read_json
+from pydantic import ValidationError
 from prp.models.manifest import (
     URI,
     AnalysisResult,
@@ -45,6 +47,7 @@ from prp.models.manifest import (
 from prp.models.metadata import MetaEntry, TableMetadataEntry
 
 from .types import (
+    DatabaseInfo,
     GenericMetadataRecord,
     IgvAnnotationTrack,
     InternalIndexArtifacts,
@@ -63,8 +66,28 @@ from .types import (
 LOG = logging.getLogger(__name__)
 
 
+def read_database_info(paths: list[Any]) -> list[DatabaseInfo]:
+    """Read the database version files listed in the manifest."""
+    databases = []
+    for path in paths:
+        try:
+            with open(path, "rb") as inpt:
+                record = json.load(inpt)
+        except (OSError, json.JSONDecodeError) as exc:
+            LOG.warning("Skipping unreadable database info file %s: %s", path, exc)
+            continue
+        try:
+            databases.append(DatabaseInfo.model_validate(record))
+        except ValidationError as exc:
+            LOG.warning("Skipping malformed database info file %s: %s", path, exc)
+    return databases
+
+
 def to_internal_run_info(
-    *, run_info: dict[str, Any], analysis_results: list[AnalysisResult]
+    *,
+    run_info: dict[str, Any],
+    analysis_results: list[AnalysisResult],
+    software_info: list[Any] | None = None,
 ) -> PipelineRun:
     """Parse the run information dump from JASEN."""
     artifacts = [
@@ -94,6 +117,7 @@ def to_internal_run_info(
             definition=pipeline_def,
             run_config=run_cnf,
             artifacts=artifacts,
+            databases=read_database_info(software_info or []),
         ),
     )
 
@@ -214,7 +238,9 @@ def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleRe
         reference_genome_accession=manifest.reference_genome_accession,
         annotation_tracks=annotations,
         pipeline=to_internal_run_info(
-            run_info=raw_run_info, analysis_results=manifest.analysis_result
+            run_info=raw_run_info,
+            analysis_results=manifest.analysis_result,
+            software_info=manifest.software_info,
         ),
         sequencing=to_internal_sequencing_info(run_info=raw_run_info),
         index_artifacts=(
