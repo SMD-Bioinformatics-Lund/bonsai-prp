@@ -1,5 +1,6 @@
 """Convert from internal data to the input required by the API."""
 
+import logging
 from pathlib import Path
 
 from bonsai_libs.api_client.bonsai.models import (
@@ -20,6 +21,8 @@ from pydantic import TypeAdapter
 
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
+LOG = logging.getLogger(__name__)
+
 meta_adapter_input = TypeAdapter(MetaEntryInput)
 
 
@@ -31,8 +34,13 @@ def convert_metadata_entry(meta) -> MetaEntryInput:
 
     # 1. Handle table metadata
     if t == "table":
+        # The API models accept a table as a path it reads itself, but the
+        # internal record has already been parsed and no longer carries one.
+        LOG.warning(
+            "Dropping metadata field '%s': table metadata cannot be uploaded yet",
+            meta.fieldname,
+        )
         return None
-        # TODO reenable this later once the API supports it --- IGNORE ---
 
     # 2. Handle datetime metadata
     if t == "datetime":
