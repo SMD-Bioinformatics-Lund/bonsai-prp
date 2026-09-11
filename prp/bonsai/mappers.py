@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 from bonsai_libs.api_client.bonsai.models import (
+    DatabaseInfo,
     DatetimeMetadataEntry,
     GenericMetadataEntry,
     MetaEntryInput,
@@ -115,6 +116,10 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> PipelineRun
         analysis_profile=raw_pipeline_nfo.run_config.analysis_profile,
         configuration_files=raw_pipeline_nfo.run_config.configuration_files,
     )
+    databases = [
+        DatabaseInfo(name=db.name, version=db.version, type=db.type)
+        for db in raw_pipeline_nfo.databases
+    ]
 
     return PipelineRunInput(
         pipeline_run_id=sample_info.pipeline.pipeline_run_id,
@@ -124,6 +129,7 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> PipelineRun
             run_config=run_cnf,
             definition=pipeline_def,
             artifacts=artifacts,
+            databases=databases,
         ),
     )
 

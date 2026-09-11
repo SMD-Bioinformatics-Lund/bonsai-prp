@@ -122,6 +122,11 @@ class SampleManifest(AllowExtraModelMixin):
 
     nextflow_run_info: RelOrAbsPath
 
+    software_info: list[RelOrAbsPath] = Field(
+        default_factory=list,
+        description="Database version files produced by the pipeline",
+    )
+
     analysis_result: list[AnalysisResult] = Field(
         default_factory=list,
         description="Analysis results produced by the pipeline",
