@@ -34,8 +34,6 @@ def convert_metadata_entry(meta) -> MetaEntryInput:
 
     # 1. Handle table metadata
     if t == "table":
-        # The API models accept a table as a path it reads itself, but the
-        # internal record has already been parsed and no longer carries one.
         LOG.warning(
             "Dropping metadata field '%s': table metadata cannot be uploaded yet",
             meta.fieldname,
