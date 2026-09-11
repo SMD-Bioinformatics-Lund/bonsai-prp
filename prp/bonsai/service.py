@@ -261,6 +261,16 @@ class BonsaiUploadService:
         # bedcov has no parser of its own; it is an input to samtools stats.
         AUX_FOR = {"coverage": "coverage_file", "bedcov": "bedcov_file"}
         SKIP_AS_STANDALONE = {("samtools", "bedcov")}
+
+        # Older pipeline runs produced a single postalignqc result; newer ones
+        # produce samtools stats. A manifest holding both is uploaded as samtools.
+        has_samtools_stats = any(
+            (r.software, r.subcommand) == ("samtools", "stats")
+            for r in results.analysis_results
+        )
+        if has_samtools_stats:
+            SKIP_AS_STANDALONE.add(("postalignqc", None))
+
         samtools_aux: dict[str, Path] = {}
         for result in results.analysis_results:
             if result.software != "samtools" or result.subcommand not in AUX_FOR:
@@ -275,7 +285,7 @@ class BonsaiUploadService:
 
             if (result.software, result.subcommand) in SKIP_AS_STANDALONE:
                 LOG.info(
-                    "Not uploading %s %s on its own; it is an auxiliary input",
+                    "Not uploading %s %s; superseded or an auxiliary input",
                     result.software,
                     result.subcommand,
                 )
