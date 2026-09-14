@@ -1,8 +1,10 @@
 """Convert from internal data to the input required by the API."""
 
+import logging
 from pathlib import Path
 
 from bonsai_libs.api_client.bonsai.models import (
+    DatabaseInfo,
     DatetimeMetadataEntry,
     GenericMetadataEntry,
     MetaEntryInput,
@@ -20,6 +22,8 @@ from pydantic import TypeAdapter
 
 from prp.pipeline.types import MinimalAnalysisRecord, ParsedSampleResults
 
+LOG = logging.getLogger(__name__)
+
 meta_adapter_input = TypeAdapter(MetaEntryInput)
 
 
@@ -31,8 +35,11 @@ def convert_metadata_entry(meta) -> MetaEntryInput:
 
     # 1. Handle table metadata
     if t == "table":
+        LOG.warning(
+            "Dropping metadata field '%s': table metadata cannot be uploaded yet",
+            meta.fieldname,
+        )
         return None
-        # TODO reenable this later once the API supports it --- IGNORE ---
 
     # 2. Handle datetime metadata
     if t == "datetime":
@@ -109,6 +116,10 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> PipelineRun
         analysis_profile=raw_pipeline_nfo.run_config.analysis_profile,
         configuration_files=raw_pipeline_nfo.run_config.configuration_files,
     )
+    databases = [
+        DatabaseInfo(name=db.name, version=db.version, type=db.type)
+        for db in raw_pipeline_nfo.databases
+    ]
 
     return PipelineRunInput(
         pipeline_run_id=sample_info.pipeline.pipeline_run_id,
@@ -118,12 +129,17 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> PipelineRun
             run_config=run_cnf,
             definition=pipeline_def,
             artifacts=artifacts,
+            databases=databases,
         ),
     )
 
 
 def analysis_result_to_upload_payload(
-    sample_id: str, *, run_id: str, result: MinimalAnalysisRecord
+    sample_id: str,
+    *,
+    run_id: str,
+    result: MinimalAnalysisRecord,
+    aux_paths: dict[str, Path] | None = None,
 ) -> UploadAnalysisResultInput:
     """Convert from internal analysis result representation to API input model."""
     if not result.uri:
@@ -146,6 +162,8 @@ def analysis_result_to_upload_payload(
         sample_id=sample_id,
         pipeline_run_id=run_id,
         software=result.software,
+        subcommand=result.subcommand,
         software_version=result.software_version,
         file=uri_path,
+        **(aux_paths or {}),
     )
