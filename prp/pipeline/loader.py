@@ -72,12 +72,13 @@ def read_database_info(paths: list[Any]) -> list[DatabaseInfo]:
     for path in paths:
         try:
             with open(path, "rb") as inpt:
-                record = json.load(inpt)
+                content = json.load(inpt)
         except (OSError, json.JSONDecodeError) as exc:
             LOG.warning("Skipping unreadable database info file %s: %s", path, exc)
             continue
+        records = content if isinstance(content, list) else [content]
         try:
-            databases.append(DatabaseInfo.model_validate(record))
+            databases.extend([DatabaseInfo.model_validate(rec) for rec in records])
         except ValidationError as exc:
             LOG.warning("Skipping malformed database info file %s: %s", path, exc)
     return databases
