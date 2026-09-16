@@ -117,7 +117,7 @@ def sample_info_to_pipeline_run(sample_info: ParsedSampleResults) -> PipelineRun
         configuration_files=raw_pipeline_nfo.run_config.configuration_files,
     )
     databases = [
-        DatabaseInfo(name=db.name, version=db.version, type=db.type)
+        DatabaseInfo(software=db.software, name=db.name, version=db.version)
         for db in raw_pipeline_nfo.databases
     ]
 

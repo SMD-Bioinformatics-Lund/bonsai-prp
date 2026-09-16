@@ -11,7 +11,7 @@ from bonsai_libs.api_client.bonsai.models import (
     CreateReferenceGenomeInput,
     CreateUserInput,
 )
-from pydantic import BaseModel, Field, ValidationInfo
+from pydantic import BaseModel, Field, ValidationInfo, model_validator
 from pydantic_core import core_schema
 
 from .base import AllowExtraModelMixin, RelOrAbsPath
@@ -107,6 +107,14 @@ class IndexArtifacts(BaseModel):
     sourmash_signature: FlexibleURI | None = None
 
 
+class DatabaseRecord(BaseModel):
+    """Version of a database a tool in the manifest was run against."""
+
+    software: str
+    database: str
+    database_version: str
+
+
 class SampleManifest(AllowExtraModelMixin):
     """Sample information with metadata and results files."""
 
@@ -122,9 +130,9 @@ class SampleManifest(AllowExtraModelMixin):
 
     nextflow_run_info: RelOrAbsPath
 
-    software_info: list[RelOrAbsPath] = Field(
+    database_info: list[DatabaseRecord] = Field(
         default_factory=list,
-        description="Database version files produced by the pipeline",
+        description="Database versions the pipeline's tools were run against",
     )
 
     analysis_result: list[AnalysisResult] = Field(
@@ -133,6 +141,15 @@ class SampleManifest(AllowExtraModelMixin):
     )
 
     index_artifacts: IndexArtifacts | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_software_info(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "software_info" in data:
+            raise ValueError(
+                "software_info was replaced by database_info; rebuild the manifest"
+            )
+        return data
 
     def assigned_to_group(self) -> bool:
         """Return True if sample is assigned to a group."""
