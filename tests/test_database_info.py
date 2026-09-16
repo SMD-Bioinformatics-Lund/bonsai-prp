@@ -1,34 +1,61 @@
-"""Tests for reading database version files listed in a manifest."""
-import json
+"""Tests for database_info in sample manifests."""
 
-from prp.pipeline.loader import read_database_info
+import pytest
+from pydantic import ValidationError
+
+from prp.models.manifest import DatabaseRecord, SampleManifest
+from prp.pipeline.loader import to_internal_run_info
+
+RUN_INFO = {
+    "pipeline": "jasen",
+    "version": "1.3.0",
+    "commit": "abc",
+    "release_life_cycle": "production",
+    "command": "nextflow run",
+    "analysis_profile": ["staphylococcus_aureus"],
+    "configuration_files": ["nextflow.config"],
+    "workflow_name": "run1",
+    "assay": "wgs",
+    "date": "2026-01-01T00:00:00",
+}
 
 
-def _write(path, content):
-    path.write_text(json.dumps(content) if not isinstance(content, str) else content)
-    return str(path)
+def _manifest(tmp_path, **extra):
+    run_info = tmp_path / "analysis_meta.json"
+    run_info.write_text("{}")
+    return {
+        "sample_id": "sample1",
+        "sample_name": "sample1",
+        "lims_id": "L1",
+        "nextflow_run_info": str(run_info),
+        **extra,
+    }
 
 
-def test_list_file_yields_every_database(tmp_path):
-    path = _write(tmp_path / "resfinder_meta.json", [
-        {"name": "resfinder", "version": "2.4.0", "type": "database"},
-        {"name": "pointfinder", "version": "4.1.1", "type": "database"},
-    ])
-    assert [(db.name, db.version) for db in read_database_info([path])] == [
-        ("resfinder", "2.4.0"), ("pointfinder", "4.1.1"),
+def test_manifest_parses_database_info(tmp_path):
+    manifest = SampleManifest.model_validate(_manifest(tmp_path, database_info=[
+        {"software": "resfinder", "database": "pointfinder", "database_version": "4.1.1"},
+    ]))
+    assert manifest.database_info == [
+        DatabaseRecord(software="resfinder", database="pointfinder", database_version="4.1.1")
     ]
 
 
-def test_single_object_file(tmp_path):
-    path = _write(tmp_path / "virulencefinder_meta.json",
-                  {"name": "virulencefinder", "version": "041b8b3", "type": "database"})
-    assert [db.name for db in read_database_info([path])] == ["virulencefinder"]
+def test_manifest_rejects_software_info(tmp_path):
+    with pytest.raises(ValidationError, match="replaced by database_info"):
+        SampleManifest.model_validate(_manifest(tmp_path, software_info=["x_meta.json"]))
 
 
-def test_bad_files_skipped_without_losing_good_ones(tmp_path):
-    good = _write(tmp_path / "good.json", {"name": "serotypefinder", "version": "1.0"})
-    broken = _write(tmp_path / "broken.json", "{not json")
-    malformed = _write(tmp_path / "malformed.json", [{"name": "x"}])
-    missing = str(tmp_path / "missing.json")
-    names = [db.name for db in read_database_info([broken, malformed, missing, good])]
-    assert names == ["serotypefinder"]
+def test_database_info_reaches_pipeline_run():
+    run = to_internal_run_info(
+        run_info=RUN_INFO,
+        analysis_results=[],
+        database_info=[
+            DatabaseRecord(software="resfinder", database="resfinder", database_version="2.6.0"),
+            DatabaseRecord(software="tbprofiler", database="tbdb", database_version="4907915"),
+        ],
+    )
+    assert [(db.software, db.name, db.version) for db in run.pipeline_info.databases] == [
+        ("resfinder", "resfinder", "2.6.0"),
+        ("tbprofiler", "tbdb", "4907915"),
+    ]

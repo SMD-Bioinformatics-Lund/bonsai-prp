@@ -28,7 +28,6 @@ This module does *not* perform validation, serialization, or API communication.
 It acts purely as the ingestion and normalisation layer for pipeline outputs.
 """
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -36,10 +35,10 @@ from typing import Any
 
 from bonsai_libs.parse.io.delimited import read_delimited
 from bonsai_libs.parse.io.json import read_json
-from pydantic import ValidationError
 from prp.models.manifest import (
     URI,
     AnalysisResult,
+    DatabaseRecord,
     IgvAnnotation,
     IndexArtifacts,
     SampleManifest,
@@ -66,29 +65,11 @@ from .types import (
 LOG = logging.getLogger(__name__)
 
 
-def read_database_info(paths: list[Any]) -> list[DatabaseInfo]:
-    """Read the database version files listed in the manifest."""
-    databases = []
-    for path in paths:
-        try:
-            with open(path, "rb") as inpt:
-                content = json.load(inpt)
-        except (OSError, json.JSONDecodeError) as exc:
-            LOG.warning("Skipping unreadable database info file %s: %s", path, exc)
-            continue
-        records = content if isinstance(content, list) else [content]
-        try:
-            databases.extend([DatabaseInfo.model_validate(rec) for rec in records])
-        except ValidationError as exc:
-            LOG.warning("Skipping malformed database info file %s: %s", path, exc)
-    return databases
-
-
 def to_internal_run_info(
     *,
     run_info: dict[str, Any],
     analysis_results: list[AnalysisResult],
-    software_info: list[Any] | None = None,
+    database_info: list[DatabaseRecord] | None = None,
 ) -> PipelineRun:
     """Parse the run information dump from JASEN."""
     artifacts = [
@@ -118,7 +99,12 @@ def to_internal_run_info(
             definition=pipeline_def,
             run_config=run_cnf,
             artifacts=artifacts,
-            databases=read_database_info(software_info or []),
+            databases=[
+                DatabaseInfo(
+                    software=db.software, name=db.database, version=db.database_version
+                )
+                for db in database_info or []
+            ],
         ),
     )
 
@@ -241,7 +227,7 @@ def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleRe
         pipeline=to_internal_run_info(
             run_info=raw_run_info,
             analysis_results=manifest.analysis_result,
-            software_info=manifest.software_info,
+            database_info=manifest.database_info,
         ),
         sequencing=to_internal_sequencing_info(run_info=raw_run_info),
         index_artifacts=(
