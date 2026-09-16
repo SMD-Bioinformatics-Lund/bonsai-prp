@@ -34,10 +34,10 @@ def _manifest(tmp_path, **extra):
 
 def test_manifest_parses_database_info(tmp_path):
     manifest = SampleManifest.model_validate(_manifest(tmp_path, database_info=[
-        {"software": "resfinder", "database": "pointfinder", "database_version": "4.1.1"},
+        {"software": "resfinder", "name": "pointfinder", "version": "4.1.1"},
     ]))
     assert manifest.database_info == [
-        DatabaseRecord(software="resfinder", database="pointfinder", database_version="4.1.1")
+        DatabaseRecord(software="resfinder", name="pointfinder", version="4.1.1")
     ]
 
 
@@ -51,8 +51,8 @@ def test_database_info_reaches_pipeline_run():
         run_info=RUN_INFO,
         analysis_results=[],
         database_info=[
-            DatabaseRecord(software="resfinder", database="resfinder", database_version="2.6.0"),
-            DatabaseRecord(software="tbprofiler", database="tbdb", database_version="4907915"),
+            DatabaseRecord(software="resfinder", name="resfinder", version="2.6.0"),
+            DatabaseRecord(software="tbprofiler", name="tbdb", version="4907915"),
         ],
     )
     assert [(db.software, db.name, db.version) for db in run.pipeline_info.databases] == [

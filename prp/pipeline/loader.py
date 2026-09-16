@@ -100,9 +100,7 @@ def to_internal_run_info(
             run_config=run_cnf,
             artifacts=artifacts,
             databases=[
-                DatabaseInfo(
-                    software=db.software, name=db.database, version=db.database_version
-                )
+                DatabaseInfo(software=db.software, name=db.name, version=db.version)
                 for db in database_info or []
             ],
         ),
