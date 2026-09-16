@@ -111,8 +111,8 @@ class DatabaseRecord(BaseModel):
     """Version of a database a tool in the manifest was run against."""
 
     software: str
-    database: str
-    database_version: str
+    name: str
+    version: str
 
 
 class SampleManifest(AllowExtraModelMixin):
