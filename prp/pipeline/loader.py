@@ -33,13 +33,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from bonsai_libs.parse import run_parser
 from bonsai_libs.parse.io.delimited import read_delimited
 from bonsai_libs.parse.io.json import read_json
-
 from prp.models.manifest import (
     URI,
     AnalysisResult,
+    DatabaseRecord,
     IgvAnnotation,
     IndexArtifacts,
     SampleManifest,
@@ -47,7 +46,7 @@ from prp.models.manifest import (
 from prp.models.metadata import MetaEntry, TableMetadataEntry
 
 from .types import (
-    FullAnalysisResult,
+    DatabaseInfo,
     GenericMetadataRecord,
     IgvAnnotationTrack,
     InternalIndexArtifacts,
@@ -67,7 +66,10 @@ LOG = logging.getLogger(__name__)
 
 
 def to_internal_run_info(
-    *, run_info: dict[str, Any], analysis_results: list[AnalysisResult]
+    *,
+    run_info: dict[str, Any],
+    analysis_results: list[AnalysisResult],
+    database_info: list[DatabaseRecord] | None = None,
 ) -> PipelineRun:
     """Parse the run information dump from JASEN."""
     artifacts = [
@@ -97,6 +99,10 @@ def to_internal_run_info(
             definition=pipeline_def,
             run_config=run_cnf,
             artifacts=artifacts,
+            databases=[
+                DatabaseInfo(software=db.software, name=db.name, version=db.version)
+                for db in database_info or []
+            ],
         ),
     )
 
@@ -214,10 +220,12 @@ def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleRe
         lims_id=manifest.lims_id,
         groups=manifest.groups,
         metadata=metadata,
-        reference_genome_id=manifest.reference_genome_id,
+        reference_genome_accession=manifest.reference_genome_accession,
         annotation_tracks=annotations,
         pipeline=to_internal_run_info(
-            run_info=raw_run_info, analysis_results=manifest.analysis_result
+            run_info=raw_run_info,
+            analysis_results=manifest.analysis_result,
+            database_info=manifest.database_info,
         ),
         sequencing=to_internal_sequencing_info(run_info=raw_run_info),
         index_artifacts=(
@@ -240,40 +248,10 @@ def parse_manifest_for_upload(manifest: SampleManifest) -> ParsedSampleResults:
         analysis_results.append(
             MinimalAnalysisRecord(
                 software=res.software,
+                subcommand=res.subcommand,
                 software_version=res.software_version,
                 uri=res.uri,
             )
         )
-
-    return base_result.model_copy(update={"analysis_results": analysis_results})
-
-
-def parse_manifest_for_analysis(manifest: SampleManifest) -> ParsedSampleResults:
-    """Parse the sample manifest and the analysis result files for internal use."""
-    base_result = parse_base_results_from_manifest(manifest)
-
-    # parse results from analysis softwares
-    analysis_results: list[FullAnalysisResult] = []
-    for res in manifest.analysis_result:
-        if not res.uri.scheme == "file":
-            raise NotImplementedError(
-                f"No method for reading {res.uri.scheme} URI scheme."
-            )
-        ev = run_parser(
-            software=res.software, version=res.software_version, data=res.uri.path
-        )
-        for at, parser_result in ev.results.items():
-            analysis_results.append(
-                FullAnalysisResult(
-                    software=ev.software,
-                    software_version=ev.software_version,
-                    parser_name=ev.parser_name,
-                    parser_version=ev.parser_version,
-                    parser_status=parser_result.status,
-                    reason=parser_result.reason,
-                    analysis_type=at,
-                    results=parser_result.value,
-                )
-            )
 
     return base_result.model_copy(update={"analysis_results": analysis_results})

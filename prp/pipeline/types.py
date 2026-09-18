@@ -57,7 +57,9 @@ class PipelineDefinition(BaseModel):
     name: str
     version: str
     commit: str | None = None
-    release_life_cycle: Literal["development", "staging", "production", "unknown"]
+    release_life_cycle: Literal[
+        "development", "validation", "staging", "production", "unknown"
+    ]
 
 
 class PipelineRunConfig(BaseModel):
@@ -68,12 +70,21 @@ class PipelineRunConfig(BaseModel):
     configuration_files: list[str] = Field(default_factory=list)
 
 
+class DatabaseInfo(BaseModel):
+    """Describe a reference database used by the pipeline."""
+
+    software: str
+    name: str
+    version: str
+
+
 class PipelineInfo(BaseModel):
     """Full description of the pipeline and its execution."""
 
     definition: PipelineDefinition
     run_config: PipelineRunConfig
     artifacts: list[PipelineArtifact]
+    databases: list[DatabaseInfo] = Field(default_factory=list)
 
 
 class PipelineRun(BaseModel):
@@ -99,6 +110,7 @@ class MinimalAnalysisRecord(BaseModel):
     """Minimal information about an analysis result, for upload to Bonsai."""
 
     software: str
+    subcommand: str | None = None
     software_version: str
     uri: URI
 
@@ -167,7 +179,7 @@ class ParsedSampleResults(BaseModel):
     pipeline: PipelineRun
 
     # reference info
-    reference_genome_id: str | None = None
+    reference_genome_accession: str | None = None
     annotation_tracks: list[IgvAnnotationTrack] = Field(..., default_factory=list)
 
     # analysis results and artifacts
