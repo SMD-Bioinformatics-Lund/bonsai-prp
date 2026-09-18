@@ -15,6 +15,10 @@
 - Added parser registry with support for version based parser selection.
 - Added added tests for several existing parsers
 - Added `--only` flag to `bonsai upload` to overwrite just the results
+- `bonsai bootstrap` creates reference genomes, reusing any that already exist
+- `bonsai upload` sends each result's subcommand, so samtools `stats`, `coverage` and `bedcov` are stored separately
+- `bonsai upload` attaches the samtools coverage and bedcov files to the stats upload
+- Added `database_info` to the manifest, carrying each database's `software`, `name` and `version` to Bonsai
 
 ### Changed
 
@@ -33,12 +37,21 @@
 - AmrFinder virulence genes accept the `STX_TYPE` subtype from v4 output
 - `release_life_cycle` accepts `validation`
 - `FlexibleURI` accepts absolute paths without requiring they exist, just warns if the file's missing
+- Manifests identify the reference genome by assembly accession (`reference_genome_accession`) instead of `reference_genome_id`
+- `bonsai upload` reuses a sample that already exists with the same external ID
+- Annotation tracks are skipped when a sample has no reference genome
+- Legacy `postalignqc` results are only uploaded when the manifest has no samtools stats result
+- Table metadata is dropped with a warning instead of silently
+- Manifests with the old `software_info` key are rejected; rebuild them to get `database_info`
+- `bonsai-libs` and `click` are base dependencies
+- Depends on bonsai-libs' `revert-server-generated-group-ids` branch until it is merged into `master`
 
 ### Fixed
 
 - Improved error handling and unified some names.
 - `SamtoolsQcParser`'s bedcov argument accepts a stream, not just a path
 - Docker publish workflow was reading the version from the wrong event and would've tagged images with an empty version; back to reading it from `prp/__version__.py`
+- A dry run no longer leaves upload state that blocks the real upload
 
 ## [1.5.0]
 

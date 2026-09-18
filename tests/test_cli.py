@@ -298,6 +298,26 @@ def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_
     assert isinstance(client.calls[2][1], dict)  # genome_data.model_dump()
 
 
+def test_bootstrap_sends_group_id(monkeypatch, bootstap_config_valid):
+    """bonsai-libs' CreateGroupInput has no group_id, but Bonsai needs one to create a group."""
+    client = FakeBonsaiClient()
+    monkeypatch.setattr(
+        "prp.cli.bonsai_api.make_bonsai_client", lambda base_url: client
+    )
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            bonsai_bootstrap,
+            [str(bootstap_config_valid.absolute()), "-a", "http://api:8000",
+             "-u", "admin", "-p", "secret"],
+        )
+
+    assert result.exit_code == 0, result.output
+    group = next(call[1] for call in client.calls if call[0] == "create_group")
+    assert group.model_dump(mode="json")["group_id"] == group.group_id
+
+
 def test_bootstrap_skips_existing_users_and_groups(monkeypatch, bootstap_config_valid):
     """Bootstrap treats an already-existing user/group/genome as a no-op, not a create."""
     client = FakeBonsaiClient(
