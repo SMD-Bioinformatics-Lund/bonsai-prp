@@ -17,6 +17,7 @@ from prp.pipeline.types import (
 
 from . import mappers
 from .client import BonsaiApiClient
+from .groups import resolve_group_ids
 from .state_store import UploadState
 
 Headers: TypeAlias = dict[str, str]
@@ -29,6 +30,14 @@ EXPECTED_SUFFIXES = ["vcf", "bam", "cram", "gff", "gff3", "gtf", "bed", "bp"]
 class SkipStep(Exception):
     def __init__(self, reason: str):
         self.reason = reason
+
+
+def _format_suffix(uri: str) -> str:
+    """File extension naming the format, looking past a trailing .gz."""
+    suffixes = [suffix.strip(".") for suffix in Path(uri).suffixes]
+    if len(suffixes) > 1 and suffixes[-1] == "gz":
+        return suffixes[-2]
+    return suffixes[-1] if suffixes else ""
 
 
 def lookup_step(step_name: str) -> Callable[[], Any]:
@@ -144,6 +153,8 @@ def step_create_sample(
         pass
 
     payload = mappers.sample_to_bonsai(sample_info)
+    if sample_info.groups:
+        payload.groups = resolve_group_ids(client.get_groups(headers=headers), sample_info.groups)
     resp = client.create_sample(payload, headers=headers)
 
     # set sample id in state
@@ -213,7 +224,7 @@ def step_add_annotation_track(
     # infere file format if not provided
     file_fmt = track.format
     if file_fmt is None:
-        suffix = Path(track.uri).suffix.strip(".")
+        suffix = _format_suffix(track.uri)
         if suffix not in EXPECTED_SUFFIXES:
             raise ValueError(
                 f"Could not infere format of file '{track.uri}', please specify format."

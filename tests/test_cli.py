@@ -8,6 +8,7 @@ from bonsai_libs.api_client.bonsai.models import (
     CreateGroupInput,
     CreateSampleResponse,
     CreateUserInput,
+    GroupResponse,
     UploadAnalysisResultResponse,
 )
 from bonsai_libs.api_client.core.exceptions import ClientError, NotFoundError
@@ -20,6 +21,13 @@ class _Resp(SimpleNamespace):
     """Stand-in for a bonsai-libs response model."""
 
 
+def _group(group_id: str, display_name: str, group: str | None = None) -> GroupResponse:
+    return GroupResponse(
+        group_id=group_id, group=group, display_name=display_name, sample_count=0,
+        created_at="2026-01-01T00:00:00", modified_at="2026-01-01T00:00:00",
+    )
+
+
 class FakeBonsaiClient:
     """Fakes BonsaiApiClient at the HTTP boundary (method signatures match bonsai-libs
     exactly), so the real BonsaiUploadService/steps code runs underneath the CLI."""
@@ -28,12 +36,15 @@ class FakeBonsaiClient:
         self,
         *,
         existing_users=(),
-        existing_groups=(),
+        existing_groups=("S. aureus",),
         existing_genomes=(),
         existing_samples=(),
     ):
         self.existing_users = set(existing_users)
-        self.existing_groups = set(existing_groups)
+        self.groups = [
+            _group(f"uuid-{i}", name, name.lower().replace(". ", "").replace(" ", "-"))
+            for i, name in enumerate(existing_groups)
+        ]
         self.existing_genomes = list(existing_genomes)
         self.existing_samples = dict(existing_samples)
         self.calls: list[tuple] = []
@@ -58,15 +69,14 @@ class FakeBonsaiClient:
         self.calls.append(("create_user", user))
         return {"username": user.username}
 
-    def get_group(self, group_id: str, *, headers=None):
-        if group_id not in self.existing_groups:
-            raise ClientError("not found", status=404)
-        return {"id": group_id}
+    def get_groups(self, *, headers=None):
+        return list(self.groups)
 
     def create_group(self, group: CreateGroupInput, *, headers=None):
-        self.existing_groups.add(group.group_id)
+        created = _group(f"uuid-{len(self.groups)}", group.display_name, group.group)
+        self.groups.append(created)
         self.calls.append(("create_group", group))
-        return {"id": group.group_id}
+        return created
 
     def request_json(self, method, path, *, json=None, expected_status=(200,)):
         assert path == "reference-genomes"
@@ -211,6 +221,28 @@ def test_bonsai_upload_full_flow(monkeypatch, tmp_path: Path):
         "add_annotation_track_to_sample",
         "upload_analysis_result",
     ]
+    payload = next(call[1] for call in client.calls if call[0] == "create_sample")
+    assert payload.groups == ["uuid-0"]
+
+
+def test_bonsai_upload_fails_for_unknown_group(monkeypatch, tmp_path: Path):
+    """A manifest group that matches no Bonsai group aborts before the sample is created."""
+    manifest = _write_manifest(tmp_path)
+    client = FakeBonsaiClient(existing_groups=("E. coli",))
+    monkeypatch.setattr(
+        "prp.cli.bonsai_api.make_bonsai_client", lambda base_url: client
+    )
+
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(
+            bonsai_upload,
+            [str(manifest), "-a", "http://api:8000", "-u", "admin", "-p", "secret"],
+        )
+
+    assert result.exit_code != 0
+    assert "No Bonsai group matches ['saureus']" in result.output
+    assert client.calls == []
 
 
 def test_bonsai_upload_adopts_existing_sample(monkeypatch, tmp_path: Path):
@@ -298,31 +330,11 @@ def test_bootstrap_happy_path_calls_ensure_methods(monkeypatch, bootstap_config_
     assert isinstance(client.calls[2][1], dict)  # genome_data.model_dump()
 
 
-def test_bootstrap_sends_group_id(monkeypatch, bootstap_config_valid):
-    """bonsai-libs' CreateGroupInput has no group_id, but Bonsai needs one to create a group."""
-    client = FakeBonsaiClient()
-    monkeypatch.setattr(
-        "prp.cli.bonsai_api.make_bonsai_client", lambda base_url: client
-    )
-
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        result = runner.invoke(
-            bonsai_bootstrap,
-            [str(bootstap_config_valid.absolute()), "-a", "http://api:8000",
-             "-u", "admin", "-p", "secret"],
-        )
-
-    assert result.exit_code == 0, result.output
-    group = next(call[1] for call in client.calls if call[0] == "create_group")
-    assert group.model_dump(mode="json")["group_id"] == group.group_id
-
-
 def test_bootstrap_skips_existing_users_and_groups(monkeypatch, bootstap_config_valid):
     """Bootstrap treats an already-existing user/group/genome as a no-op, not a create."""
     client = FakeBonsaiClient(
         existing_users={"user"},
-        existing_groups={"mtuberculosis"},
+        existing_groups={"M. tuberculosis"},
         existing_genomes=[
             {
                 "id": "existing-genome",

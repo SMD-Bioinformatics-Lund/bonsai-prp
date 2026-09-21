@@ -10,6 +10,7 @@ from bonsai_libs.api_client.bonsai.models import (
     CreateGroupInput,
     CreateReferenceGenomeInput,
     CreateUserInput,
+    GroupResponse,
 )
 from bonsai_libs.api_client.core.exceptions import ClientError
 
@@ -101,31 +102,18 @@ class BonsaiUploadService:
             # Re-raise if it's not a 404
             raise
 
-    def ensure_group_exists(self, group_data: CreateGroupInput) -> dict[str, Any]:
-        """
-        Get existing group or create if missing.
+    def ensure_group_exists(self, group_data: CreateGroupInput) -> GroupResponse:
+        """Return the group with the same slug, creating it if missing.
 
-        Args:
-            group_id: The unique identifier for the group.
-            **group_data: Additional group data to pass during creation.
-
-        Returns:
-            The group object from the API.
+        Bonsai generates group ids, so a group is referenced by its slug.
         """
-        group_id = group_data.group_id
-        try:
-            LOG.debug("Fetching group: %s", group_id)
-            group = self.client.get_group(group_id)
-            LOG.info("Group already exists: %s", group_id)
-            return group
-        except ClientError as exc:
-            if exc.status == 404:
-                LOG.info("Creating new group: %s", group_id)
-                group = self.client.create_group(group_data)
-                LOG.info("Group created successfully: %s", group_id)
+        for group in self.client.get_groups():
+            if group.group == group_data.group or group.display_name == group_data.display_name:
+                LOG.info("Group already exists: %s (%s)", group_data.group, group.group_id)
                 return group
-            # Re-raise if it's not a 404
-            raise
+        group = self.client.create_group(group_data)
+        LOG.info("Group created: %s (%s)", group_data.group, group.group_id)
+        return group
 
     def ensure_reference_genome_exists(
         self, genome_data: CreateReferenceGenomeInput
