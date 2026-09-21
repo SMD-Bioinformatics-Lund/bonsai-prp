@@ -1,6 +1,7 @@
 """Sample manifest info."""
 
 import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -11,7 +12,7 @@ from bonsai_libs.api_client.bonsai.models import (
     CreateReferenceGenomeInput,
     CreateUserInput,
 )
-from pydantic import BaseModel, Field, ValidationInfo, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 from pydantic_core import core_schema
 
 from .base import AllowExtraModelMixin, RelOrAbsPath
@@ -89,6 +90,14 @@ class IgvAnnotation(BaseModel):
     uri: str
     index_uri: str | None = None
 
+    @field_validator("uri", "index_uri")
+    @classmethod
+    def relative_to_manifest(cls, value: str | None, info: ValidationInfo) -> str | None:
+        """Make relative paths absolute against the manifest's directory, keeping symlinks."""
+        if value is None or not info.context or "://" in value or os.path.isabs(value):
+            return value
+        return os.path.normpath(os.path.join(os.path.abspath(Path(info.context).parent), value))
+
 
 class AnalysisResult(BaseModel):
     """Describe how a analysis result was derived."""
@@ -126,6 +135,7 @@ class SampleManifest(AllowExtraModelMixin):
     metadata: list[MetaEntry] = Field(default_factory=list)
 
     reference_genome_accession: str | None = None
+    reference_genome_id: str | None = None
     igv_annotations: list[IgvAnnotation] = Field(default_factory=list)
 
     nextflow_run_info: RelOrAbsPath
@@ -150,6 +160,10 @@ class SampleManifest(AllowExtraModelMixin):
                 "software_info was replaced by database_info; rebuild the manifest"
             )
         return data
+
+    def reference_genome(self) -> str | None:
+        """The reference genome to attach, preferring the assembly accession."""
+        return self.reference_genome_accession or self.reference_genome_id
 
     def assigned_to_group(self) -> bool:
         """Return True if sample is assigned to a group."""
