@@ -38,7 +38,7 @@ An upload that stops part-way can be re-run; steps that already succeeded are sk
 
 ## Bootstrap Bonsai instance
 
-Bootstrap a new test instance of Bonsai with the users, groups and reference genomes in a configuration file. Existing groups and reference genomes are reused. A reference genome's FASTA and index must already be readable by the API under its `REFERENCE_GENOMES_DIR`.
+Bootstrap a new test instance of Bonsai with the users, groups and reference genomes in a configuration file. Bonsai generates each group's ID, so a group is identified by its `group` slug; existing groups and reference genomes are reused. A reference genome's FASTA and index must already be readable by the API under its `REFERENCE_GENOMES_DIR`.
 
 ```sh
 prp bonsai bootstrap bootstrap/default.yml \
@@ -49,37 +49,37 @@ prp bonsai bootstrap bootstrap/default.yml \
 
 ## The sample manifest
 
-The manifest lists a sample's metadata and the paths to its JASEN results.
+The manifest lists a sample's metadata and the paths to its JASEN results. `jasentool create-yaml` writes it in this form.
 
 ```yaml
 sample_id: sample_1
 sample_name: sample_1
 lims_id: LIMS123
 groups:
-  - saureus
+- saureus
+database_info:
+- name: resfinder
+  software: resfinder
+  version: 2.6.0
 reference_genome_accession: GCF_000012045.1
 nextflow_run_info: /path/to/sample_1_analysis_meta.json
-analysis_result:
-  - software: samtools
-    subcommand: stats
-    software_version: "1.17"
-    uri: /path/to/sample_1.stats
-database_info:
-  - name: resfinder
-    software: resfinder
-    version: 2.6.0
 igv_annotations:
-  - name: Read coverage
-    type: alignment
-    uri: /access/jasen/saureus/bam/sample_1_bwa.bam
-    index_uri: /access/jasen/saureus/bam/sample_1_bwa.bam.bai
+- name: Read coverage
+  type: alignment
+  uri: /access/jasen/saureus/bam/sample_1_bwa.bam
+  index_uri: /access/jasen/saureus/bam/sample_1_bwa.bam.bai
+analysis_result:
+- software: samtools
+  subcommand: stats
+  software_version: '1.17'
+  uri: /path/to/sample_1.stats
 index_artifacts:
   sourmash_signature: /path/to/sample_1.sig
   ska_index: /path/to/sample_1_ska_index.skf
 ```
 
-- `groups` are Bonsai group IDs and must already exist; the upload is rejected otherwise.
-- `reference_genome_accession` must match a reference genome registered in Bonsai. Without it the IGV tracks are skipped.
+- `groups` name existing Bonsai groups by their `group` slug, such as `saureus`. A group ID also works, as does a display name with case and punctuation ignored, which covers groups created before slugs existed. The upload is rejected if a group matches none or more than one.
+- `reference_genome_accession` must match a reference genome registered in Bonsai. `reference_genome_id` is accepted as an alternative, and the accession wins when both are given. Without either the IGV tracks are skipped.
 - Each `analysis_result` needs a `software_version`. samtools `coverage` and `bedcov` results are attached to the `stats` upload rather than uploaded on their own, and a legacy `postalignqc` result is only used when there is no samtools `stats` result.
 - `database_info` records the database versions each tool was run against.
-- `igv_annotations` paths must be inside the Bonsai API's `ANNOTATIONS_DIR`. See the [IGV documentation](https://igv.org/doc/igvjs/#tracks/Tracks/) for the track types.
+- Relative paths are relative to the manifest. `igv_annotations` paths must be inside the Bonsai API's `ANNOTATIONS_DIR`. See the [IGV documentation](https://igv.org/doc/igvjs/#tracks/Tracks/) for the track types.
