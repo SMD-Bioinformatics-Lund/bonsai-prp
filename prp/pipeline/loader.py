@@ -174,7 +174,7 @@ def to_generic_metadata_record(record: MetaEntry) -> GenericMetadataRecord:
 
 def _path_if_file_uri(uri: URI | None) -> str | None:
     """Return the file path if the URI is a file URI and exists, else None."""
-    if uri.scheme == "file":
+    if uri is not None and uri.scheme == "file":
         path = Path(uri.path)
         if path.exists():
             return path.as_posix()
@@ -220,7 +220,7 @@ def parse_base_results_from_manifest(manifest: SampleManifest) -> ParsedSampleRe
         lims_id=manifest.lims_id,
         groups=manifest.groups,
         metadata=metadata,
-        reference_genome_accession=manifest.reference_genome_accession,
+        reference_genome_accession=manifest.reference_genome(),
         annotation_tracks=annotations,
         pipeline=to_internal_run_info(
             run_info=raw_run_info,
