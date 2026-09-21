@@ -44,7 +44,11 @@
 - Table metadata is dropped with a warning instead of silently
 - Manifests with the old `software_info` key are rejected; rebuild them to get `database_info`
 - `bonsai-libs` and `click` are base dependencies
-- Depends on bonsai-libs' `revert-server-generated-group-ids` branch until it is merged into `master`
+- Depends on bonsai-libs' `sample-groups-on-create` branch until it is merged into `master`
+- `bonsai bootstrap` identifies groups by their `group` slug, as Bonsai generates group IDs
+- `bonsai upload` adds the sample to its manifest groups, matched by slug, group ID or display name, and fails if a group matches none or more than one
+- Relative IGV track paths are relative to the manifest
+- A manifest may name its reference genome with `reference_genome_accession` or `reference_genome_id`; the accession is used when both are present
 
 ### Fixed
 
@@ -52,6 +56,8 @@
 - `SamtoolsQcParser`'s bedcov argument accepts a stream, not just a path
 - Docker publish workflow was reading the version from the wrong event and would've tagged images with an empty version; back to reading it from `prp/__version__.py`
 - A dry run no longer leaves upload state that blocks the real upload
+- `bonsai upload` no longer crashes on a manifest with a sourmash signature but no SKA index
+- IGV track formats are read past a `.gz` extension, so TB's `tbdb.bed.gz` uploads
 
 ## [1.5.0]
 
