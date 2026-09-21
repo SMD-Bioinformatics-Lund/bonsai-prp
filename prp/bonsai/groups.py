@@ -10,9 +10,9 @@ def _normalise(name: str) -> str:
 
 
 def _match(groups: list[GroupResponse], name: str) -> set[str]:
-    slug = {group.group_id for group in groups if group.group == name}
-    if slug:
-        return slug
+    by_key = {group.group_id for group in groups if group.group == name}
+    if by_key:
+        return by_key
     if any(group.group_id == name for group in groups):
         return {name}
     exact = {group.group_id for group in groups if group.display_name == name}
@@ -22,10 +22,10 @@ def _match(groups: list[GroupResponse], name: str) -> set[str]:
 
 
 def resolve_group_ids(groups: list[GroupResponse], names: list[str]) -> list[str]:
-    """Map each name to a group by its slug, its id, or its display name.
+    """Map each name to a group by its group key, its id, or its display name.
 
     A display name matches with case and punctuation ignored, so "saureus" also
-    matches a group displayed as "S. aureus" that has no slug.
+    matches a group displayed as "S. aureus" that has no group key.
     """
     resolved: list[str] = []
     unknown: list[str] = []

@@ -45,8 +45,8 @@
 - Manifests with the old `software_info` key are rejected; rebuild them to get `database_info`
 - `bonsai-libs` and `click` are base dependencies
 - Depends on bonsai-libs' `sample-groups-on-create` branch until it is merged into `master`
-- `bonsai bootstrap` identifies groups by their `group` slug, as Bonsai generates group IDs
-- `bonsai upload` adds the sample to its manifest groups, matched by slug, group ID or display name, and fails if a group matches none or more than one
+- `bonsai bootstrap` identifies groups by their `group` key, as Bonsai generates group IDs
+- `bonsai upload` adds the sample to its manifest groups, matched by group key, group ID or display name, and fails if a group matches none or more than one
 - Relative IGV track paths are relative to the manifest
 - A manifest may name its reference genome with `reference_genome_accession` or `reference_genome_id`; the accession is used when both are present
 
