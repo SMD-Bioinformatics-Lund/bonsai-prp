@@ -31,7 +31,7 @@ GROUPS = [
         ("streptococcus", "uuid-strep"),
     ],
 )
-def test_resolves_by_slug_id_or_display_name(name, expected):
+def test_resolves_by_group_key_id_or_display_name(name, expected):
     assert resolve_group_ids(GROUPS, [name]) == [expected]
 
 
@@ -50,11 +50,11 @@ def test_ambiguous_display_names_raise():
         resolve_group_ids(groups, ["saureus"])
 
 
-def test_slug_wins_over_a_display_name_that_also_matches():
+def test_group_key_wins_over_a_display_name_that_also_matches():
     groups = [_group("uuid-sa", "Saureus"), _group("uuid-other", "Another group", "saureus")]
     assert resolve_group_ids(groups, ["saureus"]) == ["uuid-other"]
 
 
-def test_unknown_group_lists_slugs_when_present():
+def test_unknown_group_lists_group_keys_when_present():
     with pytest.raises(UploadError, match="saureus"):
         resolve_group_ids(GROUPS, ["klebsiella"])

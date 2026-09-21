@@ -103,9 +103,9 @@ class BonsaiUploadService:
             raise
 
     def ensure_group_exists(self, group_data: CreateGroupInput) -> GroupResponse:
-        """Return the group with the same slug, creating it if missing.
+        """Return the group with the same group key, creating it if missing.
 
-        Bonsai generates group ids, so a group is referenced by its slug.
+        Bonsai generates group ids, so a group is referenced by its group key.
         """
         for group in self.client.get_groups():
             if group.group == group_data.group or group.display_name == group_data.display_name:
