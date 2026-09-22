@@ -39,6 +39,24 @@ def test_to_internal_run_info_applies_defaults():
     assert result.pipeline_info.definition.release_life_cycle == "unknown"
 
 
+def test_to_internal_run_info_maps_diagnostic_life_cycle():
+    """JASEN's release_life_cycle="diagnostic" maps to "production" (the schema's Literal)."""
+    run_info = {
+        "pipeline": "jasen",
+        "version": "1.0.0",
+        "workflow_name": "run-1",
+        "assay": "generic",
+        "date": "2026-01-01T00:00:00",
+        "command": "cmd",
+        "analysis_profile": [],
+        "release_life_cycle": "diagnostic",
+    }
+
+    result = to_internal_run_info(run_info=run_info, analysis_results=[])
+
+    assert result.pipeline_info.definition.release_life_cycle == "production"
+
+
 @pytest.mark.parametrize(
     "run_id,expected",
     [

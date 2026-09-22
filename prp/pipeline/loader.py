@@ -64,6 +64,9 @@ from .types import (
 
 LOG = logging.getLogger(__name__)
 
+# JASEN release_life_cycle values that map onto PipelineDefinition's allowed set.
+_LIFE_CYCLE_MAP = {"diagnostic": "production"}
+
 
 def to_internal_run_info(
     *,
@@ -80,11 +83,12 @@ def to_internal_run_info(
     ]
 
     # structure the data into its internal representation
+    life_cycle = run_info.get("release_life_cycle", "unknown")
     pipeline_def = PipelineDefinition(
         name=run_info.get("pipeline"),
         version=run_info.get("version") or run_info.get("commit"),
         commit=None if ((c := run_info.get("commit")) == "null") else c,
-        release_life_cycle=run_info.get("release_life_cycle", "unknown"),
+        release_life_cycle=_LIFE_CYCLE_MAP.get(life_cycle, life_cycle),
     )
     run_cnf = PipelineRunConfig(
         command=run_info.get("command"),
