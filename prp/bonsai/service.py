@@ -108,7 +108,7 @@ class BonsaiUploadService:
         Bonsai generates group ids, so a group is referenced by its group key.
         """
         for group in self.client.get_groups():
-            if group.group == group_data.group or group.display_name == group_data.display_name:
+            if group.group == group_data.group:
                 LOG.info("Group already exists: %s (%s)", group_data.group, group.group_id)
                 return group
         group = self.client.create_group(group_data)
