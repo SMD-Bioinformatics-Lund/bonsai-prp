@@ -78,7 +78,7 @@ index_artifacts:
   ska_index: /path/to/sample_1_ska_index.skf
 ```
 
-- `groups` name existing Bonsai groups by their `group` key, such as `saureus`. A group ID also works, as does a display name with case and punctuation ignored, which covers groups created before group keys existed. The upload is rejected if a group matches none or more than one.
+- `groups` name existing Bonsai groups by their `group` key, such as `saureus`; a group ID works too. Display names are not matched, so the upload is rejected if a key is unknown.
 - `reference_genome_accession` must match a reference genome registered in Bonsai. `reference_genome_id` is accepted as an alternative, and the accession wins when both are given. Without either the IGV tracks are skipped.
 - Each `analysis_result` needs a `software_version`. samtools `coverage` and `bedcov` results are attached to the `stats` upload rather than uploaded on their own, and a legacy `postalignqc` result is only used when there is no samtools `stats` result.
 - `database_info` records the database versions each tool was run against.

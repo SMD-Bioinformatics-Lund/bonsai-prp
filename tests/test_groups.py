@@ -1,4 +1,4 @@
-"""Tests for resolving manifest group names to Bonsai group ids."""
+"""Tests for resolving manifest group keys to Bonsai group ids."""
 
 import pytest
 from bonsai_libs.api_client.bonsai.models import GroupResponse
@@ -17,44 +17,33 @@ def _group(group_id: str, display_name: str, group: str | None = None) -> GroupR
 GROUPS = [
     _group("uuid-sa", "S. aureus", "saureus"),
     _group("uuid-mtb", "M. tuberculosis", "mtuberculosis"),
-    _group("uuid-strep", "Streptococcus"),
 ]
 
 
 @pytest.mark.parametrize(
     ("name", "expected"),
-    [
-        ("uuid-sa", "uuid-sa"),
-        ("S. aureus", "uuid-sa"),
-        ("saureus", "uuid-sa"),
-        ("mtuberculosis", "uuid-mtb"),
-        ("streptococcus", "uuid-strep"),
-    ],
+    [("saureus", "uuid-sa"), ("mtuberculosis", "uuid-mtb"), ("uuid-sa", "uuid-sa")],
 )
-def test_resolves_by_group_key_id_or_display_name(name, expected):
+def test_resolves_by_group_key_or_id(name, expected):
     assert resolve_group_ids(GROUPS, [name]) == [expected]
 
 
 def test_duplicate_names_resolve_once():
-    assert resolve_group_ids(GROUPS, ["saureus", "S. aureus"]) == ["uuid-sa"]
+    assert resolve_group_ids(GROUPS, ["saureus", "uuid-sa"]) == ["uuid-sa"]
 
 
-def test_unknown_group_raises():
-    with pytest.raises(UploadError, match="klebsiella"):
-        resolve_group_ids(GROUPS, ["saureus", "klebsiella"])
+@pytest.mark.parametrize("name", ["S. aureus", "SAureus", "s aureus"])
+def test_display_names_do_not_match(name):
+    """Only the group key identifies a group; a display name is free text."""
+    with pytest.raises(UploadError, match="No Bonsai group matches"):
+        resolve_group_ids(GROUPS, [name])
 
 
-def test_ambiguous_display_names_raise():
-    groups = [_group("uuid-sa", "S. aureus"), _group("uuid-sa2", "S.aureus")]
-    with pytest.raises(UploadError, match="more than one"):
-        resolve_group_ids(groups, ["saureus"])
+def test_group_without_a_key_cannot_be_matched():
+    with pytest.raises(UploadError, match="No Bonsai group matches"):
+        resolve_group_ids([_group("uuid-old", "Legacy group")], ["legacy-group"])
 
 
-def test_group_key_wins_over_a_display_name_that_also_matches():
-    groups = [_group("uuid-sa", "Saureus"), _group("uuid-other", "Another group", "saureus")]
-    assert resolve_group_ids(groups, ["saureus"]) == ["uuid-other"]
-
-
-def test_unknown_group_lists_group_keys_when_present():
-    with pytest.raises(UploadError, match="saureus"):
+def test_unknown_group_lists_the_known_keys():
+    with pytest.raises(UploadError, match=r"group keys are \['mtuberculosis', 'saureus'\]"):
         resolve_group_ids(GROUPS, ["klebsiella"])
