@@ -108,11 +108,11 @@ class BonsaiUploadService:
         Bonsai generates group ids, so a group is referenced by its group key.
         """
         for group in self.client.get_groups():
-            if group.group == group_data.group:
-                LOG.info("Group already exists: %s (%s)", group_data.group, group.group_id)
+            if group.group_key == group_data.group_key:
+                LOG.info("Group already exists: %s (%s)", group_data.group_key, group.group_id)
                 return group
         group = self.client.create_group(group_data)
-        LOG.info("Group created: %s (%s)", group_data.group, group.group_id)
+        LOG.info("Group created: %s (%s)", group_data.group_key, group.group_id)
         return group
 
     def ensure_reference_genome_exists(

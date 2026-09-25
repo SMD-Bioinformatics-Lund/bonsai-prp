@@ -21,9 +21,9 @@ class _Resp(SimpleNamespace):
     """Stand-in for a bonsai-libs response model."""
 
 
-def _group(group_id: str, display_name: str, group: str | None = None) -> GroupResponse:
+def _group(group_id: str, display_name: str, group_key: str | None = None) -> GroupResponse:
     return GroupResponse(
-        group_id=group_id, group=group, display_name=display_name, sample_count=0,
+        group_id=group_id, group_key=group_key, display_name=display_name, sample_count=0,
         created_at="2026-01-01T00:00:00", modified_at="2026-01-01T00:00:00",
     )
 
@@ -73,7 +73,7 @@ class FakeBonsaiClient:
         return list(self.groups)
 
     def create_group(self, group: CreateGroupInput, *, headers=None):
-        created = _group(f"uuid-{len(self.groups)}", group.display_name, group.group)
+        created = _group(f"uuid-{len(self.groups)}", group.display_name, group.group_key)
         self.groups.append(created)
         self.calls.append(("create_group", group))
         return created
