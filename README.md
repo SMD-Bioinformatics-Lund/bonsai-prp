@@ -38,7 +38,7 @@ An upload that stops part-way can be re-run; steps that already succeeded are sk
 
 ## Bootstrap Bonsai instance
 
-Bootstrap a new test instance of Bonsai with the users, groups and reference genomes in a configuration file. Bonsai generates each group's ID, so a group is identified by its `group` key; existing groups and reference genomes are reused. A reference genome's FASTA and index must already be readable by the API under its `REFERENCE_GENOMES_DIR`.
+Bootstrap a new test instance of Bonsai with the users, groups and reference genomes in a configuration file. Bonsai generates each group's ID, so a group is identified by its `group_key`; existing groups and reference genomes are reused. A reference genome's FASTA and index must already be readable by the API under its `REFERENCE_GENOMES_DIR`.
 
 ```sh
 prp bonsai bootstrap bootstrap/default.yml \
@@ -78,7 +78,7 @@ index_artifacts:
   ska_index: /path/to/sample_1_ska_index.skf
 ```
 
-- `groups` name existing Bonsai groups by their `group` key, such as `saureus`; a group ID works too. Display names are not matched, so the upload is rejected if a key is unknown.
+- `groups` name existing Bonsai groups by their `group_key`, such as `saureus`; a group ID works too. Display names are not matched, so the upload is rejected if a key is unknown.
 - `reference_genome_accession` must match a reference genome registered in Bonsai. `reference_genome_id` is accepted as an alternative, and the accession wins when both are given. Without either the IGV tracks are skipped.
 - Each `analysis_result` needs a `software_version`. samtools `coverage` and `bedcov` results are attached to the `stats` upload rather than uploaded on their own, and a legacy `postalignqc` result is only used when there is no samtools `stats` result.
 - `database_info` records the database versions each tool was run against.

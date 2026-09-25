@@ -17,7 +17,7 @@ def bootstap_config_valid(tmp_path: Path) -> Path:
             password: user123
             role: [user]
         groups:
-          - group: mtuberculosis
+          - group_key: mtuberculosis
             display_name: "M. tuberculosis"
             description: "Tuberculosis test samples"
         reference_genomes:

@@ -7,9 +7,9 @@ from prp.bonsai.groups import resolve_group_ids
 from prp.exceptions import UploadError
 
 
-def _group(group_id: str, display_name: str, group: str | None = None) -> GroupResponse:
+def _group(group_id: str, display_name: str, group_key: str | None = None) -> GroupResponse:
     return GroupResponse(
-        group_id=group_id, group=group, display_name=display_name, sample_count=0,
+        group_id=group_id, group_key=group_key, display_name=display_name, sample_count=0,
         created_at="2026-01-01T00:00:00", modified_at="2026-01-01T00:00:00",
     )
 

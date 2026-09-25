@@ -11,7 +11,7 @@ def resolve_group_ids(groups: list[GroupResponse], names: list[str]) -> list[str
     Bonsai generates group ids, so a manifest names groups by their key, such as
     `saureus`. A group id is accepted as well, for callers that already have one.
     """
-    by_key = {group.group: group.group_id for group in groups if group.group}
+    by_key = {group.group_key: group.group_id for group in groups if group.group_key}
     ids = {group.group_id for group in groups}
 
     resolved: list[str] = []
