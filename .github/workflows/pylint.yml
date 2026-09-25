@@ -19,7 +19,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install pylint
         pip install pytest
-        pip install -e .[dev]
+        pip install -e .[all] -e .[dev]
     - name: Analysing the code with pylint
       run: |
         pylint --fail-under 9 $(git ls-files '*.py')

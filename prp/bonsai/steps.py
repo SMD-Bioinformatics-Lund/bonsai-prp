@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Callable, TypeAlias
 
 from bonsai_libs.api_client.bonsai.models import AnnotationTrack, GenomicResourceInput
-from bonsai_libs.api_client.core.exceptions import ClientError
+from bonsai_libs.api_client.core.exceptions import ClientError, NotFoundError
 
 from prp.exceptions import PrpError
 from prp.pipeline.types import (
@@ -17,6 +17,7 @@ from prp.pipeline.types import (
 
 from . import mappers
 from .client import BonsaiApiClient
+from .groups import resolve_group_ids
 from .state_store import UploadState
 
 Headers: TypeAlias = dict[str, str]
@@ -29,6 +30,14 @@ EXPECTED_SUFFIXES = ["vcf", "bam", "cram", "gff", "gff3", "gtf", "bed", "bp"]
 class SkipStep(Exception):
     def __init__(self, reason: str):
         self.reason = reason
+
+
+def _format_suffix(uri: str) -> str:
+    """File extension naming the format, looking past a trailing .gz."""
+    suffixes = [suffix.strip(".") for suffix in Path(uri).suffixes]
+    if len(suffixes) > 1 and suffixes[-1] == "gz":
+        return suffixes[-2]
+    return suffixes[-1] if suffixes else ""
 
 
 def lookup_step(step_name: str) -> Callable[[], Any]:
@@ -104,7 +113,7 @@ def step(step_flag: str):
                     raise PrpError(
                         f"API error during step '{dynamic_id}': {details}"
                     ) from exc
-            
+
             except SkipStep as exc:
                 service.reporter.on_step_skip(external_id, dynamic_id)
                 state.mark(dynamic_id, {"skipped": True, "reason": exc.reason})
@@ -131,10 +140,21 @@ def step_create_sample(
     state: UploadState,
     *,
     headers: Headers,
-) -> "CreateSampleResponse":
-    """Create a sample using the API."""
+):
+    """Create a sample using the API, or adopt an existing one with the same external id."""
+
+    try:
+        existing = client.get_sample_by_external_id(
+            sample_info.sample_id, headers=headers
+        )
+        state.sample_id = existing["sample_id"]
+        raise SkipStep("Sample already exists")
+    except NotFoundError:
+        pass
 
     payload = mappers.sample_to_bonsai(sample_info)
+    if sample_info.groups:
+        payload.groups = resolve_group_ids(client.get_groups(headers=headers), sample_info.groups)
     resp = client.create_sample(payload, headers=headers)
 
     # set sample id in state
@@ -172,13 +192,13 @@ def step_add_reference_genome(
     headers: Headers,
 ):
     """Associate sample with a reference genome."""
-    if sample_info.reference_genome_id is None:
-        raise SkipStep("No reference genome id provided")
+    if sample_info.reference_genome_accession is None:
+        raise SkipStep("No reference genome accession provided")
 
     internal_sample_id = state.assert_sample_id()
     return client.add_reference_genome_to_sample(
         internal_sample_id,
-        reference_genome_id=sample_info.reference_genome_id,
+        reference_genome_accession=sample_info.reference_genome_accession,
         headers=headers,
     )
 
@@ -191,14 +211,20 @@ def step_add_annotation_track(
     *,
     track: IgvAnnotationTrack,
     headers: Headers,
+    force: bool = False,
 ):
-    """Associate sample with a reference genome."""
+    """Attach an IGV annotation track to a sample."""
+    # Annotation tracks are rendered by IGV, which cannot place them without a
+    # reference genome, so there is nothing to attach them to.
+    if sample_info.reference_genome_accession is None:
+        raise SkipStep("No reference genome accession provided")
+
     internal_sample_id = state.assert_sample_id()
 
     # infere file format if not provided
     file_fmt = track.format
     if file_fmt is None:
-        suffix = Path(track.uri).suffix.strip(".")
+        suffix = _format_suffix(track.uri)
         if suffix not in EXPECTED_SUFFIXES:
             raise ValueError(
                 f"Could not infere format of file '{track.uri}', please specify format."
@@ -206,7 +232,7 @@ def step_add_annotation_track(
         file_fmt = suffix
 
     api_input = GenomicResourceInput(
-        reference_genome_id=sample_info.reference_genome_id,
+        reference_genome_accession=sample_info.reference_genome_accession,
         pipeline_run_id=sample_info.pipeline.pipeline_run_id,
         resource_data=[
             AnnotationTrack(
@@ -219,7 +245,7 @@ def step_add_annotation_track(
         ],
     )
     return client.add_annotation_track_to_sample(
-        internal_sample_id, track=api_input, headers=headers
+        internal_sample_id, track=api_input, force=force, headers=headers
     )
 
 
@@ -247,6 +273,7 @@ def step_upload_analysis_results(
     *,
     result: MinimalAnalysisRecord,
     headers: Headers,
+    aux_paths: dict[str, Any] | None = None,
     **kwargs,
 ) -> dict[str, str]:
     """Upload analysis results to the sample."""
@@ -254,7 +281,7 @@ def step_upload_analysis_results(
 
     run_id = sample_info.pipeline.pipeline_run_id
     payload = mappers.analysis_result_to_upload_payload(
-        internal_sample_id, run_id=run_id, result=result
+        internal_sample_id, run_id=run_id, result=result, aux_paths=aux_paths
     )
 
     # if "force" flag is set, overwrite existing results for the same software;
@@ -278,19 +305,16 @@ def step_upload_ska_index(
     state: UploadState,
     *,
     headers: Headers,
-    **kwargs,
 ):
     """Upload an SKA index for a sample."""
     if not sample_info.index_artifacts or not sample_info.index_artifacts.ska_index:
         raise SkipStep("No index to upload")
 
-    force = kwargs.get("force", False)
     internal_sample_id = state.assert_sample_id()
 
     return client.upload_ska_index(
         internal_sample_id,
         index_path=str(sample_info.index_artifacts.ska_index),
-        force=force,
         headers=headers,
     )
 

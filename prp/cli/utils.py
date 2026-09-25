@@ -1,14 +1,11 @@
 """Shared utility and click input types."""
 
-from typing import Any, TextIO
+from typing import Any
 
 import click
-from bonsai_libs.parse.io.json import read_json
 
 from prp.io.manifest import read_manifest
 from prp.models.manifest import SampleManifest
-
-OptionalFile = TextIO | None
 
 
 class SampleManifestFile(click.ParamType):
@@ -19,13 +16,3 @@ class SampleManifestFile(click.ParamType):
     def convert(self, value: str, param: Any, ctx: Any) -> SampleManifest:
         """Convert string path to yaml object."""
         return read_manifest(value)
-
-
-class JsonFile(click.ParamType):
-    """CLI option for json files."""
-
-    name = "config"
-
-    def convert(self, value: str, param: Any, ctx: Any) -> dict[str, Any]:
-        """Convert string path to yaml object."""
-        return read_json(value)

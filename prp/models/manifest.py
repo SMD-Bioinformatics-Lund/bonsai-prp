@@ -1,5 +1,7 @@
 """Sample manifest info."""
 
+import logging
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -10,11 +12,13 @@ from bonsai_libs.api_client.bonsai.models import (
     CreateReferenceGenomeInput,
     CreateUserInput,
 )
-from pydantic import BaseModel, Field, ValidationInfo
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 from pydantic_core import core_schema
 
 from .base import AllowExtraModelMixin, RelOrAbsPath
 from .metadata import MetaEntry
+
+LOG = logging.getLogger(__name__)
 
 
 @dataclass
@@ -42,24 +46,30 @@ class FlexibleURI:
     @classmethod
     def validate(cls, value: Any, info: ValidationInfo):
         """Convert flexible URI input into a standardized URI object."""
-        # Normalize Path → string
         if isinstance(value, Path):
             value = str(value)
 
-        # --- handle local filesystem paths ---
         if isinstance(value, str):
             p = Path(value)
 
-            # resolve relative to context, if given
-            if not p.is_absolute() and info.context:
-                base = Path(info.context.parent)
-                p = (base / p).resolve()
-
-            if p.exists():
+            # Absolute paths don't need to exist yet: the access/symlink dir may not
+            # be mounted at manifest-read time. Only warn, since bonsai upload reads
+            # analysis-result files later and index artifacts aren't read at all.
+            if p.is_absolute():
+                if not p.exists():
+                    LOG.warning(
+                        "File not found at %s (not yet symlinked?); accepting as file:// URI",
+                        p,
+                    )
                 pr = urlparse(f"file://{p.as_posix()}")
                 return URI(pr.scheme, pr.path, pr.netloc)
 
-        # --- parse as URL (including s3://, file://, http://, https://, etc.) ---
+            if info.context:
+                p = (Path(info.context.parent) / p).resolve()
+                if p.exists():
+                    pr = urlparse(f"file://{p.as_posix()}")
+                    return URI(pr.scheme, pr.path, pr.netloc)
+
         pr = urlparse(value)
         if pr.scheme:
             return URI(pr.scheme, pr.path, pr.netloc)
@@ -80,11 +90,20 @@ class IgvAnnotation(BaseModel):
     uri: str
     index_uri: str | None = None
 
+    @field_validator("uri", "index_uri")
+    @classmethod
+    def relative_to_manifest(cls, value: str | None, info: ValidationInfo) -> str | None:
+        """Make relative paths absolute against the manifest's directory, keeping symlinks."""
+        if value is None or not info.context or "://" in value or os.path.isabs(value):
+            return value
+        return os.path.normpath(os.path.join(os.path.abspath(Path(info.context).parent), value))
+
 
 class AnalysisResult(BaseModel):
     """Describe how a analysis result was derived."""
 
     software: str
+    subcommand: str | None = None
     software_version: str
     database: str | None = None
     uri: FlexibleURI
@@ -97,23 +116,34 @@ class IndexArtifacts(BaseModel):
     sourmash_signature: FlexibleURI | None = None
 
 
+class DatabaseRecord(BaseModel):
+    """Version of a database a tool in the manifest was run against."""
+
+    software: str
+    name: str
+    version: str
+
+
 class SampleManifest(AllowExtraModelMixin):
     """Sample information with metadata and results files."""
 
-    # Sample information
     sample_id: str = Field(..., min_length=3, max_length=100)
     sample_name: str
     lims_id: str
 
-    # Bonsai paramters
     groups: list[str] = Field(default_factory=list)
     metadata: list[MetaEntry] = Field(default_factory=list)
 
-    # Reference genome
+    reference_genome_accession: str | None = None
     reference_genome_id: str | None = None
     igv_annotations: list[IgvAnnotation] = Field(default_factory=list)
 
     nextflow_run_info: RelOrAbsPath
+
+    database_info: list[DatabaseRecord] = Field(
+        default_factory=list,
+        description="Database versions the pipeline's tools were run against",
+    )
 
     analysis_result: list[AnalysisResult] = Field(
         default_factory=list,
@@ -121,6 +151,19 @@ class SampleManifest(AllowExtraModelMixin):
     )
 
     index_artifacts: IndexArtifacts | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_software_info(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "software_info" in data:
+            raise ValueError(
+                "software_info was replaced by database_info; rebuild the manifest"
+            )
+        return data
+
+    def reference_genome(self) -> str | None:
+        """The reference genome to attach, preferring the assembly accession."""
+        return self.reference_genome_accession or self.reference_genome_id
 
     def assigned_to_group(self) -> bool:
         """Return True if sample is assigned to a group."""
