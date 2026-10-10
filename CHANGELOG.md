@@ -44,7 +44,7 @@
 - Table metadata is dropped with a warning instead of silently
 - Manifests with the old `software_info` key are rejected; rebuild them to get `database_info`
 - `bonsai-libs` and `click` are base dependencies
-- Depends on bonsai-libs `rename-group-key`
+- Depends on bonsai-libs 0.4.0
 - `bonsai bootstrap` identifies groups by their `group_key`, as Bonsai generates group IDs
 - `bonsai upload` adds the sample to its manifest groups, matched by group key or group ID, and fails when a key is unknown
 - Relative IGV track paths are relative to the manifest
