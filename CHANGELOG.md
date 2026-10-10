@@ -1,11 +1,12 @@
 ## [Unreleased]
 
-### Removed
+### Added
 
-- Removed the `parse jasen` and `parse format-cdm` subcommands along with the entire `prp.parse` per-software parsing library, the JSON/CDM export helpers (`prp.export`), and the unused schema-migration code (`prp.cli.validate`, `prp.migration`, `prp.models.sample`)
-- The per-software parsers moved to `bonsai-libs` (`bonsai_libs.parse`), the shared dependency also used by `bonsai upload`; `prp.pipeline` and `prp.models.manifest`/`prp.models.metadata` remain in bonsai-prp, slimmed down to only build the manifest representation `bonsai upload` needs (no longer the full per-software analysis results)
-- CDM input generation (`format-cdm`) moved to `jasentool` as a self-contained feature (`jasentool.cdm`, `jasentool format-cdm`); it does not depend on bonsai-libs or bonsai-prp
-- `bonsai-prp` no longer has any result-parsing subcommands; only `bonsai upload` and `bonsai bootstrap` remain
+### Changed
+
+### Fixed
+
+## [2.0.0]
 
 ### Added
 
@@ -22,6 +23,10 @@
 
 ### Changed
 
+- Removed the `parse jasen` and `parse format-cdm` subcommands along with the entire `prp.parse` per-software parsing library, the JSON/CDM export helpers (`prp.export`), and the unused schema-migration code (`prp.cli.validate`, `prp.migration`, `prp.models.sample`)
+- The per-software parsers moved to `bonsai-libs` (`bonsai_libs.parse`), the shared dependency also used by `bonsai upload`; `prp.pipeline` and `prp.models.manifest`/`prp.models.metadata` remain in bonsai-prp, slimmed down to only build the manifest representation `bonsai upload` needs (no longer the full per-software analysis results)
+- CDM input generation (`format-cdm`) moved to `jasentool` as a self-contained feature (`jasentool.cdm`, `jasentool format-cdm`); it does not depend on bonsai-libs or bonsai-prp
+- `bonsai-prp` no longer has any result-parsing subcommands; only `bonsai upload` and `bonsai bootstrap` remain
 - Changed manifest format to include software version and database info.
 - Use shared library for API calls
 - Simplified repo structure and data models to increase code legibility.
@@ -58,6 +63,24 @@
 - A dry run no longer leaves upload state that blocks the real upload
 - `bonsai upload` no longer crashes on a manifest with a sourmash signature but no SKA index
 - IGV track formats are read past a `.gz` extension, so TB's `tbdb.bed.gz` uploads
+
+## [1.6.1]
+
+### Added
+
+- Parse the `STX_TYPE` virulence subtype from AMRFinder v4 stx operon results
+- Added a `.dockerignore`
+
+### Changed
+
+- `PostAlignQcResult` accepts results with only read counts; `mean_cov`, `pct_above_x`, `n_mapped_reads`, `quartile1`, `median_cov` and `quartile3` are optional
+
+## [1.6.0]
+
+### Fixed
+
+- Parse AMRFinder v4 output, which renamed several columns
+- Import `Callable` from `typing` instead of `pysam` in the base model
 
 ## [1.5.0]
 
