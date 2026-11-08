@@ -248,7 +248,17 @@ class BonsaiUploadService:
 
         # bedcov has no parser of its own; it is an input to samtools stats.
         AUX_FOR = {"coverage": "coverage_file", "bedcov": "bedcov_file"}
-        SKIP_AS_STANDALONE = {("samtools", "bedcov")}
+        SKIP_AS_STANDALONE = {("samtools", "bedcov"), ("hAMRonization", None)}
+
+        hamronization_uri = next(
+            (r.uri for r in results.analysis_results if r.software == "hAMRonization"),
+            None,
+        )
+        kleborate_aux = (
+            {"hamronization_file": Path(hamronization_uri.path)}
+            if hamronization_uri is not None and hamronization_uri.scheme == "file"
+            else {}
+        )
 
         # Older pipeline runs produced a single postalignqc result; newer ones
         # produce samtools stats. A manifest holding both is uploaded as samtools.
@@ -304,6 +314,8 @@ class BonsaiUploadService:
             aux_paths = (
                 samtools_aux
                 if (result.software, result.subcommand) == ("samtools", "stats")
+                else kleborate_aux
+                if result.software == "kleborate"
                 else None
             )
 
